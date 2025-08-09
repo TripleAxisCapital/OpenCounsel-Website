@@ -30,13 +30,18 @@
   </script>
   <style>
     /* ================================
-       GLOBAL HORIZONTAL PADDING CONTROL
-       Edit these two values to change global left/right padding.
+       GLOBAL CONTROLS
        ================================ */
     :root {
-      --pad-mobile-x: 24px;   /* mobile/tablet left/right padding */
-      --pad-desktop-x: 32px;  /* desktop left/right padding */
+      /* Global left/right padding (container) */
+      --pad-mobile-x: 24px;   /* mobile/tablet */
+      --pad-desktop-x: 32px;  /* desktop */
+
+      /* 🔧 GLOBAL HAMBURGER INSET
+         Increase to push the hamburger further IN from the right edge on mobile. */
+      --hamburger-inset: 10px;
     }
+
     .oc-container {
       padding-left: var(--pad-mobile-x);
       padding-right: var(--pad-mobile-x);
@@ -170,13 +175,20 @@
       background-size: 300% 300%;
       animation: gradientShift var(--speed,16s) ease-in-out infinite;
     }
+
+    /* Mobile-only hamburger button:
+       - Hidden at md and up via Tailwind (md:hidden on the element)
+       - Inset from right edge using --hamburger-inset
+    */
     #hamburgerBtn {
       display: flex;
       align-items: center;
       justify-content: center;
       height: 56px;
       padding: 0;
+      margin-right: var(--hamburger-inset);
     }
+
     .tap-boost { padding: 0; margin: 0; }
   </style>
 </head>
@@ -190,7 +202,7 @@
         <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
       </div>
 
-      <!-- Desktop nav -->
+      <!-- Desktop nav (visible ≥ md) -->
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a class="hover:underline" href="#features">Features</a>
         <a class="hover:underline" href="#edge">Why it wins</a>
@@ -201,7 +213,7 @@
 
       <!-- Right side actions -->
       <div class="flex items-center gap-2">
-        <!-- MOBILE: Hamburger button (hidden on md and up) -->
+        <!-- MOBILE: Hamburger button (only shows on mobile: hidden at md and up) -->
         <button id="hamburgerBtn"
           class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
           aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
@@ -214,7 +226,7 @@
       </div>
     </div>
 
-    <!-- MOBILE: Fullscreen animated gradient menu -->
+    <!-- MOBILE: Fullscreen animated gradient menu (also hidden ≥ md) -->
     <div id="mobileMenu"
          class="hidden md:hidden fixed inset-0 mobile-menu grad-anim text-white">
       <div class="mx-auto max-w-[1200px] oc-container py-4 flex items-center justify-between">
