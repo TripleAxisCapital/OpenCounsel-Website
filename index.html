@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- (Phosphor kept for other icons, but not required for hamburger/close) -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -55,8 +56,6 @@
     /* ===========================================
        PER-SECTION GRADIENT CONTROLS
        =========================================== */
-
-    /* Provide sensible defaults so header/mobile menu inherit the same scheme */
     :root{
       --from:  #FF6F00cc; 
       --via:   #0b3d3dcc;
@@ -112,7 +111,7 @@
     /* Back-compat */
     .animated-gradient { background-size: 300% 300%; animation: gradientShift 16s ease-in-out infinite; will-change: background-position; }
 
-    /* === Animated gradient logo (uses logo.svg as a mask) === */
+    /* Animated gradient logo (uses logo.svg as a mask) */
     .logo-anim{
       display:inline-block;
       width: var(--logo-width);
@@ -124,7 +123,6 @@
               mask: url('logo.svg') no-repeat center / contain;
     }
 
-    /* ===== Mobile hamburger + menu (inherits the same CSS vars) ===== */
     .grad-text{
       background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
       background-size: 300% 300%;
@@ -136,28 +134,32 @@
     }
     .mobile-menu { backdrop-filter: blur(8px); }
 
-    /* New: gradient-filled span masked to hamburger lines */
-    .mask-hamburger{
-      -webkit-mask: url(#hamburgerMask) center/contain no-repeat;
-              mask: url(#hamburgerMask) center/contain no-repeat;
+    /* === ROCK-SOLID HAMBURGER (no SVG mask; works everywhere) === */
+    .hamburger {
+      width: 32px;
+      height: 22px; /* visual height of 3 bars + gaps */
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hamburger span {
+      display:block;
+      height: 3px;                 /* bar thickness */
+      width: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+    }
+    /* Bigger touch target without changing visual size */
+    .tap-boost {
+      padding: 10px;
+      margin: -10px;
+      border-radius: 12px;
     }
   </style>
 </head>
 <body class="bg-white text-oc-ink font-sans antialiased">
-
-  <!-- SVG mask defs for the hamburger (THREE bars; control thickness via --bar) -->
-  <svg width="0" height="0" style="position:absolute">
-    <defs>
-      <mask id="hamburgerMask" maskContentUnits="userSpaceOnUse" x="0" y="0" width="48" height="48">
-        <!-- Black background = transparent; white strokes = visible -->
-        <rect x="0" y="0" width="48" height="48" fill="black"></rect>
-        <!-- THREE bars -->
-        <line x1="8" y1="12" x2="40" y2="12" stroke="white" stroke-linecap="round" style="stroke-width: var(--bar, 4)"></line>
-        <line x1="8" y1="24" x2="40" y2="24" stroke="white" stroke-linecap="round" style="stroke-width: var(--bar, 4)"></line>
-        <line x1="8" y1="36" x2="40" y2="36" stroke="white" stroke-linecap="round" style="stroke-width: var(--bar, 4)"></line>
-      </mask>
-    </defs>
-  </svg>
 
   <!-- HEADER -->
   <header class="sticky top-0 z-50 bg-white">
@@ -167,7 +169,7 @@
         <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
       </div>
 
-      <!-- Desktop nav (unchanged) -->
+      <!-- Desktop nav -->
       <nav class="hidden md:flex items-center gap-6 text-sm">
         <a class="hover:underline" href="#features">Features</a>
         <a class="hover:underline" href="#edge">Why it wins</a>
@@ -180,10 +182,13 @@
       <div class="flex items-center gap-2">
         <!-- MOBILE: Hamburger button (hidden on md and up) -->
         <button id="hamburgerBtn"
-          class="md:hidden rounded-xl p-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
           aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <!-- Gradient block masked by hamburger lines. Control thickness via --bar, size via width/height -->
-          <span class="mask-hamburger grad-anim block" style="--bar: 6; width: 32px; height: 32px;" aria-hidden="true"></span>
+          <span class="hamburger" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
         </button>
       </div>
     </div>
@@ -196,7 +201,10 @@
         <button id="closeMenuBtn"
                 class="rounded-xl p-2 bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white"
                 aria-label="Close menu">
-          <i class="ph ph-x text-lg"></i>
+          <!-- Inline SVG close icon (no external font required) -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
         </button>
       </div>
       <nav class="mt-6 px-6">
@@ -475,8 +483,6 @@
     },{threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-    // NOTE: Removed the random angle changer to prevent snaps/jumps.
-
     // ===== Mobile menu toggle =====
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const mobileMenu = document.getElementById('mobileMenu');
@@ -499,8 +505,9 @@
     if (closeMenuBtn) {
       closeMenuBtn.addEventListener('click', closeMenu);
     }
-    // Close on nav click (single page jump)
-    mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+    if (mobileMenu) {
+      mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+    }
   </script>
 </body>
 </html>
