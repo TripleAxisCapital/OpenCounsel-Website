@@ -58,7 +58,7 @@
       --via:   #0b3d3dcc;  /* Teal/Navy   */
       --to:    #064420cc;  /* Deep Green  */
       --speed: 9s;         /* animation duration */
-      --angle: to right;   /* gradient direction */
+      --angle: to right;   /* gradient direction (will be overridden randomly) */
     }
 
     /* EDGE / WHY IT WINS (id="edge") */
@@ -68,7 +68,7 @@
       --to:   #FFB300cc;  /* Gold Yellow */
 
       --speed: 9s;
-      --angle: to right;
+      --angle: to right;   /* will be overridden randomly */
     }
 
     /* FEATURES (id="features") */
@@ -77,7 +77,7 @@
       --via:   #0b3d3dcc;
       --to:    #064420cc;
       --speed: 9s;
-      --angle: to right;
+      --angle: to right;   /* will be overridden randomly */
     }
 
     /* =========
@@ -392,6 +392,29 @@
       }
     },{threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+    // === Randomize gradient direction per background (kept everything else the same) ===
+    (function randomizeGradientAngles(){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const els = document.querySelectorAll('.grad-anim');
+
+      els.forEach((el, idx) => {
+        const setRandomAngle = () => {
+          const deg = Math.floor(Math.random() * 360); // 0–359deg
+          el.style.setProperty('--angle', deg + 'deg'); // override section default
+        };
+
+        // Set one immediately
+        setRandomAngle();
+
+        // If user prefers reduced motion, don't keep changing it
+        if (prefersReduced) return;
+
+        // Change on a desynced interval per element so they don't sync up
+        const intervalMs = 6000 + Math.random() * 6000; // 6–12s
+        setInterval(setRandomAngle, intervalMs);
+      });
+    })();
   </script>
 </body>
 </html>
