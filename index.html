@@ -29,6 +29,25 @@
     }
   </script>
   <style>
+    /* ================================
+       GLOBAL HORIZONTAL PADDING CONTROL
+       Edit these two values to change global left/right padding.
+       ================================ */
+    :root {
+      --pad-mobile-x: 32px;   /* mobile/tablet left/right padding */
+      --pad-desktop-x: 32px;  /* desktop left/right padding */
+    }
+    .oc-container {
+      padding-left: var(--pad-mobile-x);
+      padding-right: var(--pad-mobile-x);
+    }
+    @media (min-width: 1024px) { /* desktop breakpoint */
+      .oc-container {
+        padding-left: var(--pad-desktop-x);
+        padding-right: var(--pad-desktop-x);
+      }
+    }
+
     /* Selection */
     ::selection{background:#5B8CFF;color:#fff}
 
@@ -135,47 +154,37 @@
     .mobile-menu { backdrop-filter: blur(8px); }
 
     /* === ROCK-SOLID HAMBURGER (no SVG mask; works everywhere) === */
-    /* Larger hamburger container */
-.hamburger {
-  width: 32px;   /* was 32px */
-  height: 28px;  /* was 22px */
-  display: inline-flex;
-  flex-direction: column;
-  justify-content: center;   /* center vertically inside itself */
-  gap: 6px;                   /* consistent gap between bars */
-}
-
-/* Thicker bars */
-.hamburger span {
-  height: 5px; /* was 3px */
-  width: 100%;
-  border-radius: 9999px;
-  background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
-  background-size: 300% 300%;
-  animation: gradientShift var(--speed,16s) ease-in-out infinite;
-}
-
-#hamburgerBtn {
-  display: flex;
-  align-items: center;  /* center vertically inside the button */
-  justify-content: center; /* center horizontally */
-  height: 56px;         /* same as header height */
-  padding: 0;           /* remove extra padding */
-}
-
-/* Remove extra padding so vertical centering is perfect */
-.tap-boost {
-  padding: 0;
-  margin: 0;
-}
-
+    .hamburger {
+      width: 32px;
+      height: 28px;
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+    }
+    .hamburger span {
+      height: 5px;
+      width: 100%;
+      border-radius: 9999px;
+      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+    }
+    #hamburgerBtn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 56px;
+      padding: 0;
+    }
+    .tap-boost { padding: 0; margin: 0; }
   </style>
 </head>
 <body class="bg-white text-oc-ink font-sans antialiased">
 
   <!-- HEADER -->
   <header class="sticky top-0 z-50 bg-white">
-    <div class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+    <div class="mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <!-- Animated gradient logo -->
         <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
@@ -208,18 +217,17 @@
     <!-- MOBILE: Fullscreen animated gradient menu -->
     <div id="mobileMenu"
          class="hidden md:hidden fixed inset-0 mobile-menu grad-anim text-white">
-      <div class="mx-auto max-w-[1200px] px-6 py-4 flex items-center justify-between">
+      <div class="mx-auto max-w-[1200px] oc-container py-4 flex items-center justify-between">
         <span class="font-semibold text-white text-xl">OpenCounsel</span>
         <button id="closeMenuBtn"
                 class="rounded-xl p-2 bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white"
                 aria-label="Close menu">
-          <!-- Inline SVG close icon (no external font required) -->
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
-      <nav class="mt-6 px-6">
+      <nav class="mt-6 oc-container">
         <ul class="space-y-3 text-lg">
           <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#features">Features</a></li>
           <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#edge">Why it wins</a></li>
@@ -233,7 +241,7 @@
   </header>
 
   <!-- HERO -->
-  <section id="home" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-8 reveal">
+  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-8 reveal">
     <div class="g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
       <div class="p-8 md:p-12">
         <div class="relative flex flex-col items-center justify-center py-16">
@@ -257,7 +265,7 @@
   </section>
 
   <!-- TRUST BAR -->
-  <section class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-10 reveal">
+  <section class="mx-auto max-w-[1200px] oc-container mt-10 reveal">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
       <div class="rounded-xl border border-oc-line bg-white p-4 text-sm text-oc-ink/70 tilt">Open Source</div>
       <div class="rounded-2xl border border-oc-line bg-white p-4 text-sm text-oc-ink/70 tilt">Citations on all output</div>
@@ -267,7 +275,7 @@
   </section>
 
   <!-- IMAGE BETWEEN TRUST BAR & EDGE -->
-  <section class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-12 reveal">
+  <section class="mx-auto max-w-[1200px] oc-container mt-12 reveal">
     <div class="rounded-2xl overflow-hidden border border-oc-line bg-white hover:shadow-card tilt">
       <img
         src="images/screenshot1.png"
@@ -277,7 +285,7 @@
   </section>
 
   <!-- EDGE / WHY IT WINS -->
-  <section id="edge" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 reveal">
+  <section id="edge" class="mx-auto max-w-[1200px] oc-container mt-14 reveal">
     <h2 class="text-2xl font-semibold">Built for everyone</h2>
     <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <article class="rounded-2xl border border-oc-line overflow-hidden g-grad grad-anim p-6 hover:shadow-card tilt">
@@ -313,7 +321,7 @@
   </section>
 
   <!-- FEATURES -->
-  <section id="features" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 reveal">
+  <section id="features" class="mx-auto max-w-[1200px] oc-container mt-14 reveal">
     <h2 class="text-2xl font-semibold">Why teams choose OpenCounsel</h2>
     <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       <article class="rounded-2xl border border-oc-line overflow-hidden g-grad grad-anim hover:shadow-card transition p-6 tilt">
@@ -355,7 +363,7 @@
   </section>
 
   <!-- SCREENSHOTS / PREVIEW -->
-  <section id="screens" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 reveal">
+  <section id="screens" class="mx-auto max-w-[1200px] oc-container mt-14 reveal">
     <h2 class="text-2xl font-semibold">A familiar, clean desktop app</h2>
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
       <!-- Screenshot 3 -->
@@ -377,7 +385,7 @@
   </section>
 
   <!-- PLANS -->
-  <section id="plans" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-16 reveal">
+  <section id="plans" class="mx-auto max-w-[1200px] oc-container mt-16 reveal">
     <div class="mb-6 flex items-center justify-between gap-4">
       <h2 class="text-2xl font-semibold">Plans</h2>
       <div class="text-xs text-oc-ink/60">No telemetry • No accounts required for Free</div>
@@ -432,7 +440,7 @@
   </section>
 
   <!-- DOWNLOAD CTA -->
-  <section id="download" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-16 reveal">
+  <section id="download" class="mx-auto max-w-[1200px] oc-container mt-16 reveal">
     <div class="g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
       <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
@@ -449,7 +457,7 @@
   </section>
 
   <!-- FAQ -->
-  <section id="faq" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 mb-20 reveal">
+  <section id="faq" class="mx-auto max-w-[1200px] oc-container mt-14 mb-20 reveal">
     <h2 class="text-2xl font-semibold">FAQ</h2>
     <div class="mt-6 divide-y divide-oc-line border border-oc-line rounded-2xl overflow-hidden">
       <details class="group open:bg-white">
@@ -469,7 +477,7 @@
 
   <!-- FOOTER -->
   <footer class="border-t border-oc-line">
-    <div class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-oc-ink/60 text-sm">
+    <div class="mx-auto max-w-[1200px] oc-container py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-oc-ink/60 text-sm">
       <div class="flex items-center gap-3"><span class="font-semibold text-black">OpenCounsel</span> <span>© <span id="yr"></span> OpenCounsel</span></div>
       <div class="flex items-center gap-4">
         <a class="hover:text-oc-ink" href="#">Privacy</a>
