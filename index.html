@@ -42,14 +42,18 @@
     /* Logo intro */
     @keyframes logoIntro { from { transform: translateY(6px) scale(.92); opacity:.0 } to { transform: translateY(0) scale(1); opacity:1 } }
 
-    /* Slow conic spin background */
+    /* Slow conic spin background (unused but kept) */
     @keyframes spinbg { to { transform: rotate(360deg) scale(1.08) } }
 
-    /* Global gradient animation keyframes (shared) */
-    @keyframes gradientShift { 0% {background-position:0% 50%} 50% {background-position:100% 50%} 100% {background-position:0% 50%} }
+    /* Smooth, ping-pong background movement (no angle changes) */
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50% }
+      50%  { background-position: 100% 50% }
+      100% { background-position: 0% 50% }
+    }
 
     /* ===========================================
-       PER-SECTION GRADIENT CONTROLS (edit here)
+       PER-SECTION GRADIENT CONTROLS
        =========================================== */
 
     /* HERO (id="home") */
@@ -57,18 +61,17 @@
       --from:  #0a1f44cc;  /* Navy        */
       --via:   #0b3d3dcc;  /* Teal/Navy   */
       --to:    #064420cc;  /* Deep Green  */
-      --speed: 9s;         /* animation duration */
-      --angle: to right;   /* gradient direction (will be overridden randomly) */
+      --speed: 16s;        /* slightly longer = smoother */
+      --angle: 135deg;     /* fixed angle to avoid jumps */
     }
 
     /* EDGE / WHY IT WINS (id="edge") */
     #edge {
-      --from: #4E342Ecc;  /* Deep Copper Brown */
-      --via:  #FF6F00cc;  /* Amber/Orange */
-      --to:   #FFB300cc;  /* Gold Yellow */
-
-      --speed: 9s;
-      --angle: to right;   /* will be overridden randomly */
+      --from: #4E342Ecc;   /* Deep Copper Brown */
+      --via:  #FF6F00cc;   /* Amber/Orange */
+      --to:   #FFB300cc;   /* Gold Yellow */
+      --speed: 16s;
+      --angle: 135deg;
     }
 
     /* FEATURES (id="features") */
@@ -76,26 +79,26 @@
       --from:  #0a1f44cc;
       --via:   #0b3d3dcc;
       --to:    #064420cc;
-      --speed: 9s;
-      --angle: to right;   /* will be overridden randomly */
+      --speed: 16s;
+      --angle: 135deg;
     }
 
     /* =========
        PRIMITIVES
        ========= */
-    /* Any element with .grad-anim uses the section's variables */
     .grad-anim{
-      background: linear-gradient(var(--angle, to right), var(--from, #0a1f44cc), var(--via, #0b3d3dcc), var(--to, #064420cc));
-      background-size: 200% 200%;
-      animation: gradientShift var(--speed, 9s) ease infinite;
+      background: linear-gradient(var(--angle, 135deg), var(--from, #0a1f44cc), var(--via, #0b3d3dcc), var(--to, #064420cc));
+      /* Oversize + will-change to keep edges hidden and animation smooth */
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed, 16s) ease-in-out infinite;
+      will-change: background-position;
     }
 
-    /* Keep your older animated-gradient class working too (back-compat) */
-    .animated-gradient { background-size: 200% 200%; animation: gradientShift 9s ease infinite; }
+    /* Back-compat */
+    .animated-gradient { background-size: 300% 300%; animation: gradientShift 16s ease-in-out infinite; will-change: background-position; }
 
     /* === Animated gradient logo (uses logo.svg as a mask) === */
     :root{
-      /* logo uses global defaults; change if you want it to differ */
       --grad-from: #FF6F00cc;  /* Amber/Orange */
       --grad-via:  #0b3d3dcc;
       --grad-to:   #FFB300cc;
@@ -107,9 +110,9 @@
       display:inline-block;
       width: var(--logo-width);
       height: var(--logo-height);
-      background: linear-gradient(to right, var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size: 200% 200%;
-      animation: logoIntro 800ms ease-out forwards, gradientShift 9s ease infinite;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%;
+      animation: logoIntro 800ms ease-out forwards, gradientShift 16s ease-in-out infinite;
       -webkit-mask: url('logo.svg') no-repeat center / contain;
               mask: url('logo.svg') no-repeat center / contain;
     }
@@ -400,28 +403,7 @@
     },{threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-    // === Randomize gradient direction per background (kept everything else the same) ===
-    (function randomizeGradientAngles(){
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const els = document.querySelectorAll('.grad-anim');
-
-      els.forEach((el, idx) => {
-        const setRandomAngle = () => {
-          const deg = Math.floor(Math.random() * 360); // 0–359deg
-          el.style.setProperty('--angle', deg + 'deg'); // override section default
-        };
-
-        // Set one immediately
-        setRandomAngle();
-
-        // If user prefers reduced motion, don't keep changing it
-        if (prefersReduced) return;
-
-        // Change on a desynced interval per element so they don't sync up
-        const intervalMs = 6000 + Math.random() * 6000; // 6–12s
-        setInterval(setRandomAngle, intervalMs);
-      });
-    })();
+    // NOTE: Removed the random angle changer to prevent snaps/jumps.
   </script>
 </body>
 </html>
