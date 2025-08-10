@@ -214,27 +214,24 @@
   }
 
 
-  /* Hero blur overlay that fades out on load */
-.hero-blur {
-  position: absolute;
-  inset: 0; /* fill parent */
+/* Full‑page blur overlay (covers header + hero) */
+.page-blur{
+  position: fixed; inset: 0;          /* fill the viewport */
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  background: rgba(255,255,255,.28); /* frosted white tint */
-  transition: backdrop-filter 2s ease, background-color 2s ease, opacity 2s ease;
-  z-index: 10;            /* above hero gradient */
-  pointer-events: none;  /* so it doesn't block clicks */
+  background: rgba(255,255,255,.28);  /* soft frost */
+  z-index: 9999;                      /* above sticky header (z-50) */
+  pointer-events: none;               /* don't block clicks/scroll */
+  transition: backdrop-filter 1.2s ease, background-color 1.2s ease, opacity .6s ease;
 }
-
-.hero-blur.hide {
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
+.page-blur.hide{
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
   background: rgba(255,255,255,0);
   opacity: 0;
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-blur { transition: none }
+@media (prefers-reduced-motion: reduce){
+  .page-blur{ transition: none; }
 }
 
 
@@ -243,6 +240,10 @@
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
+  <!-- FULL-PAGE BLUR OVERLAY -->
+  <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
+
+  
 
   <!-- HEADER -->
   <header class="sticky top-0 z-50 bg-white">
@@ -330,9 +331,6 @@
         </a>
       </div>
     </div>
-
-    <!-- Blur overlay ABOVE content (keeps text/buttons blurred until fade completes) -->
-    <div id="heroBlur" class="hero-blur" aria-hidden="true"></div>
   </div>
 </section>
 
@@ -658,12 +656,13 @@
     // ESC to close
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
 
-    // Fade the hero blur out after the page loads
+    // Fade the full‑page blur after load
 window.addEventListener('load', () => {
-  const heroBlur = document.getElementById('heroBlur');
-  if (!heroBlur) return;
-  heroBlur.classList.add('hide');          // animate blur/background to nothing
-  setTimeout(() => heroBlur.remove(), 1100);  // remove from DOM after animation
+  const pageBlur = document.getElementById('pageBlur');
+  if (!pageBlur) return;
+  pageBlur.classList.add('hide');
+  // match this timeout to the longest transition above (1.2s here)
+  setTimeout(() => pageBlur.remove(), 1300);
 });
 
   </script>
