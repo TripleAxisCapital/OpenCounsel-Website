@@ -212,6 +212,33 @@
   @media (min-width: 1536px){
     .mission-wrap{ max-width: 1040px; }
   }
+
+
+  /* Hero blur overlay that fades out on load */
+.hero-blur {
+  position: absolute;
+  inset: 0; /* fill parent */
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  background: rgba(255,255,255,.28); /* frosted white tint */
+  transition: backdrop-filter .9s ease, background-color .9s ease, opacity .3s ease;
+  z-index: 5;            /* above hero gradient */
+  pointer-events: none;  /* so it doesn't block clicks */
+}
+
+.hero-blur.hide {
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  background: rgba(255,255,255,0);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-blur { transition: none }
+}
+
+
+
   </style>
 </head>
 
@@ -274,36 +301,41 @@
   </header>
 
   <!-- HERO -->
-  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
-    <!-- Height = screen - header, content perfectly centered -->
-    <div
-      class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
-      style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
-    >
-      <div class="flex flex-col items-center max-w-2xl">
-        <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">
-          OpenCounsel
-        </span>
-        <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
-          AI for law. Designed for you.
-        </p>
-        <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">
-          Local, private, and built for legal research.
-        </p>
+<section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
+  <!-- Height = screen - header, content perfectly centered -->
+  <div
+    class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+    style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
+  >
+    <!-- Hero content (NOW behind the blur) -->
+    <div class="flex flex-col items-center max-w-2xl">
+      <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">
+        OpenCounsel
+      </span>
+      <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
+        AI for law. Designed for you.
+      </p>
+      <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">
+        Local, private, and built for legal research.
+      </p>
 
-        <div class="mt-8 flex flex-wrap justify-center items-center gap-3 text-sm">
-          <span class="flex items-center rounded-full bg-white/20 px-3 py-1 border border-white/20 text-white">
-            Open-Source
-          </span>
-          <a href="#download"
-             class="btn grad-anim inline-flex items-center gap-2 rounded-xl text-white px-5 py-2 font-medium focus:ring-2 focus:ring-white/50"
-             style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;">
-            <i class="ph ph-download"></i> Download
-          </a>
-        </div>
+      <div class="mt-8 flex flex-wrap justify-center items-center gap-3 text-sm">
+        <span class="flex items-center rounded-full bg-white/20 px-3 py-1 border border-white/20 text-white">
+          Open-Source
+        </span>
+        <a href="#download"
+           class="btn grad-anim inline-flex items-center gap-2 rounded-xl text-white px-5 py-2 font-medium focus:ring-2 focus:ring-white/50"
+           style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;">
+          <i class="ph ph-download"></i> Download
+        </a>
       </div>
     </div>
-  </section>
+
+    <!-- Blur overlay ABOVE content (keeps text/buttons blurred until fade completes) -->
+    <div id="heroBlur" class="hero-blur" aria-hidden="true"></div>
+  </div>
+</section>
+
 
   <!-- Secure Local Yours (Apple-style) -->
   <section
@@ -625,6 +657,15 @@
 
     // ESC to close
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+
+    // Fade the hero blur out after the page loads
+window.addEventListener('load', () => {
+  const heroBlur = document.getElementById('heroBlur');
+  if (!heroBlur) return;
+  heroBlur.classList.add('hide');          // animate blur/background to nothing
+  setTimeout(() => heroBlur.remove(), 1100);  // remove from DOM after animation
+});
+
   </script>
 </body>
 </html>
