@@ -37,6 +37,9 @@
       --pad-mobile-x: 24px;   /* mobile/tablet */
       --pad-desktop-x: 32px;  /* desktop */
       --hamburger-inset: 13px; /* push hamburger inward on mobile */
+
+      /* Scroll blur strength – tuned to feel like the opening overlay blur */
+      --scroll-blur: 22px;
     }
     .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
     @media (min-width: 1024px) {
@@ -272,6 +275,26 @@
       #mobileMenu nav li { animation: none !important; opacity: 1 !important; transform: none !important; }
       .hamburger span { transition: none; }
     }
+
+    /* =========================================
+       SCROLL BLUR (matches opening screen vibe)
+       Apply to any element you want blurred until revealed
+       ========================================= */
+    .blur-on-scroll{
+      filter: blur(var(--scroll-blur));
+      opacity: .35;
+      transform: translateY(18px) scale(.985);
+      transition: filter .8s ease, opacity .6s ease, transform .6s ease;
+      will-change: filter, opacity, transform;
+    }
+    .blur-on-scroll.in{
+      filter: blur(0);
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    @media (prefers-reduced-motion: reduce){
+      .blur-on-scroll{ transition: none; }
+    }
   </style>
 </head>
 
@@ -394,7 +417,8 @@
         For Everyone
       </span>
 
-      <!-- Tapered/“sound-wave” line with animated brand colors 
+      <!-- Tapered line (kept commented) -->
+      <!--
       <div
         class="mx-auto mt-2 h-px w-24"
         style="background: linear-gradient(
@@ -409,7 +433,8 @@
                );
                background-size: 300% 300%;
                animation: gradientShift 16s ease-in-out infinite;">
-      </div> -->
+      </div>
+      -->
     </div>
   </div>
 </section>
@@ -423,7 +448,7 @@
     <!-- Equal-height, responsive grid -->
     <div class="mt-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
       <!-- Card -->
-      <article class="group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="reveal blur-on-scroll group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
@@ -440,7 +465,7 @@
       </article>
 
       <!-- Card -->
-      <article class="group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="reveal blur-on-scroll group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
@@ -457,7 +482,7 @@
       </article>
 
       <!-- Card -->
-      <article class="group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="reveal blur-on-scroll group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
@@ -509,7 +534,7 @@
 
       <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal grid-stretch">
         <!-- Card 1 -->
-        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+        <div class="reveal blur-on-scroll rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
           <div class="flex items-center gap-3">
             <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/>
@@ -520,7 +545,7 @@
           <div class="mt-auto"></div>
         </div>
         <!-- Card 2 -->
-        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+        <div class="reveal blur-on-scroll rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
           <div class="flex items-center gap-3">
             <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -531,7 +556,7 @@
           <div class="mt-auto"></div>
         </div>
         <!-- Card 3 -->
-        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+        <div class="reveal blur-on-scroll rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
           <div class="flex items-center gap-3">
             <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/>
