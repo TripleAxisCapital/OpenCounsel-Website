@@ -773,19 +773,23 @@
     });
 
     // ================================
-    // BLUR-ON-SCROLL OBSERVER (LOOPING)
-    // ================================
-    const sbo = new IntersectionObserver((entries)=>{
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('in-view');
-        } else {
-          e.target.classList.remove('in-view');
-        }
-      }
-    }, { threshold: 0.25 });
+// BLUR-ON-SCROLL OBSERVER (LOOPING)
+// ================================
+const sbo = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (e.isIntersecting) {
+      e.target.classList.add('in-view');
+    } else {
+      e.target.classList.remove('in-view');
+    }
+  }
+}, {
+  threshold: 0.35,                // require 35% visibility
+  rootMargin: "-12% 0px -12% 0px" // shrink the viewport by 12% top/bottom
+});
 
-    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
   </script>
 </body>
 </html>
