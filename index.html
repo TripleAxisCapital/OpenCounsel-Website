@@ -41,7 +41,7 @@
       /* ==== Global Scroll-Blur Controls ==== */
       --scroll-blur-start: 16px;         /* initial blur when out of view */
       --scroll-blur-end: 0px;            /* blur when in view */
-      --scroll-blur-duration: 1500ms;     /* transition time */
+      --scroll-blur-duration: 1000ms;     /* transition time */
       --scroll-blur-ease: cubic-bezier(.2,.8,.2,1);
       --scroll-blur-opacity-start: .65;  /* out-of-view opacity */
       --scroll-blur-opacity-end: 1;      /* in-view opacity */
@@ -287,21 +287,31 @@
     /* ===============================
        BLUR-ON-SCROLL (GLOBAL UTILITY)
        =============================== */
-    .scroll-fade{
-      filter: blur(var(--scroll-blur-start));
-      opacity: var(--scroll-blur-opacity-start);
-      transform: translateY(var(--scroll-blur-translate));
-      transition:
-        filter var(--scroll-blur-duration) var(--scroll-blur-ease),
-        opacity var(--scroll-blur-duration) var(--scroll-blur-ease),
-        transform var(--scroll-blur-duration) var(--scroll-blur-ease);
-      will-change: filter, opacity, transform;
-    }
-    .scroll-fade.in-view{
-      filter: blur(var(--scroll-blur-end));
-      opacity: var(--scroll-blur-opacity-end);
-      transform: translateY(0);
-    }
+    /* BLUR-ON-SCROLL (plays nice with backdrop-blur) */
+.scroll-fade { 
+  /* keep the card as-is (it can have backdrop-blur-md) */
+  isolation: isolate;            /* helps some compositing cases */
+}
+
+.scroll-fade > * {
+  filter: blur(var(--scroll-blur-start));
+  opacity: var(--scroll-blur-opacity-start);
+  transform: translateY(var(--scroll-blur-translate));
+  transition:
+    filter var(--scroll-blur-duration) var(--scroll-blur-ease),
+    opacity var(--scroll-blur-duration) var(--scroll-blur-ease),
+    transform var(--scroll-blur-duration) var(--scroll-blur-ease);
+  will-change: filter, opacity, transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);      /* force GPU layer, smoother in Chrome/Safari */
+}
+
+.scroll-fade.in-view > * {
+  filter: blur(var(--scroll-blur-end));
+  opacity: var(--scroll-blur-opacity-end);
+  transform: translateY(0);
+}
+
   </style>
 </head>
 
