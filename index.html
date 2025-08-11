@@ -833,29 +833,27 @@
     }
   }
 
-  // Run once when the blur overlay fades out
   document.addEventListener("DOMContentLoaded", () => {
     const blurOverlay = document.getElementById("pageBlur");
 
-    if (blurOverlay) {
-      // Watch for fade-out transition
-      const observer = new MutationObserver(() => {
+    function handleFirstTap() {
+      // Wait for the blur fade to end, then buzz
+      if (blurOverlay) {
         const style = getComputedStyle(blurOverlay);
         if (style.opacity === "0" || style.display === "none") {
-          vibrateTap(12); // short buzz
-          observer.disconnect(); // only run once
+          vibrateTap(12);
+        } else {
+          // Listen for transition end
+          blurOverlay.addEventListener("transitionend", () => vibrateTap(12), { once: true });
         }
-      });
-
-      observer.observe(blurOverlay, { attributes: true, attributeFilter: ["style", "class"] });
+      }
+      document.removeEventListener("touchstart", handleFirstTap);
+      document.removeEventListener("click", handleFirstTap);
     }
 
-    // Also vibrate on all button and link clicks (mobile only)
-    if ("ontouchstart" in window) {
-      document.querySelectorAll("button, a").forEach(el => {
-        el.addEventListener("click", () => vibrateTap());
-      });
-    }
+    // Trigger on first interaction
+    document.addEventListener("touchstart", handleFirstTap, { passive: true });
+    document.addEventListener("click", handleFirstTap);
   });
 </script>
 
