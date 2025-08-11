@@ -820,6 +820,38 @@
       rootMargin: "-12% 0px -12% 0px" // shrink the viewport by 12% top/bottom
     });
     document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
+  function vibrateTap(ms = 12) {
+    if (navigator.vibrate) {
+      navigator.vibrate(ms);
+    }
+  }
+
+  // Run once when the blur overlay fades out
+  document.addEventListener("DOMContentLoaded", () => {
+    const blurOverlay = document.getElementById("pageBlur");
+
+    if (blurOverlay) {
+      // Watch for fade-out transition
+      const observer = new MutationObserver(() => {
+        const style = getComputedStyle(blurOverlay);
+        if (style.opacity === "0" || style.display === "none") {
+          vibrateTap(12); // short buzz
+          observer.disconnect(); // only run once
+        }
+      });
+
+      observer.observe(blurOverlay, { attributes: true, attributeFilter: ["style", "class"] });
+    }
+
+    // Also vibrate on all button and link clicks (mobile only)
+    if ("ontouchstart" in window) {
+      document.querySelectorAll("button, a").forEach(el => {
+        el.addEventListener("click", () => vibrateTap());
+      });
+    }
+  });
+    
   </script>
 </body>
 </html>
