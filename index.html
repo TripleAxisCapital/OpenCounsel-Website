@@ -29,6 +29,8 @@
     }
   </script>
 
+
+
   <style>
     /* ================================
        GLOBAL CONTROLS
@@ -39,25 +41,14 @@
       --hamburger-inset: 13px; /* push hamburger inward on mobile */
 
       /* ==== Global Scroll-Blur Controls ==== */
-      --scroll-blur-start: 16px;
-      --scroll-blur-end: 0px;
-      --scroll-blur-duration: 1500ms;
+      --scroll-blur-start: 16px;         /* initial blur when out of view */
+      --scroll-blur-end: 0px;            /* blur when in view */
+      --scroll-blur-duration: 1500ms;     /* transition time */
       --scroll-blur-ease: cubic-bezier(.2,.8,.2,1);
-      --scroll-blur-opacity-start: .65;
-      --scroll-blur-opacity-end: 1;
-      --scroll-blur-translate: 8px;
+      --scroll-blur-opacity-start: .65;  /* out-of-view opacity */
+      --scroll-blur-opacity-end: 1;      /* in-view opacity */
+      --scroll-blur-translate: 8px;      /* subtle lift on enter */
     }
-
-    /* Prevent layout from exceeding viewport width anywhere */
-    *, *::before, *::after { box-sizing: border-box; }
-    img, svg, video, canvas { max-width: 100%; height: auto; display: block; }
-
-    /* The key change: clip horizontal overflow without creating a scroll container */
-    body {
-      overflow-x: clip;          /* avoids breaking position:sticky */
-      overscroll-behavior-x: none;
-    }
-
     .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
     @media (min-width: 1024px) {
       .oc-container { padding-left: var(--pad-desktop-x); padding-right: var(--pad-desktop-x); }
@@ -208,7 +199,7 @@
     @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
     @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
 
-    /* Full-page blur overlay (covers header + hero) */
+    /* Full‑page blur overlay (covers header + hero) */
     .page-blur{
       position: fixed; inset: 0;
       backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
@@ -291,46 +282,60 @@
       #mobileMenu .menu-card { transition: none; transform: none !important; opacity: 1 !important; }
       #mobileMenu nav li { animation: none !important; opacity: 1 !important; transform: none !important; }
       .hamburger span { transition: none; }
+      /* Disable scroll blur transitions for a11y */
       .scroll-fade { transition: none !important; filter: none !important; opacity: 1 !important; transform: none !important; }
     }
 
     /* ===============================
        BLUR-ON-SCROLL (GLOBAL UTILITY)
        =============================== */
-    .scroll-fade { isolation: isolate; }
-    .scroll-fade > * {
-      filter: blur(var(--scroll-blur-start));
-      opacity: var(--scroll-blur-opacity-start);
-      transform: translateY(var(--scroll-blur-translate));
-      transition:
-        filter var(--scroll-blur-duration) var(--scroll-blur-ease),
-        opacity var(--scroll-blur-duration) var(--scroll-blur-ease),
-        transform var(--scroll-blur-duration) var(--scroll-blur-ease);
-      will-change: filter, opacity, transform;
-      backface-visibility: hidden;
-      transform: translateZ(0);
-    }
-    .scroll-fade.in-view > * {
-      filter: blur(var(--scroll-blur-end));
-      opacity: var(--scroll-blur-opacity-end);
-      transform: translateY(0);
-    }
+    /* BLUR-ON-SCROLL (plays nice with backdrop-blur) */
+.scroll-fade { 
+  /* keep the card as-is (it can have backdrop-blur-md) */
+  isolation: isolate;            /* helps some compositing cases */
+}
 
-    /* Size helper for the animated logo */
-    .LargeAniLogo{
-      display:inline-block;
-      width: var(--logo-size, 72px);
-      height: var(--logo-size, 72px);
-    }
+.scroll-fade > * {
+  filter: blur(var(--scroll-blur-start));
+  opacity: var(--scroll-blur-opacity-start);
+  transform: translateY(var(--scroll-blur-translate));
+  transition:
+    filter var(--scroll-blur-duration) var(--scroll-blur-ease),
+    opacity var(--scroll-blur-duration) var(--scroll-blur-ease),
+    transform var(--scroll-blur-duration) var(--scroll-blur-ease);
+  will-change: filter, opacity, transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);      /* force GPU layer, smoother in Chrome/Safari */
+}
+
+.scroll-fade.in-view > * {
+  filter: blur(var(--scroll-blur-end));
+  opacity: var(--scroll-blur-opacity-end);
+  transform: translateY(0);
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Size helper for the animated logo */
+.LargeAniLogo{
+  display:inline-block;
+  width: var(--logo-size, 72px);
+  height: var(--logo-size, 72px);
+}
+
+
   </style>
 </head>
 
-<body class="bg-white text-oc-ink font-sans antialiased">
+<body class="bg-white text-oc-ink font-sans antialiased overflow-x-hidden">
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- HEADER (sticky, always on top) -->
-  <header class="sticky top-0 z-[70] bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 bg-white">
     <div class="mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <!-- Animated gradient logo -->
@@ -427,25 +432,43 @@
   </section>
 
   <!-- Secure Local Yours (Apple-style) -->
-  <section
-    class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center"
-    style="padding-top:0;padding-bottom:0"
-  >
-    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
-      <div>
-        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">
-          Secure. Local. Yours.
-        </p>
+<section
+  class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center"
+  style="padding-top:0;padding-bottom:0"
+>
+  <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+    <div>
+      <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">
+        Secure. Local. Yours.
+      </p>
 
-        <!-- For Everyone — animated gradient text -->
-        <span
-          class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
-          style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
-          For Everyone
-        </span>
-      </div>
+      <!-- For Everyone — animated gradient text -->
+      <span
+        class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
+        style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+        For Everyone
+      </span>
+
+      <!-- Tapered/“sound-wave” line with animated brand colors 
+      <div
+        class="mx-auto mt-2 h-px w-24"
+        style="background: linear-gradient(
+                 90deg,
+                 transparent,
+                 #0B1B2Bcc 20%,
+                 #0E6F5Ccc 40%,
+                 #00CFFFcc 50%,
+                 #0E6F5Ccc 60%,
+                 #0B1B2Bcc 80%,
+                 transparent
+               );
+               background-size: 300% 300%;
+               animation: gradientShift 16s ease-in-out infinite;">
+      </div> -->
     </div>
-  </section>
+  </div>
+</section>
+
 
   <!-- EDGE / WHY IT WINS -->
   <section id="edge"
@@ -479,7 +502,7 @@
             <i class="ph-light ph-open-ai-logo text-white text-[20px]"></i>
           </div>
           <div>
-            <h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3>
+            <h3 class="font-semibold text-white tracking-tight">Built on GPT‑5</h3>
             <p class="mt-2 text-sm leading-relaxed text-white/80">
               Industry-leading intelligence, fine-tuned with deep legal expertise..
             </p>
@@ -588,25 +611,44 @@
     </div>
   </section>
 
+  
   <!-- Secure Local Yours (Apple-style) -->
-  <section
-    class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center"
-    style="padding-top:0;padding-bottom:0"
-  >
-    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
-      <div>
-        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">
-          Tomorrow’s Counsel.
-        </p>
+<section
+  class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center"
+  style="padding-top:0;padding-bottom:0"
+>
+  <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+    <div>
+      <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">
+        Tomorrow’s Counsel.
+      </p>
 
-        <span
-          class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
-          style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
-          Today
-        </span>
-      </div>
+      <!-- For Everyone — animated gradient text -->
+      <span
+        class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
+        style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+        Today
+      </span>
+
+      <!-- Tapered/“sound-wave” line with animated brand colors 
+      <div
+        class="mx-auto mt-2 h-px w-24"
+        style="background: linear-gradient(
+                 90deg,
+                 transparent,
+                 #0B1B2Bcc 20%,
+                 #0E6F5Ccc 40%,
+                 #00CFFFcc 50%,
+                 #0E6F5Ccc 60%,
+                 #0B1B2Bcc 80%,
+                 transparent
+               );
+               background-size: 300% 300%;
+               animation: gradientShift 16s ease-in-out infinite;">
+      </div> -->
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- FEATURES -->
   <section id="features"
@@ -668,24 +710,42 @@
   </section>
 
   <!-- Secure Local Yours (Apple-style) -->
-  <section
-    class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center"
-    style="padding-top:0;padding-bottom:0"
-  >
-    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
-      <div>
-        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">
-          Legal Intelligence.
-        </p>
+<section
+  class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center"
+  style="padding-top:0;padding-bottom:0"
+>
+  <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+    <div>
+      <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">
+        Legal Intelligence.
+      </p>
 
-        <span
-          class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
-          style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
-          Expert counsel for anyone, anywhere—without the cost or complexity.
-        </span>
-      </div>
+      <!-- For Everyone — animated gradient text -->
+      <span
+        class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
+        style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+Expert counsel for anyone, anywhere—without the cost or complexity.
+      </span>
+
+      <!-- Tapered/“sound-wave” line with animated brand colors 
+      <div
+        class="mx-auto mt-2 h-px w-24"
+        style="background: linear-gradient(
+                 90deg,
+                 transparent,
+                 #0B1B2Bcc 20%,
+                 #0E6F5Ccc 40%,
+                 #00CFFFcc 50%,
+                 #0E6F5Ccc 60%,
+                 #0B1B2Bcc 80%,
+                 transparent
+               );
+               background-size: 300% 300%;
+               animation: gradientShift 16s ease-in-out infinite;">
+      </div> -->
     </div>
-  </section>
+  </div>
+</section>
 
   <!-- DOWNLOAD CTA -->
   <section id="download" class="mx-auto max-w-[1200px] oc-container reveal">
@@ -704,16 +764,19 @@
     </div>
   </section>
 
-  <!-- Centered animated logo between sections -->
-  <div class="mx-auto my-10 md:my-14 flex items-center justify-center">
-    <span class="logo-anim LargeAniLogo"
-          aria-label="OpenCounsel"
-          style="--logo-size: clamp(56px, 30vw, 500px);"></span>
-  </div>
+ <!-- Centered animated logo between sections -->
+<div class="mx-auto my-10 md:my-14 flex items-center justify-center">
+  <!-- Uses your existing animation (logo-anim) + new sizing class (LargeAniLogo) -->
+  <span class="logo-anim LargeAniLogo"
+        aria-label="OpenCounsel"
+        style="--logo-size: clamp(56px, 30vw, 500px);"></span>
+</div>
+
 
   <!-- FOOTER -->
   <footer class="border-t border-oc-line">
     <div class="mx-auto max-w-[1200px] oc-container py-10 flex flex-col items-center gap-6 text-oc-ink/60 text-sm">
+      
       <div class="text-center">
         <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
       </div>
@@ -748,13 +811,15 @@
 
     function openMenu() {
       if (window.matchMedia('(min-width: 768px)').matches) return; // don't open on desktop
+      // show container
       mobileMenu.style.display = 'block';
-      void mobileMenu.offsetWidth; // reflow
+      // force reflow so transitions apply even if just displayed
+      void mobileMenu.offsetWidth;
       mobileMenu.classList.add('active');
       hamburgerBtn.classList.add('is-active');
       hamburgerBtn.setAttribute('aria-expanded', 'true');
       mobileMenu.setAttribute('aria-hidden','false');
-      document.body.classList.add('overflow-hidden'); // lock scroll vertically
+      document.body.classList.add('overflow-hidden');
     }
     function closeMenu() {
       mobileMenu.classList.remove('active');
@@ -762,6 +827,7 @@
       hamburgerBtn.setAttribute('aria-expanded', 'false');
       mobileMenu.setAttribute('aria-hidden','true');
       document.body.classList.remove('overflow-hidden');
+      // wait for fade-out before display:none to keep transition smooth
       setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 350);
     }
 
@@ -790,7 +856,7 @@
     // ESC to close
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
 
-    // Fade the full-page blur after load
+    // Fade the full‑page blur after load
     window.addEventListener('load', () => {
       const pageBlur = document.getElementById('pageBlur');
       if (!pageBlur) return;
@@ -799,21 +865,23 @@
     });
 
     // ================================
-    // BLUR-ON-SCROLL OBSERVER (LOOPING)
-    // ================================
-    const sbo = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('in-view');
-        } else {
-          e.target.classList.remove('in-view');
-        }
-      }
-    }, {
-      threshold: 0.35,
-      rootMargin: "-12% 0px -12% 0px"
-    });
-    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+// BLUR-ON-SCROLL OBSERVER (LOOPING)
+// ================================
+const sbo = new IntersectionObserver((entries) => {
+  for (const e of entries) {
+    if (e.isIntersecting) {
+      e.target.classList.add('in-view');
+    } else {
+      e.target.classList.remove('in-view');
+    }
+  }
+}, {
+  threshold: 0.35,                // require 35% visibility
+  rootMargin: "-12% 0px -12% 0px" // shrink the viewport by 12% top/bottom
+});
+
+document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
   </script>
 </body>
 </html>
