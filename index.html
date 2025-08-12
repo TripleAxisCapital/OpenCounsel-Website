@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenCounsel — Private, Local AI Legal Assistant</title>
   <meta name="description" content="OpenCounsel: a private, local AI legal assistant with RAG, document search, and case analysis. Download for macOS, Windows, and Linux." />
-<!-- Favicon -->
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
-  
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -41,13 +41,13 @@
       --hamburger-inset: 13px; /* push hamburger inward on mobile */
 
       /* ==== Global Scroll-Blur Controls ==== */
-      --scroll-blur-start: 16px;         /* initial blur when out of view */
-      --scroll-blur-end: 0px;            /* blur when in view */
-      --scroll-blur-duration: 1500ms;     /* transition time */
+      --scroll-blur-start: 16px;
+      --scroll-blur-end: 0px;
+      --scroll-blur-duration: 1500ms;
       --scroll-blur-ease: cubic-bezier(.2,.8,.2,1);
-      --scroll-blur-opacity-start: .65;  /* out-of-view opacity */
-      --scroll-blur-opacity-end: 1;      /* in-view opacity */
-      --scroll-blur-translate: 8px;      /* subtle lift on enter */
+      --scroll-blur-opacity-start: .65;
+      --scroll-blur-opacity-end: 1;
+      --scroll-blur-translate: 8px;
     }
 
     /* Kill horizontal scroll without breaking sticky */
@@ -80,18 +80,18 @@
 
     /* Hamburger (subtle brand sweep) */
     #hamburgerBtn .hamburger {
-      --from: #00CFFFcc;  /* Cyan highlight */
-      --via:  #0E6F5Ccc;  /* Emerald/Teal   */
-      --to:   #0B1B2Bcc;  /* Deep Navy      */
+      --from: #00CFFFcc;
+      --via:  #0E6F5Ccc;
+      --to:   #0B1B2Bcc;
       --angle: 135deg;
       --speed: 16s;
     }
 
     /* Global defaults / logo gradient */
     :root{
-      --from:  #0B1B2Bcc;  /* Deep Navy (base) */
-      --via:   #0E6F5Ccc;  /* Emerald/Teal     */
-      --to:    #00CFFFcc;  /* Cyan (accent)    */
+      --from:  #0B1B2Bcc;
+      --via:   #0E6F5Ccc;
+      --to:    #00CFFFcc;
       --speed: 16s;
       --angle: 135deg;
 
@@ -194,7 +194,7 @@
     }
     @media (min-width: 768px) {
       #hamburgerBtn { display: none !important; }
-      #mobileMenu   { display: none !important; }
+      #genieMenu   { display: none !important; }
     }
 
     .tap-boost { padding: 0; margin: 0; }
@@ -224,75 +224,118 @@
     @media (prefers-reduced-motion: reduce){ .page-blur{ transition: none; } }
 
     /* ============================
-       MOBILE MENU ANIMATION (NEW)
+       APPLE-LIKE GENIE MENU (NEW)
        ============================ */
-    #mobileMenu {
+    #genieMenu {
       position: fixed; inset: 0; z-index: 60;
-      display: none; /* shown via JS */
-      opacity: 0; pointer-events: none;
-      transition: opacity .4s ease;
+      display: none;            /* shown via JS */
+      pointer-events: none;     /* re-enabled when active */
     }
-    #mobileMenu.active { opacity: 1; pointer-events: auto; }
 
-    /* Overlay fade */
-    #mobileMenu .menu-overlay{
+    /* Scrim: starts subtly blurred and UNBLURS over 2s on open */
+    #genieMenu .genie-scrim{
       position: absolute; inset: 0;
-      background: rgba(10,13,16,.45);
-      -webkit-backdrop-filter: blur(6px);
-              backdrop-filter: blur(6px);
-      opacity: 0; transition: opacity .35s ease;
-    }
-    #mobileMenu.active .menu-overlay{ opacity: 1; }
-
-    /* Sheet pop-down with subtle spring */
-    #mobileMenu .menu-panel{
-      position: relative;
-      margin: 12px auto 0 auto;
-      max-width: 1200px;
-      padding-left: var(--pad-mobile-x);
-      padding-right: var(--pad-mobile-x);
-    }
-    #mobileMenu .menu-card{
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,.18);
-      overflow: hidden;
-      color: white;
-      -webkit-backdrop-filter: blur(14px);
-              backdrop-filter: blur(14px);
-      box-shadow: 0 24px 60px rgba(0,0,0,.22);
-      transform: translateY(-12px) scale(.985);
+      background: rgba(255,255,255,0.92);
+      -webkit-backdrop-filter: blur(12px);
+              backdrop-filter: blur(12px);
       opacity: 0;
       transition:
-        transform .66s cubic-bezier(.18,.9,.24,1.12),
-        opacity .4s ease;
-    }
-    #mobileMenu.active .menu-card{
-      transform: translateY(0) scale(1);
-      opacity: 1;
+        opacity .5s ease,
+        backdrop-filter 2s ease,
+        -webkit-backdrop-filter 2s ease;
     }
 
-    /* Staggered list items */
-    @keyframes itemFade {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
+    /* Decorative brand accents (very subtle) */
+    #genieMenu .brand-accents::before,
+    #genieMenu .brand-accents::after{
+      content:"";
+      position:absolute; inset:auto;
+      pointer-events:none;
+      filter: blur(40px);
+      opacity:.35;
+      transition: opacity .6s ease;
     }
-    #mobileMenu nav li { opacity: 0; }
-    #mobileMenu.active nav li { animation: itemFade .5s ease forwards; }
-    #mobileMenu.active nav li:nth-child(1){ animation-delay: .08s; }
-    #mobileMenu.active nav li:nth-child(2){ animation-delay: .14s; }
-    #mobileMenu.active nav li:nth-child(3){ animation-delay: .20s; }
-    #mobileMenu.active nav li:nth-child(4){ animation-delay: .26s; }
-    #mobileMenu.active nav li:nth-child(5){ animation-delay: .32s; }
-    #mobileMenu.active nav li:nth-child(6){ animation-delay: .38s; }
+    #genieMenu .brand-accents::before{
+      top:-6%; left:-4%;
+      width:320px; height:320px; border-radius:9999px;
+      background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));
+    }
+    #genieMenu .brand-accents::after{
+      bottom:-8%; right:-6%;
+      width:300px; height:300px; border-radius:9999px;
+      background: radial-gradient(60% 60% at 50% 50%, rgba(14,111,92,.30), rgba(0,0,0,0));
+    }
 
-    /* Reduced motion: skip fancy bits */
+    /* Genie panel: morphs from hamburger position via clip-path circle */
+    #genieMenu .genie-panel{
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,.98)),
+        radial-gradient(120% 120% at 80% 0%, rgba(0,207,255,.08), transparent 60%),
+        radial-gradient(110% 110% at 0% 100%, rgba(14,111,92,.07), transparent 60%);
+      clip-path: circle(var(--r, 0%) at var(--gx, 100%) var(--gy, 0%));
+      transition: clip-path .66s cubic-bezier(.2,.9,.2,1);
+      box-shadow: 0 24px 60px rgba(0,0,0,.10);
+      border-radius: 24px; /* gives a slight "sheet" feel as it expands */
+      overflow: hidden;
+      opacity: 0;
+    }
+
+    /* Content container inside the panel */
+    #genieMenu .genie-content{
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      padding: 24px;
+      opacity: 0; transform: translateY(8px);
+      transition: opacity .5s ease .1s, transform .5s ease .1s;
+    }
+
+    /* Active state toggles */
+    #genieMenu.active { display:block; pointer-events:auto; }
+    #genieMenu.active .genie-scrim { opacity: 1; -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px); }
+    #genieMenu.active .genie-panel { opacity: 1; }
+    #genieMenu.active .genie-content { opacity:1; transform: translateY(0); }
+
+    /* Menu list styling (Apple-like) */
+    .genie-nav a{
+      display:block;
+      padding: 14px 0;
+      font-size: clamp(20px, 4.8vw, 28px);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -.01em;
+      color: #0A0D10;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .genie-nav a:hover{ transform: translateY(-1px); opacity: .9; }
+
+    /* tiny gradient underline on hover */
+    .genie-nav a::after{
+      content:""; display:block; height:2px; margin-top:10px; width:0%;
+      background: linear-gradient(90deg, #0B1B2B, #0E6F5C, #00CFFF);
+      transition: width .25s ease;
+    }
+    .genie-nav a:hover::after{ width:100%; }
+
+    /* Close button inside */
+    .genie-close{
+      position: absolute; top: 16px; right: 16px;
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.06);
+      background: rgba(255,255,255,.6);
+      backdrop-filter: blur(6px);
+      transition: background .2s ease, transform .2s ease;
+    }
+    .genie-close:hover{ background: rgba(255,255,255,.9); transform: translateY(-1px); }
+
+    /* Reduced motion: keep it accessible */
     @media (prefers-reduced-motion: reduce){
-      #mobileMenu, #mobileMenu .menu-overlay { transition: none; }
-      #mobileMenu .menu-card { transition: none; transform: none !important; opacity: 1 !important; }
-      #mobileMenu nav li { animation: none !important; opacity: 1 !important; transform: none !important; }
-      .hamburger span { transition: none; }
-      /* Disable scroll blur transitions for a11y */
-      .scroll-fade { transition: none !important; filter: none !important; opacity: 1 !important; transform: none !important; }
+      #genieMenu .genie-scrim,
+      #genieMenu .genie-panel,
+      #genieMenu .genie-content{ transition: none !important; }
+      #genieMenu .genie-panel{ clip-path: none !important; }
     }
 
     /* ===============================
@@ -326,24 +369,21 @@
       height: var(--logo-size, 72px);
     }
 
-    
-/* Apple-style link animation: smooth wght + tiny size/track shift */
-@supports (font-variation-settings: "wght" 500) {
-  .nav-link {
-    font-variation-settings: "wght" 520;
-    transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease;
-  }
-  .nav-link:hover {
-    font-variation-settings: "wght" 700;
-    letter-spacing: .01em;           /* subtle crisping */
-    transform: translateY(-0.5px) scale(1.02);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nav-link { transition: none; }
-}
-
-
+    /* Apple-style link animation: smooth wght + tiny size/track shift */
+    @supports (font-variation-settings: "wght" 500) {
+      .nav-link {
+        font-variation-settings: "wght" 520;
+        transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease;
+      }
+      .nav-link:hover {
+        font-variation-settings: "wght" 700;
+        letter-spacing: .01em;
+        transform: translateY(-0.5px) scale(1.02);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .nav-link { transition: none; }
+    }
   </style>
 </head>
 
@@ -351,110 +391,105 @@
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-<!-- HEADER -->
-<header class="sticky top-0 z-50 bg-white">
-  <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
-    <!-- Left: Logo -->
-    <div class="flex items-center gap-3">
-      <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
-    </div>
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 bg-white">
+    <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+      <!-- Left: Logo -->
+      <div class="flex items-center gap-3">
+        <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
+      </div>
 
-    <!-- Center: Desktop nav (absolute true center) -->
-    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#features">Features</a>
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#edge">Why it wins</a>
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#plans">Plans</a>
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#screens">Screens</a>
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#faq">FAQ</a>
-    </nav>
+      <!-- Center: Desktop nav (absolute true center) -->
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#features">Features</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#edge">Why it wins</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#plans">Plans</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#screens">Screens</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#faq">FAQ</a>
+      </nav>
 
-    <!-- Right: Actions -->
-    <div class="flex items-center gap-2">
-      <!-- MOBILE: Hamburger button -->
-      <button id="hamburgerBtn"
-        class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
-        aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-        <span class="hamburger" aria-hidden="true">
-          <span></span><span></span><span></span>
-        </span>
-      </button>
-    </div>
-  </div>
-
-  <!-- MOBILE: Frosted gradient sheet menu (unchanged) -->
-  <div id="mobileMenu" class="md:hidden">
-    <div class="menu-overlay"></div>
-    <div class="menu-panel">
-      <div class="menu-card g-grad grad-anim">
-        <div class="px-4 py-4 flex items-center justify-between">
-          <span class="font-semibold text-white text-xl">OpenCounsel</span>
-          <button id="closeMenuBtn"
-            class="rounded-xl p-2 bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white"
-            aria-label="Close menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-        <nav class="pb-4">
-          <ul class="space-y-3 px-4 text-lg">
-            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#features">Features</a></li>
-            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#edge">Why it wins</a></li>
-            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#plans">Plans</a></li>
-            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#screens">Screens</a></li>
-            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#faq">FAQ</a></li>
-            <li><a class="block rounded-xl bg-white text-oc-ink px-4 py-3 font-medium hover:bg-gray-100" href="#download">Download</a></li>
-          </ul>
-        </nav>
+      <!-- Right: Actions -->
+      <div class="flex items-center gap-2">
+        <!-- MOBILE: Hamburger button -->
+        <button id="hamburgerBtn"
+          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          aria-label="Open menu" aria-expanded="false" aria-controls="genieMenu">
+          <span class="hamburger" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
       </div>
     </div>
-  </div>
-</header>
 
+    <!-- MOBILE: Apple-like GENIE MENU (replaces old menu) -->
+    <div id="genieMenu" aria-hidden="true">
+      <div class="genie-scrim brand-accents"></div>
 
+      <!-- Expanding panel -->
+      <div class="genie-panel">
+        <button id="genieClose" class="genie-close" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div class="genie-content">
+          <nav class="genie-nav w-full max-w-md">
+            <a href="#features">Features</a>
+            <a href="#edge">Why it wins</a>
+            <a href="#plans">Plans</a>
+            <a href="#screens">Screens</a>
+            <a href="#faq">FAQ</a>
+            <div class="mt-8 pt-4 border-t border-black/5">
+              <a href="#download" class="inline-flex items-center gap-2 text-base font-semibold px-4 py-3 rounded-2xl border border-black/10 bg-white hover:bg-neutral-50">
+                <i class="ph ph-download text-lg"></i> Download
+              </a>
+            </div>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
 
   <!-- HERO -->
-<section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
-  <!-- Height = screen - header, content perfectly centered -->
-  <div
-    class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
-    style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
-  >
-    <!-- Hero content -->
-    <div class="flex flex-col items-center max-w-2xl">
-      <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">
-        OpenCounsel 
-      </span>
-      <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
-        AI for law. Designed for you.
-      </p>
-      <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">
-        Local, private, and built for legal research.
-      </p>
+  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
+    <!-- Height = screen - header, content perfectly centered -->
+    <div
+      class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+      style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
+    >
+      <!-- Hero content -->
+      <div class="flex flex-col items-center max-w-2xl">
+        <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">
+          OpenCounsel 
+        </span>
+        <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
+          AI for law. Designed for you.
+        </p>
+        <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">
+          Local, private, and built for legal research.
+        </p>
 
-      <!-- CTA: Download (pops more) -->
-      <div class="mt-8 flex justify-center">
-        <a
-          href="#download"
-          class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                 grad-anim"
-          style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
-        >
-          <!-- subtle glow ring -->
-          <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
-                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <i class="ph ph-download text-xl"></i>
-          Download
-        </a>
+        <!-- CTA: Download (pops more) -->
+        <div class="mt-8 flex justify-center">
+          <a
+            href="#download"
+            class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                   grad-anim"
+            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
+          >
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
+                  style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+            <i class="ph ph-download text-xl"></i>
+            Download
+          </a>
+        </div>
       </div>
     </div>
-  </div>
-</section>
-
-
+  </section>
 
   <!-- Secure Local Yours (Apple-style) -->
   <section
@@ -773,48 +808,81 @@
     },{threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-    // ===== Mobile menu toggle with animation =====
+    // ===== Apple-like GENIE MOBILE MENU =====
     const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const mobileMenu   = document.getElementById('mobileMenu');
-    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const genieMenu    = document.getElementById('genieMenu');
+    const geniePanel   = genieMenu?.querySelector('.genie-panel');
+    const genieClose   = document.getElementById('genieClose');
+
+    function setGenieOriginFromButton() {
+      if (!hamburgerBtn || !geniePanel) return;
+      const btnRect = hamburgerBtn.getBoundingClientRect();
+      // center of the hamburger (relative to viewport)
+      const cx = btnRect.left + btnRect.width/2;
+      const cy = btnRect.top  + btnRect.height/2;
+      // convert to percentages so clip-path can anchor properly
+      const px = (cx / window.innerWidth) * 100;
+      const py = (cy / window.innerHeight) * 100;
+      geniePanel.style.setProperty('--gx', px + '%');
+      geniePanel.style.setProperty('--gy', py + '%');
+    }
 
     function openMenu() {
-      if (window.matchMedia('(min-width: 768px)').matches) return; // don't open on desktop
-      // show container
-      mobileMenu.style.display = 'block';
-      // force reflow so transitions apply even if just displayed
-      void mobileMenu.offsetWidth;
-      mobileMenu.classList.add('active');
+      if (window.matchMedia('(min-width: 768px)').matches) return; // mobile only
+      setGenieOriginFromButton();
+
+      // Calculate a radius that surely covers the viewport (vmax trick works, but dynamic looks crisp)
+      const maxR = Math.hypot(window.innerWidth, window.innerHeight) * 0.75; // generous
+      geniePanel.style.setProperty('--r', '0%');
+      genieMenu.style.display = 'block';
+      // Force reflow so transitions apply
+      void genieMenu.offsetWidth;
+
+      genieMenu.classList.add('active');
       hamburgerBtn.classList.add('is-active');
       hamburgerBtn.setAttribute('aria-expanded', 'true');
-      mobileMenu.setAttribute('aria-hidden','false');
+      genieMenu.setAttribute('aria-hidden','false');
       document.body.classList.add('overflow-hidden');
-    }
-    function closeMenu() {
-      mobileMenu.classList.remove('active');
-      hamburgerBtn.classList.remove('is-active');
-      hamburgerBtn.setAttribute('aria-expanded', 'false');
-      mobileMenu.setAttribute('aria-hidden','true');
-      document.body.classList.remove('overflow-hidden');
-      // wait for fade-out before display:none to keep transition smooth
-      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 350);
+
+      // Expand circle to cover screen
+      // Using a large % works, but set once for safety in case of small devices
+      requestAnimationFrame(()=>{
+        geniePanel.style.setProperty('--r', '150vmax');
+      });
     }
 
-    if (hamburgerBtn && mobileMenu) {
+    function closeMenu() {
+      // collapse the clip-path back to origin
+      geniePanel.style.setProperty('--r', '0%');
+      genieMenu.classList.remove('active');
+      hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      genieMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+
+      // After the clip + fades finish, hide the container to remove from a11y tree
+      setTimeout(()=>{ if(!genieMenu.classList.contains('active')) genieMenu.style.display = 'none'; }, 700);
+    }
+
+    if (hamburgerBtn && genieMenu) {
       hamburgerBtn.addEventListener('click', ()=>{
-        if (mobileMenu.classList.contains('active')) closeMenu();
+        if (genieMenu.classList.contains('active')) closeMenu();
         else openMenu();
       });
     }
-    if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeMenu);
+    if (genieClose) genieClose.addEventListener('click', closeMenu);
 
-    // Close when clicking overlay or any link
-    if (mobileMenu) {
-      mobileMenu.addEventListener('click', (e)=>{
-        if (e.target.classList.contains('menu-overlay')) closeMenu();
-      });
-      mobileMenu.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
-    }
+    // Close when clicking outside the panel (scrim)
+    genieMenu?.addEventListener('click', (e)=>{
+      if (e.target.classList.contains('genie-scrim')) closeMenu();
+    });
+
+    // Close when navigating
+    genieMenu?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+    // Reposition origin on resize/scroll (keeps genie anchored to hamburger)
+    window.addEventListener('resize', ()=> { if (genieMenu.classList.contains('active')) setGenieOriginFromButton(); });
+    window.addEventListener('scroll',  ()=> { if (genieMenu.classList.contains('active')) setGenieOriginFromButton(); });
 
     // Close if viewport grows to desktop
     const mq = window.matchMedia('(min-width: 768px)');
@@ -845,11 +913,10 @@
         }
       }
     }, {
-      threshold: 0.35,                // require 35% visibility
-      rootMargin: "-12% 0px -12% 0px" // shrink the viewport by 12% top/bottom
+      threshold: 0.35,
+      rootMargin: "-12% 0px -12% 0px"
     });
     document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
-
   </script>
 </body>
 </html>
