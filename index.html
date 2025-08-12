@@ -444,6 +444,60 @@
   }
 </style>
 
+<<style>
+  /* Smooth diagonal shine sweep for hero title */
+  .title-shine {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+  }
+  .title-shine::after {
+    content: "";
+    position: absolute;
+    top: -150%;
+    left: -150%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(
+      135deg,
+      rgba(255,255,255,0) 40%,
+      rgba(255,255,255,0.8) 50%,
+      rgba(255,255,255,0) 60%
+    );
+    background-repeat: no-repeat;
+    background-size: 50% 50%;
+    animation: shineDiagonal 10s ease-in-out infinite;
+    opacity: 0;
+  }
+
+  @keyframes shineDiagonal {
+    0%, 80% {
+      transform: translate(-150%, -150%);
+      opacity: 0;
+    }
+    82% {
+      opacity: 0.4;
+    }
+    90% {
+      transform: translate(150%, 150%);
+      opacity: 0.4;
+    }
+    92% {
+      opacity: 0;
+    }
+    100% {
+      transform: translate(150%, 150%);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .title-shine::after {
+      animation: none;
+    }
+  }
+</style>
+
 <!-- HERO -->
 <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
   <div
@@ -477,7 +531,6 @@
                  grad-anim"
           style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
         >
-          <!-- subtle glow ring -->
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,0.35), rgba(0,0,0,0));"></span>
           <i class="ph ph-download text-xl"></i>
@@ -487,6 +540,7 @@
     </div>
   </div>
 </section>
+
 
 
 
