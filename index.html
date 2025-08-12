@@ -325,6 +325,25 @@
       width: var(--logo-size, 72px);
       height: var(--logo-size, 72px);
     }
+
+    
+/* Apple-style link animation: smooth wght + tiny size/track shift */
+@supports (font-variation-settings: "wght" 500) {
+  .nav-link {
+    font-variation-settings: "wght" 520;
+    transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease;
+  }
+  .nav-link:hover {
+    font-variation-settings: "wght" 700;
+    letter-spacing: .01em;           /* subtle crisping */
+    transform: translateY(-0.5px) scale(1.02);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-link { transition: none; }
+}
+
+
   </style>
 </head>
 
@@ -332,21 +351,21 @@
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- HEADER -->
+<!-- HEADER -->
 <header class="sticky top-0 z-50 bg-white">
-  <div class="mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+  <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
     <!-- Left: Logo -->
     <div class="flex items-center gap-3">
       <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
     </div>
 
-    <!-- Center: Desktop nav -->
-    <nav class="hidden md:flex items-center gap-8 text-sm flex-1 justify-center">
-      <a class="grad-anim bg-clip-text text-transparent font-medium transition-[font-weight] duration-300 hover:font-bold" href="#features">Features</a>
-      <a class="grad-anim bg-clip-text text-transparent font-medium transition-[font-weight] duration-300 hover:font-bold" href="#edge">Why it wins</a>
-      <a class="grad-anim bg-clip-text text-transparent font-medium transition-[font-weight] duration-300 hover:font-bold" href="#plans">Plans</a>
-      <a class="grad-anim bg-clip-text text-transparent font-medium transition-[font-weight] duration-300 hover:font-bold" href="#screens">Screens</a>
-      <a class="grad-anim bg-clip-text text-transparent font-medium transition-[font-weight] duration-300 hover:font-bold" href="#faq">FAQ</a>
+    <!-- Center: Desktop nav (absolute true center) -->
+    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#features">Features</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#edge">Why it wins</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#plans">Plans</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#screens">Screens</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#faq">FAQ</a>
     </nav>
 
     <!-- Right: Actions -->
@@ -362,7 +381,7 @@
     </div>
   </div>
 
-  <!-- MOBILE: Menu -->
+  <!-- MOBILE: Frosted gradient sheet menu (unchanged) -->
   <div id="mobileMenu" class="md:hidden">
     <div class="menu-overlay"></div>
     <div class="menu-panel">
@@ -391,6 +410,7 @@
     </div>
   </div>
 </header>
+
 
 
   <!-- HERO -->
