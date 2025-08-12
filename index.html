@@ -227,7 +227,7 @@
       pointer-events: none;          /* re-enabled when active */
     }
 
-    /* Scrim: WHITE and blurred initially, UNBLURS over 2s on open */
+    /* Scrim: keep blurred until panel finishes sliding; then unblur over 2s */
     #mobileMenu .menu-scrim{
       position: absolute; inset: 0;
       background: rgba(255,255,255,0.92);
@@ -239,8 +239,13 @@
         backdrop-filter 2s ease,
         -webkit-backdrop-filter 2s ease;
     }
+    #mobileMenu.active .menu-scrim{ opacity: 1; }             /* show scrim immediately */
+    #mobileMenu.unblur .menu-scrim{
+      -webkit-backdrop-filter: blur(0px);
+              backdrop-filter: blur(0px);
+    }
 
-    /* Sliding panel */
+    /* Sliding panel: starts blurred; after slide completes it unblurs over 2s */
     #mobileMenu .menu-panel{
       position: absolute; top:0; left:0; height:100%; width:min(88vw, 420px);
       background: #ffffff;
@@ -248,14 +253,23 @@
       box-shadow: 0 24px 60px rgba(0,0,0,.12);
       transform: translateX(-100%);
       opacity: .98;
-      transition: transform .5s cubic-bezier(.22,.9,.22,1);
       display: flex; flex-direction: column;
       padding: 18px 20px;
-    }
 
-    #mobileMenu.active { display:block; pointer-events:auto; }
-    #mobileMenu.active .menu-scrim{ opacity: 1; -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px); }
+      /* Blur-on-entry, hold until JS toggles unblurring */
+      filter: blur(12px);
+      transition:
+        transform .5s cubic-bezier(.22,.9,.22,1),
+        filter 0s linear; /* no unblur during slide */
+    }
     #mobileMenu.active .menu-panel{ transform: translateX(0); }
+    /* When ready to unblur (after slide duration), ease from 12px -> 0px over 2s */
+    #mobileMenu .menu-panel.unblurring{
+      transition:
+        transform .5s cubic-bezier(.22,.9,.22,1),
+        filter 2s ease;
+      filter: blur(0px);
+    }
 
     /* Header inside drawer */
     .drawer-head{
@@ -389,7 +403,7 @@
           <a href="#screens">Screens</a>
           <a href="#faq">FAQ</a>
           <div class="drawer-sep"></div>
-          <!-- Download button: EXACT same as hero CTA -->
+          <!-- Download button: EXACT same as hero CTA (animated green/blue gradient + white text) -->
           <a
             href="#download"
             class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
@@ -674,26 +688,44 @@
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const mobileMenu   = document.getElementById('mobileMenu');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
+    const menuPanel    = mobileMenu ? mobileMenu.querySelector('.menu-panel') : null;
+
+    const SLIDE_MS = 500; // must match CSS transform duration
 
     function openMenu() {
       if (window.matchMedia('(min-width: 768px)').matches) return; // mobile only
       mobileMenu.style.display = 'block';
-      // Force reflow
+      // Force reflow so transitions apply
       void mobileMenu.offsetWidth;
-      mobileMenu.classList.add('active');
+
+      mobileMenu.classList.add('active');  // show & slide in (still blurred)
       hamburgerBtn.classList.add('is-active');
       hamburgerBtn.setAttribute('aria-expanded', 'true');
       mobileMenu.setAttribute('aria-hidden','false');
       document.body.classList.add('overflow-hidden');
+
+      // Hold panel blur during slide, then start 2s unblur
+      if (menuPanel) {
+        menuPanel.classList.remove('unblurring'); // reset
+        setTimeout(()=>{
+          // Start unblur transitions (panel + scrim)
+          menuPanel.classList.add('unblurring');
+          mobileMenu.classList.add('unblur');
+        }, SLIDE_MS + 20); // slight buffer after slide completes
+      }
     }
 
     function closeMenu() {
+      // Reset unblur state immediately so next open starts blurred
+      if (menuPanel) menuPanel.classList.remove('unblurring');
+      mobileMenu.classList.remove('unblur');
+
       mobileMenu.classList.remove('active');
       hamburgerBtn.classList.remove('is-active');
       hamburgerBtn.setAttribute('aria-expanded', 'false');
       mobileMenu.setAttribute('aria-hidden','true');
       document.body.classList.remove('overflow-hidden');
-      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, SLIDE_MS + 50);
     }
 
     if (hamburgerBtn && mobileMenu) {
