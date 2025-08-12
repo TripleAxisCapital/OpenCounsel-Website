@@ -394,7 +394,38 @@
     </div>
   </header>
 
-  <!-- HERO -->
+  <style>
+  /* Subtle metallic shimmer for the title */
+  .title-shine{ position:relative; display:inline-block }
+  .title-shine::before{
+    content:attr(data-text);
+    position:absolute; inset:0; pointer-events:none;
+    color:transparent;
+    background:linear-gradient(115deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0) 42%,
+      rgba(255,255,255,0.9) 50%,
+      rgba(255,255,255,0) 58%,
+      rgba(255,255,255,0) 100%);
+    background-size:220% 100%;
+    background-position:-120% 0;
+    -webkit-background-clip:text; background-clip:text;
+    mix-blend-mode:screen;           /* sits naturally on white text */
+    filter: drop-shadow(0 0 .25rem rgba(255,255,255,.15));
+    opacity:0;
+    animation:shineSweep 9s ease-in-out infinite;
+  }
+  @keyframes shineSweep{
+    0%,86%   { opacity:0;  background-position:-120% 0; }
+    88%,92%  { opacity:.9; background-position:120% 0;  }
+    100%     { opacity:0;  background-position:120% 0;  }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .title-shine::before{ animation:none }
+  }
+</style>
+
+<!-- HERO -->
 <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
   <!-- Height = screen - header, content perfectly centered -->
   <div
@@ -403,7 +434,7 @@
   >
     <!-- Hero content -->
     <div class="flex flex-col items-center max-w-2xl">
-      <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">
+      <span class="font-semibold text-white text-5xl md:text-7xl leading-tight title-shine" data-text="OpenCounsel">
         OpenCounsel
       </span>
       <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
@@ -434,6 +465,7 @@
     </div>
   </div>
 </section>
+
 
 
 
@@ -706,7 +738,7 @@
       <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 class="text-2xl md:text-3xl font-semibold text-white">Get OpenCounsel</h2>
-          <p class="mt-2 text-white/80 max-w-xl">Download the desktop app. No cloud, no accounts required. Works offline with local models.</p>
+          <p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <a href="#" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
