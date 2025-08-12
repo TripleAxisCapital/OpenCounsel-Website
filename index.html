@@ -394,47 +394,69 @@
     </div>
   </header>
 
-  <style>
-  /* Subtle metallic shimmer for the title */
-  .title-shine{ position:relative; display:inline-block }
-  .title-shine::before{
-    content:attr(data-text);
-    position:absolute; inset:0; pointer-events:none;
-    color:transparent;
-    background:linear-gradient(115deg,
-      rgba(255,255,255,0) 0%,
-      rgba(255,255,255,0) 42%,
-      rgba(255,255,255,0.9) 50%,
-      rgba(255,255,255,0) 58%,
-      rgba(255,255,255,0) 100%);
-    background-size:220% 100%;
-    background-position:-120% 0;
-    -webkit-background-clip:text; background-clip:text;
-    mix-blend-mode:screen;           /* sits naturally on white text */
-    filter: drop-shadow(0 0 .25rem rgba(255,255,255,.15));
-    opacity:0;
-    animation:shineSweep 9s ease-in-out infinite;
+<style>
+  /* Diagonal shine sweep for hero title */
+  .title-shine {
+    position: relative;
+    display: inline-block;
+    overflow: hidden; /* so the shine stays within text bounds */
   }
-  @keyframes shineSweep{
-    0%,86%   { opacity:0;  background-position:-120% 0; }
-    88%,92%  { opacity:.9; background-position:120% 0;  }
-    100%     { opacity:0;  background-position:120% 0;  }
+  .title-shine::after {
+    content: "";
+    position: absolute;
+    top: -150%;
+    left: -150%;
+    width: 300%;
+    height: 300%;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0) 45%,
+      rgba(255, 255, 255, 0.9) 50%,
+      rgba(255, 255, 255, 0) 55%
+    );
+    transform: rotate(0deg);
+    animation: shineDiagonal 6s ease-in-out infinite;
+    opacity: 0;
   }
-  @media (prefers-reduced-motion: reduce){
-    .title-shine::before{ animation:none }
+
+  @keyframes shineDiagonal {
+    0%, 85% {
+      transform: translate(-150%, -150%);
+      opacity: 0;
+    }
+    88% {
+      opacity: 1;
+    }
+    92% {
+      transform: translate(150%, 150%);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(150%, 150%);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .title-shine::after {
+      animation: none;
+    }
   }
 </style>
 
 <!-- HERO -->
 <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
-  <!-- Height = screen - header, content perfectly centered -->
   <div
-    class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+    class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border
+           min-h-[calc(100svh-56px-var(--pad-mobile-x))]
+           lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))]
+           flex items-center justify-center text-center
+           px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
     style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
   >
     <!-- Hero content -->
     <div class="flex flex-col items-center max-w-2xl">
-      <span class="font-semibold text-white text-5xl md:text-7xl leading-tight title-shine" data-text="OpenCounsel">
+      <span class="font-semibold text-white text-5xl md:text-7xl leading-tight title-shine">
         OpenCounsel
       </span>
       <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
@@ -444,7 +466,7 @@
         Local, private, and built for legal research.
       </p>
 
-      <!-- CTA: Download (pops more) -->
+      <!-- CTA: Download -->
       <div class="mt-8 flex justify-center">
         <a
           href="#download"
@@ -457,7 +479,7 @@
         >
           <!-- subtle glow ring -->
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
-                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,0.35), rgba(0,0,0,0));"></span>
           <i class="ph ph-download text-xl"></i>
           Download
         </a>
