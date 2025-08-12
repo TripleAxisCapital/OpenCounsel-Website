@@ -201,7 +201,7 @@
 
     /* Mission glass max width scales on XL/2XL */
     @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
-    @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
+    @media (min-width: 1536px){ .mission-wrap{ max_width: 1040px; } }
 
     /* Full-page blur overlay (covers header + hero) */
     .page-blur{
@@ -227,7 +227,7 @@
       pointer-events: none;          /* re-enabled when active */
     }
 
-    /* Scrim: keep blurred until panel finishes sliding; then unblur over 2s */
+    /* Scrim: WHITE and blurred initially, UNBLURS over 1s on open */
     #mobileMenu .menu-scrim{
       position: absolute; inset: 0;
       background: rgba(255,255,255,0.92);
@@ -236,16 +236,11 @@
       opacity: 0;
       transition:
         opacity .35s ease,
-        backdrop-filter 2s ease,
-        -webkit-backdrop-filter 2s ease;
-    }
-    #mobileMenu.active .menu-scrim{ opacity: 1; }             /* show scrim immediately */
-    #mobileMenu.unblur .menu-scrim{
-      -webkit-backdrop-filter: blur(0px);
-              backdrop-filter: blur(0px);
+        backdrop-filter 1s ease,
+        -webkit-backdrop-filter 1s ease;  /* CHANGED to 1s */
     }
 
-    /* Sliding panel: starts blurred; after slide completes it unblurs over 2s */
+    /* Sliding panel */
     #mobileMenu .menu-panel{
       position: absolute; top:0; left:0; height:100%; width:min(88vw, 420px);
       background: #ffffff;
@@ -253,23 +248,18 @@
       box-shadow: 0 24px 60px rgba(0,0,0,.12);
       transform: translateX(-100%);
       opacity: .98;
-      display: flex; flex-direction: column;
-      padding: 18px 20px;
-
-      /* Blur-on-entry, hold until JS toggles unblurring */
+      /* Add blur-on-open, then unblur after slide finishes (delay .5s) */
       filter: blur(12px);
       transition:
         transform .5s cubic-bezier(.22,.9,.22,1),
-        filter 0s linear; /* no unblur during slide */
+        filter 1s ease .5s; /* 1s unblur AFTER the .5s slide */
+      display: flex; flex-direction: column;
+      padding: 18px 20px;
     }
-    #mobileMenu.active .menu-panel{ transform: translateX(0); }
-    /* When ready to unblur (after slide duration), ease from 12px -> 0px over 2s */
-    #mobileMenu .menu-panel.unblurring{
-      transition:
-        transform .5s cubic-bezier(.22,.9,.22,1),
-        filter 2s ease;
-      filter: blur(0px);
-    }
+
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity: 1; -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px); }
+    #mobileMenu.active .menu-panel{ transform: translateX(0); filter: blur(0); } /* unblur when fully pulled out */
 
     /* Header inside drawer */
     .drawer-head{
@@ -294,7 +284,8 @@
     .drawer-close:hover{ background:#fff; transform: translateY(-1px); }
 
     /* NAV links: bold + same animated green/blue gradient as header */
-    .drawer-nav a{
+    /* UPDATED: exclude CTA so it can have solid white text over animated gradient bg */
+    .drawer-nav a:not(.drawer-cta){
       display:block; padding: 14px 2px;
       font-weight: 700;
       font-size: clamp(18px, 4.4vw, 20px);
@@ -307,6 +298,24 @@
     }
     .drawer-nav a:hover{ transform: translateY(-1px); opacity: .95; }
     .drawer-sep{ height:1px; background: linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent); margin: 8px 0 6px; }
+
+    /* Mobile menu CTA (DOWNLOAD) — exact hero look, white text centered, nothing covering bg */
+    .drawer-cta{
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;        /* center text + icon */
+      width: 100%;                    /* full-width for easy tap */
+      text-align: center;
+      position: relative;
+      color: #fff !important;         /* force white text */
+      -webkit-text-fill-color: #fff !important;
+      background-clip: border-box !important;
+      -webkit-background-clip: border-box !important;
+      overflow: hidden;
+    }
+    /* Keep the nice glow but ensure it stays behind */
+    .drawer-cta > span{ z-index: 0 !important; }
+    .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position: relative; }
 
     /* ===============================
        BLUR-ON-SCROLL (GLOBAL UTILITY)
@@ -403,20 +412,20 @@
           <a href="#screens">Screens</a>
           <a href="#faq">FAQ</a>
           <div class="drawer-sep"></div>
-          <!-- Download button: EXACT same as hero CTA (animated green/blue gradient + white text) -->
+          <!-- Download button: EXACT same as hero CTA -->
           <a
             href="#download"
-            class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+            class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
                    focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
                    shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
                    transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                   grad-anim mt-2"
+                   grad-anim mt-2 w-full justify-center"
             style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
           >
             <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                   style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
             <i class="ph ph-download text-xl"></i>
-            Download
+            <span>Download</span>
           </a>
         </nav>
       </aside>
@@ -688,44 +697,26 @@
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const mobileMenu   = document.getElementById('mobileMenu');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
-    const menuPanel    = mobileMenu ? mobileMenu.querySelector('.menu-panel') : null;
-
-    const SLIDE_MS = 500; // must match CSS transform duration
 
     function openMenu() {
       if (window.matchMedia('(min-width: 768px)').matches) return; // mobile only
       mobileMenu.style.display = 'block';
-      // Force reflow so transitions apply
+      // Force reflow
       void mobileMenu.offsetWidth;
-
-      mobileMenu.classList.add('active');  // show & slide in (still blurred)
+      mobileMenu.classList.add('active');
       hamburgerBtn.classList.add('is-active');
       hamburgerBtn.setAttribute('aria-expanded', 'true');
       mobileMenu.setAttribute('aria-hidden','false');
       document.body.classList.add('overflow-hidden');
-
-      // Hold panel blur during slide, then start 2s unblur
-      if (menuPanel) {
-        menuPanel.classList.remove('unblurring'); // reset
-        setTimeout(()=>{
-          // Start unblur transitions (panel + scrim)
-          menuPanel.classList.add('unblurring');
-          mobileMenu.classList.add('unblur');
-        }, SLIDE_MS + 20); // slight buffer after slide completes
-      }
     }
 
     function closeMenu() {
-      // Reset unblur state immediately so next open starts blurred
-      if (menuPanel) menuPanel.classList.remove('unblurring');
-      mobileMenu.classList.remove('unblur');
-
       mobileMenu.classList.remove('active');
       hamburgerBtn.classList.remove('is-active');
       hamburgerBtn.setAttribute('aria-expanded', 'false');
       mobileMenu.setAttribute('aria-hidden','true');
       document.body.classList.remove('overflow-hidden');
-      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, SLIDE_MS + 50);
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
     }
 
     if (hamburgerBtn && mobileMenu) {
