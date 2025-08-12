@@ -332,69 +332,139 @@
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- HEADER -->
-  <header class="sticky top-0 z-50 bg-white">
-    <div class="mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <!-- Animated gradient logo -->
-        <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
-      </div>
+  <!-- HEADER (Apple-style desktop nav) -->
+<style>
+  /* Minimal, premium link styling */
+  .nav-apple a{
+    position:relative; padding:.25rem 0; line-height:1;
+    transition:color .25s ease, opacity .25s ease;
+    opacity:.9;
+  }
+  .nav-apple a:hover{ opacity:1 }
 
-      <!-- Desktop nav (visible ≥ md) -->
-      <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a class="hover:underline" href="#features">Features</a>
-        <a class="hover:underline" href="#edge">Why it wins</a>
-        <a class="hover:underline" href="#plans">Plans</a>
-        <a class="hover:underline" href="#screens">Screens</a>
-        <a class="hover:underline" href="#faq">FAQ</a>
-      </nav>
+  /* Gradient underline that breathes + expands on hover/active */
+  .nav-apple a .nav-underline{
+    position:absolute; left:50%; bottom:-6px; height:2px; width:26px;
+    transform:translateX(-50%) scaleX(0);
+    transform-origin:center; border-radius:2px;
+    transition:transform .28s ease;
+    box-shadow:0 0 10px rgba(0,207,255,.25);
+  }
+  .nav-apple a:hover .nav-underline,
+  .nav-apple a[aria-current="page"] .nav-underline{
+    transform:translateX(-50%) scaleX(1);
+  }
 
-      <!-- Right side actions -->
-      <div class="flex items-center gap-2">
-        <!-- MOBILE: Hamburger button -->
-        <button id="hamburgerBtn"
-          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
-          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger" aria-hidden="true">
-            <span></span><span></span><span></span>
-          </span>
-        </button>
-      </div>
+  /* Optional: subtle gradient ink on hover (keeps your colors) */
+  .nav-apple a:hover .nav-label{
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+
+  /* Hairline bottom border like Apple */
+  .header-glass{
+    backdrop-filter:saturate(180%) blur(10px);
+    -webkit-backdrop-filter:saturate(180%) blur(10px);
+  }
+</style>
+
+<header class="sticky top-0 z-50 bg-white/80 header-glass border-b border-black/5">
+  <div class="mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <!-- Animated gradient logo -->
+      <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
     </div>
 
-    <!-- MOBILE: Frosted gradient sheet menu (animated) -->
-    <div id="mobileMenu" class="md:hidden">
-      <div class="menu-overlay"></div>
+    <!-- Desktop nav (Apple-style) -->
+    <nav class="nav-apple hidden md:flex items-center gap-7 text-sm font-medium text-oc-ink">
+      <a href="#features">
+        <span class="nav-label g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;">
+          Features
+        </span>
+        <span class="nav-underline g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;"></span>
+      </a>
+      <a href="#edge">
+        <span class="nav-label g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;">
+          Why it wins
+        </span>
+        <span class="nav-underline g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;"></span>
+      </a>
+      <a href="#plans">
+        <span class="nav-label g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;">
+          Plans
+        </span>
+        <span class="nav-underline g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;"></span>
+      </a>
+      <a href="#screens">
+        <span class="nav-label g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;">
+          Screens
+        </span>
+        <span class="nav-underline g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;"></span>
+      </a>
+      <a href="#faq">
+        <span class="nav-label g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;">
+          FAQ
+        </span>
+        <span class="nav-underline g-grad grad-anim"
+              style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:135deg;"></span>
+      </a>
+    </nav>
 
-      <div class="menu-panel">
-        <div class="menu-card g-grad grad-anim">
-          <!-- Menu header -->
-          <div class="px-4 py-4 flex items-center justify-between">
-            <span class="font-semibold text-white text-xl">OpenCounsel</span>
-            <button id="closeMenuBtn"
-              class="rounded-xl p-2 bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white"
-              aria-label="Close menu">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </button>
-          </div>
+    <!-- Right side actions -->
+    <div class="flex items-center gap-2">
+      <!-- MOBILE: Hamburger button -->
+      <button id="hamburgerBtn"
+        class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+        aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="hamburger" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+    </div>
+  </div>
 
-          <!-- Links -->
-          <nav class="pb-4">
-            <ul class="space-y-3 px-4 text-lg">
-              <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#features">Features</a></li>
-              <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#edge">Why it wins</a></li>
-              <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#plans">Plans</a></li>
-              <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#screens">Screens</a></li>
-              <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#faq">FAQ</a></li>
-              <li><a class="block rounded-xl bg-white text-oc-ink px-4 py-3 font-medium hover:bg-gray-100" href="#download">Download</a></li>
-            </ul>
-          </nav>
+  <!-- MOBILE: Frosted gradient sheet menu (animated) -->
+  <div id="mobileMenu" class="md:hidden">
+    <div class="menu-overlay"></div>
+
+    <div class="menu-panel">
+      <div class="menu-card g-grad grad-anim">
+        <!-- Menu header -->
+        <div class="px-4 py-4 flex items-center justify-between">
+          <span class="font-semibold text-white text-xl">OpenCounsel</span>
+          <button id="closeMenuBtn"
+            class="rounded-xl p-2 bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white"
+            aria-label="Close menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
+
+        <!-- Links -->
+        <nav class="pb-4">
+          <ul class="space-y-3 px-4 text-lg">
+            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#features">Features</a></li>
+            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#edge">Why it wins</a></li>
+            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#plans">Plans</a></li>
+            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#screens">Screens</a></li>
+            <li><a class="block rounded-xl border border-white/20 bg-white/10 px-4 py-3 hover:bg-white/15" href="#faq">FAQ</a></li>
+            <li><a class="block rounded-xl bg-white text-oc-ink px-4 py-3 font-medium hover:bg-gray-100" href="#download">Download</a></li>
+          </ul>
+        </nav>
       </div>
     </div>
-  </header>
+  </div>
+</header>
+
 
   <!-- HERO -->
 <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
