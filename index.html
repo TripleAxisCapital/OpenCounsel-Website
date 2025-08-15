@@ -247,7 +247,7 @@
       transition:
         opacity 2s ease,
         backdrop-filter 2s ease,
-        -webkit-backdrop-filter 2s ease;  /* CHANGED to 1s */
+        -webkit-backdrop-filter 2s ease;
     }
 
     /* Sliding panel */
@@ -258,18 +258,17 @@
       box-shadow: 0 24px 60px rgba(0,0,0,.12);
       transform: translateX(-100%);
       opacity: .98;
-      /* Add blur-on-open, then unblur after slide finishes (delay .5s) */
       filter: blur(12px);
       transition:
         transform .5s cubic-bezier(.22,.9,.22,1),
-        filter 1s ease .1s; /* 1s unblur AFTER the .5s slide */
+        filter 1s ease .1s;
       display: flex; flex-direction: column;
       padding: 18px 20px;
     }
 
     #mobileMenu.active { display:block; pointer-events:auto; }
     #mobileMenu.active .menu-scrim{ opacity: 1; -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px); }
-    #mobileMenu.active .menu-panel{ transform: translateX(0); filter: blur(0); } /* unblur when fully pulled out */
+    #mobileMenu.active .menu-panel{ transform: translateX(0); filter: blur(0); }
 
     /* Header inside drawer */
     .drawer-head{
@@ -294,7 +293,6 @@
     .drawer-close:hover{ background:#fff; transform: translateY(-1px); }
 
     /* NAV links: bold + same animated green/blue gradient as header */
-    /* UPDATED: exclude CTA so it can have solid white text over animated gradient bg */
     .drawer-nav a:not(.drawer-cta){
       display:block; padding: 14px 2px;
       font-weight: 700;
@@ -309,21 +307,20 @@
     .drawer-nav a:hover{ transform: translateY(-1px); opacity: .95; }
     .drawer-sep{ height:1px; background: linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent); margin: 8px 0 6px; }
 
-    /* Mobile menu CTA (DOWNLOAD) — exact hero look, white text centered, nothing covering bg */
+    /* Mobile menu CTA (DOWNLOAD) — exact hero look */
     .drawer-cta{
       display: inline-flex !important;
       align-items: center;
-      justify-content: center;        /* center text + icon */
-      width: 100%;                    /* full-width for easy tap */
+      justify-content: center;
+      width: 100%;
       text-align: center;
       position: relative;
-      color: #fff !important;         /* force white text */
+      color: #fff !important;
       -webkit-text-fill-color: #fff !important;
       background-clip: border-box !important;
       -webkit-background-clip: border-box !important;
       overflow: hidden;
     }
-    /* Keep the nice glow but ensure it stays behind */
     .drawer-cta > span{ z-index: 0 !important; }
     .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position: relative; }
 
@@ -516,7 +513,7 @@
     </div>
   </section>
 
-  <!-- ===== NEW: LIVE CHAT DEMO (styled like Code B) ===== -->
+  <!-- ===== LIVE CHAT DEMO (fixed-in-view behavior) ===== -->
   <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal">
     <div class="mx-auto max-w-3xl rounded-3xl border-hairline bg-white/70 backdrop-blur-md shadow-soft overflow-hidden">
       <div class="px-4 py-3 flex items-center justify-between border-b border-[var(--line)]/80 bg-white/60">
@@ -525,7 +522,8 @@
           <button id="demoReplay" class="chip" type="button" title="Replay">Replay</button>
         </div>
       </div>
-      <div id="demoMessages" class="p-4 md:p-5 flex flex-col gap-3"></div>
+      <!-- The inner list scrolls (page does not) -->
+      <div id="demoMessages" class="p-4 md:p-5 flex flex-col gap-3 max-h-[360px] sm:max-h-[420px] overflow-auto"></div>
       <div class="p-3 md:p-4">
         <div class="rounded-2xl bg-white/70 backdrop-blur-md border-hairline">
           <div class="flex items-end gap-2 p-2">
@@ -546,7 +544,7 @@
     <template id="demoTplBot">
       <div class="flex justify-start">
         <div class="max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed bg-[var(--lilac)]/35 border-hairline shadow-soft">
-          <div class="ai-think think-stream"></div>
+          <div class="ai-think think-stream">Thinking</div>
           <div class="ai-final hidden"></div>
         </div>
       </div>
@@ -750,6 +748,9 @@
   </footer>
 
   <script>
+    // Global speed control for the demo (1.0 = normal, 0.5 = 2x faster, 2.0 = 2x slower)
+    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 1.0;
+
     // Year
     const yr = document.getElementById('yr');
     if (yr) yr.textContent = new Date().getFullYear();
@@ -773,7 +774,6 @@
     function openMenu() {
       if (window.matchMedia('(min-width: 768px)').matches) return; // mobile only
       mobileMenu.style.display = 'block';
-      // Force reflow
       void mobileMenu.offsetWidth;
       mobileMenu.classList.add('active');
       hamburgerBtn.classList.add('is-active');
@@ -839,7 +839,7 @@
     document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
 
     // ================================
-    // LIVE CHAT DEMO (auto-plays)
+    // LIVE CHAT DEMO (auto-plays, no page scroll)
     // ================================
     (function chatDemo(){
       const wrap = document.getElementById('chat-demo');
@@ -872,6 +872,12 @@
         `},
       ];
 
+      // ---- speed helper
+      function sp(ms){ 
+        const f = (typeof window.OC_DEMO_SPEED === 'number' && window.OC_DEMO_SPEED > 0) ? window.OC_DEMO_SPEED : 1.0;
+        return ms * f;
+      }
+
       function clearList(){ list.innerHTML = ''; }
 
       function appendUser(text){
@@ -889,25 +895,33 @@
         const thinkEl = bubble.querySelector('.ai-think');
         const finalEl = bubble.querySelector('.ai-final');
 
-        thinkEl.textContent = 'Thinking…';
         list.appendChild(wrapper);
-        scrollToEnd();
+        scrollDemo();
+
+        // animated "Thinking..." with dots; blue/green gradient via .think-stream
+        let dots = 0;
+        const dotsTimer = setInterval(()=>{
+          dots = (dots + 1) % 4;
+          thinkEl.textContent = 'Thinking' + '.'.repeat(dots);
+          scrollDemo();
+        }, sp(300));
 
         return new Promise((resolve)=>{
           setTimeout(()=>{
+            clearInterval(dotsTimer);
             // swap think → final
             thinkEl.classList.add('fade-away');
             setTimeout(()=>{ thinkEl.remove(); }, 380);
             finalEl.classList.remove('hidden');
             finalEl.style.opacity = 0;
             finalEl.innerHTML = finalHTML.trim();
-            // soft fade-in
             requestAnimationFrame(()=> {
               finalEl.style.transition = 'opacity .28s ease';
               finalEl.style.opacity = 1;
+              scrollDemo();
             });
-            setTimeout(resolve, 320);
-          }, 700 + Math.random()*600); // variable "thinking"
+            setTimeout(resolve, sp(320));
+          }, sp(700 + Math.random()*600)); // variable "thinking"
         });
       }
 
@@ -916,14 +930,14 @@
           let i = 0;
           (function tick(){
             el.textContent = text.slice(0, i++);
-            scrollToEnd();
-            if (i <= text.length) setTimeout(tick, rand(min,max));
+            scrollDemo();
+            if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
             else resolve();
           })();
         });
       }
       function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-      function scrollToEnd(){ requestAnimationFrame(()=> window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' })); }
+      function scrollDemo(){ list.scrollTop = list.scrollHeight; } // <-- only the inner list scrolls
 
       async function run(){
         clearList();
@@ -936,7 +950,7 @@
       // Replay button
       replay?.addEventListener('click', run);
 
-      // Auto-play when section comes into view (once)
+      // Auto-play when section comes into view (once). Does not move the page.
       let started = false;
       const ob = new IntersectionObserver((entries)=>{
         for (const e of entries){
