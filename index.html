@@ -51,14 +51,29 @@
       --scroll-blur-opacity-end: 1;
       --scroll-blur-translate: 8px;
 
-      /* Chat demo palette hooks */
+      /* Colors */
       --line:#E7EDF2;
       --brand-angle:135deg; 
       --brand-1:#0B1B2B; 
       --brand-2:#0E6F5C; 
       --brand-3:#00CFFF;
       --lilac:#E7E7FF;
+
+      /* Site background (single source of truth) */
+      --site-bg:#fff;
+
+      /* Will be set by JS */
+      --hdr: 56px;
     }
+
+    /* Page-level smooth, snap like iOS carousel */
+    html { scroll-snap-type: y proximity; scroll-behavior: smooth; background: var(--site-bg); }
+    body { background: var(--site-bg); }
+
+    /* Sections that participate in snapping */
+    #home, #chat-demo, #edge { scroll-snap-align: start; }
+    /* Make chat-demo the strong snap target */
+    #chat-demo { scroll-snap-stop: always; }
 
     /* Kill horizontal scroll without breaking sticky */
     html, body { max-width: 100%; overflow-x: clip !important; }
@@ -230,12 +245,39 @@
     .chip{font-size:12px;line-height:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 6px 14px rgba(10,13,16,.06);transition:transform .12s ease}
     .chip:hover{transform:translateY(-1px)}
 
-    /* Chat stream layout (ChatGPT-like indent) */
-    .chat-wrap { width:min(900px,100%); margin:0 auto; }
+    /* Chat stream layout */
+    .chat-wrap { width:min(1024px,100%); margin:0 auto; position: relative; }
+    /* FULL-SCREEN, no adjacent bleed-through */
+    #chat-demo {
+      background: var(--site-bg);
+      min-height: calc(100dvh - var(--hdr, 56px));
+      display: grid;
+      place-items: center;
+      padding-top: calc(var(--hdr, 56px) + 10px);
+      padding-bottom: 24px;
+    }
+
+    .chat-viewport{
+      /* Take nearly the whole screen */
+      height: calc(100dvh - var(--hdr, 56px) - 90px);
+      width: min(1000px, 94vw);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scroll-behavior: smooth;
+      background: var(--site-bg);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      box-shadow: 0 12px 40px rgba(0,0,0,.08);
+      padding: 16px 16px 160px 16px; /* extra bottom pad so next bubble peeks */
+      /* Hide the scrollbar but keep programmatic scrolling */
+      -ms-overflow-style: none; scrollbar-width: none;
+    }
+    .chat-viewport::-webkit-scrollbar{ display:none; }
+
     .chat-stream { display:flex; flex-direction:column; gap:10px; }
     .msg-row { display:flex; width:100%; }
-    .msg-assistant { justify-content:flex-start; padding-left:56px; }  /* left gutter like avatar space */
-    .msg-user { justify-content:flex-end; padding-right:56px; }       /* right gutter */
+    .msg-assistant { justify-content:flex-start; padding-left:56px; }
+    .msg-user { justify-content:flex-end; padding-right:56px; }
     .bubble {
       max-width:85%; border-radius:16px; padding:12px 16px;
       font-size:15px; line-height:1.6; box-shadow: 0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06)
@@ -249,8 +291,8 @@
       background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow: 0 10px 28px rgba(10,13,16,.10);
       border-radius: 14px; padding: 28px 28px 32px 28px;
       aspect-ratio: 8.5 / 11; overflow: hidden;
-      width: min(620px, 85vw);   /* ensure full page visible on all screens */
-      max-width: 100%;           /* never exceed bubble width */
+      width: min(620px, 85vw);
+      max-width: 100%;
     }
     .doc-h1{ font-size: 20px; font-weight: 700; letter-spacing:.02em; text-transform: uppercase; text-align:center; }
     .doc-sub{ font-size:12px; text-align:center; color:#666; margin-top:2px; }
@@ -295,42 +337,6 @@
         </button>
       </div>
     </div>
-
-    <!-- MOBILE MENU -->
-    <div id="mobileMenu" aria-hidden="true">
-      <div class="menu-scrim"></div>
-      <aside class="menu-panel">
-        <div class="drawer-head">
-          <span class="drawer-title">OpenCounsel</span>
-          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-
-        <nav class="drawer-nav mt-2">
-          <a href="#features">Features</a>
-          <a href="#edge">Why it wins</a>
-          <a href="#plans">Plans</a>
-          <a href="#screens">Screens</a>
-          <a href="#faq">FAQ</a>
-          <div class="drawer-sep"></div>
-          <a
-            href="#download"
-            class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
-                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                   grad-anim mt-2 w-full justify-center"
-            style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
-          >
-            <i class="ph ph-download text-xl"></i>
-            <span>Download</span>
-          </a>
-        </nav>
-      </aside>
-    </div>
   </header>
 
   <!-- HERO -->
@@ -374,15 +380,13 @@
     </div>
   </section>
 
-  <!-- ===== LIVE CHAT DEMO — BUBBLES ON BACKGROUND ===== -->
-  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 pb-12 md:pb-16">
-
+  <!-- ===== LIVE CHAT DEMO — FULL-SCREEN SNAP ===== -->
+  <section id="chat-demo" class="oc-container reveal" style="background: var(--site-bg);">
     <div class="w-full flex items-center justify-center">
       <div class="chat-wrap">
-        <div id="demoMessages" class="chat-stream"></div>
-        <div class="mt-3 flex items-center gap-3">
-          <button id="demoReplay" class="chip" type="button" title="Replay">Replay</button>
-          <div class="text-[11px] text-neutral-500">Simulated conversation + generated document</div>
+        <!-- Scrollable chat viewport (scrollbar hidden visually) -->
+        <div id="chatViewport" class="chat-viewport">
+          <div id="demoMessages" class="chat-stream"></div>
         </div>
       </div>
     </div>
@@ -486,7 +490,7 @@
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
           <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24"  fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <p class="font-semibold text-neutral-900">Verified</p>
           </div>
           <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
@@ -591,68 +595,78 @@
     // ================================
     // GLOBAL DEMO SETTINGS
     // ================================
-    // Speed: 1.0 = normal, 0.5 = faster, 2.0 = slower
-    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 0.7;
+    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 1.25;
 
-    // 🔊 Bass drop sound (change these)
+    // 🔊 Bass drop sound (robust with fallback)
     window.OC_DEMO_SOUND = Object.assign({
       enabled: true,
-      url: 'bass-drop.mp3',  // <-- replace with your file path
-      volume: 0.9            // 0.0 - 1.0
+      url: 'bass-drop.mp3',  // set to a valid path or leave blank for synth
+      volume: 0.9
     }, window.OC_DEMO_SOUND || {});
 
     let __OC_AUDIO = null;
+    let __WA_CTX = null;
+
+    function measureHeader(){
+      const h = document.querySelector('header');
+      const px = h ? h.getBoundingClientRect().height : 56;
+      document.documentElement.style.setProperty('--hdr', px + 'px');
+    }
+    measureHeader();
+    window.addEventListener('resize', measureHeader);
+
+    function getCtx(){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      if (!__WA_CTX) __WA_CTX = new Ctx();
+      return __WA_CTX;
+    }
+    function playWithWebAudio(vol=0.9){
+      try{
+        const ctx = getCtx(); if (!ctx) return;
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(100, ctx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(Math.max(0, Math.min(vol, 1)), ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+        o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 1.25);
+        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+      }catch(e){}
+    }
     function playBassDrop(){
       if (!window.OC_DEMO_SOUND?.enabled) return;
-
       const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
       const url = (window.OC_DEMO_SOUND.url || '').trim();
-
       if (url){
         if (!__OC_AUDIO){
           __OC_AUDIO = new Audio(url);
           __OC_AUDIO.preload = 'auto';
-          __OC_AUDIO.crossOrigin = 'anonymous';
+          __OC_AUDIO.addEventListener('error', () => playWithWebAudio(vol), { once:true });
         }
         try {
-          __OC_AUDIO.currentTime = 0;
-          __OC_AUDIO.volume = vol;
-          __OC_AUDIO.play().catch(()=>{/* autoplay may be blocked */});
-        } catch(e){}
+          __OC_AUDIO.currentTime = 0; __OC_AUDIO.volume = vol; __OC_AUDIO.muted = false;
+          __OC_AUDIO.play().catch(()=> playWithWebAudio(vol));
+        } catch(e){ playWithWebAudio(vol); }
         return;
       }
-
-      // Fallback: synthesize a bass drop with WebAudio
-      try{
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new Ctx();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-
-        o.type = 'sine';
-        o.frequency.setValueAtTime(100, ctx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
-
-        g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-
-        o.connect(g).connect(ctx.destination);
-        o.start();
-        o.stop(ctx.currentTime + 1.25);
-        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
-      }catch(e){}
+      playWithWebAudio(vol);
     }
+    function unlockAudio(){
+      try{ const ctx = getCtx(); if (ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{}); }catch(e){}
+      try{ if (__OC_AUDIO) __OC_AUDIO.play().catch(()=>{}); }catch(e){}
+    }
+    ['pointerdown','click','touchstart','keydown'].forEach(evt => {
+      window.addEventListener(evt, unlockAudio, { once:true, passive:true });
+    });
 
     // Year
-    const yr = document.getElementById('yr');
-    if (yr) yr.textContent = new Date().getFullYear();
+    const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
 
     // Scroll reveal (one-shot)
     const io = new IntersectionObserver((entries)=>{
-      for (const e of entries) {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-      }
+      for (const e of entries) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }
     },{threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
@@ -705,24 +719,46 @@
     }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    // Typewriter for plain text into an element (creates a single text node)
+    // ===== Chat viewport autoscroll (no visible scrollbar) =====
+    const viewport = document.getElementById('chatViewport');
+    let autoScroll = true;
+    let _scrollRAF = null;
+
+    function nearBottom(px=40){
+      if (!viewport) return true;
+      return (viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight) <= px;
+    }
+    function scheduleAutoScroll(){
+      if (!autoScroll || !viewport) return;
+      if (_scrollRAF) return;
+      _scrollRAF = requestAnimationFrame(()=>{
+        viewport.scrollTop = viewport.scrollHeight;
+        _scrollRAF = null;
+      });
+    }
+    function setAutoScrollOn(){ autoScroll = true; scheduleAutoScroll(); }
+    function setAutoScrollOff(){ autoScroll = false; }
+
+    viewport?.addEventListener('scroll', ()=>{ if (nearBottom()) setAutoScrollOn(); else setAutoScrollOff(); });
+
+    // Typewriter for plain text
     function typewriter(el, text, min=10, max=18){
       return new Promise((resolve)=>{
         let i = 0;
-        el.textContent = ''; // ensure clean start
+        el.textContent = '';
         const tn = document.createTextNode('');
         el.appendChild(tn);
         (function tick(){
           tn.textContent = text.slice(0, i++);
+          if (i % 2 === 0) scheduleAutoScroll();
           if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
           else resolve();
         })();
       });
     }
 
-    // Stream HTML with structure preserved (safe DOM walk; types text nodes char-by-char)
+    // Stream HTML preserving structure
     async function streamHTML(el, html, charMin=10, charMax=18){
-      // Parse once into a fragment container
       const container = document.createElement('div');
       container.innerHTML = html.trim();
 
@@ -737,24 +773,19 @@
               dstParent.appendChild(tn);
               (function tick(){
                 tn.textContent = text.slice(0, i++);
+                if (i % 2 === 0) scheduleAutoScroll();
                 if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
                 else res();
               })();
             });
           } else if (child.nodeType === Node.ELEMENT_NODE){
-            // Create a shallow clone (no children yet) to preserve classes/attrs
             const clone = child.cloneNode(false);
             dstParent.appendChild(clone);
-            // For <li>, stream its text a bit faster so lists feel snappy
-            if (clone.tagName === 'LI'){
-              await walk(child, clone);
-            } else {
-              await walk(child, clone);
-            }
+            scheduleAutoScroll();
+            await walk(child, clone);
           }
         }
       }
-      // Clear and stream into el
       el.innerHTML = '';
       await walk(container, el);
     }
@@ -767,7 +798,6 @@
       const list = document.getElementById('demoMessages');
       const tplU = document.getElementById('demoTplUser');
       const tplB = document.getElementById('demoTplBot');
-      const replay = document.getElementById('demoReplay');
 
       const msgs = [
         { role:'user', text:"I'm a contractor in BC. Client hasn't paid my final invoice. What are my options?" },
@@ -793,12 +823,13 @@
         `},
       ];
 
-      function clearList(){ list.innerHTML = ''; }
+      function clearList(){ list.innerHTML = ''; scheduleAutoScroll(); }
 
       function appendUser(text){
         const node = tplU.content.cloneNode(true);
         const bubble = node.querySelector('.bubble-user');
         list.appendChild(node);
+        scheduleAutoScroll();
         return typewriter(bubble, text, 14, 18);
       }
 
@@ -809,13 +840,13 @@
         const finalEl = bubble.querySelector('.ai-final');
 
         list.appendChild(node);
+        scheduleAutoScroll();
 
         // animated "Thinking..." with dots
         let dots = 0;
-        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
+        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
 
         return new Promise((resolve)=>{
-          // brief think delay, then fade think and stream output
           setTimeout(async ()=>{
             clearInterval(dotsTimer);
             thinkEl.classList.add('fade-away');
@@ -828,7 +859,6 @@
               finalEl.style.opacity = 1;
             });
 
-            // 🔥 Stream the assistant HTML with structure preserved
             await streamHTML(finalEl, finalHTML, 9, 16);
             resolve();
           }, sp(700 + Math.random()*600));
@@ -843,12 +873,14 @@
         const finalEl = bubble.querySelector('.ai-final');
 
         list.appendChild(node);
+        scheduleAutoScroll();
 
         let dots = 0;
         thinkEl.textContent = 'Drafting lien document';
         const dotsTimer = setInterval(()=>{
           dots = (dots + 1) % 4;
           thinkEl.textContent = 'Drafting lien document' + '.'.repeat(dots);
+          scheduleAutoScroll();
         }, sp(300));
 
         return new Promise((resolve)=>{
@@ -866,9 +898,9 @@
             finalEl.appendChild(intro);
 
             const docPage = document.createElement('div');
-            // scaling handled by CSS .doc-page (min(620px, 85vw) with aspect-ratio)
             docPage.className = 'doc-page';
             finalEl.appendChild(docPage);
+            scheduleAutoScroll();
 
             const band = document.createElement('div');
             band.className = 'doc-brand-band brand-gradient breathing';
@@ -897,6 +929,7 @@
           el.innerHTML = html;
           container.appendChild(el);
           requestAnimationFrame(()=> el.classList.add('in'));
+          scheduleAutoScroll();
           return el;
         }
         function ensureBullets(){
@@ -906,6 +939,7 @@
             ul.className = 'doc-bullets doc-fade';
             container.appendChild(ul);
             requestAnimationFrame(()=> ul.classList.add('in'));
+            scheduleAutoScroll();
           }
           return ul;
         }
@@ -919,6 +953,7 @@
             li.style.transition = 'opacity .22s ease, transform .22s ease';
             li.style.opacity = 1; li.style.transform = 'translateY(0)';
           });
+          scheduleAutoScroll();
         }
         function wait(ms){ return new Promise(r => setTimeout(r, sp(ms))); }
 
@@ -966,39 +1001,69 @@
 
       async function run(){
         clearList();
-        // 🔊 Play bass drop when the demo starts
+        setAutoScrollOn();
         playBassDrop();
 
         for (const m of msgs){
           if (m.role === 'user') {
             await appendUser(m.text);
           } else {
-            // 🔥 Assistant now streams its response (not instant dump)
             await appendBotStreaming(m.final);
           }
         }
         await appendBotDoc();
+        scheduleAutoScroll();
       }
 
-      replay?.addEventListener('click', () => { playBassDrop(); run(); });
+      // Start when chat first snaps fully in view
+      let startedOnce = false;
 
-      // Auto-play when section comes into view (once).
-      let started = false;
-      const ob = new IntersectionObserver((entries)=>{
+      // Smooth snap takeover that "continues" user scroll into a full-screen lock of the demo
+      let lastY = window.scrollY, scrollingDown = false, snapLock = false;
+      window.addEventListener('scroll', ()=>{ scrollingDown = window.scrollY > lastY; lastY = window.scrollY; }, { passive:true });
+
+      function chatTopOffset(){
+        const hdr = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr')) || 56;
+        const rect = wrap.getBoundingClientRect();
+        return window.scrollY + rect.top - hdr - 1; // -1 helps avoid sub-pixel showing previous/next
+      }
+
+      // As soon as user brings the chat ~40% into view, we finish the motion
+      const snapObs = new IntersectionObserver((entries)=>{
         for (const e of entries){
-          if (e.isIntersecting && !started){
-            started = true; run(); ob.unobserve(wrap);
+          if (e.target !== wrap) continue;
+          if (e.isIntersecting && scrollingDown && !snapLock){
+            const vis = e.intersectionRatio;
+            if (vis > 0.4){
+              snapLock = true;
+              window.scrollTo({ top: chatTopOffset(), behavior: 'smooth' });
+              // start the demo the first time it's snapped
+              if (!startedOnce){ startedOnce = true; run(); }
+              // release the "lock" once we've arrived
+              setTimeout(()=>{ snapLock = false; }, 700);
+            }
           }
         }
-      }, { threshold:.35 });
-      if (wrap) ob.observe(wrap);
+      }, { threshold: [0.25, 0.4, 0.6, 0.8, 1] });
+      snapObs.observe(wrap);
 
-      // Unlock audio on first user gesture if needed
-      ['click','touchstart','keydown'].forEach(evt => {
-        window.addEventListener(evt, function onFirst(){
-          try { if (__OC_AUDIO && __OC_AUDIO.resume) __OC_AUDIO.resume(); } catch {}
-          window.removeEventListener(evt, onFirst, { once:true });
-        }, { once:true });
+      // Also allow deep link clicks to #chat-demo to snap cleanly and start
+      document.querySelectorAll('a[href="#chat-demo"]').forEach(a=>{
+        a.addEventListener('click', (evt) => {
+          evt.preventDefault();
+          window.scrollTo({ top: chatTopOffset(), behavior: 'smooth' });
+          if (!startedOnce){ startedOnce = true; run(); }
+        });
+      });
+
+      // Fallback autoplay if user lands directly on the chat at load (e.g., via anchor)
+      window.addEventListener('load', ()=>{
+        const rect = wrap.getBoundingClientRect();
+        const hdr = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr')) || 56;
+        if (rect.top >= hdr && rect.top < window.innerHeight * 0.4){
+          window.scrollTo({ top: chatTopOffset(), behavior: 'smooth' });
+          if (!startedOnce){ startedOnce = true; run(); }
+        }
       });
     })();
   </script>
