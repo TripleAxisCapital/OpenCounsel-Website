@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenCounsel — Private, Local AI Legal Assistant</title>
   <meta name="description" content="OpenCounsel: a private, local AI legal assistant with RAG, document search, and case analysis. Download for macOS, Windows, and Linux." />
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,15 +33,11 @@
   </script>
 
   <style>
-    /* ================================
-       GLOBAL CONTROLS
-       ================================ */
     :root {
       --pad-mobile-x: 24px;
       --pad-desktop-x: 32px;
       --hamburger-inset: 13px;
 
-      /* ==== Global Scroll-Blur Controls ==== */
       --scroll-blur-start: 16px;
       --scroll-blur-end: 0px;
       --scroll-blur-duration: 1500ms;
@@ -51,7 +46,6 @@
       --scroll-blur-opacity-end: 1;
       --scroll-blur-translate: 8px;
 
-      /* Colors */
       --line:#E7EDF2;
       --brand-angle:135deg; 
       --brand-1:#0B1B2B; 
@@ -59,21 +53,13 @@
       --brand-3:#00CFFF;
       --lilac:#E7E7FF;
 
-      /* Site background (single source of truth) */
       --site-bg:#fff;
-
-      /* Header height (updated on DOM ready) */
-      --hdr: 56px;
+      --hdr:56px; /* updated once after DOM ready */
     }
 
-    /* Keep the overall background identical */
-    html, body { background: var(--site-bg); }
-
-    /* Kill horizontal scroll without breaking sticky */
-    html, body { max-width: 100%; overflow-x: clip !important; }
+    html, body { background: var(--site-bg); max-width: 100%; overflow-x: clip !important; }
     @supports not (overflow-x: clip) { html, body { overflow-x: hidden !important; } }
     .section-clip { position: relative; overflow-x: clip; }
-
     .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
     @media (min-width: 1024px) { .oc-container { padding-left: var(--pad-desktop-x); padding-right: var(--pad-desktop-x); } }
     ::selection{background:#5B8CFF;color:#fff}
@@ -88,182 +74,82 @@
     @keyframes logoIntro { from { transform: translateY(6px) scale(.92); opacity:0 } to { transform: translateY(0) scale(1); opacity:1 } }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===========================================
-       PER-SECTION GRADIENT CONTROLS
-       =========================================== */
-    #hamburgerBtn .hamburger {
-      --from: #00CFFFcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --angle:135deg; --speed:16s;
-    }
-
-    :root{
-      --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
-      --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
-      --logo-width:64px; --logo-height:64px;
-    }
-
+    #hamburgerBtn .hamburger { --from:#00CFFFcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --angle:135deg; --speed:16s; }
+    :root{ --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg; --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc; --logo-width:64px; --logo-height:64px; }
     #home { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg; }
     #edge { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --speed:16s; --angle:135deg; }
     #features { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --speed:16s; --angle:135deg; }
 
-    /* ========= PRIMITIVES ========= */
-    .g-grad, .grad-anim{
-      background: linear-gradient(var(--angle, 135deg), var(--from, #0a1f44cc), var(--via, #0b3d3dcc), var(--to, #064420cc));
-      background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
-    }
+    .g-grad, .grad-anim{ background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc)); background-size:300% 300%; animation:gradientShift var(--speed,16s) ease-in-out infinite; will-change:background-position; }
     .animated-gradient { background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; will-change:background-position; }
-
-    .logo-anim{
-      display:inline-block; width:var(--logo-width); height:var(--logo-height);
-      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size: 300% 300%;
-      animation: logoIntro 800ms ease-out forwards, gradientShift 16s ease-in-out infinite;
-      -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain;
-    }
-
-    .grad-text{
-      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
-      background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
-    }
-
+    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:logoIntro 800ms ease-out forwards, gradientShift 16s ease-in-out infinite; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
+    .grad-text{ background:linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc)); background-size:300% 300%; animation:gradientShift var(--speed,16s) ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
     .mobile-menu { backdrop-filter: blur(8px); }
 
     .hamburger { width: 32px; height: 28px; display: inline-flex; flex-direction: column; justify-content: center; gap: 6px; }
-    .hamburger span {
-      height: 3px; width: 100%; border-radius: 9999px;
-      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
-      background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
-      transition: transform .4s ease, opacity .2s ease;
-    }
+    .hamburger span { height: 3px; width: 100%; border-radius: 9999px; background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420)); background-size:300% 300%; animation:gradientShift var(--speed,16s) ease-in-out infinite; transition: transform .4s ease, opacity .2s ease; }
     #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
     #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity: 0; }
     #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
-
-    #hamburgerBtn { display:flex; align-items:center; justify-content:center; height:56px; padding:0; margin-right: var(--hamburger-inset); }
-    @media (min-width: 768px) { #hamburgerBtn { display:none!important; } #mobileMenu{ display:none!important; } }
 
     .rows-equal { grid-auto-rows: 1fr; }
     .grid-stretch > * { height: 100%; }
     .card-glass { display:flex; flex-direction:column; height:100%; }
 
-    @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
-    @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
-
-    .page-blur{
-      position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
-      background: rgba(255,255,255,.28); z-index:9999; pointer-events:none;
-      transition: backdrop-filter 2s ease, background-color 2s ease, opacity 2s ease;
-    }
+    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition: backdrop-filter 2s ease, background-color 2s ease, opacity 2s ease; }
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
-    @media (prefers-reduced-motion: reduce){ .page-blur{ transition:none; } }
 
-    /* Mobile slide-in menu */
     #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
-    #mobileMenu .menu-scrim{
-      position:absolute; inset:0; background: rgba(255,255,255,0.92);
-      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-      opacity:0; transition: opacity 2s ease, backdrop-filter 2s ease, -webkit-backdrop-filter 2s ease;
-    }
-    #mobileMenu .menu-panel{
-      position:absolute; top:0; left:0; height:100%; width:min(88vw, 420px); background:#fff;
-      border-right: 1px solid rgba(0,0,0,.06); box-shadow: 0 24px 60px rgba(0,0,0,.12);
-      transform: translateX(-100%); opacity:.98; filter: blur(12px);
-      transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s;
-      display:flex; flex-direction:column; padding:18px 20px;
-    }
+    #mobileMenu .menu-scrim{ position:absolute; inset:0; background: rgba(255,255,255,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); opacity:0; transition: opacity 2s ease, backdrop-filter 2s ease, -webkit-backdrop-filter 2s ease; }
+    #mobileMenu .menu-panel{ position:absolute; top:0; left:0; height:100%; width:min(88vw,420px); background:#fff; border-right:1px solid rgba(0,0,0,.06); box-shadow:0 24px 60px rgba(0,0,0,.12); transform:translateX(-100%); opacity:.98; filter:blur(12px); transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px; }
     #mobileMenu.active { display:block; pointer-events:auto; }
     #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px); }
     #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
 
     .drawer-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
-    .drawer-title{
-      font-weight:700; letter-spacing:-.01em;
-      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
-      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px;
-    }
-    .drawer-close{
-      display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px;
-      border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); transition: background .2s ease, transform .2s ease;
-    }
+    .drawer-title{ font-weight:700; letter-spacing:-.01em; background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; }
+    .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); transition: background .2s ease, transform .2s ease; }
     .drawer-close:hover{ background:#fff; transform:translateY(-1px); }
 
-    .drawer-nav a:not(.drawer-cta){
-      display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2;
-      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
-      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
-      transition: transform .18s ease, opacity .18s ease;
-    }
+    .drawer-nav a:not(.drawer-cta){ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; transition: transform .18s ease, opacity .18s ease; }
     .drawer-nav a:hover{ transform:translateY(-1px); opacity:.95; }
     .drawer-sep{ height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent); margin:8px 0 6px; }
 
-    .drawer-cta{
-      display:inline-flex!important; align-items:center; justify-content:center; width:100%;
-      text-align:center; position:relative; color:#fff!important; -webkit-text-fill-color:#fff!important;
-      background-clip:border-box!important; -webkit-background-clip:border-box!important; overflow:hidden;
-    }
+    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; position:relative; color:#fff!important; -webkit-text-fill-color:#fff!important; }
     .drawer-cta > span{ z-index:0!important; }
-    .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position:relative; }
 
-    /* BLUR-ON-SCROLL utility */
     .scroll-fade { isolation:isolate; }
-    .scroll-fade > * {
-      filter: blur(var(--scroll-blur-start)); opacity: var(--scroll-blur-opacity-start); transform: translateY(var(--scroll-blur-translate));
-      transition: filter var(--scroll-blur-duration) var(--scroll-blur-ease), opacity var(--scroll-blur-duration) var(--scroll-blur-ease), transform var(--scroll-blur-duration) var(--scroll-blur-ease);
-      will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0);
-    }
+    .scroll-fade > * { filter: blur(var(--scroll-blur-start)); opacity: var(--scroll-blur-opacity-start); transform: translateY(var(--scroll-blur-translate)); transition: filter var(--scroll-blur-duration) var(--scroll-blur-ease), opacity var(--scroll-blur-duration) var(--scroll-blur-ease), transform var(--scroll-blur-duration) var(--scroll-blur-ease); will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0); }
     .scroll-fade.in-view > * { filter:blur(var(--scroll-blur-end)); opacity:var(--scroll-blur-opacity-end); transform:translateY(0); }
 
-    .LargeAniLogo{ display:inline-block; width:var(--logo-size,72px); height:var(--logo-size,72px); }
-
-    @supports (font-variation-settings: "wght" 500) {
-      .nav-link { font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
-      .nav-link:hover { font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
-    }
-    @media (prefers-reduced-motion: reduce) { .nav-link { transition:none; } }
-
-    /* ===== Chat Demo visuals ===== */
     .brand-gradient{ background-image:linear-gradient(var(--brand-angle),var(--brand-1),var(--brand-2),var(--brand-3)); background-size:200% 200%; }
     @keyframes breathe{0%{background-position:0% 50%;filter:saturate(.95)}50%{background-position:100% 50%;filter:saturate(1.05)}100%{background-position:0% 50%;filter:saturate(.95)}}
     .breathing{animation:breathe 6s ease-in-out infinite}
-    .shadow-soft{box-shadow:0 2px 6px rgba(10,13,16,0.04), 0 12px 24px rgba(10,13,16,0.06)}
-    .border-hairline{border:1px solid var(--line)}
-    .think-stream{
-      color:transparent; background-image:linear-gradient(var(--brand-angle),#00CFFF,#0E6F5C,#00CFFF); background-size:200% 200%;
-      -webkit-background-clip:text; background-clip:text; animation:breathe 4.5s ease-in-out infinite;
-      filter:drop-shadow(0 0 .3rem rgba(0,207,255,.3)); white-space:pre-wrap; line-height:1.6
-    }
+    .think-stream{ color:transparent; background-image:linear-gradient(var(--brand-angle),#00CFFF,#0E6F5C,#00CFFF); background-size:200% 200%; -webkit-background-clip:text; background-clip:text; animation:breathe 4.5s ease-in-out infinite; filter:drop-shadow(0 0 .3rem rgba(0,207,255,.3)); white-space:pre-wrap; line-height:1.6 }
     @keyframes fadeAway{to{opacity:0;transform:translateY(-4px);filter:blur(2px)}}
     .fade-away{animation:fadeAway .38s ease forwards}
 
-    /* Chat stream layout (centered full-screen) */
+    /* ===== Chat: centered, seamless, full-screen (below header) ===== */
     .chat-wrap { width:min(1024px,100%); margin:0 auto; position: relative; }
-
-    #chat-demo {
+    #chat-demo{
       background: var(--site-bg);
-      min-height: calc(100dvh - var(--hdr, 56px));
+      height: calc(100dvh - var(--hdr));
+      min-height: calc(100dvh - var(--hdr));
       display: grid;
-      place-items: center;
-      padding-top: calc(var(--hdr, 56px) + 10px);
-      padding-bottom: 24px;
-      /* Prevent browser scroll anchoring from jumping hero when content streams in */
-      overflow-anchor: none;
+      align-items: center;
+      justify-items: center;
+      padding: 0 var(--pad-mobile-x);
+      overflow-anchor: none; /* avoid hero jump while content streams */
     }
+    @media (min-width: 1024px){ #chat-demo{ padding: 0 var(--pad-desktop-x); } }
 
     .chat-viewport{
-      height: calc(100dvh - var(--hdr, 56px) - 60px);
-      width: min(1000px, 94vw);
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scroll-behavior: smooth;
-      background: var(--site-bg);
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      box-shadow: 0 12px 40px rgba(0,0,0,.08);
-      padding: 18px 18px 180px 18px; /* generous bottom padding so next bubble peeks */
+      height: calc(100dvh - var(--hdr));
+      width: min(980px, 92vw);
+      overflow-y: auto; overscroll-behavior: contain; scroll-behavior: smooth;
+      background: transparent; /* identical to page so it feels part of it */
+      padding: 18px 18px 200px 18px; /* bottom padding so next bubble peeks */
       -ms-overflow-style: none; scrollbar-width: none;
-      /* Prevent anchoring jiggle while messages stream in */
       overflow-anchor: none;
     }
     .chat-viewport::-webkit-scrollbar{ display:none; }
@@ -274,42 +160,35 @@
     .msg-user { justify-content:flex-end; padding-right:56px; }
 
     .bubble {
-      max-width:85%;
-      border-radius:16px; padding:12px 16px;
-      font-size:15px; line-height:1.6;
-      box-shadow: 0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06);
-      /* Keep ALL text inside bubble neatly */
-      overflow-wrap: anywhere; word-break: break-word; hyphens: auto;
+      max-width:85%; border-radius:16px; padding:12px 16px;
+      font-size:15px; line-height:1.6; box-shadow:0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06);
+      overflow-wrap:anywhere; word-break:break-word; hyphens:auto;
     }
-    .bubble * {
-      overflow-wrap: anywhere; word-break: break-word; hyphens: auto;
-    }
-    .bubble p { margin: .35rem 0; }
-    .bubble ul { list-style: disc; padding-left: 1.1rem; margin: .3rem 0; }
-    .bubble li { margin: .18rem 0; }
-    .bubble strong { font-weight: 700; }
-    .bubble em { font-style: italic; }
+    .bubble * { overflow-wrap:anywhere; word-break:break-word; hyphens:auto; }
+    .bubble p { margin:.35rem 0; }
+    .bubble ul { list-style:disc; padding-left:1.15rem; margin:.3rem 0; }
+    .bubble li { margin:.18rem 0; }
+    .bubble strong { font-weight:700; }
+    .bubble em { font-style:italic; }
 
     .bubble-user { background:#fff; border:1px solid var(--line); }
-    .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); overflow: visible; }
+    .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); }
     .bubble .ai-final{ color:#0A0D10; white-space:normal; }
 
-    /* ===== Document Preview (Lien) styles ===== */
+    /* ===== Document Preview ===== */
     .doc-page{
-      background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow: 0 10px 28px rgba(10,13,16,.10);
-      border-radius: 14px; padding: 28px 28px 32px 28px;
-      aspect-ratio: 8.5 / 11; overflow: hidden;
-      width: min(620px, 85vw);
-      max-width: 100%;
+      background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow:0 10px 28px rgba(10,13,16,.10);
+      border-radius:14px; padding:28px 28px 32px 28px; aspect-ratio:8.5/11; overflow:hidden;
+      width:min(620px,85vw); max-width:100%;
     }
-    .doc-h1{ font-size: 20px; font-weight: 700; letter-spacing:.02em; text-transform: uppercase; text-align:center; }
+    .doc-h1{ font-size:20px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; text-align:center; }
     .doc-sub{ font-size:12px; text-align:center; color:#666; margin-top:2px; }
     .doc-sec{ font-size:12px; font-weight:600; letter-spacing:.02em; text-transform:uppercase; color:#0A0D10; margin-top:16px; }
     .doc-p{ font-size:13px; line-height:1.5; color:#0A0D10; margin-top:6px; }
     .doc-small{ font-size:12px; color:#333; }
     .doc-rule{ height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.12), transparent); margin:12px 0; }
-    .doc-bullets{ padding-left: 18px; margin-top: 4px; }
-    .doc-bullets li{ font-size:13px; line-height:1.5; margin: 4px 0; }
+    .doc-bullets{ padding-left:18px; margin-top:4px; }
+    .doc-bullets li{ font-size:13px; line-height:1.5; margin:4px 0; }
     .doc-brand-band{ height:8px; border-radius:10px; }
     .doc-fade{ opacity:0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
     .doc-fade.in{ opacity:1; transform: translateY(0); }
@@ -317,16 +196,13 @@
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
-  <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- HEADER -->
   <header class="sticky top-0 z-50 bg-white">
     <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
       </div>
-
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#features">Features</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#edge">Why it wins</a>
@@ -334,51 +210,53 @@
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#screens">Screens</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#faq">FAQ</a>
       </nav>
-
       <div class="flex items-center gap-2">
-        <button id="hamburgerBtn"
-          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
-          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger" aria-hidden="true">
-            <span></span><span></span><span></span>
-          </span>
+        <button id="hamburgerBtn" class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
         </button>
       </div>
+    </div>
+    <div id="mobileMenu" aria-hidden="true">
+      <div class="menu-scrim"></div>
+      <aside class="menu-panel">
+        <div class="drawer-head">
+          <span class="drawer-title">OpenCounsel</span>
+          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <nav class="drawer-nav mt-2">
+          <a href="#features">Features</a>
+          <a href="#edge">Why it wins</a>
+          <a href="#plans">Plans</a>
+          <a href="#screens">Screens</a>
+          <a href="#faq">FAQ</a>
+          <div class="drawer-sep"></div>
+          <a href="#download" class="drawer-cta grad-anim rounded-2xl px-6 py-3 font-semibold text-white" style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;">
+            <i class="ph ph-download text-xl"></i><span>Download</span>
+          </a>
+        </nav>
+      </aside>
     </div>
   </header>
 
   <!-- HERO -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal" style="overflow-anchor:auto;">
-    <div
-      class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
-      style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
-    >
+    <div class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]" style="min-height: calc(100vh - 56px - var(--pad-mobile-x));">
       <div class="flex flex-col items-center max-w-2xl">
         <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
         <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">AI for law. Designed for you.</p>
         <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Local, private, and built for legal research.</p>
-
         <div class="mt-8 flex justify-center">
-          <a
-            href="#download"
-            class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
-                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                   grad-anim"
-            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
-          >
-            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
-                  style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-            <i class="ph ph-download text-xl"></i>
-            Download
+          <a href="#download" class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 grad-anim" style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;">
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70" style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+            <i class="ph ph-download text-xl"></i> Download
           </a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Secure. Local. Yours. -->
   <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
     <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
       <div>
@@ -388,22 +266,16 @@
     </div>
   </section>
 
-  <!-- ===== LIVE CHAT DEMO — FULL-SCREEN, CENTERED, AUTOSCROLL ===== -->
+  <!-- ===== LIVE CHAT DEMO (seamless, centered, snap only at center) ===== -->
   <section id="chat-demo" class="oc-container reveal" style="background: var(--site-bg);">
-    <div class="w-full flex items-center justify-center">
-      <div class="chat-wrap">
-        <!-- Hidden (programmatic) chat viewport -->
-        <div id="chatViewport" class="chat-viewport">
-          <div id="demoMessages" class="chat-stream"></div>
-        </div>
+    <div class="chat-wrap">
+      <div id="chatViewport" class="chat-viewport">
+        <div id="demoMessages" class="chat-stream"></div>
       </div>
     </div>
-
-    <!-- bubble templates -->
+    <!-- Templates -->
     <template id="demoTplUser">
-      <div class="msg-row msg-user">
-        <div class="bubble bubble-user"></div>
-      </div>
+      <div class="msg-row msg-user"><div class="bubble bubble-user"></div></div>
     </template>
     <template id="demoTplBot">
       <div class="msg-row msg-assistant">
@@ -414,46 +286,30 @@
       </div>
     </template>
   </section>
-  <!-- ===== END DEMO SECTION ===== -->
 
   <!-- EDGE / WHY IT WINS -->
   <section id="edge" class="mx-auto max-w-[1200px] oc-container reveal -mt-4 md:-mt-6" style="padding-top:0">
     <div class="mt-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
-            <i class="ph ph-lock text-white text-[20px]"></i>
-          </div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Private by Design</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Models, search, and data stay on your device. Your work never leaves your hands.</p>
-          </div>
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-lock text-white text-[20px]"></i></div>
+          <div><h3 class="font-semibold text-white tracking-tight">Private by Design</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Models, search, and data stay on your device. Your work never leaves your hands.</p></div>
         </div>
         <div class="mt-auto"></div>
       </article>
-
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
-            <i class="ph-light ph-open-ai-logo text-white text-[20px]"></i>
-          </div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Industry-leading intelligence, fine-tuned with deep legal expertise..</p>
-          </div>
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph-light ph-open-ai-logo text-white text-[20px]"></i></div>
+          <div><h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Industry-leading intelligence, fine-tuned with deep legal expertise..</p></div>
         </div>
         <div class="mt-auto"></div>
       </article>
-
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform card-glass">
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Legal Knowledge Base</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Trusted by government. Curated by leading counsel. Built for absolute clarity.</p>
-          </div>
+          <div><h3 class="font-semibold text-white tracking-tight">Legal Knowledge Base</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Trusted by government. Curated by leading counsel. Built for absolute clarity.</p></div>
         </div>
         <div class="mt-auto"></div>
       </article>
@@ -462,7 +318,6 @@
 
   <!-- COUNSEL FOR EVERYONE -->
   <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-24 pb-0 bg-white">
-    <!-- Decorative glows -->
     <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
       <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
       <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
@@ -473,34 +328,22 @@
     <div class="mission-wrap relative z-10 mx-auto max-w-[900px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
       <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Mission</div>
       <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Counsel for Everyone</h2>
-      <p class="mx-auto mt-4 max-w-[650px] text-center text-lg leading-relaxed text-neutral-700">
-        OpenCounsel makes legal intelligence as accessible as the internet itself.
-        No barriers. No gatekeepers. Just powerful, private counsel — for anyone, anywhere.
-      </p>
+      <p class="mx-auto mt-4 max-w-[650px] text-center text-lg leading-relaxed text-neutral-700">OpenCounsel makes legal intelligence as accessible as the internet itself. No barriers. No gatekeepers. Just powerful, private counsel — for anyone, anywhere.</p>
       <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
 
       <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal grid-stretch">
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p class="font-semibold text-neutral-900">Accessible</p>
-          </div>
+          <div class="flex items-center gap-3"><svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg><p class="font-semibold text-neutral-900">Accessible</p></div>
           <p class="mt-2 text-sm text-neutral-600">Powerful legal AI, designed for everyone.</p>
           <div class="mt-auto"></div>
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p class="font-semibold text-neutral-900">Private</p>
-          </div>
+          <div class="flex items-center gap-3"><svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg><p class="font-semibold text-neutral-900">Private</p></div>
           <p class="mt-2 text-sm text-neutral-600">Runs locally. Your data never leaves your device.</p>
           <div class="mt-auto"></div>
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24"  fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p class="font-semibold text-neutral-900">Verified</p>
-          </div>
+          <div class="flex items-center gap-3"><svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24"  fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg><p class="font-semibold text-neutral-900">Verified</p></div>
           <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
           <div class="mt-auto"></div>
         </div>
@@ -513,7 +356,6 @@
     </div>
   </section>
 
-  <!-- Secure Local Yours -->
   <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
     <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
       <div>
@@ -526,51 +368,27 @@
   <!-- FEATURES -->
   <section id="features" class="mx-auto max-w-[1200px] oc-container reveal pt-0 mb-10 md:mb-10" style="padding-top:0px">
     <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Verifiable Outputs</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Every answer, backed by sources. Every step, documented.</p>
-          </div>
-        </div>
+        <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div><div><h3 class="font-semibold text-white tracking-tight">Verifiable Outputs</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Every answer, backed by sources. Every step, documented.</p></div></div>
         <div class="mt-auto"></div>
       </article>
-
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Custom Databases</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Curated case law, contracts, filings, and legal statistics — all in one place.</p>
-          </div>
-        </div>
+        <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div><div><h3 class="font-semibold text-white tracking-tight">Custom Databases</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Curated case law, contracts, filings, and legal statistics — all in one place.</p></div></div>
         <div class="mt-auto"></div>
       </article>
-
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Your Local Library</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Build your own on-disk databases. Drag-and-drop files for instant semantic search.</p>
-          </div>
-        </div>
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform card-glass">
+        <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div><div><h3 class="font-semibold text-white tracking-tight">Your Local Library</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Build your own on-disk databases. Drag-and-drop files for instant semantic search.</p></div></div>
         <div class="mt-auto"></div>
       </article>
     </div>
   </section>
 
-  <!-- DOWNLOAD CTA -->
   <section id="download" class="section-clip mx-auto max-w-[1200px] oc-container mt-24 reveal">
     <div class="scroll-fade g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
       <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-semibold text-white">Get OpenCounsel</h2>
-          <p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p>
-        </div>
+        <div><h2 class="text-2xl md:text-3xl font-semibold text-white">Get OpenCounsel</h2><p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p></div>
         <div class="flex flex-wrap items-center gap-3">
           <a href="#" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
           <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
@@ -580,17 +398,13 @@
     </div>
   </section>
 
-  <!-- Centered animated logo -->
   <div class="mx-auto my-10 md:my-14 flex items-center justify-center">
     <span class="logo-anim LargeAniLogo" aria-label="OpenCounsel" style="--logo-size: clamp(56px, 30vw, 500px);"></span>
   </div>
 
-  <!-- FOOTER -->
   <footer class="border-t border-oc-line">
     <div class="mx-auto max-w-[1200px] oc-container py-10 flex flex-col items-center gap-6 text-oc-ink/60 text-sm">
-      <div class="text-center">
-        <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
-      </div>
+      <div class="text-center"><span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel</div>
       <div class="flex items-center gap-4">
         <a class="hover:text-oc-ink" href="#">Privacy</a>
         <a class="hover:text-oc-ink" href="#">Terms</a>
@@ -600,209 +414,102 @@
   </footer>
 
   <script>
-    // ================================
-    // GLOBAL DEMO SETTINGS
-    // ================================
+    // ===== GLOBAL =====
     window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 1.25;
-
-    // 🔊 Bass drop sound (robust with fallback)
-    window.OC_DEMO_SOUND = Object.assign({
-      enabled: true,
-      url: 'bass-drop.mp3',  // set to a valid path or leave blank for synth
-      volume: 0.9
-    }, window.OC_DEMO_SOUND || {});
-
-    let __OC_AUDIO = null;
-    let __WA_CTX = null;
+    window.OC_DEMO_SOUND = Object.assign({ enabled:true, url:'bass-drop.mp3', volume:0.9 }, window.OC_DEMO_SOUND || {});
+    let __OC_AUDIO = null, __WA_CTX = null;
 
     function measureHeader(){
       const h = document.querySelector('header');
       const px = h ? h.getBoundingClientRect().height : 56;
       document.documentElement.style.setProperty('--hdr', px + 'px');
     }
-    // Measure once on DOM ready, then debounce on resize to avoid jank
     document.addEventListener('DOMContentLoaded', measureHeader);
-    let __mhTO = null;
-    window.addEventListener('resize', ()=>{ clearTimeout(__mhTO); __mhTO = setTimeout(measureHeader, 120); });
+    let __mhTO=null; window.addEventListener('resize', ()=>{ clearTimeout(__mhTO); __mhTO=setTimeout(measureHeader,120); }, {passive:true});
 
-    function getCtx(){
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return null;
-      if (!__WA_CTX) __WA_CTX = new Ctx();
-      return __WA_CTX;
-    }
+    function getCtx(){ const Ctx = window.AudioContext || window.webkitAudioContext; if(!Ctx) return null; if(!__WA_CTX) __WA_CTX = new Ctx(); return __WA_CTX; }
     function playWithWebAudio(vol=0.9){
       try{
-        const ctx = getCtx(); if (!ctx) return;
-        const o = ctx.createOscillator(); const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(100, ctx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
-        g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(Math.max(0, Math.min(vol, 1)), ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-        o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 1.25);
-        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+        const ctx = getCtx(); if(!ctx) return;
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(100, ctx.currentTime); o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime+0.85);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(Math.max(0,Math.min(vol,1)), ctx.currentTime+0.02); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+1.2);
+        o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+1.25); if(ctx.state==='suspended') ctx.resume().catch(()=>{});
       }catch(e){}
     }
     function playBassDrop(){
-      if (!window.OC_DEMO_SOUND?.enabled) return;
+      if(!window.OC_DEMO_SOUND?.enabled) return;
       const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
       const url = (window.OC_DEMO_SOUND.url || '').trim();
-      if (url){
-        if (!__OC_AUDIO){
-          __OC_AUDIO = new Audio(url);
-          __OC_AUDIO.preload = 'auto';
-          __OC_AUDIO.addEventListener('error', () => playWithWebAudio(vol), { once:true });
-        }
-        try {
-          __OC_AUDIO.currentTime = 0; __OC_AUDIO.volume = vol; __OC_AUDIO.muted = false;
-          __OC_AUDIO.play().catch(()=> playWithWebAudio(vol));
-        } catch(e){ playWithWebAudio(vol); }
+      if(url){
+        if(!__OC_AUDIO){ __OC_AUDIO = new Audio(url); __OC_AUDIO.preload = 'auto'; __OC_AUDIO.addEventListener('error', ()=>playWithWebAudio(vol), {once:true}); }
+        try{ __OC_AUDIO.currentTime = 0; __OC_AUDIO.volume = vol; __OC_AUDIO.muted = false; __OC_AUDIO.play().catch(()=>playWithWebAudio(vol)); }catch(e){ playWithWebAudio(vol); }
         return;
       }
       playWithWebAudio(vol);
     }
-    function unlockAudio(){
-      try{ const ctx = getCtx(); if (ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{}); }catch(e){}
-      try{ if (__OC_AUDIO) __OC_AUDIO.play().catch(()=>{}); }catch(e){}
-    }
-    ['pointerdown','click','touchstart','keydown'].forEach(evt => {
-      window.addEventListener(evt, unlockAudio, { once:true, passive:true });
-    });
+    function unlockAudio(){ try{ const ctx=getCtx(); if(ctx && ctx.state==='suspended') ctx.resume().catch(()=>{});}catch(e){} try{ if(__OC_AUDIO) __OC_AUDIO.play().catch(()=>{});}catch(e){} }
+    ['pointerdown','click','touchstart','keydown'].forEach(evt=>window.addEventListener(evt,unlockAudio,{once:true,passive:true}));
 
-    // Year
     const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
 
-    // Scroll reveal (one-shot)
-    const io = new IntersectionObserver((entries)=>{
-      for (const e of entries) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }
-    },{threshold:.12});
+    const io = new IntersectionObserver((entries)=>{ for (const e of entries){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} } }, {threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-    // ===== MOBILE SLIDE-IN MENU =====
+    // Mobile menu
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const mobileMenu   = document.getElementById('mobileMenu');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
-
-    function openMenu() {
-      if (window.matchMedia('(min-width: 768px)').matches) return;
-      mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
-      mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
-      hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
-      document.body.classList.add('overflow-hidden');
-    }
-    function closeMenu() {
-      mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
-      hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
-      document.body.classList.remove('overflow-hidden');
-      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
-    }
-
+    function openMenu(){ if (window.matchMedia('(min-width: 768px)').matches) return; mobileMenu.style.display='block'; void mobileMenu.offsetWidth; mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active'); hamburgerBtn.setAttribute('aria-expanded','true'); mobileMenu.setAttribute('aria-hidden','false'); document.body.classList.add('overflow-hidden'); }
+    function closeMenu(){ mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active'); hamburgerBtn.setAttribute('aria-expanded','false'); mobileMenu.setAttribute('aria-hidden','true'); document.body.classList.remove('overflow-hidden'); setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display='none'; }, 550); }
     hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
     closeMenuBtn?.addEventListener('click', closeMenu);
     mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
-
-    const mq = window.matchMedia('(min-width: 768px)');
-    function handleMQ(e){ if (e.matches) closeMenu(); }
-    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
-
+    const mq = window.matchMedia('(min-width: 768px)'); function handleMQ(e){ if (e.matches) closeMenu(); } if(mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
 
-    window.addEventListener('load', () => {
-      const pageBlur = document.getElementById('pageBlur');
-      if (!pageBlur) return; pageBlur.classList.add('hide'); setTimeout(() => pageBlur.remove(), 1300);
-    });
+    window.addEventListener('load', ()=>{ const pageBlur=document.getElementById('pageBlur'); if(!pageBlur) return; pageBlur.classList.add('hide'); setTimeout(()=>pageBlur.remove(),1300); });
 
-    // ================================
-    // BLUR-ON-SCROLL OBSERVER (LOOPING)
-    // ================================
-    const sbo = new IntersectionObserver((entries) => {
-      for (const e of entries) { e.isIntersecting ? e.target.classList.add('in-view') : e.target.classList.remove('in-view'); }
-    }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
-    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+    const sbo = new IntersectionObserver((entries)=>{ for(const e of entries){ e.isIntersecting ? e.target.classList.add('in-view') : e.target.classList.remove('in-view'); } }, {threshold:.35, rootMargin:"-12% 0px -12% 0px"});
+    document.querySelectorAll('.scroll-fade').forEach(el=>sbo.observe(el));
 
     // ===== Helpers =====
-    function sp(ms){
-      const f = (typeof window.OC_DEMO_SPEED === 'number' && window.OC_DEMO_SPEED > 0) ? window.OC_DEMO_SPEED : 1.0;
-      return ms * f;
-    }
+    function sp(ms){ const f = (typeof window.OC_DEMO_SPEED === 'number' && window.OC_DEMO_SPEED > 0) ? window.OC_DEMO_SPEED : 1.0; return ms * f; }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    // ===== Chat viewport autoscroll (no visible scrollbar) =====
+    // ===== Chat Autoscroll =====
     const viewport = document.getElementById('chatViewport');
-    let autoScroll = true;
-    let _scrollRAF = null;
-
-    function nearBottom(px=40){
-      if (!viewport) return true;
-      return (viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight) <= px;
-    }
-    function scheduleAutoScroll(){
-      if (!autoScroll || !viewport) return;
-      if (_scrollRAF) return;
-      _scrollRAF = requestAnimationFrame(()=>{
-        viewport.scrollTop = viewport.scrollHeight;
-        _scrollRAF = null;
-      });
-    }
+    let autoScroll = true, _scrollRAF = null;
+    function nearBottom(px=40){ if(!viewport) return true; return (viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight) <= px; }
+    function scheduleAutoScroll(){ if (!autoScroll || !viewport) return; if (_scrollRAF) return; _scrollRAF = requestAnimationFrame(()=>{ viewport.scrollTop = viewport.scrollHeight; _scrollRAF = null; }); }
     function setAutoScrollOn(){ autoScroll = true; scheduleAutoScroll(); }
     function setAutoScrollOff(){ autoScroll = false; }
+    viewport?.addEventListener('scroll', ()=>{ if (nearBottom()) setAutoScrollOn(); else setAutoScrollOff(); }, {passive:true});
 
-    viewport?.addEventListener('scroll', ()=>{ if (nearBottom()) setAutoScrollOn(); else setAutoScrollOff(); }, { passive:true });
-
-    // Typewriter for plain text
     function typewriter(el, text, min=10, max=18){
       return new Promise((resolve)=>{
-        let i = 0;
-        el.textContent = '';
-        const tn = document.createTextNode('');
-        el.appendChild(tn);
-        (function tick(){
-          tn.textContent = text.slice(0, i++);
-          if (i % 2 === 0) scheduleAutoScroll();
-          if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
-          else resolve();
-        })();
+        let i=0; el.textContent=''; const tn=document.createTextNode(''); el.appendChild(tn);
+        (function tick(){ tn.textContent=text.slice(0,i++); if(i%2===0) scheduleAutoScroll(); if(i<=text.length) setTimeout(tick, sp(rand(min,max))); else resolve(); })();
       });
     }
-
-    // Stream HTML preserving structure
     async function streamHTML(el, html, charMin=10, charMax=18){
-      const container = document.createElement('div');
-      container.innerHTML = html.trim();
-
-      async function walk(srcNode, dstParent){
-        const children = Array.from(srcNode.childNodes);
-        for (const child of children){
-          if (child.nodeType === Node.TEXT_NODE){
-            const text = child.textContent || '';
-            await new Promise(res=>{
-              let i=0;
-              const tn = document.createTextNode('');
-              dstParent.appendChild(tn);
-              (function tick(){
-                tn.textContent = text.slice(0, i++);
-                if (i % 2 === 0) scheduleAutoScroll();
-                if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
-                else res();
-              })();
+      const container=document.createElement('div'); container.innerHTML=html.trim();
+      async function walk(src,dst){
+        for(const child of Array.from(src.childNodes)){
+          if(child.nodeType===Node.TEXT_NODE){
+            const text=child.textContent||'';
+            await new Promise(res=>{ let i=0; const tn=document.createTextNode(''); dst.appendChild(tn);
+              (function tick(){ tn.textContent=text.slice(0,i++); if(i%2===0) scheduleAutoScroll(); if(i<=text.length) setTimeout(tick, sp(rand(charMin,charMax))); else res(); })();
             });
-          } else if (child.nodeType === Node.ELEMENT_NODE){
-            const clone = child.cloneNode(false);
-            dstParent.appendChild(clone);
-            scheduleAutoScroll();
-            await walk(child, clone);
+          } else if (child.nodeType===Node.ELEMENT_NODE){
+            const clone=child.cloneNode(false); dst.appendChild(clone); scheduleAutoScroll(); await walk(child,clone);
           }
         }
       }
-      el.innerHTML = '';
-      await walk(container, el);
+      el.innerHTML=''; await walk(container, el);
     }
 
-    // ================================
-    // LIVE CHAT DEMO (bubbles, with embedded document)
-    // ================================
+    // ===== Chat Demo =====
     (function chatDemo(){
       const wrap = document.getElementById('chat-demo');
       const list = document.getElementById('demoMessages');
@@ -833,175 +540,95 @@
         `},
       ];
 
-      function clearList(){ list.innerHTML = ''; scheduleAutoScroll(); }
-
+      function clearList(){ list.innerHTML=''; scheduleAutoScroll(); }
       function appendUser(text){
         const node = tplU.content.cloneNode(true);
         const bubble = node.querySelector('.bubble-user');
-        list.appendChild(node);
-        scheduleAutoScroll();
+        list.appendChild(node); scheduleAutoScroll();
         return typewriter(bubble, text, 14, 18);
       }
-
       function appendBotStreaming(finalHTML){
         const node = tplB.content.cloneNode(true);
-        const bubble  = node.querySelector('.bubble-bot');
-        const thinkEl = bubble.querySelector('.ai-think');
-        const finalEl = bubble.querySelector('.ai-final');
+        const bubble=node.querySelector('.bubble-bot');
+        const thinkEl=bubble.querySelector('.ai-think');
+        const finalEl=bubble.querySelector('.ai-final');
 
-        list.appendChild(node);
-        scheduleAutoScroll();
-
-        // animated "Thinking..." with dots
-        let dots = 0;
-        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
+        list.appendChild(node); scheduleAutoScroll();
+        let dots=0; const dotsTimer=setInterval(()=>{ dots=(dots+1)%4; thinkEl.textContent='Thinking'+'.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
 
         return new Promise((resolve)=>{
           setTimeout(async ()=>{
             clearInterval(dotsTimer);
-            thinkEl.classList.add('fade-away');
-            setTimeout(()=>{ thinkEl.remove(); }, 380);
-
-            finalEl.classList.remove('hidden');
-            finalEl.style.opacity = 0;
-            requestAnimationFrame(()=> {
-              finalEl.style.transition = 'opacity .28s ease';
-              finalEl.style.opacity = 1;
-            });
-
+            thinkEl.classList.add('fade-away'); setTimeout(()=>thinkEl.remove(),380);
+            finalEl.classList.remove('hidden'); finalEl.style.opacity=0;
+            requestAnimationFrame(()=>{ finalEl.style.transition='opacity .28s ease'; finalEl.style.opacity=1; });
             await streamHTML(finalEl, finalHTML, 9, 16);
             resolve();
           }, sp(700 + Math.random()*600));
         });
       }
-
-      // ---------- Embedded Document in bot bubble ----------
       function appendBotDoc(){
         const node = tplB.content.cloneNode(true);
-        const bubble  = node.querySelector('.bubble-bot');
-        const thinkEl = bubble.querySelector('.ai-think');
-        const finalEl = bubble.querySelector('.ai-final');
+        const bubble=node.querySelector('.bubble-bot');
+        const thinkEl=bubble.querySelector('.ai-think');
+        const finalEl=bubble.querySelector('.ai-final');
 
-        list.appendChild(node);
-        scheduleAutoScroll();
-
-        let dots = 0;
-        thinkEl.textContent = 'Drafting lien document';
-        const dotsTimer = setInterval(()=>{
-          dots = (dots + 1) % 4;
-          thinkEl.textContent = 'Drafting lien document' + '.'.repeat(dots);
-          scheduleAutoScroll();
-        }, sp(300));
+        list.appendChild(node); scheduleAutoScroll();
+        let dots=0; thinkEl.textContent='Drafting lien document';
+        const dotsTimer=setInterval(()=>{ dots=(dots+1)%4; thinkEl.textContent='Drafting lien document'+'.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
 
         return new Promise((resolve)=>{
           setTimeout(async ()=>{
             clearInterval(dotsTimer);
-            thinkEl.classList.add('fade-away');
-            setTimeout(()=>{ thinkEl.remove(); }, 380);
+            thinkEl.classList.add('fade-away'); setTimeout(()=>thinkEl.remove(),380);
+            finalEl.classList.remove('hidden'); finalEl.style.opacity=0;
 
-            finalEl.classList.remove('hidden');
-            finalEl.style.opacity = 0;
+            const intro=document.createElement('div'); intro.className='text-[13px] mb-2'; intro.innerHTML='<strong>Generated:</strong> Builders Lien Claim (preview)'; finalEl.appendChild(intro);
+            const docPage=document.createElement('div'); docPage.className='doc-page'; finalEl.appendChild(docPage); scheduleAutoScroll();
+            const band=document.createElement('div'); band.className='doc-brand-band brand-gradient breathing'; docPage.appendChild(band);
+            const docContent=document.createElement('div'); docContent.className='mt-3'; docPage.appendChild(docContent);
 
-            const intro = document.createElement('div');
-            intro.className = 'text-[13px] mb-2';
-            intro.innerHTML = '<strong>Generated:</strong> Builders Lien Claim (preview)';
-            finalEl.appendChild(intro);
-
-            const docPage = document.createElement('div');
-            docPage.className = 'doc-page';
-            finalEl.appendChild(docPage);
-            scheduleAutoScroll();
-
-            const band = document.createElement('div');
-            band.className = 'doc-brand-band brand-gradient breathing';
-            docPage.appendChild(band);
-
-            const docContent = document.createElement('div');
-            docContent.className = 'mt-3';
-            docPage.appendChild(docContent);
-
-            requestAnimationFrame(()=> {
-              finalEl.style.transition = 'opacity .28s ease';
-              finalEl.style.opacity = 1;
-            });
+            requestAnimationFrame(()=>{ finalEl.style.transition='opacity .28s ease'; finalEl.style.opacity=1; });
 
             await docAnimate(docContent);
             resolve();
           }, sp(900 + Math.random()*700));
         });
       }
-
-      // Document animation helpers
       function docAnimate(container){
         function addLine(html, cls='doc-p'){
-          const el = document.createElement('div');
-          el.className = `doc-fade ${cls}`;
-          el.innerHTML = html;
-          container.appendChild(el);
-          requestAnimationFrame(()=> el.classList.add('in'));
-          scheduleAutoScroll();
-          return el;
+          const el=document.createElement('div'); el.className=`doc-fade ${cls}`; el.innerHTML=html; container.appendChild(el);
+          requestAnimationFrame(()=> el.classList.add('in')); scheduleAutoScroll(); return el;
         }
         function ensureBullets(){
-          let ul = container.querySelector('ul.doc-bullets');
-          if (!ul){
-            ul = document.createElement('ul');
-            ul.className = 'doc-bullets doc-fade';
-            container.appendChild(ul);
-            requestAnimationFrame(()=> ul.classList.add('in'));
-            scheduleAutoScroll();
-          }
+          let ul=container.querySelector('ul.doc-bullets');
+          if(!ul){ ul=document.createElement('ul'); ul.className='doc-bullets doc-fade'; container.appendChild(ul); requestAnimationFrame(()=>ul.classList.add('in')); scheduleAutoScroll(); }
           return ul;
         }
         function addBullet(text){
-          const ul = ensureBullets();
-          const li = document.createElement('li');
-          li.textContent = text;
-          li.style.opacity = 0; li.style.transform = 'translateY(4px)';
-          ul.appendChild(li);
-          requestAnimationFrame(()=>{
-            li.style.transition = 'opacity .22s ease, transform .22s ease';
-            li.style.opacity = 1; li.style.transform = 'translateY(0)';
-          });
-          scheduleAutoScroll();
+          const ul=ensureBullets(); const li=document.createElement('li'); li.textContent=text; li.style.opacity=0; li.style.transform='translateY(4px)'; ul.appendChild(li);
+          requestAnimationFrame(()=>{ li.style.transition='opacity .22s ease, transform .22s ease'; li.style.opacity=1; li.style.transform='translateY(0)'; }); scheduleAutoScroll();
         }
-        function wait(ms){ return new Promise(r => setTimeout(r, sp(ms))); }
+        function wait(ms){ return new Promise(r=>setTimeout(r, sp(ms))); }
 
-        // The scripted build
         return (async ()=>{
           addLine('<div class="doc-h1">Builders Lien Claim</div>');
           addLine('<div class="doc-sub">Supreme Court of British Columbia</div>');
-          addLine('<div class="doc-rule"></div>', ''); 
-          await wait(360);
-
+          addLine('<div class="doc-rule"></div>', ''); await wait(360);
           addLine('<div class="doc-sec">Between</div>');
           addLine('<div class="doc-p"><strong>North Shore Renovations Ltd.</strong> — Claimant</div>');
-          addLine('<div class="doc-p"><strong>Harbourview Developments Inc.</strong> — Respondent</div>');
-          await wait(420);
-
+          addLine('<div class="doc-p"><strong>Harbourview Developments Inc.</strong> — Respondent</div>'); await wait(420);
           addLine('<div class="doc-sec">Property</div>');
-          addLine('<div class="doc-small">Strata Lot 12, District Lot 274, Group 1, New Westminster District, Plan LMS1234 (123 Seaside Ave, North Vancouver, BC)</div>');
-          await wait(420);
-
+          addLine('<div class="doc-small">Strata Lot 12, District Lot 274, Group 1, New Westminster District, Plan LMS1234 (123 Seaside Ave, North Vancouver, BC)</div>'); await wait(420);
           addLine('<div class="doc-sec">Amount Claimed</div>');
-          addLine('<div class="doc-p"><strong>$28,740.00</strong> (labour and materials), plus contractual interest and costs.</div>');
-          await wait(420);
-
-          addLine('<div class="doc-sec">Particulars</div>');
-          await wait(200);
-          addBullet('Interior framing, drywall, and finishing per PO #7842.');
-          await wait(160);
-          addBullet('Extras: change orders CO-3, CO-7 (owner-approved).');
-          await wait(160);
-          addBullet('Substantial completion: June 18, 2025; holdback unpaid.');
-          await wait(160);
-          addBullet('Notice of lien to be filed within the statutory period.');
-          await wait(420);
-
+          addLine('<div class="doc-p"><strong>$28,740.00</strong> (labour and materials), plus contractual interest and costs.</div>'); await wait(420);
+          addLine('<div class="doc-sec">Particulars</div>'); await wait(200);
+          addBullet('Interior framing, drywall, and finishing per PO #7842.'); await wait(160);
+          addBullet('Extras: change orders CO-3, CO-7 (owner-approved).'); await wait(160);
+          addBullet('Substantial completion: June 18, 2025; holdback unpaid.'); await wait(160);
+          addBullet('Notice of lien to be filed within the statutory period.'); await wait(420);
           addLine('<div class="doc-sec">Declaration</div>');
-          addLine('<div class="doc-p">The Claimant claims a lien against the Estate in Fee Simple of the Lands and Premises described above under the <em>Builders Lien Act</em> (British Columbia).</div>');
-          await wait(420);
-
+          addLine('<div class="doc-p">The Claimant claims a lien against the Estate in Fee Simple of the Lands and Premises described above under the <em>Builders Lien Act</em> (British Columbia).</div>'); await wait(420);
           addLine('<div class="doc-rule"></div>', '');
           addLine('<div class="doc-small">Dated at Vancouver, British Columbia, this 14th day of August, 2025.</div>');
           addLine('<div class="doc-p" style="margin-top:22px;">__________________________________</div>');
@@ -1009,97 +636,95 @@
         })();
       }
 
-      // ---------- Smooth "Apple-like" snap takeover ----------
+      // ===== Apple-like center snap (no interference with other sections) =====
       let startedOnce = false;
-      let lastY = window.scrollY, scrollingDown = false;
-      let snapAnimating = false, snapCooldown = false;
+      let lastY = window.scrollY;
+      let scrollingDown = false;
+      let snapAnimating = false;
+      let snapCooldown = false;
+      let centerHoldStart = 0;
+      let inViewLarge = false;
 
-      window.addEventListener('scroll', ()=>{ scrollingDown = window.scrollY > lastY; lastY = window.scrollY; }, { passive:true });
+      window.addEventListener('scroll', ()=>{ scrollingDown = window.scrollY > lastY; lastY = window.scrollY; onScrollCheck(); }, {passive:true});
 
-      function chatTopOffset(){
+      const visObs = new IntersectionObserver((entries)=>{
+        for(const e of entries){
+          if(e.target !== wrap) continue;
+          inViewLarge = e.isIntersecting && e.intersectionRatio >= 0.6;
+          if(!inViewLarge) centerHoldStart = 0;
+        }
+      }, { threshold:[0,0.4,0.6,0.8,1] });
+      visObs.observe(wrap);
+
+      function chatTopTargetY(){
         const hdr = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr')) || 56;
         const rect = wrap.getBoundingClientRect();
-        return Math.max(0, window.scrollY + rect.top - hdr - 1);
+        return Math.max(0, window.scrollY + rect.top - hdr);
       }
-
       function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
       function animateToY(targetY, duration){
-        if (snapAnimating) return;
-        snapAnimating = true;
-        const startY = window.scrollY;
-        const dist = targetY - startY;
-        const dur = Math.max(350, Math.min(duration || 650, 800));
-        const t0 = performance.now();
+        if(snapAnimating) return Promise.resolve();
+        return new Promise(resolve=>{
+          snapAnimating = true;
+          const startY = window.scrollY;
+          const dist   = targetY - startY;
+          const dur    = Math.max(350, Math.min(duration || 650, 800));
+          const t0 = performance.now();
 
-        function step(now){
-          if (!snapAnimating) return; // cancelled
-          const t = Math.min(1, (now - t0) / dur);
-          window.scrollTo(0, startY + dist * easeOutCubic(t));
-          if (t < 1) requestAnimationFrame(step);
-          else { snapAnimating = false; snapCooldown = true; setTimeout(()=>snapCooldown=false, 350); }
-        }
-        requestAnimationFrame(step);
+          function step(now){
+            if(!snapAnimating) { resolve(); return; }
+            const t = Math.min(1, (now - t0) / dur);
+            window.scrollTo(0, startY + dist * easeOutCubic(t));
+            if (t < 1) requestAnimationFrame(step);
+            else { snapAnimating = false; snapCooldown = true; setTimeout(()=>snapCooldown=false, 450); resolve(); }
+          }
+          requestAnimationFrame(step);
+        });
       }
-
-      // Cancel snap if the user actively scrolls during animation
-      ['wheel','touchstart','keydown'].forEach(evt=>{
-        window.addEventListener(evt, ()=>{ if (snapAnimating) snapAnimating = false; }, { passive:true });
+      ['wheel','touchmove','keydown'].forEach(evt=>{
+        window.addEventListener(evt, ()=>{ if(snapAnimating) snapAnimating = false; }, {passive:true});
       });
 
-      // Trigger when ~40% of chat is visible on downward scroll
-      const snapObs = new IntersectionObserver((entries)=>{
-        for (const e of entries){
-          if (e.target !== wrap) continue;
-          if (snapCooldown) continue;
-          if (e.isIntersecting && scrollingDown && !snapAnimating){
-            const ratio = e.intersectionRatio;
-            if (ratio > 0.4){
-              const target = chatTopOffset();
-              const distance = Math.abs(window.scrollY - target);
-              const duration = 420 + Math.min(380, distance * 0.25); // momentum-like
-              animateToY(target, duration);
-              if (!startedOnce){ startedOnce = true; setTimeout(()=> run(), 160); }
-            }
+      function onScrollCheck(){
+        if (snapAnimating || snapCooldown || !inViewLarge) return;
+        const rect = wrap.getBoundingClientRect();
+        const viewportCenter = window.innerHeight / 2;
+        const chatCenter = rect.top + rect.height / 2;
+        const delta = chatCenter - viewportCenter; // + below, - above
+        const nearCenter = Math.abs(delta) < 24;   // sweet spot
+        if (nearCenter){
+          if (!centerHoldStart) centerHoldStart = performance.now();
+          if ((performance.now() - centerHoldStart) > 100){
+            centerHoldStart = 0;
+            const target = chatTopTargetY();
+            const distance = Math.abs(window.scrollY - target);
+            const duration = 420 + Math.min(320, distance * 0.25);
+            animateToY(target, duration).then(()=>{
+              // Start demo only once we are snapped in perfectly
+              if (!startedOnce){
+                startedOnce = true;
+                setTimeout(()=> run(), 120);
+              }
+            });
+          }
+        } else {
+          centerHoldStart = 0;
+          // If user manually holds the center without snapping distance (already aligned)
+          if (!startedOnce && Math.abs(rect.top - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr'))||56)) < 8){
+            startedOnce = true; setTimeout(()=> run(), 120);
           }
         }
-      }, { threshold: [0.25, 0.4, 0.6, 0.8, 1] });
-      snapObs.observe(wrap);
+      }
 
-      // Deep link support
-      document.querySelectorAll('a[href="#chat-demo"]').forEach(a=>{
-        a.addEventListener('click', (evt) => {
-          evt.preventDefault();
-          const target = chatTopOffset();
-          animateToY(target, 600);
-          if (!startedOnce){ startedOnce = true; setTimeout(()=> run(), 160); }
-        });
-      });
-
-      // Autoplay if user lands with chat already near view on load (no hero jump)
-      window.addEventListener('load', ()=>{
-        const rect = wrap.getBoundingClientRect();
-        const hdr = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr')) || 56;
-        // Only snap if it's already significantly in view on first paint
-        if (rect.top >= hdr && rect.top < window.innerHeight * 0.35){
-          const target = chatTopOffset();
-          animateToY(target, 520);
-          if (!startedOnce){ startedOnce = true; setTimeout(()=> run(), 160); }
-        }
-      });
-
-      // Demo runner
-      function clearList(){ list.innerHTML = ''; scheduleAutoScroll(); }
+      // ===== Run Demo =====
       async function run(){
         clearList();
         setAutoScrollOn();
         playBassDrop();
 
         for (const m of msgs){
-          if (m.role === 'user') {
-            await appendUser(m.text);
-          } else {
-            await appendBotStreaming(m.final);
-          }
+          if (m.role === 'user') { await appendUser(m.text); }
+          else { await appendBotStreaming(m.final); }
         }
         await appendBotDoc();
         scheduleAutoScroll();
