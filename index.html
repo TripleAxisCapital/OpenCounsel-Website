@@ -140,7 +140,6 @@
       justify-items: center;
       padding: 0 var(--pad-mobile-x);
       overflow-anchor: none;         /* prevent page jump when content streams */
-      contain: layout style paint;   /* isolate layout to avoid hero shifts   */
       will-change: transform;
     }
     @media (min-width: 1024px){ #chat-demo{ padding: 0 var(--pad-desktop-x); } }
@@ -156,7 +155,6 @@
       -ms-overflow-style: none; scrollbar-width: none;
       overflow-anchor: none;
       pointer-events: none;          /* user cannot scroll/drag the chat */
-      contain: layout paint;
     }
     .chat-viewport::-webkit-scrollbar{ display:none; }
 
@@ -279,6 +277,7 @@
         <div id="demoMessages" class="chat-stream"></div>
       </div>
     </div>
+
     <!-- Templates -->
     <template id="demoTplUser">
       <div class="msg-row msg-user"><div class="bubble bubble-user"></div></div>
@@ -486,7 +485,6 @@
     // ===== Chat Autoscroll (programmatic only) =====
     const viewport = document.getElementById('chatViewport');
     let autoScroll = true, _scrollRAF = null;
-    function nearBottom(px=40){ if(!viewport) return true; return (viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight) <= px; }
     function scheduleAutoScroll(){ if (!autoScroll || !viewport) return; if (_scrollRAF) return; _scrollRAF = requestAnimationFrame(()=>{ viewport.scrollTop = viewport.scrollHeight; _scrollRAF = null; }); }
     function setAutoScrollOn(){ autoScroll = true; scheduleAutoScroll(); }
     function setAutoScrollOff(){ autoScroll = false; }
@@ -648,15 +646,21 @@
       let snapAnimating = false;
       let snapArmed = true;        // allow a single snap
       let centerHoldStart = 0;
+      let firstPrimeQueued = false;
 
-      // Show first message immediately when snap begins
+      // Ensure first message is visible ASAP so the chat is never “empty”
+      document.addEventListener('DOMContentLoaded', ()=>{
+        // If the user has already scrolled past by the time DOM is ready, it still shows—harmless.
+        primeFirstMessage();
+      });
+
       async function primeFirstMessage(){
         if (primed) return;
         primed = true;
         clearList();
         setAutoScrollOn();
         playBassDrop();
-        await appendUser(msgs[0].text); // animate first message right at the start
+        await appendUser(msgs[0].text); // animate first message right away
       }
 
       function chatTopTargetY(){
@@ -711,7 +715,7 @@
           if ((performance.now() - centerHoldStart) > 100){
             centerHoldStart = 0;
             snapArmed = false; // only once
-            // Prime first message immediately (visible during the snap)
+            // make sure first is primed (if not already)
             primeFirstMessage().then(async ()=>{
               const target = chatTopTargetY();
               const distance = Math.abs(window.scrollY - target);
@@ -739,13 +743,8 @@
         }
         await appendBotDoc();
         scheduleAutoScroll();
-        // After the demo finishes, stop forcing autoscroll; user can scroll past the section naturally.
-        setAutoScrollOff();
+        setAutoScrollOff(); // let user scroll past naturally
       }
-
-      // Optional: render a static placeholder height immediately so layout is stable
-      // (no content flush—chat runs only when centered)
-      // But we *do* want the first message immediately when snapping begins, handled above.
     })();
   </script>
 </body>
