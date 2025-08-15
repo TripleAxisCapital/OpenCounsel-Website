@@ -1,3 +1,5 @@
+  <!-- Sync Successful -->
+
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -5,10 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenCounsel — Private, Local AI Legal Assistant</title>
   <meta name="description" content="OpenCounsel: a private, local AI legal assistant with RAG, document search, and case analysis. Download for macOS, Windows, and Linux." />
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Icons + Tailwind -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -17,13 +22,7 @@
         extend: {
           fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
           colors: {
-            oc: {
-              ink:'#0A0D10',
-              soft:'#F5F7F9',
-              line:'#E7EDF2',
-              accent:'#5B8CFF',
-              lilac:'#E7E7FF'
-            }
+            oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' }
           },
           boxShadow: {
             card:'0 6px 30px rgba(16,24,40,0.08)',
@@ -33,320 +32,644 @@
       }
     }
   </script>
+
   <style>
-    /* Selection */
+    /* ================================
+       GLOBAL CONTROLS
+       ================================ */
+    :root {
+      --pad-mobile-x: 24px;   /* mobile/tablet */
+      --pad-desktop-x: 32px;  /* desktop */
+      --hamburger-inset: 13px; /* push hamburger inward on mobile */
+
+      /* ==== Global Scroll-Blur Controls ==== */
+      --scroll-blur-start: 16px;
+      --scroll-blur-end: 0px;
+      --scroll-blur-duration: 1500ms;
+      --scroll-blur-ease: cubic-bezier(.2,.8,.2,1);
+      --scroll-blur-opacity-start: .65;
+      --scroll-blur-opacity-end: 1;
+      --scroll-blur-translate: 8px;
+    }
+
+    /* Kill horizontal scroll without breaking sticky */
+    html, body { max-width: 100%; overflow-x: clip !important; }
+    @supports not (overflow-x: clip) {
+      html, body { overflow-x: hidden !important; }
+    }
+    /* Clip horizontally for sections with wide absolute decorations */
+    .section-clip { position: relative; overflow-x: clip; }
+
+    .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
+    @media (min-width: 1024px) {
+      .oc-container { padding-left: var(--pad-desktop-x); padding-right: var(--pad-desktop-x); }
+    }
     ::selection{background:#5B8CFF;color:#fff}
 
-    /* Motion primitives (respect reduced motion) */
     @media (prefers-reduced-motion: no-preference) {
-      .reveal {
-        opacity: 0;
-        transform: translateY(18px) scale(.98);
-        transition: opacity .6s ease, transform .6s ease;
+      .reveal { opacity:0; transform: translateY(18px) scale(.98); transition: opacity .6s ease, transform .6s ease; }
+      .reveal.in { opacity:1; transform: translateY(0) scale(1); }
+      .tilt:hover{ transform: translateY(-2px) scale(1.01); }
+      .tilt{ transition: transform .25s ease; }
+    }
+
+    @keyframes logoIntro { from { transform: translateY(6px) scale(.92); opacity:0 } to { transform: translateY(0) scale(1); opacity:1 } }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* ===========================================
+       PER-SECTION GRADIENT CONTROLS (brand sweep)
+       =========================================== */
+
+    /* Hamburger (subtle brand sweep) */
+    #hamburgerBtn .hamburger {
+      --from: #00CFFFcc;
+      --via:  #0E6F5Ccc;
+      --to:   #0B1B2Bcc;
+      --angle: 135deg;
+      --speed: 16s;
+    }
+
+    /* Global defaults / logo gradient */
+    :root{
+      --from:  #0B1B2Bcc;
+      --via:   #0E6F5Ccc;
+      --to:    #00CFFFcc;
+      --speed: 16s;
+      --angle: 135deg;
+
+      --grad-from: #0B1B2Bcc;
+      --grad-via:  #0E6F5Ccc;
+      --grad-to:   #00CFFFcc;
+
+      --logo-width:  64px;
+      --logo-height: 64px;
+    }
+
+    /* HERO — flagship Navy → Teal → Cyan */
+    #home {
+      --from:  #0B1B2Bcc;
+      --via:   #0E6F5Ccc;
+      --to:    #00CFFFcc;
+      --speed: 16s;
+      --angle: 135deg;
+    }
+
+    /* EDGE / WHY IT WINS */
+    #edge {
+      --from: #0B1B2Bcc;
+      --via:  #0E6F5Ccc;
+      --to:   #0B1B2Bcc;
+      --speed: 16s;
+      --angle: 135deg;
+    }
+
+    /* Download button */
+    #downloadbtn {
+      --from: #00CFFFcc;
+      --via:  #0E6F5Ccc;
+      --to:   #C6A759cc;
+      --speed: 16s;
+      --angle: 135deg;
+    }
+
+    /* FEATURES */
+    #features {
+      --from:  #0B1B2Bcc;
+      --via:   #0E6F5Ccc;
+      --to:    #0B1B2Bcc;
+      --speed: 16s;
+      --angle: 135deg;
+    }
+
+    /* =========
+       PRIMITIVES
+       ========= */
+    .g-grad, .grad-anim{
+      background: linear-gradient(var(--angle, 135deg), var(--from, #0a1f44cc), var(--via, #0b3d3dcc), var(--to, #064420cc));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed, 16s) ease-in-out infinite;
+      will-change: background-position;
+    }
+    .animated-gradient { background-size: 300% 300%; animation: gradientShift 16s ease-in-out infinite; will-change: background-position; }
+
+    .logo-anim{
+      display:inline-block;
+      width: var(--logo-width);
+      height: var(--logo-height);
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%;
+      animation: logoIntro 800ms ease-out forwards, gradientShift 16s ease-in-out infinite;
+      -webkit-mask: url('logo.svg') no-repeat center / contain;
+              mask: url('logo.svg') no-repeat center / contain;
+    }
+
+    .grad-text{
+      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+
+    .mobile-menu { backdrop-filter: blur(8px); }
+
+    /* Solid hamburger (no icon font) */
+    .hamburger { width: 32px; height: 28px; display: inline-flex; flex-direction: column; justify-content: center; gap: 6px; }
+    .hamburger span {
+      height: 3px; width: 100%; border-radius: 9999px;
+      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      transition: transform .4s ease, opacity .2s ease;
+    }
+    /* Morph hamburger → X */
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity: 0; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
+
+    /* Mobile hamburger button + hard desktop hide */
+    #hamburgerBtn { display: flex; align-items:center; justify-content:center; height:56px; padding:0; margin-right: var(--hamburger-inset); }
+    @media (min-width: 768px) {
+      #hamburgerBtn { display: none !important; }
+      #mobileMenu   { display: none !important; }
+    }
+
+    .tap-boost { padding: 0; margin: 0; }
+
+    /* ====== RESPONSIVE GRID FIXES ====== */
+    .rows-equal { grid-auto-rows: 1fr; }
+    .grid-stretch > * { height: 100%; }
+    .card-glass { display:flex; flex-direction:column; height:100%; }
+
+    /* Mission glass max width scales on XL/2XL */
+    @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
+    @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
+
+    /* Full-page blur overlay (covers header + hero) */
+    .page-blur{
+      position: fixed; inset: 0;
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      background: rgba(255,255,255,.28);
+      z-index: 9999; pointer-events: none;
+      transition: backdrop-filter 2s ease, background-color 2s ease, opacity 2s ease;
+    }
+    .page-blur.hide{
+      backdrop-filter: blur(0); -webkit-backdrop-filter: blur(0);
+      background: rgba(255,255,255,0);
+      opacity: 0;
+    }
+    @media (prefers-reduced-motion: reduce){ .page-blur{ transition: none; } }
+
+    /* ============================
+       APPLE-LIKE SLIDE-IN MENU (NEW)
+       ============================ */
+    #mobileMenu {
+      position: fixed; inset: 0; z-index: 60;
+      display: none;                 /* shown via JS */
+      pointer-events: none;          /* re-enabled when active */
+    }
+
+    /* Scrim: WHITE and blurred initially, UNBLURS over 1s on open */
+    #mobileMenu .menu-scrim{
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.92);
+      -webkit-backdrop-filter: blur(12px);
+              backdrop-filter: blur(12px);
+      opacity: 0;
+      transition:
+        opacity 2s ease,
+        backdrop-filter 2s ease,
+        -webkit-backdrop-filter 2s ease;  /* CHANGED to 1s */
+    }
+
+    /* Sliding panel */
+    #mobileMenu .menu-panel{
+      position: absolute; top:0; left:0; height:100%; width:min(88vw, 420px);
+      background: #ffffff;
+      border-right: 1px solid rgba(0,0,0,.06);
+      box-shadow: 0 24px 60px rgba(0,0,0,.12);
+      transform: translateX(-100%);
+      opacity: .98;
+      /* Add blur-on-open, then unblur after slide finishes (delay .5s) */
+      filter: blur(12px);
+      transition:
+        transform .5s cubic-bezier(.22,.9,.22,1),
+        filter 1s ease .1s; /* 1s unblur AFTER the .5s slide */
+      display: flex; flex-direction: column;
+      padding: 18px 20px;
+    }
+
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity: 1; -webkit-backdrop-filter: blur(0px); backdrop-filter: blur(0px); }
+    #mobileMenu.active .menu-panel{ transform: translateX(0); filter: blur(0); } /* unblur when fully pulled out */
+
+    /* Header inside drawer */
+    .drawer-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding-bottom: 6px;
+    }
+    .drawer-title{
+      font-weight: 700; letter-spacing: -.01em;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%; animation: gradientShift 16s ease-in-out infinite;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      font-size: 20px;
+    }
+    .drawer-close{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.06);
+      background: rgba(255,255,255,.8);
+      transition: background .2s ease, transform .2s ease;
+    }
+    .drawer-close:hover{ background:#fff; transform: translateY(-1px); }
+
+    /* NAV links: bold + same animated green/blue gradient as header */
+    /* UPDATED: exclude CTA so it can have solid white text over animated gradient bg */
+    .drawer-nav a:not(.drawer-cta){
+      display:block; padding: 14px 2px;
+      font-weight: 700;
+      font-size: clamp(18px, 4.4vw, 20px);
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%; animation: gradientShift 16s ease-in-out infinite;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .drawer-nav a:hover{ transform: translateY(-1px); opacity: .95; }
+    .drawer-sep{ height:1px; background: linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent); margin: 8px 0 6px; }
+
+    /* Mobile menu CTA (DOWNLOAD) — exact hero look, white text centered, nothing covering bg */
+    .drawer-cta{
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;        /* center text + icon */
+      width: 100%;                    /* full-width for easy tap */
+      text-align: center;
+      position: relative;
+      color: #fff !important;         /* force white text */
+      -webkit-text-fill-color: #fff !important;
+      background-clip: border-box !important;
+      -webkit-background-clip: border-box !important;
+      overflow: hidden;
+    }
+    /* Keep the nice glow but ensure it stays behind */
+    .drawer-cta > span{ z-index: 0 !important; }
+    .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position: relative; }
+
+    /* ===============================
+       BLUR-ON-SCROLL (GLOBAL UTILITY)
+       =============================== */
+    .scroll-fade { isolation: isolate; }
+    .scroll-fade > * {
+      filter: blur(var(--scroll-blur-start));
+      opacity: var(--scroll-blur-opacity-start);
+      transform: translateY(var(--scroll-blur-translate));
+      transition:
+        filter var(--scroll-blur-duration) var(--scroll-blur-ease),
+        opacity var(--scroll-blur-duration) var(--scroll-blur-ease),
+        transform var(--scroll-blur-duration) var(--scroll-blur-ease);
+      will-change: filter, opacity, transform;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+    }
+    .scroll-fade.in-view > * {
+      filter: blur(var(--scroll-blur-end));
+      opacity: var(--scroll-blur-opacity-end);
+      transform: translateY(0);
+    }
+
+    /* Size helper for the animated logo */
+    .LargeAniLogo{ display:inline-block; width: var(--logo-size, 72px); height: var(--logo-size, 72px); }
+
+    /* Apple-style link animation (desktop header) */
+    @supports (font-variation-settings: "wght" 500) {
+      .nav-link {
+        font-variation-settings: "wght" 520;
+        transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease;
       }
-      .reveal.in {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-      .tilt:hover{
-        transform: translateY(-2px) scale(1.01);
-      }
-      .tilt{
-        transition: transform .25s ease;
+      .nav-link:hover {
+        font-variation-settings: "wght" 700;
+        letter-spacing: .01em;
+        transform: translateY(-0.5px) scale(1.02);
       }
     }
-
-    /* Logo intro */
-    @keyframes logoIntro { from { transform: translateY(6px) scale(.92); opacity:.0 } to { transform: translateY(0) scale(1); opacity:1 } }
-
-    /* Slow conic spin background */
-    @keyframes spinbg { to { transform: rotate(360deg) scale(1.08) } }
-
-    /* Animated gradient shimmer */
-    .animated-gradient {
-      background-size: 200% 200%;
-      animation: gradientShift 9s ease infinite;
-    }
-    @keyframes gradientShift {
-      0% {background-position: 0% 50%}
-      50% {background-position: 100% 50%}
-      100% {background-position: 0% 50%}
-    }
-
-    /* Button micro-interactions */
-    .btn {
-      transition: transform .15s ease, box-shadow .3s ease, background-color .2s ease, color .2s ease;
-    }
-    .btn:hover { transform: translateY(-1px) }
-    .btn:active { transform: translateY(0) scale(.98) }
-
-    /* Focus ring */
-    .focus-ring:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(91,140,255,.35);
-    }
+    @media (prefers-reduced-motion: reduce) { .nav-link { transition: none; } }
   </style>
 </head>
+
 <body class="bg-white text-oc-ink font-sans antialiased">
+  <!-- FULL-PAGE BLUR OVERLAY -->
+  <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
+
   <!-- HEADER -->
-  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-oc-line supports-[backdrop-filter]:bg-white/60">
-    <div class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+  <header class="sticky top-0 z-50 bg-white">
+    <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+      <!-- Left: Logo -->
       <div class="flex items-center gap-3">
-        <span class="font-semibold text-black animate-[logoIntro_800ms_ease-out_forwards]">OpenCounsel</span>
-        <span class="hidden sm:inline text-xs px-2 py-1 rounded-full border border-oc-line text-oc-ink/60">Local‑first</span>
+        <span class="logo-anim" role="img" aria-label="OpenCounsel"></span>
       </div>
-      <nav class="hidden md:flex items-center gap-6 text-sm">
-        <a class="hover:underline" href="#features">Features</a>
-        <a class="hover:underline" href="#edge">Why it wins</a>
-        <a class="hover:underline" href="#plans">Plans</a>
-        <a class="hover:underline" href="#screens">Screens</a>
-        <a class="hover:underline" href="#faq">FAQ</a>
+
+      <!-- Center: Desktop nav (absolute true center) -->
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#features">Features</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#edge">Why it wins</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#plans">Plans</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#screens">Screens</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#faq">FAQ</a>
       </nav>
+
+      <!-- Right: Actions -->
       <div class="flex items-center gap-2">
-        <select id="gradientSelect" class="rounded-lg border border-oc-line px-2 py-1 text-sm focus-ring">
-          <option value="from-[#0a1f44]/80 via-[#0b3d3d]/80 to-[#064420]/80">Navy → Teal‑Navy → Deep Green</option>
-          <option value="from-[#FFB7A1]/50 via-[#FFD9A8]/60 to-[#C6E8FF]/60">Sunset (Peach→Apricot→Sky)</option>
-          <option value="from-blue-200/60 via-indigo-200/50 to-purple-200/50">Blue→Indigo→Purple</option>
-          <option value="from-red-400/60 via-pink-400/50 to-orange-300/50">Red→Pink→Orange</option>
-          <option value="from-green-300/60 via-lime-300/50 to-yellow-200/50">Green→Lime→Yellow</option>
-          <option value="from-sky-300/60 via-cyan-300/50 to-teal-300/50">Sky→Cyan→Teal</option>
-          <option value="from-purple-300/60 via-pink-300/50 to-rose-300/50">Purple→Pink→Rose</option>
-          <option value="from-emerald-400/60 via-green-400/50 to-teal-400/50">Emerald→Green→Teal</option>
-          <option value="from-orange-400/60 via-amber-300/50 to-yellow-300/50">Orange→Amber→Yellow</option>
-          <option value="from-indigo-400/60 via-violet-400/50 to-fuchsia-400/50">Indigo→Violet→Fuchsia</option>
-          <option value="from-gray-700/60 via-gray-500/50 to-gray-300/50">Dark Gray→Medium Gray→Light Gray</option>
-          <option value="from-[#1e3c72]/80 via-[#2a5298]/80 to-[#00c6ff]/80">Deep Blue→Royal Blue→Light Blue</option>
-        </select>
-        <a href="#download" class="btn rounded-xl border border-oc-line px-3 py-1.5 text-sm hover:bg-oc-soft focus-ring">Download</a>
+        <!-- MOBILE: Hamburger button -->
+        <button id="hamburgerBtn"
+          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
       </div>
+    </div>
+
+    <!-- MOBILE: Apple-like SLIDE-IN MENU -->
+    <div id="mobileMenu" aria-hidden="true">
+      <div class="menu-scrim"></div>
+      <aside class="menu-panel">
+        <div class="drawer-head">
+          <span class="drawer-title">OpenCounsel</span>
+          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <nav class="drawer-nav mt-2">
+          <a href="#features">Features</a>
+          <a href="#edge">Why it wins</a>
+          <a href="#plans">Plans</a>
+          <a href="#screens">Screens</a>
+          <a href="#faq">FAQ</a>
+          <div class="drawer-sep"></div>
+          <!-- Download button: EXACT same as hero CTA -->
+          <a
+  href="#download"
+  class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+         focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+         shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+         transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+         grad-anim mt-2 w-full justify-center"
+  style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+>
+  <i class="ph ph-download text-xl"></i>
+  <span>Download</span>
+</a>
+
+        </nav>
+      </aside>
     </div>
   </header>
 
-  <!-- COLORFUL SPLASH ABOVE HERO -->
-  <section class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-6 reveal">
-    <div class="relative overflow-hidden rounded-3xl border border-oc-line">
-      <div class="absolute inset-0 -m-24 origin-center animate-[spinbg_18s_linear_infinite]">
-        <div class="h-[200%] w-[200%] bg-[conic-gradient(from_0deg_at_50%_50%,#ff80b5,#9089fc,#34d399,#22d3ee,#f59e0b,#ff80b5)]"></div>
-      </div>
-      <div class="absolute inset-0 backdrop-blur-md bg-white/50"></div>
-      <div class="relative flex items-center justify-center py-16">
-        <!-- Bigger than hero title below -->
-        <span class="font-semibold text-white text-5xl md:text-7xl">OpenCounsel</span>
-      </div>
-    </div>
-  </section>
-
   <!-- HERO -->
-  <section id="home" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-8 reveal">
-    <div class="g-grad rounded-3xl overflow-hidden border border-oc-line bg-gradient-to-r from-[#0a1f44]/80 via-[#0b3d3d]/80 to-[#064420]/80 animated-gradient">
-      <div class="p-8 md:p-12">
-        <p class="text-sm mb-2 text-white/70">Flagship app</p>
-        <h1 class="text-4xl md:text-5xl font-semibold leading-tight text-white">Private, local AI for legal research</h1>
-        <p class="mt-4 max-w-2xl text-white/80">Run models locally, search your filings with RAG, and generate motions, briefs, and checklists — all with verifiable citations and zero cloud dependency.</p>
-        <div class="mt-6 flex flex-wrap items-center gap-3 text-sm">
-          <span class="rounded-full bg-white/20 px-3 py-1 border border-white/20 text-white">v1.0 • Desktop</span>
-          <a href="#download" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus-ring"><i class="ph ph-download"></i> Download</a>
-          <a href="#features" class="inline-flex items-center gap-1 text-white hover:underline">Explore features<i class="ph ph-arrow-right"></i></a>
+  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
+    <!-- Height = screen - header, content perfectly centered -->
+    <div
+      class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+      style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
+    >
+      <!-- Hero content -->
+      <div class="flex flex-col items-center max-w-2xl">
+        <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">
+          OpenCounsel 
+        </span>
+        <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">
+          AI for law. Designed for you.
+        </p>
+        <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">
+          Local, private, and built for legal research.
+        </p>
+
+        <!-- CTA: Download (pops more) -->
+        <div class="mt-8 flex justify-center">
+          <a
+            href="#download"
+            class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                   grad-anim"
+            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
+          >
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
+                  style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+            <i class="ph ph-download text-xl"></i>
+            Download
+          </a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- TRUST BAR -->
-  <section class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-10 reveal">
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="rounded-xl border border-oc-line bg-white p-4 text-sm text-oc-ink/70 tilt">Local‑first</div>
-      <div class="rounded-xl border border-oc-line bg-white p-4 text-sm text-oc-ink/70 tilt">Citations on every answer</div>
-      <div class="rounded-xl border border-oc-line bg-white p-4 text-sm text-oc-ink/70 tilt">Encrypted workspace</div>
-      <div class="rounded-xl border border-oc-line bg-white p-4 text-sm text-oc-ink/70 tilt">No data leaves your device</div>
+  <!-- Secure Local Yours (Apple-style) -->
+  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
+    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+      <div>
+        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Secure. Local. Yours.</p>
+        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">For Everyone</span>
+      </div>
     </div>
   </section>
 
   <!-- EDGE / WHY IT WINS -->
-  <section id="edge" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 reveal">
-    <h2 class="text-2xl font-semibold">Built for real legal work</h2>
-    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <article class="rounded-2xl border border-oc-line bg-white p-6 hover:shadow-card tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-lock"></i></div>
-        <h3 class="mt-3 font-semibold">Private by design</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Everything runs locally: models, embeddings, and search. Your matters never leave disk.</p>
+  <section id="edge" class="mx-auto max-w-[1200px] oc-container reveal -mt-4 md:-mt-6" style="padding-top:0">
+    <div class="mt-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+            <i class="ph ph-lock text-white text-[20px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-white tracking-tight">Private by Design</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Models, search, and data stay on your device. Your work never leaves your hands.</p>
+          </div>
+        </div>
+        <div class="mt-auto"></div>
       </article>
-      <article class="rounded-2xl border border-oc-line bg-white p-6 hover:shadow-card tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-shield-check"></i></div>
-        <h3 class="mt-3 font-semibold">Verifiable outputs</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Every answer links to sources, with an exportable audit trail that includes prompts and model hashes.</p>
+
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+            <i class="ph-light ph-open-ai-logo text-white text-[20px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Industry-leading intelligence, fine-tuned with deep legal expertise..</p>
+          </div>
+        </div>
+        <div class="mt-auto"></div>
       </article>
-      <article class="rounded-2xl border border-oc-line bg-white p-6 hover:shadow-card tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-arrows-out-line-horizontal"></i></div>
-        <h3 class="mt-3 font-semibold">No lock‑in</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Use any compatible GGUF model. Swap models, upgrade hardware, keep your data.</p>
+
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+            <i class="ph ph-plug-charging text-white text-[20px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold text-white tracking-tight">Legal Knowledge Base</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Trusted by government. Curated by leading counsel. Built for absolute clarity.</p>
+          </div>
+        </div>
+        <div class="mt-auto"></div>
       </article>
-      <article class="rounded-2xl border border-oc-line bg-white p-6 hover:shadow-card tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-list-numbers"></i></div>
-        <h3 class="mt-3 font-semibold">Structured drafting</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Templates for motions and memos that adopt your voice and style, with checklists you can trust.</p>
-      </article>
-      <article class="rounded-2xl border border-oc-line bg-white p-6 hover:shadow-card tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-graph"></i></div>
-        <h3 class="mt-3 font-semibold">Statistical insights</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Turn outcomes and facts into probabilities for strategy — on‑device, reproducible, exportable.</p>
-      </article>
-      <article class="rounded-2xl border border-oc-line bg-white p-6 hover:shadow-card tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-plug-charging"></i></div>
-        <h3 class="mt-3 font-semibold">Extensible</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Opt‑in connectors and a curated marketplace for premium models and domain packs.</p>
-      </article>
+    </div>
+  </section>
+
+  <!-- COUNSEL FOR EVERYONE (Mission) -->
+  <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-24 pb-0">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
+      <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
+      <div class="absolute left-[-8%] bottom-[-6%] h-72 w-72 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(244,114,182,.18), rgba(244,114,182,0) 70%);"></div>
+    </div>
+
+    <div class="mission-wrap mx-auto max-w-[900px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+      <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Mission</div>
+      <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Counsel for Everyone</h2>
+      <p class="mx-auto mt-4 max-w-[650px] text-center text-lg leading-relaxed text-neutral-700">
+        OpenCounsel makes legal intelligence as accessible as the internet itself.
+        No barriers. No gatekeepers. Just powerful, private counsel — for anyone, anywhere.
+      </p>
+      <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
+
+      <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal grid-stretch">
+        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-semibold text-neutral-900">Accessible</p>
+          </div>
+          <p class="mt-2 text-sm text-neutral-600">Powerful legal AI, designed for everyone.</p>
+          <div class="mt-auto"></div>
+        </div>
+        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-semibold text-neutral-900">Private</p>
+          </div>
+          <p class="mt-2 text-sm text-neutral-600">Runs locally. Your data never leaves your device.</p>
+          <div class="mt-auto"></div>
+        </div>
+        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-semibold text-neutral-900">Verified</p>
+          </div>
+          <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
+          <div class="mt-auto"></div>
+        </div>
+      </div>
+
+      <div class="mt-10 flex items-center justify-center gap-3">
+        <a href="#download" class="inline-flex items-center rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90">Get OpenCounsel</a>
+        <a href="#learn-more" class="inline-flex items-center rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-50">Learn more</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secure Local Yours (Apple-style) -->
+  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
+    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+      <div>
+        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Tomorrow’s Counsel.</p>
+        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">Today</span>
+      </div>
     </div>
   </section>
 
   <!-- FEATURES -->
-  <section id="features" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 reveal">
-    <h2 class="text-2xl font-semibold">Why teams choose OpenCounsel</h2>
-    <div class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <article class="rounded-2xl border border-oc-line bg-white hover:shadow-card transition p-6 tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-magnifying-glass"></i></div>
-        <h3 class="mt-3 font-semibold">RAG on your corpus</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Point to folders or uploads; OpenCounsel builds embeddings and retrieves precise passages with source links.</p>
+  <section id="features" class="mx-auto max-w-[1200px] oc-container reveal pt-[75px]" style="padding-top:0px">
+    <div class="mt-1 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div>
+          <div>
+            <h3 class="font-semibold text-white tracking-tight">Verifiable Outputs</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Every answer, backed by sources. Every step, documented.</p>
+          </div>
+        </div>
+        <div class="mt-auto"></div>
       </article>
-      <article class="rounded-2xl border border-oc-line bg-white hover:shadow-card transition p-6 tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-brain"></i></div>
-        <h3 class="mt-3 font-semibold">Local models</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Run via llama.cpp / GGUF. Toggle sizes for speed vs. accuracy. Zero external calls required.</p>
+
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
+          <div>
+            <h3 class="font-semibold text-white tracking-tight">Custom Databases</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Curated case law, contracts, filings, and legal statistics — all in one place.</p>
+          </div>
+        </div>
+        <div class="mt-auto"></div>
       </article>
-      <article class="rounded-2xl border border-oc-line bg-white hover:shadow-card transition p-6 tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-folder-search"></i></div>
-        <h3 class="mt-3 font-semibold">Case law & citing</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Paste or import opinions; get structured summaries and Bluebook‑style references.</p>
-      </article>
-      <article class="rounded-2xl border border-oc-line bg-white hover:shadow-card transition p-6 tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-seal-check"></i></div>
-        <h3 class="mt-3 font-semibold">Audit trail</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Conversation export with sources, model, hash, and prompts for defensibility.</p>
-      </article>
-      <article class="rounded-2xl border border-oc-line bg-white hover:shadow-card transition p-6 tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-cloud-slash"></i></div>
-        <h3 class="mt-3 font-semibold">Offline by default</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">Keep everything on‑device. Optional connectors can be disabled per workspace.</p>
-      </article>
-      <article class="rounded-2xl border border-oc-line bg-white hover:shadow-card transition p-6 tilt">
-        <div class="h-10 w-10 rounded-xl bg-oc-soft border border-oc-line flex items-center justify-center"><i class="ph ph-rocket-launch"></i></div>
-        <h3 class="mt-3 font-semibold">Templates & drafting</h3>
-        <p class="mt-2 text-sm text-oc-ink/70">One‑click drafting for motions, memos, and demand letters with your firm’s voice.</p>
+
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div>
+          <div>
+            <h3 class="font-semibold text-white tracking-tight">Your Local Library</h3>
+            <p class="mt-2 text-sm leading-relaxed text-white/80">Build your own on-disk databases. Drag-and-drop files for instant semantic search.</p>
+          </div>
+        </div>
+        <div class="mt-auto"></div>
       </article>
     </div>
   </section>
 
-  <!-- SCREENSHOTS / PREVIEW -->
-  <section id="screens" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 reveal">
-    <h2 class="text-2xl font-semibold">A familiar, clean desktop app</h2>
-    <div class="mt-6 grid gap-6 lg:grid-cols-2">
-      <div class="rounded-2xl border border-oc-line bg-white overflow-hidden tilt">
-        <div class="h-56 bg-gradient-to-br from-oc-lilac to-oc-soft"></div>
-        <div class="p-5 text-sm text-oc-ink/70">Chat interface with sources, RAG toggle, and workspace switcher.</div>
-      </div>
-      <div class="rounded-2xl border border-oc-line bg-white overflow-hidden tilt">
-        <div class="h-56 bg-gradient-to-br from-oc-soft to-white"></div>
-        <div class="p-5 text-sm text-oc-ink/70">Document viewer with side‑by‑side citations and export.</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PLANS -->
-  <section id="plans" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-16 reveal">
-    <div class="mb-6 flex items-center justify-between gap-4">
-      <h2 class="text-2xl font-semibold">Plans</h2>
-      <div class="text-xs text-oc-ink/60">No telemetry • No accounts required for Free</div>
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-6">
-      <!-- Free -->
-      <div class="rounded-3xl border border-oc-line bg-white p-6 md:p-8 hover:shadow-card tilt">
-        <div class="flex items-baseline justify-between">
-          <h3 class="text-xl font-semibold">Free</h3>
-          <span class="text-sm px-2 py-1 rounded-full border border-oc-line text-oc-ink/60">Local use</span>
-        </div>
-        <p class="mt-2 text-sm text-oc-ink/70">Personal research, local drafting, and on‑device search.</p>
-        <ul class="mt-4 space-y-2 text-sm">
-          <li class="flex items-start gap-2"><i class="ph ph-check text-oc-accent mt-[2px]"></i> Run compatible GGUF models locally</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check text-oc-accent mt-[2px]"></i> RAG on your own files & folders</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check text-oc-accent mt-[2px]"></i> Citations & exportable audit trail</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check text-oc-accent mt-[2px]"></i> Limited external database pulls / month</li>
-          <li class="flex items-start gap-2"><i class="ph ph-minus text-oc-ink/40 mt-[2px]"></i> Basic model set</li>
-          <li class="flex items-start gap-2"><i class="ph ph-minus text-oc-ink/40 mt-[2px]"></i> No statistical modeling</li>
-        </ul>
-        <a href="#download" class="btn mt-6 inline-flex items-center gap-2 rounded-xl border border-oc-line px-4 py-2 text-sm hover:bg-oc-soft focus-ring">
-          <i class="ph ph-download-simple"></i> Download Free
-        </a>
-      </div>
-
-      <!-- Pro -->
-      <div class="relative rounded-3xl border border-oc-line bg-white p-6 md:p-8 hover:shadow-glow tilt">
-        <div class="absolute -inset-px rounded-3xl pointer-events-none bg-gradient-to-tr from-oc-lilac/0 via-oc-lilac/40 to-oc-accent/30 opacity-0 group-hover:opacity-100 transition"></div>
-        <div class="flex items-baseline justify-between">
-          <h3 class="text-xl font-semibold">Pro</h3>
-          <span class="text-sm px-2 py-1 rounded-full border border-oc-line text-oc-ink/60">For firms</span>
-        </div>
-        <p class="mt-2 text-sm text-oc-ink/70">Everything in Free, plus premium local models, statistical tools, and a private marketplace.</p>
-        <ul class="mt-4 space-y-2 text-sm">
-          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-oc-accent mt-[2px]"></i> Premium GGUF models & domain adapters</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-oc-accent mt-[2px]"></i> Unlimited external database pulls</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-oc-accent mt-[2px]"></i> Statistical modeling & outcome analysis</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-oc-accent mt-[2px]"></i> Marketplace: extensions, connectors, datasets</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-oc-accent mt-[2px]"></i> Workspace encryption & role controls</li>
-          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-oc-accent mt-[2px]"></i> Priority updates & support</li>
-        </ul>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a href="#download" class="btn inline-flex items-center gap-2 rounded-xl bg-oc-ink text-white px-4 py-2 text-sm hover:bg-black focus-ring">
-            <i class="ph ph-rocket-launch"></i> Get Pro
-          </a>
-          <a href="#marketplace" class="btn inline-flex items-center gap-2 rounded-xl border border-oc-line px-4 py-2 text-sm hover:bg-oc-soft focus-ring">
-            <i class="ph ph-plug-charging"></i> Explore marketplace
-          </a>
-        </div>
+  <!-- Secure Local Yours (Apple-style) -->
+  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
+    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+      <div>
+        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Legal Intelligence.</p>
+        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">Expert counsel for anyone, anywhere—without the cost or complexity.</span>
       </div>
     </div>
   </section>
 
   <!-- DOWNLOAD CTA -->
-  <section id="download" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-16 reveal">
-    <div class="g-grad rounded-3xl overflow-hidden border border-oc-line bg-gradient-to-r from-[#0a1f44]/80 via-[#0b3d3d]/80 to-[#064420]/80 animated-gradient">
+  <section id="download" class="section-clip mx-auto max-w-[1200px] oc-container reveal">
+    <div class="scroll-fade g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
       <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 class="text-2xl md:text-3xl font-semibold text-white">Get OpenCounsel</h2>
-          <p class="mt-2 text-white/80 max-w-xl">Download the desktop app. No cloud, no accounts required. Works offline with local models.</p>
+          <p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus-ring"><i class="ph ph-apple-logo"></i> Download for macOS</a>
-          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus-ring"><i class="ph ph-windows-logo"></i> Download for Windows</a>
-          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus-ring"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
+          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
+          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
+          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 mt-14 mb-20 reveal">
-    <h2 class="text-2xl font-semibold">FAQ</h2>
-    <div class="mt-6 divide-y divide-oc-line border border-oc-line rounded-2xl overflow-hidden">
-      <details class="group open:bg-white">
-        <summary class="cursor-pointer list-none p-5 flex items-center justify-between"><span class="font-medium">Does it require the internet?</span><i class="ph ph-caret-down text-xl transition group-open:rotate-180"></i></summary>
-        <div class="px-5 pb-5 text-oc-ink/70 text-sm">No. By default, all inference and retrieval are local. Optional connectors can be toggled off.</div>
-      </details>
-      <details class="group">
-        <summary class="cursor-pointer list-none p-5 flex items-center justify-between"><span class="font-medium">What models can I use?</span><i class="ph ph-caret-down text-xl transition group-open:rotate-180"></i></summary>
-        <div class="px-5 pb-5 text-oc-ink/70 text-sm">Any GGUF model compatible with llama.cpp. Choose sizes based on hardware.</div>
-      </details>
-      <details class="group">
-        <summary class="cursor-pointer list-none p-5 flex items-center justify-between"><span class="font-medium">How is data stored?</span><i class="ph ph-caret-down text-xl transition group-open:rotate-180"></i></summary>
-        <div class="px-5 pb-5 text-oc-ink/70 text-sm">Encrypted workspace on disk with export/import. Embeddings are local via ChromaDB.</div>
-      </details>
-    </div>
-  </section>
+  <!-- Centered animated logo between sections -->
+  <div class="mx-auto my-10 md:my-14 flex items-center justify-center">
+    <span class="logo-anim LargeAniLogo" aria-label="OpenCounsel" style="--logo-size: clamp(56px, 30vw, 500px);"></span>
+  </div>
 
   <!-- FOOTER -->
   <footer class="border-t border-oc-line">
-    <div class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-oc-ink/60 text-sm">
-      <div class="flex items-center gap-3"><span class="font-semibold text-black">OpenCounsel</span> <span>© <span id="yr"></span> OpenCounsel</span></div>
+    <div class="mx-auto max-w-[1200px] oc-container py-10 flex flex-col items-center gap-6 text-oc-ink/60 text-sm">
+      <div class="text-center">
+        <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
+      </div>
       <div class="flex items-center gap-4">
         <a class="hover:text-oc-ink" href="#">Privacy</a>
         <a class="hover:text-oc-ink" href="#">Terms</a>
@@ -360,22 +683,7 @@
     const yr = document.getElementById('yr');
     if (yr) yr.textContent = new Date().getFullYear();
 
-    // Gradient switcher applies to all blocks with .g-grad (hero + download)
-    const select = document.getElementById('gradientSelect');
-    const gradTargets = () => Array.from(document.querySelectorAll('.g-grad'));
-    const applyGrad = (classes) => {
-      gradTargets().forEach(el => {
-        el.className = el.className
-          .split(' ')
-          .filter(c => !c.startsWith('from-') && !c.startsWith('via-') && !c.startsWith('to-'))
-          .join(' ');
-        el.classList.add('bg-gradient-to-r','animated-gradient');
-        classes.split(' ').forEach(c => el.classList.add(c));
-      });
-    };
-    if (select) select.addEventListener('change', () => applyGrad(select.value));
-
-    // Scroll reveal
+    // Scroll reveal (one-shot for generic .reveal content)
     const io = new IntersectionObserver((entries)=>{
       for (const e of entries) {
         if (e.isIntersecting) {
@@ -385,6 +693,79 @@
       }
     },{threshold:.12});
     document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+    // ===== MOBILE SLIDE-IN MENU =====
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+    function openMenu() {
+      if (window.matchMedia('(min-width: 768px)').matches) return; // mobile only
+      mobileMenu.style.display = 'block';
+      // Force reflow
+      void mobileMenu.offsetWidth;
+      mobileMenu.classList.add('active');
+      hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'true');
+      mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeMenu() {
+      mobileMenu.classList.remove('active');
+      hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+    }
+
+    if (hamburgerBtn && mobileMenu) {
+      hamburgerBtn.addEventListener('click', ()=>{
+        if (mobileMenu.classList.contains('active')) closeMenu();
+        else openMenu();
+      });
+    }
+    if (closeMenuBtn) closeMenuBtn.addEventListener('click', closeMenu);
+
+    // Close when clicking scrim
+    mobileMenu?.addEventListener('click', (e)=>{
+      if (e.target.classList.contains('menu-scrim')) closeMenu();
+    });
+
+    // Close when navigating
+    mobileMenu?.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+
+    // Close if viewport grows to desktop
+    const mq = window.matchMedia('(min-width: 768px)');
+    function handleMQ(e){ if (e.matches) closeMenu(); }
+    if (mq.addEventListener) mq.addEventListener('change', handleMQ);
+    else mq.addListener(handleMQ); // Safari fallback
+
+    // ESC to close
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+
+    // Fade the full-page blur after load
+    window.addEventListener('load', () => {
+      const pageBlur = document.getElementById('pageBlur');
+      if (!pageBlur) return;
+      pageBlur.classList.add('hide');
+      setTimeout(() => pageBlur.remove(), 1300);
+    });
+
+    // ================================
+    // BLUR-ON-SCROLL OBSERVER (LOOPING)
+    // ================================
+    const sbo = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in-view');
+        } else {
+          e.target.classList.remove('in-view');
+        }
+      }
+    }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
+    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
   </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-  <!-- Sync Successful -->
+<!-- Sync Successful -->
 
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
@@ -50,6 +50,14 @@
       --scroll-blur-opacity-start: .65;
       --scroll-blur-opacity-end: 1;
       --scroll-blur-translate: 8px;
+
+      /* Chat demo / Code B palette hooks */
+      --line:#E7EDF2;
+      --brand-angle:135deg; 
+      --brand-1:#0B1B2B; 
+      --brand-2:#0E6F5C; 
+      --brand-3:#00CFFF;
+      --lilac:#E7E7FF;
     }
 
     /* Kill horizontal scroll without breaking sticky */
@@ -357,6 +365,31 @@
       }
     }
     @media (prefers-reduced-motion: reduce) { .nav-link { transition: none; } }
+
+    /* ================================
+       Chat Demo bits from Code B (light)
+       ================================ */
+    .brand-gradient{
+      background-image:linear-gradient(var(--brand-angle),var(--brand-1),var(--brand-2),var(--brand-3));
+      background-size:200% 200%;
+    }
+    @keyframes breathe{0%{background-position:0% 50%;filter:saturate(.95)}50%{background-position:100% 50%;filter:saturate(1.05)}100%{background-position:0% 50%;filter:saturate(.95)}}
+    .breathing{animation:breathe 6s ease-in-out infinite}
+    .shadow-soft{box-shadow:0 2px 6px rgba(10,13,16,0.04), 0 12px 24px rgba(10,13,16,0.06)}
+    .border-hairline{border:1px solid var(--line)}
+    .think-stream{
+      color:transparent;
+      background-image:linear-gradient(var(--brand-angle),#00CFFF,#0E6F5C,#00CFFF);
+      background-size:200% 200%;
+      -webkit-background-clip:text;background-clip:text;
+      animation:breathe 4.5s ease-in-out infinite;
+      filter:drop-shadow(0 0 .3rem rgba(0,207,255,.3));
+      white-space:pre-wrap;line-height:1.6
+    }
+    @keyframes fadeAway{to{opacity:0;transform:translateY(-4px);filter:blur(2px)}}
+    .fade-away{animation:fadeAway .38s ease forwards}
+    .chip{font-size:12px;line-height:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 6px 14px rgba(10,13,16,.06);transition:transform .12s ease}
+    .chip:hover{transform:translateY(-1px)}
   </style>
 </head>
 
@@ -482,6 +515,44 @@
       </div>
     </div>
   </section>
+
+  <!-- ===== NEW: LIVE CHAT DEMO (styled like Code B) ===== -->
+  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal">
+    <div class="mx-auto max-w-3xl rounded-3xl border-hairline bg-white/70 backdrop-blur-md shadow-soft overflow-hidden">
+      <div class="px-4 py-3 flex items-center justify-between border-b border-[var(--line)]/80 bg-white/60">
+        <div class="text-sm text-neutral-600">OpenCounsel — Live demo</div>
+        <div class="flex items-center gap-2">
+          <button id="demoReplay" class="chip" type="button" title="Replay">Replay</button>
+        </div>
+      </div>
+      <div id="demoMessages" class="p-4 md:p-5 flex flex-col gap-3"></div>
+      <div class="p-3 md:p-4">
+        <div class="rounded-2xl bg-white/70 backdrop-blur-md border-hairline">
+          <div class="flex items-end gap-2 p-2">
+            <textarea rows="1" placeholder="Message OpenCounsel…" class="w-full px-3 py-2 text-[15px] leading-[1.35] opacity-50 cursor-not-allowed" disabled></textarea>
+            <button class="shrink-0 px-3 py-2 rounded-xl text-white brand-gradient breathing opacity-60 cursor-not-allowed">Send</button>
+          </div>
+        </div>
+        <div class="flex justify-center mt-2"><div class="text-[11px] text-neutral-500">Simulated conversation</div></div>
+      </div>
+    </div>
+
+    <!-- tiny templates for bubbles -->
+    <template id="demoTplUser">
+      <div class="flex justify-end">
+        <div class="max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed bg-white border-hairline shadow-soft"></div>
+      </div>
+    </template>
+    <template id="demoTplBot">
+      <div class="flex justify-start">
+        <div class="max-w-[85%] rounded-2xl px-4 py-3 text-[15px] leading-relaxed bg-[var(--lilac)]/35 border-hairline shadow-soft">
+          <div class="ai-think think-stream"></div>
+          <div class="ai-final hidden"></div>
+        </div>
+      </div>
+    </template>
+  </section>
+  <!-- ===== END CHAT DEMO ===== -->
 
   <!-- EDGE / WHY IT WINS -->
   <section id="edge" class="mx-auto max-w-[1200px] oc-container reveal -mt-4 md:-mt-6" style="padding-top:0">
@@ -766,6 +837,118 @@
       }
     }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
     document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
+    // ================================
+    // LIVE CHAT DEMO (auto-plays)
+    // ================================
+    (function chatDemo(){
+      const wrap = document.getElementById('chat-demo');
+      const list = document.getElementById('demoMessages');
+      const tplU = document.getElementById('demoTplUser');
+      const tplB = document.getElementById('demoTplBot');
+      const replay = document.getElementById('demoReplay');
+
+      const msgs = [
+        { role:'user', text:"I'm a contractor in BC. Client hasn't paid my final invoice. What are my options?" },
+        { role:'assistant', final: `
+          <strong>Short answer:</strong> send a formal demand, preserve your lien rights, and choose the right forum for recovery.<br><br>
+          <strong>Next steps:</strong>
+          <ul class="list-disc pl-5">
+            <li><b>Deadline:</b> Builders lien rights are time-sensitive (often ~45 days from completion/abandonment/certificate).</li>
+            <li>Send a written demand with interest and a clear due date.</li>
+            <li>Negotiate holdback/release; if unresolved, pursue Small Claims or Supreme Court (by amount/complexity).</li>
+          </ul>
+          <em>General information, not legal advice.</em>
+        `},
+        { role:'user', text:"Can I file a lien without a written contract?" },
+        { role:'assistant', final: `
+          Yes. A written contract isn’t required to claim a builders lien, but you’ll need proof of work/materials and value due
+          (invoices, change orders, site photos, emails). Diary your deadline and serve required notices correctly.
+        `},
+        { role:'user', text:"What if they dispute the quality of my work?" },
+        { role:'assistant', final: `
+          Document everything: punch-list, deficiency walk-through, photos, and your cure plan. Offer a reasonable fix or holdback.
+          If the dispute persists, the lien secures your claim while quality issues get resolved on the merits.
+        `},
+      ];
+
+      function clearList(){ list.innerHTML = ''; }
+
+      function appendUser(text){
+        const node = tplU.content.cloneNode(true);
+        const bubble = node.querySelector('div > div');
+        bubble.textContent = '';
+        list.appendChild(node);
+        return typewriter(bubble, text, 14, 18);
+      }
+
+      function appendBot(finalHTML){
+        const node = tplB.content.cloneNode(true);
+        const wrapper = node.firstElementChild;
+        const bubble  = wrapper.querySelector('div > div');
+        const thinkEl = bubble.querySelector('.ai-think');
+        const finalEl = bubble.querySelector('.ai-final');
+
+        thinkEl.textContent = 'Thinking…';
+        list.appendChild(wrapper);
+        scrollToEnd();
+
+        return new Promise((resolve)=>{
+          setTimeout(()=>{
+            // swap think → final
+            thinkEl.classList.add('fade-away');
+            setTimeout(()=>{ thinkEl.remove(); }, 380);
+            finalEl.classList.remove('hidden');
+            finalEl.style.opacity = 0;
+            finalEl.innerHTML = finalHTML.trim();
+            // soft fade-in
+            requestAnimationFrame(()=> {
+              finalEl.style.transition = 'opacity .28s ease';
+              finalEl.style.opacity = 1;
+            });
+            setTimeout(resolve, 320);
+          }, 700 + Math.random()*600); // variable "thinking"
+        });
+      }
+
+      function typewriter(el, text, min=10, max=18){
+        return new Promise((resolve)=>{
+          let i = 0;
+          (function tick(){
+            el.textContent = text.slice(0, i++);
+            scrollToEnd();
+            if (i <= text.length) setTimeout(tick, rand(min,max));
+            else resolve();
+          })();
+        });
+      }
+      function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+      function scrollToEnd(){ requestAnimationFrame(()=> window.scrollTo({ top: document.body.scrollHeight, behavior:'smooth' })); }
+
+      async function run(){
+        clearList();
+        for (const m of msgs){
+          if (m.role === 'user'){ await appendUser(m.text); }
+          else { await appendBot(m.final); }
+        }
+      }
+
+      // Replay button
+      replay?.addEventListener('click', run);
+
+      // Auto-play when section comes into view (once)
+      let started = false;
+      const ob = new IntersectionObserver((entries)=>{
+        for (const e of entries){
+          if (e.isIntersecting && !started){
+            started = true;
+            run();
+            ob.unobserve(wrap);
+          }
+        }
+      }, { threshold:.35 });
+      if (wrap) ob.observe(wrap);
+    })();
   </script>
 </body>
 </html>
