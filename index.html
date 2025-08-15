@@ -58,13 +58,10 @@
       --brand-2:#0E6F5C; 
       --brand-3:#00CFFF;
       --lilac:#E7E7FF;
-
-      /* site background (single source of truth) */
-      --site-bg:#fff;
     }
 
     /* Kill horizontal scroll without breaking sticky */
-    html, body { max-width: 100%; overflow-x: clip !important; background: var(--site-bg); }
+    html, body { max-width: 100%; overflow-x: clip !important; }
     @supports not (overflow-x: clip) { html, body { overflow-x: hidden !important; } }
     .section-clip { position: relative; overflow-x: clip; }
 
@@ -234,15 +231,7 @@
     .chip:hover{transform:translateY(-1px)}
 
     /* Chat stream layout (ChatGPT-like indent) */
-    .chat-wrap { width:min(900px,100%); margin:0 auto; position: relative; }
-    .chat-viewport{
-      max-height: clamp(320px, 50vh, 560px);
-      overflow-y: auto; overscroll-behavior: contain; scroll-behavior: smooth;
-      background: var(--site-bg);
-      padding: 14px 14px 160px 14px; /* bottom pad so next bubble peeks */
-      padding-right: 6px;
-      will-change: transform;
-    }
+    .chat-wrap { width:min(900px,100%); margin:0 auto; }
     .chat-stream { display:flex; flex-direction:column; gap:10px; }
     .msg-row { display:flex; width:100%; }
     .msg-assistant { justify-content:flex-start; padding-left:56px; }  /* left gutter like avatar space */
@@ -255,17 +244,13 @@
     .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); overflow: visible; }
     .bubble .ai-final{ color:#0A0D10; white-space:normal; }
 
-    /* Jump to latest button */
-    #jumpLatest { position: absolute; right: 10px; bottom: 18px; }
-    #jumpLatest.hidden { display: none; }
-
     /* ===== Document Preview (Lien) styles ===== */
     .doc-page{
       background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow: 0 10px 28px rgba(10,13,16,.10);
       border-radius: 14px; padding: 28px 28px 32px 28px;
       aspect-ratio: 8.5 / 11; overflow: hidden;
-      width: min(620px, 85vw);
-      max-width: 100%;
+      width: min(620px, 85vw);   /* ensure full page visible on all screens */
+      max-width: 100%;           /* never exceed bubble width */
     }
     .doc-h1{ font-size: 20px; font-weight: 700; letter-spacing:.02em; text-transform: uppercase; text-align:center; }
     .doc-sub{ font-size:12px; text-align:center; color:#666; margin-top:2px; }
@@ -278,36 +263,6 @@
     .doc-brand-band{ height:8px; border-radius:10px; }
     .doc-fade{ opacity:0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
     .doc-fade.in{ opacity:1; transform: translateY(0); }
-
-    /* ====== IMMERSIVE CHAT (full-screen lock + iOS-like motion) ====== */
-    body.chat-immersive { overflow: hidden; background: var(--site-bg); }
-    body.chat-immersive header { transform: translateY(-100%); transition: transform .45s cubic-bezier(.22,1,.18,1); }
-
-    #chat-demo.immersive {
-      position: fixed; inset: 0; z-index: 70; background: var(--site-bg);
-      padding: max(16px, var(--pad-mobile-x)) !important;
-      display: flex; align-items: center; justify-content: center;
-      will-change: transform, opacity, filter;
-    }
-    #chat-demo.immersive .chat-wrap { width: min(1000px, 96vw); }
-    #chat-demo.immersive .chat-viewport {
-      height: clamp(60vh, calc(100vh - 180px), 86vh);
-      max-height: none;
-      background: var(--site-bg);
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      box-shadow: 0 12px 40px rgba(0,0,0,.08);
-      padding: 16px 16px 180px 16px; /* immersive bottom pad */
-      transform: translateY(var(--rubber-y, 0px));
-    }
-
-    /* Control buttons while immersive */
-    #chatContinue, #exitImmersive {
-      position: absolute; left: 50%; transform: translateX(-50%);
-      bottom: 14px; z-index: 5;
-    }
-    #exitImmersive { right: 10px; left: auto; transform: none; }
-    #chatContinue.hidden, #exitImmersive.hidden { display:none; }
   </style>
 </head>
 
@@ -420,28 +375,11 @@
   </section>
 
   <!-- ===== LIVE CHAT DEMO — BUBBLES ON BACKGROUND ===== -->
-  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 pb-12 md:pb-16" style="background: transparent;">
+  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 pb-12 md:pb-16">
 
     <div class="w-full flex items-center justify-center">
       <div class="chat-wrap">
-        <!-- Jump-to-latest appears only when user has scrolled up -->
-        <button id="jumpLatest" class="chip hidden" type="button" title="Jump to latest">
-          <i class="ph ph-arrow-down"></i>&nbsp;Latest
-        </button>
-
-        <!-- Scrollable chat viewport keeps conversation in view -->
-        <div id="chatViewport" class="chat-viewport">
-          <div id="demoMessages" class="chat-stream"></div>
-        </div>
-
-        <!-- Immersive controls -->
-        <button id="chatContinue" class="chip hidden" type="button" title="Continue">
-          <i class="ph ph-arrow-down"></i>&nbsp;Scroll to continue
-        </button>
-        <button id="exitImmersive" class="chip hidden" type="button" title="Exit">
-          Exit
-        </button>
-
+        <div id="demoMessages" class="chat-stream"></div>
         <div class="mt-3 flex items-center gap-3">
           <button id="demoReplay" class="chip" type="button" title="Replay">Replay</button>
           <div class="text-[11px] text-neutral-500">Simulated conversation + generated document</div>
@@ -548,7 +486,7 @@
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
           <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24"  fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <p class="font-semibold text-neutral-900">Verified</p>
           </div>
           <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
@@ -653,47 +591,17 @@
     // ================================
     // GLOBAL DEMO SETTINGS
     // ================================
-    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 1.25;
+    // Speed: 1.0 = normal, 0.5 = faster, 2.0 = slower
+    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 0.7;
 
-    // 🔊 Bass drop sound (config)
+    // 🔊 Bass drop sound (change these)
     window.OC_DEMO_SOUND = Object.assign({
       enabled: true,
-      url: 'bass-drop.mp3',  // set to valid path or leave blank for synth
-      volume: 0.9
+      url: 'bass-drop.mp3',  // <-- replace with your file path
+      volume: 0.9            // 0.0 - 1.0
     }, window.OC_DEMO_SOUND || {});
 
-    // ===== Robust audio with fallback + gesture unlock =====
     let __OC_AUDIO = null;
-    let __WA_CTX = null;
-
-    function getCtx(){
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (!Ctx) return null;
-      if (!__WA_CTX) __WA_CTX = new Ctx();
-      return __WA_CTX;
-    }
-
-    function playWithWebAudio(vol=0.9){
-      try{
-        const ctx = getCtx();
-        if (!ctx) return;
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(100, ctx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
-
-        g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(Math.max(0, Math.min(vol, 1)), ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-
-        o.connect(g).connect(ctx.destination);
-        o.start();
-        o.stop(ctx.currentTime + 1.25);
-        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
-      }catch(e){}
-    }
-
     function playBassDrop(){
       if (!window.OC_DEMO_SOUND?.enabled) return;
 
@@ -704,35 +612,37 @@
         if (!__OC_AUDIO){
           __OC_AUDIO = new Audio(url);
           __OC_AUDIO.preload = 'auto';
-          // Only enable if your server returns CORS headers:
-          // __OC_AUDIO.crossOrigin = 'anonymous';
-          __OC_AUDIO.addEventListener('error', () => playWithWebAudio(vol), { once:true });
+          __OC_AUDIO.crossOrigin = 'anonymous';
         }
         try {
           __OC_AUDIO.currentTime = 0;
           __OC_AUDIO.volume = vol;
-          __OC_AUDIO.muted = false;
-          __OC_AUDIO.play().catch(() => { playWithWebAudio(vol); });
-        } catch(e){
-          playWithWebAudio(vol);
-        }
+          __OC_AUDIO.play().catch(()=>{/* autoplay may be blocked */});
+        } catch(e){}
         return;
       }
-      playWithWebAudio(vol);
-    }
 
-    function unlockAudio(){
-      try {
-        const ctx = getCtx();
-        if (ctx && ctx.state === 'suspended') ctx.resume().catch(()=>{});
-      } catch(e){}
-      try {
-        if (__OC_AUDIO) { __OC_AUDIO.play().catch(()=>{}); }
-      } catch(e){}
+      // Fallback: synthesize a bass drop with WebAudio
+      try{
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new Ctx();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+
+        o.type = 'sine';
+        o.frequency.setValueAtTime(100, ctx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
+
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+
+        o.connect(g).connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 1.25);
+        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+      }catch(e){}
     }
-    ['pointerdown','click','touchstart','keydown'].forEach(evt => {
-      window.addEventListener(evt, unlockAudio, { once:true, passive:true });
-    });
 
     // Year
     const yr = document.getElementById('yr');
@@ -795,57 +705,24 @@
     }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    // ===== Autoscroll controller (chat viewport) =====
-    const viewport = document.getElementById('chatViewport');
-    const jumpBtn  = document.getElementById('jumpLatest');
-    let autoScroll = true;
-    let _scrollRAF = null;
-
-    function nearBottom(px=40){
-      if (!viewport) return true;
-      return (viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight) <= px;
-    }
-    function scheduleAutoScroll(){
-      if (!autoScroll || !viewport) return;
-      if (_scrollRAF) return;
-      _scrollRAF = requestAnimationFrame(()=>{
-        viewport.scrollTop = viewport.scrollHeight;
-        _scrollRAF = null;
-      });
-    }
-    function setAutoScrollOn(){
-      autoScroll = true;
-      if (jumpBtn) jumpBtn.classList.add('hidden');
-      scheduleAutoScroll();
-    }
-    function setAutoScrollOff(){
-      autoScroll = false;
-      if (jumpBtn) jumpBtn.classList.remove('hidden');
-    }
-
-    viewport?.addEventListener('scroll', ()=>{
-      if (nearBottom()) setAutoScrollOn(); else setAutoScrollOff();
-    });
-    jumpBtn?.addEventListener('click', setAutoScrollOn);
-
-    // Typewriter for plain text
+    // Typewriter for plain text into an element (creates a single text node)
     function typewriter(el, text, min=10, max=18){
       return new Promise((resolve)=>{
         let i = 0;
-        el.textContent = '';
+        el.textContent = ''; // ensure clean start
         const tn = document.createTextNode('');
         el.appendChild(tn);
         (function tick(){
           tn.textContent = text.slice(0, i++);
-          if (i % 2 === 0) scheduleAutoScroll();
           if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
           else resolve();
         })();
       });
     }
 
-    // Stream HTML preserving structure
+    // Stream HTML with structure preserved (safe DOM walk; types text nodes char-by-char)
     async function streamHTML(el, html, charMin=10, charMax=18){
+      // Parse once into a fragment container
       const container = document.createElement('div');
       container.innerHTML = html.trim();
 
@@ -860,19 +737,24 @@
               dstParent.appendChild(tn);
               (function tick(){
                 tn.textContent = text.slice(0, i++);
-                if (i % 2 === 0) scheduleAutoScroll();
                 if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
                 else res();
               })();
             });
           } else if (child.nodeType === Node.ELEMENT_NODE){
+            // Create a shallow clone (no children yet) to preserve classes/attrs
             const clone = child.cloneNode(false);
             dstParent.appendChild(clone);
-            scheduleAutoScroll();
-            await walk(child, clone);
+            // For <li>, stream its text a bit faster so lists feel snappy
+            if (clone.tagName === 'LI'){
+              await walk(child, clone);
+            } else {
+              await walk(child, clone);
+            }
           }
         }
       }
+      // Clear and stream into el
       el.innerHTML = '';
       await walk(container, el);
     }
@@ -886,12 +768,6 @@
       const tplU = document.getElementById('demoTplUser');
       const tplB = document.getElementById('demoTplBot');
       const replay = document.getElementById('demoReplay');
-      const continueBtn = document.getElementById('chatContinue');
-      const exitBtn = document.getElementById('exitImmersive');
-
-      const hero = document.getElementById('home');
-      const nextSection = document.getElementById('edge');
-      const header = document.querySelector('header');
 
       const msgs = [
         { role:'user', text:"I'm a contractor in BC. Client hasn't paid my final invoice. What are my options?" },
@@ -917,13 +793,12 @@
         `},
       ];
 
-      function clearList(){ list.innerHTML = ''; scheduleAutoScroll(); }
+      function clearList(){ list.innerHTML = ''; }
 
       function appendUser(text){
         const node = tplU.content.cloneNode(true);
         const bubble = node.querySelector('.bubble-user');
         list.appendChild(node);
-        scheduleAutoScroll();
         return typewriter(bubble, text, 14, 18);
       }
 
@@ -934,13 +809,13 @@
         const finalEl = bubble.querySelector('.ai-final');
 
         list.appendChild(node);
-        scheduleAutoScroll();
 
         // animated "Thinking..." with dots
         let dots = 0;
-        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
+        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
 
         return new Promise((resolve)=>{
+          // brief think delay, then fade think and stream output
           setTimeout(async ()=>{
             clearInterval(dotsTimer);
             thinkEl.classList.add('fade-away');
@@ -953,6 +828,7 @@
               finalEl.style.opacity = 1;
             });
 
+            // 🔥 Stream the assistant HTML with structure preserved
             await streamHTML(finalEl, finalHTML, 9, 16);
             resolve();
           }, sp(700 + Math.random()*600));
@@ -967,14 +843,12 @@
         const finalEl = bubble.querySelector('.ai-final');
 
         list.appendChild(node);
-        scheduleAutoScroll();
 
         let dots = 0;
         thinkEl.textContent = 'Drafting lien document';
         const dotsTimer = setInterval(()=>{
           dots = (dots + 1) % 4;
           thinkEl.textContent = 'Drafting lien document' + '.'.repeat(dots);
-          scheduleAutoScroll();
         }, sp(300));
 
         return new Promise((resolve)=>{
@@ -992,9 +866,9 @@
             finalEl.appendChild(intro);
 
             const docPage = document.createElement('div');
+            // scaling handled by CSS .doc-page (min(620px, 85vw) with aspect-ratio)
             docPage.className = 'doc-page';
             finalEl.appendChild(docPage);
-            scheduleAutoScroll();
 
             const band = document.createElement('div');
             band.className = 'doc-brand-band brand-gradient breathing';
@@ -1023,7 +897,6 @@
           el.innerHTML = html;
           container.appendChild(el);
           requestAnimationFrame(()=> el.classList.add('in'));
-          scheduleAutoScroll();
           return el;
         }
         function ensureBullets(){
@@ -1033,7 +906,6 @@
             ul.className = 'doc-bullets doc-fade';
             container.appendChild(ul);
             requestAnimationFrame(()=> ul.classList.add('in'));
-            scheduleAutoScroll();
           }
           return ul;
         }
@@ -1047,7 +919,6 @@
             li.style.transition = 'opacity .22s ease, transform .22s ease';
             li.style.opacity = 1; li.style.transform = 'translateY(0)';
           });
-          scheduleAutoScroll();
         }
         function wait(ms){ return new Promise(r => setTimeout(r, sp(ms))); }
 
@@ -1093,231 +964,42 @@
         })();
       }
 
-      // ===== iOS-like IMMERSIVE (FLIP + rubber-band) =====
-      let started = false;
-      let immersiveEnabled = false;
-      let immersiveUsedOnce = false;
-      let touchStartY = null;
-      let rubberY = 0;
-      let rubberRAF = null;
-
-      function headerHeight(){ return header ? header.getBoundingClientRect().height : 0; }
-      function scrollToEl(el, behavior='smooth'){
-        const top = el.getBoundingClientRect().top + window.scrollY - headerHeight();
-        window.scrollTo({ top, behavior });
-      }
-
-      function setRubber(y){
-        rubberY = y;
-        wrap.style.setProperty('--rubber-y', y.toFixed(2) + 'px');
-      }
-
-      function springBack(to=0){
-        cancelAnimationFrame(rubberRAF);
-        const k = 0.04, c = 0.18; // spring constants for a soft iOS feel
-        let y = rubberY, v = 0;
-        const step = () => {
-          const a = -k*(y - to) - c*v;
-          v += a;
-          y += v;
-          if (Math.abs(y - to) < 0.5 && Math.abs(v) < 0.5){ setRubber(to); return; }
-          setRubber(y);
-          rubberRAF = requestAnimationFrame(step);
-        };
-        rubberRAF = requestAnimationFrame(step);
-      }
-
-      function enterImmersive(){
-        if (immersiveEnabled) return;
-        immersiveEnabled = true; immersiveUsedOnce = true;
-
-        // FLIP: measure BEFORE
-        const first = wrap.getBoundingClientRect();
-
-        // Apply immersive layout instantly (but keep transform)
-        wrap.classList.add('immersive');
-        document.body.classList.add('chat-immersive');
-
-        // Measure AFTER
-        const last = wrap.getBoundingClientRect();
-
-        // Compute inverted transform
-        const dx = first.left - last.left;
-        const dy = first.top - last.top;
-        const sx = first.width / last.width;
-        const sy = first.height / last.height;
-
-        // Set starting transform and animate with overshoot
-        wrap.style.transformOrigin = 'top center';
-        wrap.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-
-        // Web Animations API for perfect iOS-like snap with gentle overshoot
-        wrap.animate([
-          { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`, opacity: 0.98, filter:'saturate(0.98)' },
-          { transform: 'translateY(-10px) scale(1.02)', opacity: 1, offset: 0.7 },
-          { transform: 'none', opacity: 1, filter:'saturate(1)' }
-        ], { duration: 720, easing: 'cubic-bezier(.2,.9,.16,1)', fill: 'both' });
-
-        // Header slides away (CSS handles transition)
-        // Show controls
-        continueBtn.classList.remove('hidden');
-        exitBtn.classList.remove('hidden');
-
-        // Kick off conversation if needed
-        if (!started){ started = true; run(); } else { setAutoScrollOn(); scheduleAutoScroll(); }
-      }
-
-      function exitImmersive(direction='next'){
-        if (!immersiveEnabled) return;
-
-        // Animate out with a subtle settle
-        wrap.animate([
-          { transform: 'none', opacity: 1 },
-          { transform: 'translateY(8px) scale(0.995)', opacity: 1, offset:.5 },
-          { transform: 'none', opacity: 1 }
-        ], { duration: 360, easing: 'cubic-bezier(.2,.9,.16,1)', fill: 'both' });
-
-        setTimeout(()=>{
-          document.body.classList.remove('chat-immersive');
-          wrap.classList.remove('immersive');
-          wrap.style.transform = '';
-          continueBtn.classList.add('hidden');
-          exitBtn.classList.add('hidden');
-          setRubber(0);
-          // Allow normal page scroll and jump
-          if (direction === 'next' && nextSection) {
-            scrollToEl(nextSection);
-          } else if (direction === 'prev' && hero) {
-            scrollToEl(hero);
-          }
-          immersiveEnabled = false;
-        }, 320);
-      }
-
-      // Rubber-band on edges (wheel)
-      function handleWheel(e){
-        if (!immersiveEnabled) return;
-        const dy = e.deltaY || 0;
-        const atBottom = (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2);
-        const atTop = (viewport.scrollTop <= 2);
-
-        if ((dy > 0 && atBottom) || (dy < 0 && atTop)){
-          e.preventDefault();
-          const damp = 0.35;
-          const next = Math.max(-120, Math.min(120, rubberY + dy * damp));
-          setRubber(next);
-
-          // Exceed threshold -> continue to next/prev section
-          if (next > 80){ springBack(100); setTimeout(()=>exitImmersive('next'), 120); }
-          else if (next < -80){ springBack(-100); setTimeout(()=>exitImmersive('prev'), 120); }
-          else {
-            // Otherwise snap back gently
-            cancelAnimationFrame(rubberRAF);
-            rubberRAF = requestAnimationFrame(()=> springBack(0));
-          }
-        }
-      }
-
-      // Rubber-band on edges (touch)
-      function onTouchStart(e){
-        if (!immersiveEnabled) return;
-        touchStartY = e.touches ? e.touches[0].clientY : null;
-      }
-      function onTouchMove(e){
-        if (!immersiveEnabled || touchStartY == null) return;
-        const y = e.touches ? e.touches[0].clientY : 0;
-        const dy = touchStartY - y;
-        const atBottom = (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2);
-        const atTop = (viewport.scrollTop <= 2);
-
-        if ((dy > 0 && atBottom) || (dy < 0 && atTop)){
-          e.preventDefault();
-          const damp = 0.45; // touch feels better with a hair more damp
-          const next = Math.max(-120, Math.min(120, rubberY + dy * damp));
-          setRubber(next);
-        }
-      }
-      function onTouchEnd(){
-        if (!immersiveEnabled) return;
-        if (rubberY > 80){ springBack(100); setTimeout(()=>exitImmersive('next'), 120); }
-        else if (rubberY < -80){ springBack(-100); setTimeout(()=>exitImmersive('prev'), 120); }
-        else { springBack(0); }
-        touchStartY = null;
-      }
-
-      window.addEventListener('wheel', handleWheel, { passive:false });
-      wrap.addEventListener('touchstart', onTouchStart, { passive:true });
-      wrap.addEventListener('touchmove', onTouchMove, { passive:false });
-      wrap.addEventListener('touchend', onTouchEnd, { passive:true });
-      wrap.addEventListener('touchcancel', onTouchEnd, { passive:true });
-
-      // Keyboard exit shortcuts
-      window.addEventListener('keydown', (e)=>{
-        if (!immersiveEnabled) return;
-        const atBottom = (viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2);
-        const atTop = (viewport.scrollTop <= 2);
-        if (e.key === 'Escape') exitImmersive('next');
-        if ((e.key === 'PageDown' || e.key === ' ' || e.key === 'ArrowDown') && atBottom){
-          e.preventDefault(); exitImmersive('next');
-        }
-        if ((e.key === 'PageUp' || e.key === 'ArrowUp') && atTop){
-          e.preventDefault(); exitImmersive('prev');
-        }
-      });
-
-      continueBtn?.addEventListener('click', ()=> exitImmersive('next'));
-      exitBtn?.addEventListener('click', ()=> exitImmersive('next'));
-
-      // Engage immersive when user scrolls from hero into chat (first time only)
-      let lastScrollY = window.scrollY;
-      let scrollingDown = false;
-      window.addEventListener('scroll', () => {
-        scrollingDown = window.scrollY > lastScrollY; lastScrollY = window.scrollY;
-      }, { passive:true });
-
-      const chatSnap = new IntersectionObserver((entries)=>{
-        for (const e of entries){
-          if (e.isIntersecting && scrollingDown && !immersiveUsedOnce) {
-            enterImmersive();
-          }
-        }
-      }, { threshold: 0.6 });
-      chatSnap.observe(wrap);
-
-      // Optional deep link: clicking an anchor to #chat-demo force immersive
-      document.querySelectorAll('a[href="#chat-demo"]').forEach(a=>{
-        a.addEventListener('click', (e)=>{ e.preventDefault(); enterImmersive(); }, { passive:false });
-      });
-
-      // ===== Run / autoplay once the section is seen (backup) =====
       async function run(){
         clearList();
-        setAutoScrollOn();
+        // 🔊 Play bass drop when the demo starts
         playBassDrop();
 
         for (const m of msgs){
           if (m.role === 'user') {
             await appendUser(m.text);
           } else {
+            // 🔥 Assistant now streams its response (not instant dump)
             await appendBotStreaming(m.final);
           }
         }
         await appendBotDoc();
-        scheduleAutoScroll();
       }
 
       replay?.addEventListener('click', () => { playBassDrop(); run(); });
 
-      let startedOnce = false;
+      // Auto-play when section comes into view (once).
+      let started = false;
       const ob = new IntersectionObserver((entries)=>{
         for (const e of entries){
-          if (e.isIntersecting && !startedOnce){
-            startedOnce = true; run(); ob.unobserve(wrap);
+          if (e.isIntersecting && !started){
+            started = true; run(); ob.unobserve(wrap);
           }
         }
       }, { threshold:.35 });
       if (wrap) ob.observe(wrap);
 
+      // Unlock audio on first user gesture if needed
+      ['click','touchstart','keydown'].forEach(evt => {
+        window.addEventListener(evt, function onFirst(){
+          try { if (__OC_AUDIO && __OC_AUDIO.resume) __OC_AUDIO.resume(); } catch {}
+          window.removeEventListener(evt, onFirst, { once:true });
+        }, { once:true });
+      });
     })();
   </script>
 </body>
