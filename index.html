@@ -58,13 +58,10 @@
       --brand-2:#0E6F5C; 
       --brand-3:#00CFFF;
       --lilac:#E7E7FF;
-
-      /* site background (single source of truth) */
-      --site-bg:#fff;
     }
 
     /* Kill horizontal scroll without breaking sticky */
-    html, body { max-width: 100%; overflow-x: clip !important; background: var(--site-bg); }
+    html, body { max-width: 100%; overflow-x: clip !important; }
     @supports not (overflow-x: clip) { html, body { overflow-x: hidden !important; } }
     .section-clip { position: relative; overflow-x: clip; }
 
@@ -238,9 +235,6 @@
     .chat-viewport{
       max-height: clamp(320px, 50vh, 560px);
       overflow-y: auto; overscroll-behavior: contain; scroll-behavior: smooth;
-      background: var(--site-bg);
-      /* more padding at bottom so next bubble peeks in */
-      padding: 14px 14px 160px 14px; /* <-- increased bottom padding */
       padding-right: 6px;
     }
     .chat-stream { display:flex; flex-direction:column; gap:10px; }
@@ -256,7 +250,7 @@
     .bubble .ai-final{ color:#0A0D10; white-space:normal; }
 
     /* Jump to latest button */
-    #jumpLatest { position: absolute; right: 10px; bottom: 18px; }
+    #jumpLatest { position: absolute; right: 6px; bottom: 6px; }
     #jumpLatest.hidden { display: none; }
 
     /* ===== Document Preview (Lien) styles ===== */
@@ -280,10 +274,10 @@
     .doc-fade.in{ opacity:1; transform: translateY(0); }
 
     /* ====== IMMERSIVE CHAT (full-screen lock) ====== */
-    body.chat-immersive { overflow: hidden; background: var(--site-bg); }
+    body.chat-immersive { overflow: hidden; }
     body.chat-immersive header { transform: translateY(-100%); transition: transform .35s ease; }
     #chat-demo.immersive {
-      position: fixed; inset: 0; z-index: 70; background: var(--site-bg); /* identical to site background */
+      position: fixed; inset: 0; z-index: 70; background: #fff;
       padding: max(16px, var(--pad-mobile-x)) !important;
       display: flex; align-items: center; justify-content: center;
     }
@@ -291,12 +285,11 @@
     #chat-demo.immersive .chat-viewport {
       height: clamp(60vh, calc(100vh - 180px), 86vh);
       max-height: none;
-      background: var(--site-bg); /* ensure flow is seamless */
+      background: #fff;
       border-radius: 16px;
       border: 1px solid var(--line);
       box-shadow: 0 10px 30px rgba(0,0,0,.08);
-      /* extra bottom padding in immersive too */
-      padding: 16px 16px 180px 16px;
+      padding: 14px;
     }
     #chatContinue, #exitImmersive {
       position: absolute; left: 50%; transform: translateX(-50%);
@@ -415,7 +408,7 @@
   </section>
 
   <!-- ===== LIVE CHAT DEMO — BUBBLES ON BACKGROUND ===== -->
-  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 pb-12 md:pb-16" style="background: transparent;">
+  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 pb-12 md:pb-16">
 
     <div class="w-full flex items-center justify-center">
       <div class="chat-wrap">
@@ -543,7 +536,7 @@
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
           <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24  fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <p class="font-semibold text-neutral-900">Verified</p>
           </div>
           <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
@@ -1090,10 +1083,8 @@
         })();
       }
 
-      // ===== Run / autoplay =====
-      let started = false; // ensures the scripted conversation runs once unless replayed
-
       async function run(){
+        // when replaying, reset autoscroll to on and jump to bottom
         clearList();
         setAutoScrollOn();
         playBassDrop();
@@ -1112,6 +1103,7 @@
       replay?.addEventListener('click', () => { playBassDrop(); run(); });
 
       // Auto-play when section comes into view (once).
+      let started = false;
       const ob = new IntersectionObserver((entries)=>{
         for (const e of entries){
           if (e.isIntersecting && !started){
@@ -1121,7 +1113,7 @@
       }, { threshold:.35 });
       if (wrap) ob.observe(wrap);
 
-      // ====== IMMERSIVE (full-screen, centered, auto-scroll) ======
+      // ====== IMMERSIVE (full-screen) behavior ======
       let immersiveEnabled = false;
       let immersiveUsedOnce = false;
       let touchStartY = null;
@@ -1140,8 +1132,8 @@
         wrap.classList.add('immersive');
         continueBtn.classList.remove('hidden');
         exitBtn.classList.remove('hidden');
-        // Ensure conversation is running and autoscrolling, then center
-        if (!started){ started = true; run(); } else { setAutoScrollOn(); scheduleAutoScroll(); }
+        // Keep chat autoscrolling, and jump to bottom as messages stream
+        setAutoScrollOn();
       }
 
       function exitImmersive(direction='next'){
@@ -1162,7 +1154,7 @@
       continueBtn?.addEventListener('click', ()=> exitImmersive('next'));
       exitBtn?.addEventListener('click', ()=> exitImmersive('next'));
 
-      // Engage immersive when user scrolls from hero down into chat (first time)
+      // Engage immersive when user scrolls from hero down into chat (only once)
       let lastScrollY = window.scrollY;
       let scrollingDown = false;
       window.addEventListener('scroll', () => {
@@ -1172,6 +1164,7 @@
       const chatSnap = new IntersectionObserver((entries)=>{
         for (const e of entries){
           if (e.isIntersecting && scrollingDown && !immersiveUsedOnce) {
+            // Snap to immersive chat on first approach from above
             enterImmersive();
           }
         }
@@ -1218,11 +1211,6 @@
         if ((e.key === 'PageUp' || e.key === 'ArrowUp') && (viewport.scrollTop <= 6)){
           e.preventDefault(); exitImmersive('prev');
         }
-      });
-
-      // Optional: if you add an anchor link to #chat-demo, snap into immersive when clicked
-      document.querySelectorAll('a[href="#chat-demo"]').forEach(a=>{
-        a.addEventListener('click', (e)=>{ e.preventDefault(); enterImmersive(); }, { passive:false });
       });
 
     })();
