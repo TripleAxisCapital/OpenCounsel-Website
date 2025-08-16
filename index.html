@@ -1,4 +1,5 @@
-<!-- Sync Successful (Refactored) -->
+<!-- Sync Successful -->
+
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -6,12 +7,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenCounsel — Private, Local AI Legal Assistant</title>
   <meta name="description" content="OpenCounsel: a private, local AI legal assistant with RAG, document search, and case analysis. Download for macOS, Windows, and Linux." />
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
 
-  <!-- Fonts / Icons / Tailwind -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Icons + Tailwind -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -19,7 +21,9 @@
       theme: {
         extend: {
           fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
-          colors: { oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' } },
+          colors: {
+            oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' }
+          },
           boxShadow: {
             card:'0 6px 30px rgba(16,24,40,0.08)',
             glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)'
@@ -30,160 +34,243 @@
   </script>
 
   <style>
-    /* ===== Vars / Resets ===== */
-    :root{
-      --pad-mobile-x:24px; --pad-desktop-x:32px; --hamburger-inset:13px;
-      --line:#E7EDF2; --lilac:#E7E7FF;
-      --grad-angle:135deg; --grad-speed:16s;
-      --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
-      --logo-size:72px;
+    /* ================================
+       GLOBAL CONTROLS
+       ================================ */
+    :root {
+      --pad-mobile-x: 24px;
+      --pad-desktop-x: 32px;
+      --hamburger-inset: 13px;
 
-      /* Scroll-fade */
-      --sf-blur-start:16px; --sf-blur-end:0px;
-      --sf-dur:1500ms; --sf-ease:cubic-bezier(.2,.8,.2,1);
-      --sf-op-start:.65; --sf-op-end:1; --sf-translate:8px;
+      /* ==== Global Scroll-Blur Controls ==== */
+      --scroll-blur-start: 16px;
+      --scroll-blur-end: 0px;
+      --scroll-blur-duration: 1500ms;
+      --scroll-blur-ease: cubic-bezier(.2,.8,.2,1);
+      --scroll-blur-opacity-start: .65;
+      --scroll-blur-opacity-end: 1;
+      --scroll-blur-translate: 8px;
+
+      /* Chat demo palette hooks */
+      --line:#E7EDF2;
+      --brand-angle:135deg; 
+      --brand-1:#0B1B2B; 
+      --brand-2:#0E6F5C; 
+      --brand-3:#00CFFF;
+      --lilac:#E7E7FF;
     }
 
-    html, body { max-width:100%; overflow-x:clip !important; }
-    @supports not (overflow-x: clip){ html, body{ overflow-x:hidden !important; } }
-    .section-clip{ position:relative; overflow-x:clip; }
-    .oc-container{ padding-inline:var(--pad-mobile-x); }
-    @media (min-width:1024px){ .oc-container{ padding-inline:var(--pad-desktop-x); } }
-    ::selection{ background:#5B8CFF; color:#fff; }
+    /* Kill horizontal scroll without breaking sticky */
+    html, body { max-width: 100%; overflow-x: clip !important; }
+    @supports not (overflow-x: clip) { html, body { overflow-x: hidden !important; } }
+    .section-clip { position: relative; overflow-x: clip; }
 
-    /* Animations */
+    .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
+    @media (min-width: 1024px) { .oc-container { padding-left: var(--pad-desktop-x); padding-right: var(--pad-desktop-x); } }
+    ::selection{background:#5B8CFF;color:#fff}
+
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity:0; transform: translateY(18px) scale(.98); transition: opacity .6s ease, transform .6s ease; }
+      .reveal.in { opacity:1; transform: translateY(0) scale(1); }
+      .tilt:hover{ transform: translateY(-2px) scale(1.01); }
+      .tilt{ transition: transform .25s ease; }
+    }
+
+    @keyframes logoIntro { from { transform: translateY(6px) scale(.92); opacity:0 } to { transform: translateY(0) scale(1); opacity:1 } }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-    @keyframes logoIntro { from{ transform:translateY(6px) scale(.92); opacity:0 } to{ transform:translateY(0) scale(1); opacity:1 } }
-    @media (prefers-reduced-motion:no-preference){
-      .reveal{ opacity:0; transform:translateY(18px) scale(.98); transition:opacity .6s ease, transform .6s ease; }
-      .reveal.in{ opacity:1; transform:translateY(0) scale(1); }
-      .tilt{ transition:transform .25s ease; } .tilt:hover{ transform:translateY(-2px) scale(1.01); }
+
+    /* ===========================================
+       PER-SECTION GRADIENT CONTROLS
+       =========================================== */
+    #hamburgerBtn .hamburger {
+      --from: #00CFFFcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --angle:135deg; --speed:16s;
     }
 
-    /* Gradient utilities */
-    .grad-anim{
-      background:linear-gradient(var(--grad-angle), var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size:300% 300%; animation:gradientShift var(--grad-speed) ease-in-out infinite;
-      will-change:background-position;
+    :root{
+      --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
+      --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
+      --logo-width:64px; --logo-height:64px;
     }
-    .g-grad{ background:linear-gradient(var(--grad-angle), var(--grad-from), var(--grad-via), var(--grad-to)); }
-    .grad-text{
-      background:linear-gradient(var(--grad-angle), var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size:300% 300%; animation:gradientShift var(--grad-speed) ease-in-out infinite;
-      -webkit-background-clip:text; background-clip:text; color:transparent; -webkit-text-fill-color:transparent;
+
+    #home { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg; }
+    #edge { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --speed:16s; --angle:135deg; }
+    #features { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --speed:16s; --angle:135deg; }
+
+    /* ========= PRIMITIVES ========= */
+    .g-grad, .grad-anim{
+      background: linear-gradient(var(--angle, 135deg), var(--from, #0a1f44cc), var(--via, #0b3d3dcc), var(--to, #064420cc));
+      background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
     }
+    .animated-gradient { background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; will-change:background-position; }
+
     .logo-anim{
-      display:inline-block; width:var(--logo-size); height:var(--logo-size);
-      background:linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size:300% 300%;
-      animation:logoIntro 800ms ease-out forwards, gradientShift var(--grad-speed) ease-in-out infinite;
-      -webkit-mask:url('logo.svg') no-repeat center / contain; mask:url('logo.svg') no-repeat center / contain;
+      display:inline-block; width:var(--logo-width); height:var(--logo-height);
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%;
+      animation: logoIntro 800ms ease-out forwards, gradientShift 16s ease-in-out infinite;
+      -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain;
     }
 
-    /* Header / Nav */
-    @supports (font-variation-settings:"wght" 500){
-      .nav-link{ font-variation-settings:"wght" 520; transition: font-variation-settings 260ms, letter-spacing 260ms, transform 260ms; }
-      .nav-link:hover{ font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
+    .grad-text{
+      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
+      background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
     }
 
-    /* Hamburger */
-    .hamburger{ width:32px; height:28px; display:inline-flex; flex-direction:column; justify-content:center; gap:6px; }
-    .hamburger span{
-      height:3px; width:100%; border-radius:9999px;
-      background:linear-gradient(var(--grad-angle), #0a1f44, #0b3d3d, #064420);
-      background-size:300% 300%; animation:gradientShift var(--grad-speed) ease-in-out infinite;
-      transition:transform .4s ease, opacity .2s ease;
-    }
-    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform:translateY(9px) rotate(45deg); }
-    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity:0; }
-    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform:translateY(-9px) rotate(-45deg); }
-    #hamburgerBtn{ display:flex; align-items:center; justify-content:center; height:56px; margin-right:var(--hamburger-inset); }
-    @media (min-width:768px){ #hamburgerBtn{ display:none!important; } #mobileMenu{ display:none!important; } }
+    .mobile-menu { backdrop-filter: blur(8px); }
 
-    /* Mobile drawer */
-    #mobileMenu{ position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
+    .hamburger { width: 32px; height: 28px; display: inline-flex; flex-direction: column; justify-content: center; gap: 6px; }
+    .hamburger span {
+      height: 3px; width: 100%; border-radius: 9999px;
+      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
+      background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      transition: transform .4s ease, opacity .2s ease;
+    }
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity: 0; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
+
+    #hamburgerBtn { display:flex; align-items:center; justify-content:center; height:56px; padding:0; margin-right: var(--hamburger-inset); }
+    @media (min-width: 768px) { #hamburgerBtn { display:none!important; } #mobileMenu{ display:none!important; } }
+
+    .rows-equal { grid-auto-rows: 1fr; }
+    .grid-stretch > * { height: 100%; }
+    .card-glass { display:flex; flex-direction:column; height:100%; }
+
+    @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
+    @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
+
+    .page-blur{
+      position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
+      background: rgba(255,255,255,.28); z-index:9999; pointer-events:none;
+      transition: backdrop-filter 2s ease, background-color 2s ease, opacity 2s ease;
+    }
+    .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
+    @media (prefers-reduced-motion: reduce){ .page-blur{ transition:none; } }
+
+    /* Mobile slide-in menu */
+    #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
     #mobileMenu .menu-scrim{
-      position:absolute; inset:0; background:rgba(255,255,255,0.92);
-      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
-      opacity:0; transition:opacity .4s ease;
+      position:absolute; inset:0; background: rgba(255,255,255,0.92);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      opacity:0; transition: opacity 2s ease, backdrop-filter 2s ease, -webkit-backdrop-filter 2s ease;
     }
     #mobileMenu .menu-panel{
-      position:absolute; inset:0 auto 0 0; height:100%; width:min(88vw,420px); background:#fff;
-      border-right:1px solid rgba(0,0,0,.06); box-shadow:0 24px 60px rgba(0,0,0,.12);
-      transform:translateX(-100%); transition:transform .45s cubic-bezier(.22,.9,.22,1);
+      position:absolute; top:0; left:0; height:100%; width:min(88vw, 420px); background:#fff;
+      border-right: 1px solid rgba(0,0,0,.06); box-shadow: 0 24px 60px rgba(0,0,0,.12);
+      transform: translateX(-100%); opacity:.98; filter: blur(12px);
+      transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s;
       display:flex; flex-direction:column; padding:18px 20px;
     }
-    #mobileMenu.active{ display:block; pointer-events:auto; }
-    #mobileMenu.active .menu-scrim{ opacity:1; }
-    #mobileMenu.active .menu-panel{ transform:translateX(0); }
-    .drawer-title{ font-weight:700; font-size:20px; letter-spacing:-.01em; }
-    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; color:#fff!important; }
-    .drawer-nav a{ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; }
-    .drawer-nav a.grad{ -webkit-background-clip:text; background-clip:text; color:transparent; }
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px); }
+    #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
 
-    /* Page blur on load */
-    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition:backdrop-filter 1.2s, background-color 1.2s, opacity 1.2s; }
-    .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
-
-    /* Scroll-fade */
-    .scroll-fade{ isolation:isolate; }
-    .scroll-fade > *{
-      filter:blur(var(--sf-blur-start)); opacity:var(--sf-op-start); transform:translateY(var(--sf-translate));
-      transition: filter var(--sf-dur) var(--sf-ease), opacity var(--sf-dur) var(--sf-ease), transform var(--sf-dur) var(--sf-ease);
+    .drawer-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
+    .drawer-title{
+      font-weight:700; letter-spacing:-.01em;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px;
     }
-    .scroll-fade.in-view > *{ filter:blur(var(--sf-blur-end)); opacity:var(--sf-op-end); transform:translateY(0); }
+    .drawer-close{
+      display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px;
+      border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); transition: background .2s ease, transform .2s ease;
+    }
+    .drawer-close:hover{ background:#fff; transform:translateY(-1px); }
 
-    /* Hero */
-    .vh-hero{ min-height:calc(100svh - 56px - var(--pad-mobile-x)); }
-    @media (min-width:1024px){ .vh-hero{ min-height:calc(100svh - 56px - var(--pad-desktop-x)); } }
+    .drawer-nav a:not(.drawer-cta){
+      display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .drawer-nav a:hover{ transform:translateY(-1px); opacity:.95; }
+    .drawer-sep{ height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent); margin:8px 0 6px; }
 
-    /* Chat demo */
-    .chat-wrap{ width:min(900px,100%); margin:0 auto; }
-    .chat-stream{ display:flex; flex-direction:column; gap:10px; }
-    .msg-row{ display:flex; width:100%; }
-    .msg-assistant{ justify-content:flex-start; padding-left:56px; }
-    .msg-user{ justify-content:flex-end; padding-right:56px; }
-    .bubble{ max-width:85%; border-radius:16px; padding:12px 16px; font-size:15px; line-height:1.6; box-shadow:0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06); }
-    .bubble-user{ background:#fff; border:1px solid var(--line); }
-    .bubble-bot{ background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); overflow:visible; }
+    .drawer-cta{
+      display:inline-flex!important; align-items:center; justify-content:center; width:100%;
+      text-align:center; position:relative; color:#fff!important; -webkit-text-fill-color:#fff!important;
+      background-clip:border-box!important; -webkit-background-clip:border-box!important; overflow:hidden;
+    }
+    .drawer-cta > span{ z-index:0!important; }
+    .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position:relative; }
+
+    /* BLUR-ON-SCROLL utility */
+    .scroll-fade { isolation:isolate; }
+    .scroll-fade > * {
+      filter: blur(var(--scroll-blur-start)); opacity: var(--scroll-blur-opacity-start); transform: translateY(var(--scroll-blur-translate));
+      transition: filter var(--scroll-blur-duration) var(--scroll-blur-ease), opacity var(--scroll-blur-duration) var(--scroll-blur-ease), transform var(--scroll-blur-duration) var(--scroll-blur-ease);
+      will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0);
+    }
+    .scroll-fade.in-view > * { filter:blur(var(--scroll-blur-end)); opacity:var(--scroll-blur-opacity-end); transform:translateY(0); }
+
+    .LargeAniLogo{ display:inline-block; width:var(--logo-size,72px); height:var(--logo-size,72px); }
+
+    @supports (font-variation-settings: "wght" 500) {
+      .nav-link { font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
+      .nav-link:hover { font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
+    }
+    @media (prefers-reduced-motion: reduce) { .nav-link { transition:none; } }
+
+    /* ===== Chat Demo visuals (bubbles on background) ===== */
+    .brand-gradient{ background-image:linear-gradient(var(--brand-angle),var(--brand-1),var(--brand-2),var(--brand-3)); background-size:200% 200%; }
+    @keyframes breathe{0%{background-position:0% 50%;filter:saturate(.95)}50%{background-position:100% 50%;filter:saturate(1.05)}100%{background-position:0% 50%;filter:saturate(.95)}}
+    .breathing{animation:breathe 6s ease-in-out infinite}
+    .shadow-soft{box-shadow:0 2px 6px rgba(10,13,16,0.04), 0 12px 24px rgba(10,13,16,0.06)}
+    .border-hairline{border:1px solid var(--line)}
     .think-stream{
-      color:transparent; background-image:linear-gradient(var(--grad-angle), #00CFFF, #0E6F5C, #00CFFF);
-      background-size:200% 200%; animation:gradientShift 4.5s ease-in-out infinite;
-      -webkit-background-clip:text; background-clip:text; filter:drop-shadow(0 0 .3rem rgba(0,207,255,.3)); white-space:pre-wrap; line-height:1.6;
+      color:transparent; background-image:linear-gradient(var(--brand-angle),#00CFFF,#0E6F5C,#00CFFF); background-size:200% 200%;
+      -webkit-background-clip:text; background-clip:text; animation:breathe 4.5s ease-in-out infinite;
+      filter:drop-shadow(0 0 .3rem rgba(0,207,255,.3)); white-space:pre-wrap; line-height:1.6
     }
-    @keyframes fadeAway{ to{ opacity:0; transform:translateY(-4px); filter:blur(2px) } }
-    .fade-away{ animation:fadeAway .38s ease forwards; }
-    .chip{ font-size:12px; line-height:1; border:1px solid var(--line); background:#fff; border-radius:999px; padding:6px 10px; box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 6px 14px rgba(10,13,16,.06); transition:transform .12s ease }
-    .chip:hover{ transform:translateY(-1px); }
-    .ai-final{ color:#0A0D10; white-space:normal; }
+    @keyframes fadeAway{to{opacity:0;transform:translateY(-4px);filter:blur(2px)}}
+    .fade-away{animation:fadeAway .38s ease forwards}
+    .chip{font-size:12px;line-height:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 6px 14px rgba(10,13,16,.06);transition:transform .12s ease}
+    .chip:hover{transform:translateY(-1px)}
 
-    /* Document preview */
-    .brand-gradient{ background-image:linear-gradient(var(--grad-angle), #0B1B2B, #0E6F5C, #00CFFF); background-size:200% 200%; }
-    @keyframes breathe{ 0%{background-position:0% 50%; filter:saturate(.95)} 50%{background-position:100% 50%; filter:saturate(1.05)} 100%{background-position:0% 50%; filter:saturate(.95)} }
-    .breathing{ animation:breathe 6s ease-in-out infinite; }
-    .doc-page{ background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow:0 10px 28px rgba(10,13,16,.10); border-radius:14px; padding:28px 28px 32px; aspect-ratio:8.5/11; overflow:hidden; width:min(620px,85vw); max-width:100%; }
-    .doc-h1{ font-size:20px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; text-align:center; }
+    /* Chat stream layout (ChatGPT-like indent) */
+    .chat-wrap { width:min(900px,100%); margin:0 auto; }
+    .chat-stream { display:flex; flex-direction:column; gap:10px; }
+    .msg-row { display:flex; width:100%; }
+    .msg-assistant { justify-content:flex-start; padding-left:56px; }  /* left gutter like avatar space */
+    .msg-user { justify-content:flex-end; padding-right:56px; }       /* right gutter */
+    .bubble {
+      max-width:85%; border-radius:16px; padding:12px 16px;
+      font-size:15px; line-height:1.6; box-shadow: 0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06)
+    }
+    .bubble-user { background:#fff; border:1px solid var(--line); }
+    .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); overflow: visible; }
+    .bubble .ai-final{ color:#0A0D10; white-space:normal; }
+
+    /* ===== Document Preview (Lien) styles ===== */
+    .doc-page{
+      background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow: 0 10px 28px rgba(10,13,16,.10);
+      border-radius: 14px; padding: 28px 28px 32px 28px;
+      aspect-ratio: 8.5 / 11; overflow: hidden;
+      width: min(620px, 85vw);   /* ensure full page visible on all screens */
+      max-width: 100%;           /* never exceed bubble width */
+    }
+    .doc-h1{ font-size: 20px; font-weight: 700; letter-spacing:.02em; text-transform: uppercase; text-align:center; }
     .doc-sub{ font-size:12px; text-align:center; color:#666; margin-top:2px; }
     .doc-sec{ font-size:12px; font-weight:600; letter-spacing:.02em; text-transform:uppercase; color:#0A0D10; margin-top:16px; }
     .doc-p{ font-size:13px; line-height:1.5; color:#0A0D10; margin-top:6px; }
     .doc-small{ font-size:12px; color:#333; }
     .doc-rule{ height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.12), transparent); margin:12px 0; }
-    .doc-bullets{ padding-left:18px; margin-top:4px; }
-    .doc-bullets li{ font-size:13px; line-height:1.5; margin:4px 0; }
+    .doc-bullets{ padding-left: 18px; margin-top: 4px; }
+    .doc-bullets li{ font-size:13px; line-height:1.5; margin: 4px 0; }
     .doc-brand-band{ height:8px; border-radius:10px; }
-    .doc-fade{ opacity:0; transform:translateY(4px); transition:opacity .25s ease, transform .25s ease; } .doc-fade.in{ opacity:1; transform:translateY(0); }
-
-    /* Helpers */
-    .rows-equal{ grid-auto-rows:1fr; }
-    .grid-stretch > *{ height:100%; }
+    .doc-fade{ opacity:0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
+    .doc-fade.in{ opacity:1; transform: translateY(0); }
   </style>
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
-  <!-- Load blur -->
+  <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- Header -->
+  <!-- HEADER -->
   <header class="sticky top-0 z-50 bg-white">
     <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -191,56 +278,86 @@
       </div>
 
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link grad-text font-medium" href="#features">Features</a>
-        <a class="nav-link grad-text font-medium" href="#edge">Why it wins</a>
-        <a class="nav-link grad-text font-medium" href="#plans">Plans</a>
-        <a class="nav-link grad-text font-medium" href="#screens">Screens</a>
-        <a class="nav-link grad-text font-medium" href="#faq">FAQ</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#features">Features</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#edge">Why it wins</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#plans">Plans</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#screens">Screens</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="#faq">FAQ</a>
       </nav>
 
-      <button id="hamburgerBtn" class="md:hidden rounded-xl focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-        <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
-      </button>
+      <div class="flex items-center gap-2">
+        <button id="hamburgerBtn"
+          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
+      </div>
     </div>
 
-    <!-- Mobile drawer -->
+    <!-- MOBILE MENU -->
     <div id="mobileMenu" aria-hidden="true">
       <div class="menu-scrim"></div>
       <aside class="menu-panel">
-        <div class="flex items-center justify-between pb-1">
-          <span class="drawer-title grad-text">OpenCounsel</span>
-          <button id="closeMenuBtn" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-black/10 bg-white/80" aria-label="Close menu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
+        <div class="drawer-head">
+          <span class="drawer-title">OpenCounsel</span>
+          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
 
         <nav class="drawer-nav mt-2">
-          <a class="grad-text grad" href="#features">Features</a>
-          <a class="grad-text grad" href="#edge">Why it wins</a>
-          <a class="grad-text grad" href="#plans">Plans</a>
-          <a class="grad-text grad" href="#screens">Screens</a>
-          <a class="grad-text grad" href="#faq">FAQ</a>
-          <div class="h-px my-2 bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
-          <a href="#download" class="drawer-cta rounded-2xl px-6 py-3 text-base md:text-lg font-semibold grad-anim focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 ease-out hover:-translate-y-[2px]">
-            <i class="ph ph-download text-xl mr-2"></i>Download
+          <a href="#features">Features</a>
+          <a href="#edge">Why it wins</a>
+          <a href="#plans">Plans</a>
+          <a href="#screens">Screens</a>
+          <a href="#faq">FAQ</a>
+          <div class="drawer-sep"></div>
+          <a
+            href="#download"
+            class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                   grad-anim mt-2 w-full justify-center"
+            style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+          >
+            <i class="ph ph-download text-xl"></i>
+            <span>Download</span>
           </a>
         </nav>
       </aside>
     </div>
   </header>
 
-  <!-- Hero -->
-  <section id="home" class="mx-auto max-w-[1200px] oc-container reveal">
-    <div class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border vh-hero flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]">
+  <!-- HERO -->
+  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
+    <div
+      class="g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+      style="min-height: calc(100vh - 56px - var(--pad-mobile-x));"
+    >
       <div class="flex flex-col items-center max-w-2xl">
         <span class="font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
         <p class="mt-4 text-lg md:text-xl text-white/90 leading-relaxed">AI for law. Designed for you.</p>
         <p class="mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Local, private, and built for legal research.</p>
 
-        <div class="mt-8">
-          <a href="#download" class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 shadow-xl hover:shadow-2xl transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 grad-anim">
-            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70" style="background:radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-            <i class="ph ph-download text-xl"></i>Download
+        <div class="mt-8 flex justify-center">
+          <a
+            href="#download"
+            class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                   grad-anim"
+            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
+          >
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
+                  style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+            <i class="ph ph-download text-xl"></i>
+            Download
           </a>
         </div>
       </div>
@@ -248,17 +365,18 @@
   </section>
 
   <!-- Secure. Local. Yours. -->
-  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center">
+  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
     <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
       <div>
         <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Secure. Local. Yours.</p>
-        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text">For Everyone</span>
+        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">For Everyone</span>
       </div>
     </div>
   </section>
 
-  <!-- Live Chat Demo -->
-  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pb-12 md:pb-16">
+  <!-- ===== LIVE CHAT DEMO — BUBBLES ON BACKGROUND ===== -->
+  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 pb-12 md:pb-16">
+
     <div class="w-full flex items-center justify-center">
       <div class="chat-wrap">
         <div id="demoMessages" class="chat-stream"></div>
@@ -269,7 +387,7 @@
       </div>
     </div>
 
-    <!-- Templates -->
+    <!-- bubble templates -->
     <template id="demoTplUser">
       <div class="msg-row msg-user">
         <div class="bubble bubble-user"></div>
@@ -284,33 +402,40 @@
       </div>
     </template>
   </section>
+  <!-- ===== END DEMO SECTION ===== -->
 
-  <!-- Edge -->
-  <section id="edge" class="mx-auto max-w-[1200px] oc-container reveal -mt-4 md:-mt-6">
+  <!-- EDGE / WHY IT WINS -->
+  <section id="edge" class="mx-auto max-w-[1200px] oc-container reveal -mt-4 md:-mt-6" style="padding-top:0">
     <div class="mt-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
-      <article class="scroll-fade relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-lock text-white text-[20px]"></i></div>
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+            <i class="ph ph-lock text-white text-[20px]"></i>
+          </div>
           <div>
             <h3 class="font-semibold text-white tracking-tight">Private by Design</h3>
             <p class="mt-2 text-sm leading-relaxed text-white/80">Models, search, and data stay on your device. Your work never leaves your hands.</p>
           </div>
         </div>
+        <div class="mt-auto"></div>
       </article>
 
-      <article class="scroll-fade relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph-light ph-open-ai-logo text-white text-[20px]"></i></div>
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+            <i class="ph-light ph-open-ai-logo text-white text-[20px]"></i>
+          </div>
           <div>
             <h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3>
             <p class="mt-2 text-sm leading-relaxed text-white/80">Industry-leading intelligence, fine-tuned with deep legal expertise..</p>
           </div>
         </div>
+        <div class="mt-auto"></div>
       </article>
 
-      <article class="scroll-fade relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
           <div>
@@ -318,16 +443,18 @@
             <p class="mt-2 text-sm leading-relaxed text-white/80">Trusted by government. Curated by leading counsel. Built for absolute clarity.</p>
           </div>
         </div>
+        <div class="mt-auto"></div>
       </article>
     </div>
   </section>
 
-  <!-- Counsel for Everyone -->
+  <!-- COUNSEL FOR EVERYONE -->
   <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-24 pb-0 bg-white">
+    <!-- Decorative glows -->
     <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
-      <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
-      <div class="absolute left-[-8%] bottom-[-6%] h-72 w-72 rounded-full blur-2xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(244,114,182,.18), rgba(244,114,182,0) 70%);"></div>
+      <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
+      <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
+      <div class="absolute left-[-8%] bottom-[-6%] h-72 w-72 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(244,114,182,.18), rgba(244,114,182,0) 70%);"></div>
     </div>
     <div class="absolute inset-0 z-0 bg-white"></div>
 
@@ -374,20 +501,20 @@
     </div>
   </section>
 
-  <!-- Separator slogan -->
-  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center">
+  <!-- Secure Local Yours -->
+  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
     <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
       <div>
         <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Tomorrow’s Counsel.</p>
-        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text">Today</span>
+        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">Today</span>
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section id="features" class="mx-auto max-w-[1200px] oc-container reveal mb-10 md:mb-10">
+  <!-- FEATURES -->
+  <section id="features" class="mx-auto max-w-[1200px] oc-container reveal pt-0 mb-10 md:mb-10" style="padding-top:0px">
     <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
-      <article class="scroll-fade relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div>
@@ -396,9 +523,10 @@
             <p class="mt-2 text-sm leading-relaxed text-white/80">Every answer, backed by sources. Every step, documented.</p>
           </div>
         </div>
+        <div class="mt-auto"></div>
       </article>
 
-      <article class="scroll-fade relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
@@ -407,9 +535,10 @@
             <p class="mt-2 text-sm leading-relaxed text-white/80">Curated case law, contracts, filings, and legal statistics — all in one place.</p>
           </div>
         </div>
+        <div class="mt-auto"></div>
       </article>
 
-      <article class="scroll-fade relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt card-glass">
+      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
         <div class="flex items-start gap-4">
           <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div>
           <div>
@@ -417,11 +546,12 @@
             <p class="mt-2 text-sm leading-relaxed text-white/80">Build your own on-disk databases. Drag-and-drop files for instant semantic search.</p>
           </div>
         </div>
+        <div class="mt-auto"></div>
       </article>
     </div>
   </section>
 
-  <!-- Download CTA -->
+  <!-- DOWNLOAD CTA -->
   <section id="download" class="section-clip mx-auto max-w-[1200px] oc-container mt-24 reveal">
     <div class="scroll-fade g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
       <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -430,23 +560,25 @@
           <p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-          <a href="#" class="inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
-          <a href="#" class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
-          <a href="#" class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
+          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
+          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
+          <a href="#" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Big animated logo -->
+  <!-- Centered animated logo -->
   <div class="mx-auto my-10 md:my-14 flex items-center justify-center">
-    <span class="logo-anim" aria-label="OpenCounsel" style="--logo-size: clamp(56px, 30vw, 500px);"></span>
+    <span class="logo-anim LargeAniLogo" aria-label="OpenCounsel" style="--logo-size: clamp(56px, 30vw, 500px);"></span>
   </div>
 
-  <!-- Footer -->
+  <!-- FOOTER -->
   <footer class="border-t border-oc-line">
     <div class="mx-auto max-w-[1200px] oc-container py-10 flex flex-col items-center gap-6 text-oc-ink/60 text-sm">
-      <div class="text-center"><span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel</div>
+      <div class="text-center">
+        <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
+      </div>
       <div class="flex items-center gap-4">
         <a class="hover:text-oc-ink" href="#">Privacy</a>
         <a class="hover:text-oc-ink" href="#">Terms</a>
@@ -456,119 +588,188 @@
   </footer>
 
   <script>
-    /* ========= Helpers ========= */
-    const qs = (s, r=document) => r.querySelector(s);
-    const qsa = (s, r=document) => [...r.querySelectorAll(s)];
-    const on = (el, ev, fn, opts) => el && el.addEventListener(ev, fn, opts);
-    const ioOnce = (el, opts, fn) => {
-      const io = new IntersectionObserver(es => es.forEach(e => {
-        if (e.isIntersecting){ fn(e.target); io.unobserve(e.target); }
-      }), opts);
-      io.observe(el);
-    };
-    const ioToggle = (els, opts, cls) => {
-      const io = new IntersectionObserver(es => es.forEach(e => {
-        e.target.classList.toggle(cls, e.isIntersecting);
-      }), opts);
-      els.forEach(el => io.observe(el));
-    };
+    // ================================
+    // GLOBAL DEMO SETTINGS
+    // ================================
+    // Speed: 1.0 = normal, 0.5 = faster, 2.0 = slower
+    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 0.7;
 
-    /* ========= Demo speed & audio ========= */
-    window.OC_DEMO_SPEED = (typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 0.7);
-    window.OC_DEMO_SOUND = Object.assign({ enabled:true, url:'bass-drop.mp3', volume:0.9 }, window.OC_DEMO_SOUND || {});
+    // 🔊 Bass drop sound (change these)
+    window.OC_DEMO_SOUND = Object.assign({
+      enabled: true,
+      url: 'bass-drop.mp3',  // <-- replace with your file path
+      volume: 0.9            // 0.0 - 1.0
+    }, window.OC_DEMO_SOUND || {});
+
     let __OC_AUDIO = null;
     function playBassDrop(){
       if (!window.OC_DEMO_SOUND?.enabled) return;
+
       const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
       const url = (window.OC_DEMO_SOUND.url || '').trim();
 
       if (url){
-        __OC_AUDIO ||= new Audio(url);
-        Object.assign(__OC_AUDIO, { preload:'auto', crossOrigin:'anonymous', volume:vol, currentTime:0 });
-        __OC_AUDIO.play().catch(()=>{});
+        if (!__OC_AUDIO){
+          __OC_AUDIO = new Audio(url);
+          __OC_AUDIO.preload = 'auto';
+          __OC_AUDIO.crossOrigin = 'anonymous';
+        }
+        try {
+          __OC_AUDIO.currentTime = 0;
+          __OC_AUDIO.volume = vol;
+          __OC_AUDIO.play().catch(()=>{/* autoplay may be blocked */});
+        } catch(e){}
         return;
       }
+
+      // Fallback: synthesize a bass drop with WebAudio
       try{
         const Ctx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new Ctx(), o = ctx.createOscillator(), g = ctx.createGain();
-        o.type='sine'; o.frequency.setValueAtTime(100, ctx.currentTime);
+        const ctx = new Ctx();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+
+        o.type = 'sine';
+        o.frequency.setValueAtTime(100, ctx.currentTime);
         o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
+
         g.gain.setValueAtTime(0.0001, ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-        o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + 1.25);
+
+        o.connect(g).connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 1.25);
         if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
-      }catch{}
+      }catch(e){}
     }
-    const sp = ms => ms * ( (typeof window.OC_DEMO_SPEED==='number' && window.OC_DEMO_SPEED>0) ? window.OC_DEMO_SPEED : 1 );
-    const rand = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 
-    /* ========= Basic effects ========= */
-    const yr = qs('#yr'); if (yr) yr.textContent = new Date().getFullYear();
+    // Year
+    const yr = document.getElementById('yr');
+    if (yr) yr.textContent = new Date().getFullYear();
 
-    qsa('.reveal').forEach(el => ioOnce(el, { threshold:.12 }, t => t.classList.add('in')));
-    ioToggle(qsa('.scroll-fade'), { threshold:.35, rootMargin:"-12% 0px -12% 0px" }, 'in-view');
-
-    on(window, 'load', () => { const pb = qs('#pageBlur'); if (!pb) return; pb.classList.add('hide'); setTimeout(()=>pb.remove(), 1200); });
-
-    /* ========= Mobile menu ========= */
-    const hamburgerBtn = qs('#hamburgerBtn');
-    const mobileMenu   = qs('#mobileMenu');
-    const closeMenuBtn = qs('#closeMenuBtn');
-    const mq = window.matchMedia('(min-width: 768px)');
-
-    function setMenu(open){
-      if (!mobileMenu) return;
-      if (open){
-        mobileMenu.style.display='block'; mobileMenu.classList.add('active');
-        hamburgerBtn?.classList.add('is-active');
-        hamburgerBtn?.setAttribute('aria-expanded','true'); mobileMenu.setAttribute('aria-hidden','false');
-        document.body.classList.add('overflow-hidden');
-      } else {
-        mobileMenu.classList.remove('active'); hamburgerBtn?.classList.remove('is-active');
-        hamburgerBtn?.setAttribute('aria-expanded','false'); mobileMenu.setAttribute('aria-hidden','true');
-        document.body.classList.remove('overflow-hidden');
-        setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display='none'; }, 450);
+    // Scroll reveal (one-shot)
+    const io = new IntersectionObserver((entries)=>{
+      for (const e of entries) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
       }
-    }
-    on(hamburgerBtn,'click',()=> setMenu(!mobileMenu.classList.contains('active')));
-    on(closeMenuBtn,'click',()=> setMenu(false));
-    on(mobileMenu,'click',e=>{ if (e.target.classList.contains('menu-scrim')) setMenu(false); });
-    (mq.addEventListener ? mq.addEventListener('change', e => e.matches && setMenu(false)) : mq.addListener(e => e.matches && setMenu(false)));
-    on(document,'keydown', e => { if (e.key==='Escape') setMenu(false); });
+    },{threshold:.12});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-    /* ========= Type/Stream ========= */
+    // ===== MOBILE SLIDE-IN MENU =====
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+    function openMenu() {
+      if (window.matchMedia('(min-width: 768px)').matches) return;
+      mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
+      mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+    function closeMenu() {
+      mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+    }
+
+    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+    closeMenuBtn?.addEventListener('click', closeMenu);
+    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
+
+    const mq = window.matchMedia('(min-width: 768px)');
+    function handleMQ(e){ if (e.matches) closeMenu(); }
+    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+
+    window.addEventListener('load', () => {
+      const pageBlur = document.getElementById('pageBlur');
+      if (!pageBlur) return; pageBlur.classList.add('hide'); setTimeout(() => pageBlur.remove(), 1300);
+    });
+
+    // ================================
+    // BLUR-ON-SCROLL OBSERVER (LOOPING)
+    // ================================
+    const sbo = new IntersectionObserver((entries) => {
+      for (const e of entries) { e.isIntersecting ? e.target.classList.add('in-view') : e.target.classList.remove('in-view'); }
+    }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
+    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
+    // ===== Helpers =====
+    function sp(ms){
+      const f = (typeof window.OC_DEMO_SPEED === 'number' && window.OC_DEMO_SPEED > 0) ? window.OC_DEMO_SPEED : 1.0;
+      return ms * f;
+    }
+    function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+    // Typewriter for plain text into an element (creates a single text node)
     function typewriter(el, text, min=10, max=18){
-      return new Promise(resolve=>{
-        let i=0; el.textContent=''; const tn=document.createTextNode(''); el.appendChild(tn);
-        (function tick(){ tn.textContent=text.slice(0, i++); (i<=text.length) ? setTimeout(tick, sp(rand(min,max))) : resolve(); })();
+      return new Promise((resolve)=>{
+        let i = 0;
+        el.textContent = ''; // ensure clean start
+        const tn = document.createTextNode('');
+        el.appendChild(tn);
+        (function tick(){
+          tn.textContent = text.slice(0, i++);
+          if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
+          else resolve();
+        })();
       });
     }
 
-    async function streamHTML(el, html, min=9, max=16){
-      const container = document.createElement('div'); container.innerHTML = html.trim();
-      async function walk(src, dst){
-        for (const child of Array.from(src.childNodes)){
+    // Stream HTML with structure preserved (safe DOM walk; types text nodes char-by-char)
+    async function streamHTML(el, html, charMin=10, charMax=18){
+      // Parse once into a fragment container
+      const container = document.createElement('div');
+      container.innerHTML = html.trim();
+
+      async function walk(srcNode, dstParent){
+        const children = Array.from(srcNode.childNodes);
+        for (const child of children){
           if (child.nodeType === Node.TEXT_NODE){
             const text = child.textContent || '';
             await new Promise(res=>{
-              let i=0; const tn=document.createTextNode(''); dst.appendChild(tn);
-              (function tick(){ tn.textContent=text.slice(0, i++); (i<=text.length) ? setTimeout(tick, sp(rand(min,max))) : res(); })();
+              let i=0;
+              const tn = document.createTextNode('');
+              dstParent.appendChild(tn);
+              (function tick(){
+                tn.textContent = text.slice(0, i++);
+                if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
+                else res();
+              })();
             });
           } else if (child.nodeType === Node.ELEMENT_NODE){
-            const clone = child.cloneNode(false); dst.appendChild(clone);
-            await walk(child, clone);
+            // Create a shallow clone (no children yet) to preserve classes/attrs
+            const clone = child.cloneNode(false);
+            dstParent.appendChild(clone);
+            // For <li>, stream its text a bit faster so lists feel snappy
+            if (clone.tagName === 'LI'){
+              await walk(child, clone);
+            } else {
+              await walk(child, clone);
+            }
           }
         }
       }
-      el.innerHTML=''; await walk(container, el);
+      // Clear and stream into el
+      el.innerHTML = '';
+      await walk(container, el);
     }
 
-    /* ========= Chat Demo ========= */
+    // ================================
+    // LIVE CHAT DEMO (bubbles, with embedded document)
+    // ================================
     (function chatDemo(){
-      const wrap = qs('#chat-demo'), list = qs('#demoMessages'), tplU = qs('#demoTplUser'), tplB = qs('#demoTplBot'), replay = qs('#demoReplay');
+      const wrap = document.getElementById('chat-demo');
+      const list = document.getElementById('demoMessages');
+      const tplU = document.getElementById('demoTplUser');
+      const tplB = document.getElementById('demoTplBot');
+      const replay = document.getElementById('demoReplay');
 
-      const MESSAGES = [
+      const msgs = [
         { role:'user', text:"I'm a contractor in BC. Client hasn't paid my final invoice. What are my options?" },
         { role:'assistant', final: `
           <strong>Short answer:</strong> send a formal demand, preserve your lien rights, and choose the right forum for recovery.<br><br>
@@ -592,116 +793,213 @@
         `},
       ];
 
-      const clearList = () => { list.innerHTML=''; };
+      function clearList(){ list.innerHTML = ''; }
 
-      const appendUser = async (text) => {
+      function appendUser(text){
         const node = tplU.content.cloneNode(true);
         const bubble = node.querySelector('.bubble-user');
         list.appendChild(node);
-        await typewriter(bubble, text, 14, 18);
-      };
-
-      // Unified bot: shows thinking, then streams final HTML
-      const appendBot = async (finalHTML, thinkingLabel='Thinking') => {
-        const node = tplB.content.cloneNode(true);
-        const bubble = node.querySelector('.bubble-bot');
-        const thinkEl = bubble.querySelector('.ai-think');
-        const finalEl = bubble.querySelector('.ai-final');
-        list.appendChild(node);
-
-        let dots=0; thinkEl.textContent = thinkingLabel;
-        const timer = setInterval(()=>{ dots=(dots+1)%4; thinkEl.textContent = thinkingLabel + '.'.repeat(dots); }, sp(300));
-
-        await new Promise(res => setTimeout(res, sp(700 + Math.random()*600)));
-        clearInterval(timer);
-        thinkEl.classList.add('fade-away'); setTimeout(()=> thinkEl.remove(), 380);
-
-        finalEl.classList.remove('hidden');
-        finalEl.style.opacity=0; requestAnimationFrame(()=>{ finalEl.style.transition='opacity .28s ease'; finalEl.style.opacity=1; });
-
-        await streamHTML(finalEl, finalHTML, 9, 16);
-      };
-
-      // Document builder
-      const appendDoc = async () => {
-        const node = tplB.content.cloneNode(true);
-        const bubble = node.querySelector('.bubble-bot');
-        const thinkEl = bubble.querySelector('.ai-think');
-        const finalEl = bubble.querySelector('.ai-final');
-        list.appendChild(node);
-
-        let dots=0; thinkEl.textContent='Drafting lien document';
-        const t = setInterval(()=>{ dots=(dots+1)%4; thinkEl.textContent='Drafting lien document' + '.'.repeat(dots); }, sp(300));
-        await new Promise(res => setTimeout(res, sp(900 + Math.random()*700)));
-        clearInterval(t); thinkEl.classList.add('fade-away'); setTimeout(()=> thinkEl.remove(), 380);
-
-        finalEl.classList.remove('hidden'); finalEl.style.opacity=0;
-        const intro = document.createElement('div'); intro.className='text-[13px] mb-2'; intro.innerHTML='<strong>Generated:</strong> Builders Lien Claim (preview)';
-        const page  = document.createElement('div'); page.className='doc-page';
-        const band  = document.createElement('div'); band.className='doc-brand-band brand-gradient breathing';
-        const inner = document.createElement('div'); inner.className='mt-3';
-
-        finalEl.append(intro, page); page.append(band, inner);
-        requestAnimationFrame(()=>{ finalEl.style.transition='opacity .28s ease'; finalEl.style.opacity=1; });
-
-        const addLine = (html, cls='doc-p') => {
-          const el = document.createElement('div'); el.className=`doc-fade ${cls}`.trim(); el.innerHTML=html; inner.appendChild(el);
-          requestAnimationFrame(()=> el.classList.add('in')); return el;
-        };
-        const ensureUL = () => {
-          let ul = inner.querySelector('ul.doc-bullets');
-          if (!ul){ ul = document.createElement('ul'); ul.className='doc-bullets doc-fade'; inner.appendChild(ul); requestAnimationFrame(()=> ul.classList.add('in')); }
-          return ul;
-        };
-        const addBullet = (text) => {
-          const ul=ensureUL(), li=document.createElement('li'); li.textContent=text; li.style.opacity=0; li.style.transform='translateY(4px)';
-          ul.appendChild(li); requestAnimationFrame(()=>{ li.style.transition='opacity .22s ease, transform .22s ease'; li.style.opacity=1; li.style.transform='translateY(0)'; });
-        };
-        const wait = ms => new Promise(r=>setTimeout(r, sp(ms)));
-
-        addLine('<div class="doc-h1">Builders Lien Claim</div>');
-        addLine('<div class="doc-sub">Supreme Court of British Columbia</div>');
-        addLine('<div class="doc-rule"></div>',''); await wait(360);
-
-        addLine('<div class="doc-sec">Between</div>');
-        addLine('<div class="doc-p"><strong>North Shore Renovations Ltd.</strong> — Claimant</div>');
-        addLine('<div class="doc-p"><strong>Harbourview Developments Inc.</strong> — Respondent</div>'); await wait(420);
-
-        addLine('<div class="doc-sec">Property</div>');
-        addLine('<div class="doc-small">Strata Lot 12, District Lot 274, Group 1, New Westminster District, Plan LMS1234 (123 Seaside Ave, North Vancouver, BC)</div>'); await wait(420);
-
-        addLine('<div class="doc-sec">Amount Claimed</div>');
-        addLine('<div class="doc-p"><strong>$28,740.00</strong> (labour and materials), plus contractual interest and costs.</div>'); await wait(420);
-
-        addLine('<div class="doc-sec">Particulars</div>'); await wait(200);
-        addBullet('Interior framing, drywall, and finishing per PO #7842.'); await wait(160);
-        addBullet('Extras: change orders CO-3, CO-7 (owner-approved).'); await wait(160);
-        addBullet('Substantial completion: June 18, 2025; holdback unpaid.'); await wait(160);
-        addBullet('Notice of lien to be filed within the statutory period.'); await wait(420);
-
-        addLine('<div class="doc-sec">Declaration</div>');
-        addLine('<div class="doc-p">The Claimant claims a lien against the Estate in Fee Simple of the Lands and Premises described above under the <em>Builders Lien Act</em> (British Columbia).</div>'); await wait(420);
-
-        addLine('<div class="doc-rule"></div>','');
-        addLine('<div class="doc-small">Dated at Vancouver, British Columbia, this 14th day of August, 2025.</div>');
-        addLine('<div class="doc-p" style="margin-top:22px;">__________________________________</div>');
-        addLine('<div class="doc-small">Authorized Signatory, North Shore Renovations Ltd.</div>');
-      };
-
-      async function run(){
-        clearList(); playBassDrop();
-        for (const m of MESSAGES){
-          if (m.role==='user') await appendUser(m.text);
-          else await appendBot(m.final, 'Thinking');
-        }
-        await appendDoc();
+        return typewriter(bubble, text, 14, 18);
       }
 
-      on(replay, 'click', run);
+      function appendBotStreaming(finalHTML){
+        const node = tplB.content.cloneNode(true);
+        const bubble  = node.querySelector('.bubble-bot');
+        const thinkEl = bubble.querySelector('.ai-think');
+        const finalEl = bubble.querySelector('.ai-final');
 
-      // Autoplay once when visible & unlock audio on first gesture
-      if (wrap) ioOnce(wrap, { threshold:.35 }, run);
-      ['click','touchstart','keydown'].forEach(evt => on(window, evt, function once(){ try{ __OC_AUDIO?.resume?.(); }catch{} window.removeEventListener(evt, once, { once:true }); }, { once:true }));
+        list.appendChild(node);
+
+        // animated "Thinking..." with dots
+        let dots = 0;
+        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
+
+        return new Promise((resolve)=>{
+          // brief think delay, then fade think and stream output
+          setTimeout(async ()=>{
+            clearInterval(dotsTimer);
+            thinkEl.classList.add('fade-away');
+            setTimeout(()=>{ thinkEl.remove(); }, 380);
+
+            finalEl.classList.remove('hidden');
+            finalEl.style.opacity = 0;
+            requestAnimationFrame(()=> {
+              finalEl.style.transition = 'opacity .28s ease';
+              finalEl.style.opacity = 1;
+            });
+
+            // 🔥 Stream the assistant HTML with structure preserved
+            await streamHTML(finalEl, finalHTML, 9, 16);
+            resolve();
+          }, sp(700 + Math.random()*600));
+        });
+      }
+
+      // ---------- Embedded Document in bot bubble ----------
+      function appendBotDoc(){
+        const node = tplB.content.cloneNode(true);
+        const bubble  = node.querySelector('.bubble-bot');
+        const thinkEl = bubble.querySelector('.ai-think');
+        const finalEl = bubble.querySelector('.ai-final');
+
+        list.appendChild(node);
+
+        let dots = 0;
+        thinkEl.textContent = 'Drafting lien document';
+        const dotsTimer = setInterval(()=>{
+          dots = (dots + 1) % 4;
+          thinkEl.textContent = 'Drafting lien document' + '.'.repeat(dots);
+        }, sp(300));
+
+        return new Promise((resolve)=>{
+          setTimeout(async ()=>{
+            clearInterval(dotsTimer);
+            thinkEl.classList.add('fade-away');
+            setTimeout(()=>{ thinkEl.remove(); }, 380);
+
+            finalEl.classList.remove('hidden');
+            finalEl.style.opacity = 0;
+
+            const intro = document.createElement('div');
+            intro.className = 'text-[13px] mb-2';
+            intro.innerHTML = '<strong>Generated:</strong> Builders Lien Claim (preview)';
+            finalEl.appendChild(intro);
+
+            const docPage = document.createElement('div');
+            // scaling handled by CSS .doc-page (min(620px, 85vw) with aspect-ratio)
+            docPage.className = 'doc-page';
+            finalEl.appendChild(docPage);
+
+            const band = document.createElement('div');
+            band.className = 'doc-brand-band brand-gradient breathing';
+            docPage.appendChild(band);
+
+            const docContent = document.createElement('div');
+            docContent.className = 'mt-3';
+            docPage.appendChild(docContent);
+
+            requestAnimationFrame(()=> {
+              finalEl.style.transition = 'opacity .28s ease';
+              finalEl.style.opacity = 1;
+            });
+
+            await docAnimate(docContent);
+            resolve();
+          }, sp(900 + Math.random()*700));
+        });
+      }
+
+      // Document animation helpers
+      function docAnimate(container){
+        function addLine(html, cls='doc-p'){
+          const el = document.createElement('div');
+          el.className = `doc-fade ${cls}`;
+          el.innerHTML = html;
+          container.appendChild(el);
+          requestAnimationFrame(()=> el.classList.add('in'));
+          return el;
+        }
+        function ensureBullets(){
+          let ul = container.querySelector('ul.doc-bullets');
+          if (!ul){
+            ul = document.createElement('ul');
+            ul.className = 'doc-bullets doc-fade';
+            container.appendChild(ul);
+            requestAnimationFrame(()=> ul.classList.add('in'));
+          }
+          return ul;
+        }
+        function addBullet(text){
+          const ul = ensureBullets();
+          const li = document.createElement('li');
+          li.textContent = text;
+          li.style.opacity = 0; li.style.transform = 'translateY(4px)';
+          ul.appendChild(li);
+          requestAnimationFrame(()=>{
+            li.style.transition = 'opacity .22s ease, transform .22s ease';
+            li.style.opacity = 1; li.style.transform = 'translateY(0)';
+          });
+        }
+        function wait(ms){ return new Promise(r => setTimeout(r, sp(ms))); }
+
+        // The scripted build
+        return (async ()=>{
+          addLine('<div class="doc-h1">Builders Lien Claim</div>');
+          addLine('<div class="doc-sub">Supreme Court of British Columbia</div>');
+          addLine('<div class="doc-rule"></div>', ''); 
+          await wait(360);
+
+          addLine('<div class="doc-sec">Between</div>');
+          addLine('<div class="doc-p"><strong>North Shore Renovations Ltd.</strong> — Claimant</div>');
+          addLine('<div class="doc-p"><strong>Harbourview Developments Inc.</strong> — Respondent</div>');
+          await wait(420);
+
+          addLine('<div class="doc-sec">Property</div>');
+          addLine('<div class="doc-small">Strata Lot 12, District Lot 274, Group 1, New Westminster District, Plan LMS1234 (123 Seaside Ave, North Vancouver, BC)</div>');
+          await wait(420);
+
+          addLine('<div class="doc-sec">Amount Claimed</div>');
+          addLine('<div class="doc-p"><strong>$28,740.00</strong> (labour and materials), plus contractual interest and costs.</div>');
+          await wait(420);
+
+          addLine('<div class="doc-sec">Particulars</div>');
+          await wait(200);
+          addBullet('Interior framing, drywall, and finishing per PO #7842.');
+          await wait(160);
+          addBullet('Extras: change orders CO-3, CO-7 (owner-approved).');
+          await wait(160);
+          addBullet('Substantial completion: June 18, 2025; holdback unpaid.');
+          await wait(160);
+          addBullet('Notice of lien to be filed within the statutory period.');
+          await wait(420);
+
+          addLine('<div class="doc-sec">Declaration</div>');
+          addLine('<div class="doc-p">The Claimant claims a lien against the Estate in Fee Simple of the Lands and Premises described above under the <em>Builders Lien Act</em> (British Columbia).</div>');
+          await wait(420);
+
+          addLine('<div class="doc-rule"></div>', '');
+          addLine('<div class="doc-small">Dated at Vancouver, British Columbia, this 14th day of August, 2025.</div>');
+          addLine('<div class="doc-p" style="margin-top:22px;">__________________________________</div>');
+          addLine('<div class="doc-small">Authorized Signatory, North Shore Renovations Ltd.</div>');
+        })();
+      }
+
+      async function run(){
+        clearList();
+        // 🔊 Play bass drop when the demo starts
+        playBassDrop();
+
+        for (const m of msgs){
+          if (m.role === 'user') {
+            await appendUser(m.text);
+          } else {
+            // 🔥 Assistant now streams its response (not instant dump)
+            await appendBotStreaming(m.final);
+          }
+        }
+        await appendBotDoc();
+      }
+
+      replay?.addEventListener('click', () => { playBassDrop(); run(); });
+
+      // Auto-play when section comes into view (once).
+      let started = false;
+      const ob = new IntersectionObserver((entries)=>{
+        for (const e of entries){
+          if (e.isIntersecting && !started){
+            started = true; run(); ob.unobserve(wrap);
+          }
+        }
+      }, { threshold:.35 });
+      if (wrap) ob.observe(wrap);
+
+      // Unlock audio on first user gesture if needed
+      ['click','touchstart','keydown'].forEach(evt => {
+        window.addEventListener(evt, function onFirst(){
+          try { if (__OC_AUDIO && __OC_AUDIO.resume) __OC_AUDIO.resume(); } catch {}
+          window.removeEventListener(evt, onFirst, { once:true });
+        }, { once:true });
+      });
     })();
   </script>
 </body>
