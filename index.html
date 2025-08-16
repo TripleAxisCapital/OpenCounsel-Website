@@ -163,6 +163,11 @@
     }
     .chat-viewport::-webkit-scrollbar{ display:none; }
 
+    /* When the section is snapped, add generous top padding before first bubble */
+    #chat-demo.is-snapped .chat-viewport{
+      padding-top: clamp(8vh, 10vh, 12vh);
+    }
+
     .chat-stream { display:flex; flex-direction:column; gap:10px; }
     .msg-row { display:flex; width:100%; }
     .msg-assistant { justify-content:flex-start; padding-left:56px; }
@@ -172,6 +177,7 @@
       max-width:85%; border-radius:16px; padding:12px 16px;
       font-size:15px; line-height:1.6; box-shadow:0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06);
       overflow-wrap:anywhere; word-break:break-word; hyphens:auto; background-clip:padding-box;
+      background:#fff;
     }
     .bubble * { overflow-wrap:anywhere; word-break:break-word; hyphens:auto; }
     .bubble p { margin:.35rem 0; }
@@ -184,7 +190,7 @@
     .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); }
     .bubble .ai-final{ color:#0A0D10; white-space:normal; }
 
-    /* ===== Document Preview ===== */
+    /* ===== Document Preview (kept for future use; not used in this capped demo) ===== */
     .doc-page{
       background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow:0 10px 28px rgba(10,13,16,.10);
       border-radius:14px; padding:28px 28px 32px 28px; aspect-ratio:8.5/11; overflow:hidden;
@@ -548,38 +554,38 @@
       const tplU = document.getElementById('demoTplUser');
       const tplB = document.getElementById('demoTplBot');
 
+      // ---- Canadian litigation & rights (concise; 4 bubbles) ----
       const msgs = [
-        { role:'user', text:"I'm a contractor in BC. Client hasn't paid my final invoice. What are my options?" },
+        { role:'user', text:"I’m in Canada and a company refused to refund me for a defective product. What are my options to sue?" },
         { role:'assistant', final: `
-          <p><strong>Short answer:</strong> send a formal demand, preserve your lien rights, and choose the right forum for recovery.</p>
-          <p><strong>Next steps:</strong></p>
+          <p><strong>Big picture:</strong> Most consumer disputes are civil, not criminal. You can send a <em>demand letter</em> first, then file in <strong>Small Claims Court</strong> (provincial) if needed.</p>
           <ul>
-            <li><b>Deadline:</b> Builders lien rights are time-sensitive (often ~45 days from completion/abandonment/certificate).</li>
-            <li>Send a written demand with interest and a clear due date.</li>
-            <li>Negotiate holdback/release; if unresolved, pursue Small Claims or Supreme Court (by amount/complexity).</li>
+            <li><strong>Charter</strong> rights protect you from government, not private companies.</li>
+            <li><strong>Limitation</strong> periods apply (often ~2 years; check your province).</li>
+            <li>Keep <strong>evidence</strong>: receipts, emails, photos, refund policy.</li>
           </ul>
-          <p><em>General information, not legal advice.</em></p>
+          <p><em>Info only, not legal advice.</em></p>
         `},
-        { role:'user', text:"Can I file a lien without a written contract?" },
+        { role:'user', text:"Do I need a lawyer and what could it cost me?" },
         { role:'assistant', final: `
-          <p>Yes. A written contract isn’t required to claim a builders lien, but you’ll need proof of work/materials and value due
-          (invoices, change orders, site photos, emails). Diary your deadline and serve required notices correctly.</p>
-        `},
-        { role:'user', text:"What if they dispute the quality of my work?" },
-        { role:'assistant', final: `
-          <p>Document everything: punch-list, deficiency walk-through, photos, and your cure plan. Offer a reasonable fix or holdback.
-          If the dispute persists, the lien secures your claim while quality issues get resolved on the merits.</p>
+          <p><strong>Small Claims:</strong> You can self-represent. Filing fees are modest and limited <em>costs</em> may be awarded. A brief, polite demand letter can trigger settlement.</p>
+          <p><strong>Tips:</strong> outline facts, what you want, a deadline, and attach proof. If the amount or issues are complex, consult a lawyer or a legal clinic.</p>
         `},
       ];
+      const MAX_BUBBLES = 5;
 
       function clearList(){ list.innerHTML=''; scheduleAutoScroll(); }
-      function appendUser(text){
+      function lastBubble(){ const rows = list.querySelectorAll('.msg-row'); return rows[rows.length-1] || null; }
+      function fitsViewport(){ return viewport.scrollHeight <= viewport.clientHeight; }
+
+      async function appendUser(text){
         const node = tplU.content.cloneNode(true);
         const bubble = node.querySelector('.bubble-user');
         list.appendChild(node); scheduleAutoScroll();
-        return typewriter(bubble, text, 14, 18);
+        await typewriter(bubble, text, 14, 18);
       }
-      function appendBotStreaming(finalHTML){
+
+      async function appendBotStreaming(finalHTML){
         const node = tplB.content.cloneNode(true);
         const bubble=node.querySelector('.bubble-bot');
         const thinkEl=bubble.querySelector('.ai-think');
@@ -588,7 +594,7 @@
         list.appendChild(node); scheduleAutoScroll();
         let dots=0; const dotsTimer=setInterval(()=>{ dots=(dots+1)%4; thinkEl.textContent='Thinking'+'.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
 
-        return new Promise((resolve)=>{
+        await new Promise((resolve)=>{
           setTimeout(async ()=>{
             clearInterval(dotsTimer);
             thinkEl.classList.add('fade-away'); setTimeout(()=>thinkEl.remove(),380);
@@ -596,76 +602,8 @@
             requestAnimationFrame(()=>{ finalEl.style.transition='opacity .28s ease'; finalEl.style.opacity=1; });
             await streamHTML(finalEl, finalHTML, 9, 16);
             resolve();
-          }, sp(700 + Math.random()*600));
+          }, sp(620 + Math.random()*520));
         });
-      }
-      function appendBotDoc(){
-        const node = tplB.content.cloneNode(true);
-        const bubble=node.querySelector('.bubble-bot');
-        const thinkEl=bubble.querySelector('.ai-think');
-        const finalEl=bubble.querySelector('.ai-final');
-
-        list.appendChild(node); scheduleAutoScroll();
-        let dots=0; thinkEl.textContent='Drafting lien document';
-        const dotsTimer=setInterval(()=>{ dots=(dots+1)%4; thinkEl.textContent='Drafting lien document'+'.'.repeat(dots); scheduleAutoScroll(); }, sp(300));
-
-        return new Promise((resolve)=>{
-          setTimeout(async ()=>{
-            clearInterval(dotsTimer);
-            thinkEl.classList.add('fade-away'); setTimeout(()=>thinkEl.remove(),380);
-            finalEl.classList.remove('hidden'); finalEl.style.opacity=0;
-
-            const intro=document.createElement('div'); intro.className='text-[13px] mb-2'; intro.innerHTML='<strong>Generated:</strong> Builders Lien Claim (preview)'; finalEl.appendChild(intro);
-            const docPage=document.createElement('div'); docPage.className='doc-page'; finalEl.appendChild(docPage); scheduleAutoScroll();
-            const band=document.createElement('div'); band.className='doc-brand-band brand-gradient breathing'; docPage.appendChild(band);
-            const docContent=document.createElement('div'); docContent.className='mt-3'; docPage.appendChild(docContent);
-
-            requestAnimationFrame(()=>{ finalEl.style.transition='opacity .28s ease'; finalEl.style.opacity=1; });
-
-            await docAnimate(docContent);
-            resolve();
-          }, sp(900 + Math.random()*700));
-        });
-      }
-      function docAnimate(container){
-        function addLine(html, cls='doc-p'){
-          const el=document.createElement('div'); el.className=`doc-fade ${cls}`; el.innerHTML=html; container.appendChild(el);
-          requestAnimationFrame(()=> el.classList.add('in')); scheduleAutoScroll(); return el;
-        }
-        function ensureBullets(){
-          let ul=container.querySelector('ul.doc-bullets');
-          if(!ul){ ul=document.createElement('ul'); ul.className='doc-bullets doc-fade'; container.appendChild(ul); requestAnimationFrame(()=>ul.classList.add('in')); scheduleAutoScroll(); }
-          return ul;
-        }
-        function addBullet(text){
-          const ul=ensureBullets(); const li=document.createElement('li'); li.textContent=text; li.style.opacity=0; li.style.transform='translateY(4px)'; ul.appendChild(li);
-          requestAnimationFrame(()=>{ li.style.transition='opacity .22s ease, transform .22s ease'; li.style.opacity=1; li.style.transform='translateY(0)'; }); scheduleAutoScroll();
-        }
-        function wait(ms){ return new Promise(r=>setTimeout(r, sp(ms))); }
-
-        return (async ()=>{
-          addLine('<div class="doc-h1">Builders Lien Claim</div>');
-          addLine('<div class="doc-sub">Supreme Court of British Columbia</div>');
-          addLine('<div class="doc-rule"></div>', ''); await wait(360);
-          addLine('<div class="doc-sec">Between</div>');
-          addLine('<div class="doc-p"><strong>North Shore Renovations Ltd.</strong> — Claimant</div>');
-          addLine('<div class="doc-p"><strong>Harbourview Developments Inc.</strong> — Respondent</div>'); await wait(420);
-          addLine('<div class="doc-sec">Property</div>');
-          addLine('<div class="doc-small">Strata Lot 12, District Lot 274, Group 1, New Westminster District, Plan LMS1234 (123 Seaside Ave, North Vancouver, BC)</div>'); await wait(420);
-          addLine('<div class="doc-sec">Amount Claimed</div>');
-          addLine('<div class="doc-p"><strong>$28,740.00</strong> (labour and materials), plus contractual interest and costs.</div>'); await wait(420);
-          addLine('<div class="doc-sec">Particulars</div>'); await wait(200);
-          addBullet('Interior framing, drywall, and finishing per PO #7842.'); await wait(160);
-          addBullet('Extras: change orders CO-3, CO-7 (owner-approved).'); await wait(160);
-          addBullet('Substantial completion: June 18, 2025; holdback unpaid.'); await wait(160);
-          addBullet('Notice of lien to be filed within the statutory period.'); await wait(420);
-          addLine('<div class="doc-sec">Declaration</div>');
-          addLine('<div class="doc-p">The Claimant claims a lien against the Estate in Fee Simple of the Lands and Premises described above under the <em>Builders Lien Act</em> (British Columbia).</div>'); await wait(420);
-          addLine('<div class="doc-rule"></div>', '');
-          addLine('<div class="doc-small">Dated at Vancouver, British Columbia, this 14th day of August, 2025.</div>');
-          addLine('<div class="doc-p" style="margin-top:22px;">__________________________________</div>');
-          addLine('<div class="doc-small">Authorized Signatory, North Shore Renovations Ltd.</div>');
-        })();
       }
 
       // ===== FIRST MESSAGE IMMEDIATELY (so section never looks empty) =====
@@ -678,6 +616,13 @@
         clearList();
         playBassDrop();
         await appendUser(msgs[0].text);
+        // If even the first message would overflow (rare), trim its text slightly
+        if (!fitsViewport()){
+          const bubble = lastBubble()?.querySelector('.bubble');
+          if (bubble && bubble.textContent.length > 80){
+            bubble.textContent = bubble.textContent.slice(0, 80) + '…';
+          }
+        }
       }
 
       // ===== SNAP LOGIC: as soon as user sees first message, +10px scroll snaps demo full-screen =====
@@ -727,7 +672,6 @@
         const aboveHeader = rect.bottom > hdr + 40;
 
         if (!snapDone && visibleTop && aboveHeader && !snapArmed){
-          // The chat has entered the viewport; arm snapping and remember current scroll
           snapArmed = true;
           armScrollY = window.scrollY;
         }
@@ -735,16 +679,15 @@
         // If armed and user has scrolled ~10px further down, trigger snap
         const scrolledDown = window.scrollY > lastScrollY;
         if (!snapDone && snapArmed && scrolledDown && (window.scrollY - armScrollY) > 10){
-          // Ensure first bubble exists
           primeFirstMessage();
           const target = chatTopTargetY();
           const distance = Math.abs(window.scrollY - target);
           const duration = 420 + Math.min(320, distance * 0.25);
           animateToY(target, duration).then(()=>{
             snapDone = true; snapArmed = false;
+            wrap.classList.add('is-snapped'); // add generous top padding
             if (!startedOnce){
               startedOnce = true;
-              // Continue the conversation after a tiny pause
               setTimeout(()=> runFrom(1), 120);
             }
           });
@@ -754,16 +697,26 @@
       }
       window.addEventListener('scroll', onScroll, {passive:true});
 
-      // Continue the conversation from the given index
+      // Continue the conversation from the given index,
+      // but stop before it would create vertical scroll in the demo.
       async function runFrom(startIndex){
-        for (let i=startIndex; i<msgs.length; i++){
+        let bubbleCount = list.querySelectorAll('.msg-row').length;
+        for (let i=startIndex; i<msgs.length && bubbleCount < MAX_BUBBLES; i++){
           const m = msgs[i];
           if (m.role === 'user') await appendUser(m.text);
           else await appendBotStreaming(m.final);
+
+          bubbleCount = list.querySelectorAll('.msg-row').length;
+
+          // If adding this bubble caused overflow, remove it and stop
+          if (!fitsViewport()){
+            const last = lastBubble();
+            if (last) last.remove();
+            break;
+          }
         }
-        await appendBotDoc();
         scheduleAutoScroll();
-        // do nothing else; user can scroll past freely
+        // leave; user can scroll past freely
       }
     })();
   </script>
