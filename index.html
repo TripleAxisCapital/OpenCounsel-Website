@@ -53,9 +53,9 @@
 
       /* Chat demo palette hooks */
       --line:#E7EDF2;
-      --brand-angle:135deg; 
-      --brand-1:#0B1B2B; 
-      --brand-2:#0E6F5C; 
+      --brand-angle:135deg;
+      --brand-1:#0B1B2B;
+      --brand-2:#0E6F5C;
       --brand-3:#00CFFF;
       --lilac:#E7E7FF;
 
@@ -120,6 +120,12 @@
       background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
     }
+
+    /* NEW: one-way gradient motion helpers (override .grad-text animation) */
+    @keyframes gradientShiftRight { 0%{background-position:0% 50%} 100%{background-position:100% 50%} }
+    @keyframes gradientShiftLeft  { 0%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .grad-move-right { animation: gradientShiftRight var(--speed,16s) linear infinite !important; }
+    .grad-move-left  { animation: gradientShiftLeft  var(--speed,16s) linear infinite !important; }
 
     .mobile-menu { backdrop-filter: blur(8px); }
 
@@ -238,8 +244,8 @@
     .chat-wrap { width:min(900px,100%); margin:0 auto; }
     .chat-stream { display:flex; flex-direction:column; gap:10px; }
     .msg-row { display:flex; width:100%; }
-    .msg-assistant { justify-content:flex-start; padding-left:56px; }  /* left gutter like avatar space */
-    .msg-user { justify-content:flex-end; padding-right:56px; }       /* right gutter */
+    .msg-assistant { justify-content:flex-start; padding-left:56px; }
+    .msg-user { justify-content:flex-end; padding-right:56px; }
     .bubble {
       max-width:85%; border-radius:16px; padding:12px 16px;
       font-size:15px; line-height:1.6; box-shadow: 0 2px 6px rgba(10,13,16,.04), 0 12px 24px rgba(10,13,16,.06)
@@ -248,7 +254,7 @@
     .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); overflow: visible; }
     .bubble .ai-final{ color:#0A0D10; white-space:normal; }
 
-    /* ===== Document Preview (Lien) styles (kept for feature parity, not used in this demo) ===== */
+    /* ===== Document Preview (kept for parity) ===== */
     .doc-page{
       background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow: 0 10px 28px rgba(10,13,16,.10);
       border-radius: 14px; padding: 28px 28px 32px 28px;
@@ -268,7 +274,7 @@
     .doc-fade{ opacity:0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
     .doc-fade.in{ opacity:1; transform: translateY(0); }
 
-    /* ====== NEW: Fixed-size Demo Stage (like a video) ====== */
+    /* ====== Fixed-size Demo Stage ====== */
     .demo-stage{
       position: relative;
       height: var(--demo-stage-h-sm);
@@ -286,7 +292,7 @@
       position:absolute; inset:0;
       display:flex; flex-direction:column; gap:10px;
       align-items:stretch; justify-content:center;
-      padding: 18px 0; /* match bubble paddings so it feels centered */
+      padding: 18px 0;
       opacity:0; transform: scale(.985);
       transition: opacity .35s ease, transform .35s ease;
       will-change: opacity, transform;
@@ -396,12 +402,19 @@
   </section>
 
   <!-- Secure. Local. Yours. -->
-  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
+  <section id="sly" class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
     <div class="w-full mt-24 md:py-24 mb-24 flex items-center justify-center">
-
       <div>
-        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Secure. Local. Yours.</p>
-        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">For Everyone</span>
+        <!-- Title: now gradient + rightward drift -->
+        <p class="sly-title text-2xl md:text-4xl font-semibold tracking-tight grad-text grad-move-right"
+           style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:14s; --angle:90deg;">
+          Secure. Local. Yours.
+        </p>
+        <!-- Sub: leftward drift -->
+        <span class="sly-sub mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text grad-move-left"
+              style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+          For Everyone
+        </span>
       </div>
     </div>
   </section>
@@ -413,7 +426,6 @@
         <div id="demoStage" class="demo-stage">
           <!-- Scenes are injected here absolutely, one pair at a time -->
         </div>
-        <!-- (Replay & tagline removed per request) -->
       </div>
     </div>
 
@@ -531,12 +543,15 @@
     </div>
   </section>
 
-  <!-- Secure Local Yours -->
-  <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
+  <!-- Tomorrow's Counsel Today -->
+  <section id="tct" class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
     <div class="w-full mt-24 md:py-24 mb-24 flex items-center justify-center">
       <div>
-        <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Tomorrow’s Counsel.</p>
-        <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">Today</span>
+        <p class="tct-title text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Tomorrow’s Counsel.</p>
+        <span class="tct-sub mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
+              style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+          Today
+        </span>
       </div>
     </div>
   </section>
@@ -621,45 +636,69 @@
     // ================================
     // GLOBAL DEMO SETTINGS
     // ================================
-    // ⏩ Streaming speed multiplier (affects typing/streaming). 1.0 = normal. Lower is faster (e.g., 0.7), higher is slower (e.g., 1.5)
     window.OC_DEMO_STREAM_SPEED = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
       ? window.OC_DEMO_STREAM_SPEED : 1.0;
 
-    // ⏱️ Dwell time per pair AFTER the answer finishes (ms).
     window.OC_DEMO_DWELL_MS = (typeof window.OC_DEMO_DWELL_MS === 'number' && window.OC_DEMO_DWELL_MS >= 0)
       ? window.OC_DEMO_DWELL_MS : 2000;
 
-    // 🔊 Bass drop sound (optional)
     window.OC_DEMO_SOUND = Object.assign({
       enabled: true,
-      url: 'bass-drop.mp3',  // replace with your file path
-      volume: 0.9            // 0.0 - 1.0
+      url: 'bass-drop.mp3',
+      volume: 0.9
     }, window.OC_DEMO_SOUND || {});
 
     // ================================
-    // HERO TYPE-IN GLOBALS (separate from chat demo)
+    // HERO TYPE-IN GLOBALS
     // ================================
     window.OC_HERO = Object.assign({
-      enabled: true,            // toggle hero typing on/off
-      startOnView: true,        // begin when hero is in view
-      startDelayMs: 200,        // delay before first character
-      staggerMs: 50,           // delay between title -> sub1 -> sub2 -> button
-      streamSpeed: 1.0,         // 1.0 = normal, <1 faster, >1 slower
-      titleCharMin: 5,          // per-char delay bounds (ms) for title
+      enabled: true,
+      startOnView: true,
+      startDelayMs: 200,
+      staggerMs: 50,
+      streamSpeed: 1.0,
+      titleCharMin: 5,
       titleCharMax: 50,
-      lineCharMin: 5,          // per-char delay for paragraphs
+      lineCharMin: 5,
       lineCharMax: 10,
-      buttonCharMin: 5,        // per-char delay for CTA label
+      buttonCharMin: 5,
       buttonCharMax: 50
     }, window.OC_HERO || {});
+
+    // ================================
+    // NEW: SECTION TYPE-IN GLOBALS (separate controls)
+    // ================================
+    // Secure • Local • Yours (title + sub)
+    window.OC_SLY = Object.assign({
+      enabled: true,
+      startOnView: true,
+      startDelayMs: 0,
+      staggerMs: 140,
+      streamSpeed: 1.0,
+      titleCharMin: 6,   // headline
+      titleCharMax: 12,
+      lineCharMin: 9,    // sublabel
+      lineCharMax: 14
+    }, window.OC_SLY || {});
+
+    // Tomorrow’s Counsel • Today (title + sub)
+    window.OC_TCT = Object.assign({
+      enabled: true,
+      startOnView: true,
+      startDelayMs: 0,
+      staggerMs: 120,
+      streamSpeed: 1.0,
+      titleCharMin: 6,
+      titleCharMax: 12,
+      lineCharMin: 9,
+      lineCharMax: 14
+    }, window.OC_TCT || {});
 
     let __OC_AUDIO = null;
     function playBassDrop(){
       if (!window.OC_DEMO_SOUND?.enabled) return;
-
       const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
       const url = (window.OC_DEMO_SOUND.url || '').trim();
-
       if (url){
         if (!__OC_AUDIO){
           __OC_AUDIO = new Audio(url);
@@ -669,26 +708,21 @@
         try {
           __OC_AUDIO.currentTime = 0;
           __OC_AUDIO.volume = vol;
-          __OC_AUDIO.play().catch(()=>{/* autoplay may be blocked */});
+          __OC_AUDIO.play().catch(()=>{});
         } catch(e){}
         return;
       }
-
-      // Fallback synth
       try{
         const Ctx = window.AudioContext || window.webkitAudioContext;
         const ctx = new Ctx();
         const o = ctx.createOscillator();
         const g = ctx.createGain();
-
         o.type = 'sine';
         o.frequency.setValueAtTime(100, ctx.currentTime);
         o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
-
         g.gain.setValueAtTime(0.0001, ctx.currentTime);
         g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-
         o.connect(g).connect(ctx.destination);
         o.start();
         o.stop(ctx.currentTime + 1.25);
@@ -758,7 +792,7 @@
     }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    // Typewriter for plain text into an element (creates a single text node)
+    // Typewriter for plain text into an element
     function typewriter(el, text, min=10, max=18){
       return new Promise((resolve)=>{
         let i = 0;
@@ -822,15 +856,13 @@
       if (!titleEl || !ctaTxt) return;
 
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) return; // respect user setting; show content instantly
+      if (prefersReduced) return;
 
-      // Save original text
       const tText = titleEl.textContent || '';
       const s1    = sub1El ? (sub1El.textContent || '') : '';
       const s2    = sub2El ? (sub2El.textContent || '') : '';
       const bTxt  = ctaTxt.textContent || '';
 
-      // Clear content to prepare typing
       titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
       if (sub2El) sub2El.textContent = '';
@@ -881,7 +913,73 @@
     })();
 
     // ================================
-    // LIVE CHAT DEMO — ONE PAIR AT A TIME (fixed stage, LOOPING)
+    // NEW: GENERIC SECTION TYPER
+    // ================================
+    function makeSectionTyper(rootSel, titleSel, subSel, cfg){
+      const root  = document.querySelector(rootSel);
+      if (!root || !cfg?.enabled) return;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+
+      const titleEl = root.querySelector(titleSel);
+      const subEl   = root.querySelector(subSel);
+
+      if (!titleEl && !subEl) return;
+
+      const tText = titleEl ? (titleEl.textContent || '') : '';
+      const sText = subEl   ? (subEl.textContent   || '') : '';
+
+      if (titleEl) titleEl.textContent = '';
+      if (subEl)   subEl.textContent   = '';
+
+      function spLocal(ms){
+        const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
+        return ms * f;
+      }
+      function typeLocal(el, text, min, max){
+        return new Promise(resolve=>{
+          let i=0;
+          const tn = document.createTextNode('');
+          el.appendChild(tn);
+          (function tick(){
+            tn.textContent = text.slice(0, ++i);
+            if (i <= text.length) setTimeout(tick, spLocal(rand(min,max)));
+            else resolve();
+          })();
+        });
+      }
+      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+
+      async function run(){
+        await wait(Math.max(0, cfg.startDelayMs|0));
+        if (titleEl) await typeLocal(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+        if (subEl){ await wait(cfg.staggerMs|0); await typeLocal(subEl, sText, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+      }
+
+      if (cfg.startOnView){
+        let started = false;
+        const ob = new IntersectionObserver((entries)=>{
+          for (const e of entries){
+            if (e.isIntersecting && !started){
+              started = true;
+              run();
+              ob.disconnect();
+            }
+          }
+        }, { threshold:.35 });
+        ob.observe(root);
+      } else {
+        run();
+      }
+    }
+
+    // INIT section typers with their own globals
+    makeSectionTyper('#sly', '.sly-title', '.sly-sub', window.OC_SLY);
+    makeSectionTyper('#tct', '.tct-title', '.tct-sub', window.OC_TCT);
+
+    // ================================
+    // LIVE CHAT DEMO — ONE PAIR AT A TIME
     // ================================
     (function chatDemo(){
       const wrap    = document.getElementById('chat-demo');
@@ -889,7 +987,6 @@
       const tplU    = document.getElementById('demoTplUser');
       const tplB    = document.getElementById('demoTplBot');
 
-      // Three bold, legal-focused questions & crisp answers (with citations)
       const scenes = [
         {
           user: "Can my non-compete stop me from joining a competitor in Ontario?",
@@ -926,28 +1023,22 @@
         const scene = document.createElement('div');
         scene.className = 'scene';
 
-        // user row
         const uNode = elFromTpl(tplU);
         const uBubble = uNode.querySelector('.bubble-user');
         scene.appendChild(uNode);
 
-        // bot row
         const bNode   = elFromTpl(tplB);
         const bBubble = bNode.querySelector('.bubble-bot');
         const thinkEl = bBubble.querySelector('.ai-think');
         const finalEl = bBubble.querySelector('.ai-final');
         scene.appendChild(bNode);
 
-        // behaviors
         scene.run = async () => {
-          // Activate scene (fade in)
           stage.appendChild(scene);
           requestAnimationFrame(()=> scene.classList.add('active'));
 
-          // 1) Type the user message
           await typewriter(uBubble, userText, 12, 18);
 
-          // 2) Thinking shimmer + streamed answer
           let dots = 0;
           const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
 
@@ -969,7 +1060,6 @@
             }, sp(650 + Math.random()*500));
           });
 
-          // 3) Dwell (global; not scaled by stream speed)
           await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
         };
 
@@ -988,9 +1078,8 @@
         if (looping) return;
         looping = true;
 
-        // Continuous loop
         while (looping) {
-          playBassDrop(); // intro pulse each cycle
+          playBassDrop();
           for (let i=0; i<scenes.length; i++){
             const pair = makeScenePair(scenes[i].user, scenes[i].answer);
             await pair.run();
@@ -999,7 +1088,6 @@
         }
       }
 
-      // Auto-start loop when section comes into view (once).
       let started = false;
       const ob = new IntersectionObserver((entries)=>{
         for (const e of entries){
