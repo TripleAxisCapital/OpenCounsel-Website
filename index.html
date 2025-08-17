@@ -153,7 +153,7 @@
     .page-blur{
       position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
       background: rgba(255,255,255,.28); z-index:9999; pointer-events:none;
-      transition: backdrop-filter 2s ease, background-color 2s ease, opacity 2s ease;
+      transition: backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1);
     }
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
     @media (prefers-reduced-motion: reduce){ .page-blur{ transition:none; } }
@@ -299,6 +299,18 @@
     }
     .scene.active{ opacity:1; transform: scale(1); }
     .scene.exit{ opacity:0; transform: scale(.99); transition: opacity .28s ease, transform .28s ease; }
+
+    /* ===== Hero CTA fade (Apple-smooth) ===== */
+    .hero-cta-fade {
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .66s cubic-bezier(.22,.8,.22,1), transform .66s cubic-bezier(.22,.8,.22,1);
+      will-change: opacity, transform;
+    }
+    .hero-cta-fade.cta-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
   </style>
 </head>
 
@@ -384,7 +396,7 @@
         <a
           id="heroCtaBtn"
           href="#download"
-          class="relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+          class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
                  focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
                  shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
                  transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
@@ -399,7 +411,7 @@
       </div>
     </div>
 
-    <!-- Decorative down arrow — starts invisible; fades in after CTA appears & finishes typing -->
+    <!-- Decorative down arrow — starts invisible; fades in after CTA appears -->
     <oc-down-arrow
       id="heroArrow"
       aria-hidden="true"
@@ -414,9 +426,10 @@
   </div>
 </section>
 
-<!-- Controller: reveal arrow after CTA is visible and its text stops changing -->
+<!-- Controller: reveal arrow after CTA becomes visible (immediate, Apple-smooth) -->
 <script>
 (() => {
+  const ARROW_AFTER_CTA_MS = 50; // feel free to tweak to 0–80ms for snap
   const arrow  = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
@@ -429,54 +442,35 @@
     arrow.classList.add('opacity-100');
   };
 
-  // When CTA is on-screen, wait for its label to stop changing (typing done), then reveal arrow.
+  // Primary trigger: when hero script marks CTA as visible
+  document.addEventListener('oc:cta-visible', () => {
+    if (prefersReduced) { reveal(); return; }
+    setTimeout(reveal, ARROW_AFTER_CTA_MS);
+  }, { once: true });
+
+  // Fallback: if event didn't fire (e.g., reduced motion or custom edits), use IO/typing watcher
   const onCtaInView = () => {
-    if (prefersReduced) { reveal(); return; } // no typing in reduced motion
-
-    if (!ctaTxt) { setTimeout(reveal, 500); return; }
-
-    // Watch CTA label for changes; when stable for a short moment, fade in.
+    if (prefersReduced) { reveal(); return; }
+    if (!ctaTxt) { setTimeout(reveal, 300); return; }
     let lastChange = Date.now();
-    let mo;
-    const observeDone = () => {
-      // consider "done" when text exists and hasn't changed for ~300ms
+    const mo = new MutationObserver(() => { lastChange = Date.now(); });
+    mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
+
+    const checkStable = () => {
       const idleMs = Date.now() - lastChange;
-      const hasText = (ctaTxt.textContent || '').trim().length > 0;
-      if (hasText && idleMs > 300) {
-        mo?.disconnect();
-        reveal();
-        return true;
+      if ((ctaTxt.textContent || '').trim() && idleMs > 250) {
+        mo.disconnect(); reveal(); return true;
       }
       return false;
     };
-
-    mo = new MutationObserver(() => { lastChange = Date.now(); });
-    mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
-
-    // Drive a tiny loop to detect stability without relying on scroll
-    let raf;
-    const tick = () => {
-      if (!observeDone()) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    // Safety fallback
-    setTimeout(() => {
-      if (arrow.classList.contains('opacity-0')) {
-        mo.disconnect();
-        reveal();
-      }
-    }, 6000);
+    const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+    setTimeout(() => { try { mo.disconnect(); } catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
   };
 
-  // Fire when the CTA button itself enters the viewport (initial load or later).
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
-      if (e.isIntersecting) {
-        onCtaInView();
-        io.disconnect();
-        break;
-      }
+      if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
     }
   }, { threshold: 0.35 });
 
@@ -740,6 +734,7 @@
     window.OC_HERO = Object.assign({
       enabled: true,
       startOnView: true,
+      waitForBlur: true,       // NEW: gate hero until page blur begins to fade
       startDelayMs: 200,
       staggerMs: 50,
       streamSpeed: 1.0,
@@ -859,7 +854,11 @@
 
     window.addEventListener('load', () => {
       const pageBlur = document.getElementById('pageBlur');
-      if (!pageBlur) return; pageBlur.classList.add('hide'); setTimeout(() => pageBlur.remove(), 1300);
+      if (!pageBlur) return;
+      // Start the blur fade, then immediately allow hero sequence to begin (Apple-like orchestration).
+      pageBlur.classList.add('hide');
+      document.dispatchEvent(new Event('oc:page-blur-fade'));
+      setTimeout(() => pageBlur.remove(), 1300);
     });
 
     // ================================
@@ -925,7 +924,8 @@
     }
 
     // ================================
-    // HERO TYPE-IN (separate speed/controls)
+    // HERO TYPE-IN (Apple-smooth orchestration)
+    // Sequence: Title -> Sub1 -> CTA fades in -> CTA label types -> Arrow appears -> Sub2 (kept for feature parity)
     // ================================
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
@@ -935,11 +935,12 @@
       if (!hero) return;
 
       const titleEl = hero.querySelector('.hero-title');
-      const sub1El  = hero.querySelector('.hero-sub1');
+      const sub1El  = hero.querySelector('.hero-sub1'); // "AI for law..." paragraph
       const sub2El  = hero.querySelector('.hero-sub2');
       const ctaTxt  = hero.querySelector('.hero-cta-text');
+      const ctaBtn  = hero.querySelector('#heroCtaBtn');
 
-      if (!titleEl || !ctaTxt) return;
+      if (!titleEl || !ctaTxt || !ctaBtn) return;
 
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (prefersReduced) return;
@@ -949,10 +950,12 @@
       const s2    = sub2El ? (sub2El.textContent || '') : '';
       const bTxt  = ctaTxt.textContent || '';
 
+      // Hide content: only gradient background is visible
       titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
       if (sub2El) sub2El.textContent = '';
       ctaTxt.textContent = '';
+      ctaBtn.classList.remove('cta-visible'); // ensure hidden until time
 
       function spH(ms){
         const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
@@ -974,27 +977,54 @@
 
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
+
+        // 1) Title
         await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+
+        // 2) Sub1 (AI for law paragraph)
         if (sub1El){ await wait(cfg.staggerMs|0); await typeHero(sub1El, s1, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-        if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+
+        // 3) CTA fades in smoothly (no text yet)
         await wait(cfg.staggerMs|0);
+        ctaBtn.classList.add('cta-visible');
+        document.dispatchEvent(new Event('oc:cta-visible'));
+
+        // 4) CTA label types
+        await wait(60);
+        document.dispatchEvent(new Event('oc:cta-text-start'));
         await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
+        document.dispatchEvent(new Event('oc:cta-text-done'));
+
+        // 5) (Optional) Sub2 types after CTA for a clean cascade (feature kept)
+        if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+      }
+
+      // Gate start: must be in view AND (optionally) page blur has begun to fade
+      let started = false;
+      let inView = !cfg.startOnView; // if not waiting for view, treat as true
+      let blurReady = !cfg.waitForBlur; // if not waiting for blur, treat as true
+
+      function tryStart(){
+        if (!started && inView && blurReady){
+          started = true; run();
+        }
       }
 
       if (cfg.startOnView){
-        let started = false;
         const ob = new IntersectionObserver((entries)=>{
           for (const e of entries){
-            if (e.isIntersecting && !started){
-              started = true;
-              run();
-              ob.disconnect();
+            if (e.isIntersecting){
+              inView = true; tryStart(); ob.disconnect();
             }
           }
         }, { threshold:.35 });
         ob.observe(hero);
+      }
+
+      if (cfg.waitForBlur){
+        document.addEventListener('oc:page-blur-fade', () => { blurReady = true; tryStart(); }, { once:true });
       } else {
-        run();
+        blurReady = true; tryStart();
       }
     })();
 
@@ -1287,8 +1317,6 @@
     customElements.define('oc-down-arrow', OCDownArrow);
   }
 })();
-
-
   </script>
 </body>
 </html>
