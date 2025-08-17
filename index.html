@@ -397,6 +397,9 @@
             <span class="hero-cta-text">Download</span>
           </a>
         </div>
+
+        <oc-down-arrow size="300" from="#FFFFFFFFF" via="#FFFFFFFFF" to="#111827" speed="8s"></oc-down-arrow>
+
       </div>
     </div>
   </section>
@@ -420,7 +423,7 @@
   </section>
 
   <!-- ===== LIVE CHAT DEMO — FIXED "VIDEO-LIKE" STAGE ===== -->
-  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 mb-12 md:mb-16">
+  <section id="chat-demo" class="mx-auto max-w-[1200px] oc-container reveal pt-0 md:pt-0 mb-12 md:mb-12">
     <div class="w-full flex items-center justify-center">
       <div class="chat-wrap">
         <div id="demoStage" class="demo-stage">
@@ -1098,6 +1101,96 @@
       }, { threshold:.35 });
       if (wrap) ob.observe(wrap);
     })();
+    (() => {
+  class OCDownArrow extends HTMLElement {
+    static get observedAttributes() {
+      return ['dir','size','speed','thickness','from','via','to','glow','alpha','opacity','flow'];
+    }
+    constructor(){ super(); this.attachShadow({mode:'open'}); }
+    connectedCallback(){ this.render(); }
+    attributeChangedCallback(){ this.render(); }
+
+    render(){
+      // ↓ default is now "down"
+      const dir       = (this.getAttribute('dir') || 'down').toLowerCase();   // down|right|left|up
+      const size      = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
+      const speed     = (this.getAttribute('speed') || '6s').trim();
+      const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
+      const from      = this.getAttribute('from') || '#111111';
+      const via       = this.getAttribute('via')  || from;
+      const to        = this.getAttribute('to')   || from;
+      const glow      = this.hasAttribute('glow');
+      const alphaAttr = this.getAttribute('alpha') ?? this.getAttribute('opacity');
+      const alpha     = Math.min(1, Math.max(0, alphaAttr ? parseFloat(alphaAttr) : 1));
+      const reduce    = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // gradient flow defaults to arrow direction (so: down)
+      const flow = (this.getAttribute('flow') || dir).toLowerCase();
+      const flowMap = {
+        right: {from:'-1 0', to:'1 0'},
+        left:  {from:'1 0',  to:'-1 0'},
+        down:  {from:'0 -1', to:'0 1'},
+        up:    {from:'0 1',  to:'0 -1'}
+      };
+      const gAnim = flowMap[flow] || flowMap.down;
+
+      // rotate base RIGHT arrow to requested dir
+      const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
+
+      const gid = 'grad_' + Math.random().toString(36).slice(2);
+      const animateTag = reduce ? '' : `
+        <animateTransform attributeName="gradientTransform"
+                          type="translate"
+                          from="${gAnim.from}" to="${gAnim.to}"
+                          dur="${speed}" repeatCount="indefinite" />`;
+
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host { display:inline-block; line-height:0; }
+          .wrap {
+            display:inline-block;
+            opacity:${alpha};
+            ${glow ? `filter:
+              drop-shadow(0 1px 6px ${from}40)
+              drop-shadow(0 6px 18px ${to}26);` : ''}
+            will-change: transform, filter;
+          }
+          svg { width:${size}px; height:${size}px; overflow:visible; }
+          .stroke {
+            stroke: url(#${gid});
+            stroke-width:${thickness};
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+          }
+          svg, .wrap { backface-visibility:hidden; transform:translateZ(0); }
+        </style>
+
+        <div class="wrap" part="wrap" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img" aria-label="Down arrow" style="transform: rotate(${rotation}deg);">
+            <defs>
+              <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%"   stop-color="${from}" />
+                <stop offset="50%"  stop-color="${via}" />
+                <stop offset="100%" stop-color="${to}" />
+                ${animateTag}
+              </linearGradient>
+            </defs>
+
+            <!-- Apple-like: rounded shaft + chevron head -->
+            <path class="stroke" d="M12 32 H44" />
+            <path class="stroke" d="M44 20 L56 32 L44 44" />
+          </svg>
+        </div>
+      `;
+    }
+  }
+
+  if (!customElements.get('oc-down-arrow')) {
+    customElements.define('oc-down-arrow', OCDownArrow);
+  }
+})();
+
   </script>
 </body>
 </html>
