@@ -396,7 +396,8 @@
 
   <!-- Secure. Local. Yours. -->
   <section class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
-    <div class="w-full min-h-[34vh] md:min-h-[42vh] flex items-center justify-center">
+    <div class="w-full pt-24 md:py-12 pb-12 flex items-center justify-center">
+
       <div>
         <p class="text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Secure. Local. Yours.</p>
         <span class="mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">For Everyone</span>
@@ -411,10 +412,7 @@
         <div id="demoStage" class="demo-stage">
           <!-- Scenes are injected here absolutely, one pair at a time -->
         </div>
-        <div class="mt-3 flex items-center gap-3">
-          <button id="demoReplay" class="chip" type="button" title="Replay">Replay</button>
-          <div class="text-[11px] text-neutral-500">Three powerful legal Q&As — streamed, one pair at a time</div>
-        </div>
+        <!-- (Replay & tagline removed per request) -->
       </div>
     </div>
 
@@ -622,17 +620,18 @@
     // ================================
     // GLOBAL DEMO SETTINGS
     // ================================
-    // Speed: 1.0 = normal, 0.5 = faster, 2.0 = slower
-    window.OC_DEMO_SPEED = typeof window.OC_DEMO_SPEED === 'number' ? window.OC_DEMO_SPEED : 0.7;
+    // ⏩ Streaming speed multiplier (affects typing/streaming). 1.0 = normal. Lower is faster (e.g., 0.7), higher is slower (e.g., 1.5)
+    window.OC_DEMO_STREAM_SPEED = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
+      ? window.OC_DEMO_STREAM_SPEED : 1.0;
 
-    // ⏱️ Global dwell time per pair (ms). Default ~2s after answer completes.
+    // ⏱️ Dwell time per pair AFTER the answer finishes (ms).
     window.OC_DEMO_DWELL_MS = (typeof window.OC_DEMO_DWELL_MS === 'number' && window.OC_DEMO_DWELL_MS >= 0)
       ? window.OC_DEMO_DWELL_MS : 2000;
 
-    // 🔊 Bass drop sound (change these)
+    // 🔊 Bass drop sound (optional)
     window.OC_DEMO_SOUND = Object.assign({
       enabled: true,
-      url: 'bass-drop.mp3',  // <-- replace with your file path
+      url: 'bass-drop.mp3',  // replace with your file path
       volume: 0.9            // 0.0 - 1.0
     }, window.OC_DEMO_SOUND || {});
 
@@ -657,7 +656,7 @@
         return;
       }
 
-      // Fallback: synthesize a bass drop with WebAudio
+      // Fallback synth
       try{
         const Ctx = window.AudioContext || window.webkitAudioContext;
         const ctx = new Ctx();
@@ -735,7 +734,8 @@
 
     // ===== Helpers =====
     function sp(ms){
-      const f = (typeof window.OC_DEMO_SPEED === 'number' && window.OC_DEMO_SPEED > 0) ? window.OC_DEMO_SPEED : 1.0;
+      const f = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
+        ? window.OC_DEMO_STREAM_SPEED : 1.0;
       return ms * f;
     }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
@@ -744,7 +744,7 @@
     function typewriter(el, text, min=10, max=18){
       return new Promise((resolve)=>{
         let i = 0;
-        el.textContent = ''; // ensure clean start
+        el.textContent = '';
         const tn = document.createTextNode('');
         el.appendChild(tn);
         (function tick(){
@@ -787,23 +787,23 @@
     }
 
     // ================================
-    // LIVE CHAT DEMO — ONE PAIR AT A TIME (fixed stage)
+    // LIVE CHAT DEMO — ONE PAIR AT A TIME (fixed stage, LOOPING)
     // ================================
     (function chatDemo(){
       const wrap    = document.getElementById('chat-demo');
       const stage   = document.getElementById('demoStage');
       const tplU    = document.getElementById('demoTplUser');
       const tplB    = document.getElementById('demoTplBot');
-      const replay  = document.getElementById('demoReplay');
 
-      // Three bold, legal-focused questions & crisp answers (concise to fit stage)
+      // Three bold, legal-focused questions & crisp answers (with citations)
       const scenes = [
         {
           user: "Can my non-compete stop me from joining a competitor in Ontario?",
           answer: `
             <strong>Likely no for employees.</strong> Ontario bans most employment non-competes; limited exceptions (e.g., executives or sale of business).
             <br><strong>Still enforceable?</strong> Only if narrow (time/scope), protects legitimate interests, and not public-policy barred.
-            <br><em>This is general info — get advice for your facts.</em>
+            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.ontario.ca/document/your-guide-employment-standards-act-0/non-compete-agreements" target="_blank" rel="noopener">Ontario ESA – Non-compete agreements</a></div>
+            <em>General information — not legal advice.</em>
           `
         },
         {
@@ -812,13 +812,15 @@
             <strong>Minimums:</strong> Employment Standards gives <b>~3 weeks' pay</b> at 3 years.<br>
             <strong>Common-law notice:</strong> often higher (months), based on role, tenure, age, job market.<br>
             <strong>Act now:</strong> preserve evidence, avoid signing under pressure, get an independent review.
+            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/termination" target="_blank" rel="noopener">BC Employment Standards — Termination</a></div>
           `
         },
         {
           user: "Can officers search my phone at the Canadian border?",
           answer: `
-            <strong>Border powers are broad.</strong> Digital devices can be examined under border laws with a threshold higher than “random.”<br>
-            <strong>Practical:</strong> travel mode, separate work data, use strong passcodes; refusal can lead to detention/seizure.<br>
+            <strong>Border powers are broad.</strong> Digital devices can be examined under border laws with a heightened threshold.<br>
+            <strong>Practical:</strong> travel mode, separate work data, strong passcodes; refusal can lead to detention/seizure.
+            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.cbsa-asfc.gc.ca/publications/dm-md/d19/d19-14-1-eng.html" target="_blank" rel="noopener">CBSA — Examination of digital devices</a></div>
             <em>General info — policies evolve; check current guidance.</em>
           `
         }
@@ -873,7 +875,7 @@
             }, sp(650 + Math.random()*500));
           });
 
-          // 3) Dwell (global, not scaled by speed)
+          // 3) Dwell (global; not scaled by stream speed)
           await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
         };
 
@@ -886,30 +888,29 @@
         return scene;
       }
 
-      let playing = false;
-      async function runCarousel(){
-        if (playing) return;
-        playing = true;
+      let looping = false;
 
-        playBassDrop();
+      async function loopCarousel(){
+        if (looping) return;
+        looping = true;
 
-        for (let i=0; i<scenes.length; i++){
-          const pair = makeScenePair(scenes[i].user, scenes[i].answer);
-          await pair.run();
-          await pair.teardown();
+        // Continuous loop
+        while (looping) {
+          playBassDrop(); // intro pulse each cycle
+          for (let i=0; i<scenes.length; i++){
+            const pair = makeScenePair(scenes[i].user, scenes[i].answer);
+            await pair.run();
+            await pair.teardown();
+          }
         }
-
-        playing = false;
       }
 
-      replay?.addEventListener('click', () => { runCarousel(); });
-
-      // Auto-play when section comes into view (once).
+      // Auto-start loop when section comes into view (once).
       let started = false;
       const ob = new IntersectionObserver((entries)=>{
         for (const e of entries){
           if (e.isIntersecting && !started){
-            started = true; runCarousel(); ob.unobserve(wrap);
+            started = true; loopCarousel(); ob.unobserve(wrap);
           }
         }
       }, { threshold:.35 });
