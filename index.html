@@ -4,7 +4,19 @@
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Viewport updated to support iOS safe areas/fullscreen -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <!-- iOS/Standalone (lets users hide Safari UI when launched from Home Screen) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="OpenCounsel">
+  <!-- Optional icons/manifest (add these files to fully enable the standalone PWA look) -->
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0B1B2B">
+
   <title>OpenCounsel — Private, Local AI Legal Assistant</title>
   <meta name="description" content="OpenCounsel: a private, local AI legal assistant with RAG, document search, and case analysis. Download for macOS, Windows, and Linux." />
   <!-- Favicon -->
@@ -42,14 +54,20 @@
       --pad-desktop-x: 32px;
       --hamburger-inset: 13px;
 
-      /* ==== Global Scroll-Blur Controls ==== */
+      /* ==== Global Scroll-Blur Controls (content inside cards) ==== */
       --scroll-blur-start: 16px;
       --scroll-blur-end: 0px;
-      --scroll-blur-duration: 1500ms;
-      --scroll-blur-ease: cubic-bezier(.2,.8,.2,1);
+      --scroll-blur-duration: 1100ms; /* smoother */
+      --scroll-blur-ease: cubic-bezier(.16,1,.3,1); /* Apple-y ease-out */
       --scroll-blur-opacity-start: .65;
       --scroll-blur-opacity-end: 1;
       --scroll-blur-translate: 8px;
+
+      /* ==== Card backdrop blur controls (the glass card itself) ==== */
+      --card-blur-start: 12px;
+      --card-blur-end: 0px;
+      --card-blur-duration: 900ms;
+      --card-blur-ease: cubic-bezier(.16,1,.3,1);
 
       /* Chat demo palette hooks */
       --line:#E7EDF2;
@@ -150,6 +168,7 @@
     @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
     @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
 
+    /* ===== PAGE START BLUR (unchanged as requested) ===== */
     .page-blur{
       position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
       background: rgba(255,255,255,.28); z-index:9999; pointer-events:none;
@@ -207,14 +226,36 @@
     .drawer-cta > span{ z-index:0!important; }
     .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position:relative; }
 
-    /* BLUR-ON-SCROLL utility */
+    /* ======= SCROLL BLUR (content inside cards) ======= */
     .scroll-fade { isolation:isolate; }
     .scroll-fade > * {
-      filter: blur(var(--scroll-blur-start)); opacity: var(--scroll-blur-opacity-start); transform: translateY(var(--scroll-blur-translate));
-      transition: filter var(--scroll-blur-duration) var(--scroll-blur-ease), opacity var(--scroll-blur-duration) var(--scroll-blur-ease), transform var(--scroll-blur-duration) var(--scroll-blur-ease);
+      filter: blur(var(--scroll-blur-start));
+      opacity: var(--scroll-blur-opacity-start);
+      transform: translateY(var(--scroll-blur-translate));
+      transition:
+        filter var(--scroll-blur-duration) var(--scroll-blur-ease),
+        opacity var(--scroll-blur-duration) var(--scroll-blur-ease),
+        transform var(--scroll-blur-duration) var(--scroll-blur-ease);
       will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0);
     }
-    .scroll-fade.in-view > * { filter:blur(var(--scroll-blur-end)); opacity:var(--scroll-blur-opacity-end); transform:translateY(0); }
+    .scroll-fade.in-view > * {
+      filter: blur(var(--scroll-blur-end));
+      opacity: var(--scroll-blur-opacity-end);
+      transform: translateY(0);
+    }
+
+    /* ======= Card backdrop blur (the glass card itself) — smoother to clear, then stays clear ======= */
+    .scroll-fade.card-glass {
+      -webkit-backdrop-filter: blur(var(--card-blur-start)) !important;
+      backdrop-filter: blur(var(--card-blur-start)) !important;
+      transition:
+        -webkit-backdrop-filter var(--card-blur-duration) var(--card-blur-ease),
+        backdrop-filter var(--card-blur-duration) var(--card-blur-ease);
+    }
+    .scroll-fade.in-view.card-glass {
+      -webkit-backdrop-filter: blur(var(--card-blur-end)) !important;
+      backdrop-filter: blur(var(--card-blur-end)) !important;
+    }
 
     .LargeAniLogo{ display:inline-block; width:var(--logo-size,72px); height:var(--logo-size,72px); }
 
@@ -315,7 +356,7 @@
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
-  <!-- FULL-PAGE BLUR OVERLAY -->
+  <!-- FULL-PAGE BLUR OVERLAY (unchanged) -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
   <!-- HEADER -->
@@ -381,7 +422,7 @@
     </div>
   </header>
 
-  <!-- HERO -->
+  <!-- HERO (unchanged) -->
 <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal">
   <div
     class="relative g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border min-h-[calc(100svh-56px-var(--pad-mobile-x))] lg:min-h-[calc(100svh-56px-var(--pad-desktop-x))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
@@ -426,7 +467,7 @@
   </div>
 </section>
 
-<!-- Controller: reveal arrow strictly after CTA label finishes typing -->
+<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
 <script>
 (() => {
   const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
@@ -442,13 +483,11 @@
     arrow.classList.add('opacity-100');
   };
 
-  // Trigger strictly after CTA label finishes typing
   document.addEventListener('oc:cta-text-done', () => {
     if (prefersReduced) { reveal(); return; }
     setTimeout(reveal, ARROW_AFTER_CTA_MS);
   }, { once: true });
 
-  // Fallback: visibility check in case of custom edits
   const onCtaInView = () => {
     if (prefersReduced) { reveal(); return; }
     if (!ctaTxt) { setTimeout(reveal, 300); return; }
@@ -477,9 +516,6 @@
   io.observe(ctaBtn);
 })();
 </script>
-
-
-
 
   <!-- Secure. Local. Yours. -->
   <section id="sly" class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
@@ -859,10 +895,15 @@
     });
 
     // ================================
-    // BLUR-ON-SCROLL OBSERVER (LOOPING)
+    // BLUR-ON-SCROLL OBSERVER (ONE-SHOT, PERSISTS UNTIL REFRESH)
     // ================================
     const sbo = new IntersectionObserver((entries) => {
-      for (const e of entries) { e.isIntersecting ? e.target.classList.add('in-view') : e.target.classList.remove('in-view'); }
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in-view');
+          sbo.unobserve(e.target); // don't remove on exit -> stays un-blurred
+        }
+      }
     }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
     document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
 
@@ -921,8 +962,7 @@
     }
 
     // ================================
-    // HERO TYPE-IN (strict sequence)
-    // Title -> Sub1 -> Sub2 -> CTA fade-in (await) -> CTA text -> Arrow
+    // HERO TYPE-IN (strict sequence) — unchanged behavior
     // ================================
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
@@ -932,8 +972,8 @@
       if (!hero) return;
 
       const titleEl = hero.querySelector('.hero-title');
-      const sub1El  = hero.querySelector('.hero-sub1'); // "AI for law. Designed for you."
-      const sub2El  = hero.querySelector('.hero-sub2'); // "Local, private, and built for legal research."
+      const sub1El  = hero.querySelector('.hero-sub1');
+      const sub2El  = hero.querySelector('.hero-sub2');
       const ctaTxt  = hero.querySelector('.hero-cta-text');
       const ctaBtn  = hero.querySelector('#heroCtaBtn');
 
@@ -946,14 +986,12 @@
       const s2    = sub2El ? (sub2El.textContent || '') : '';
       const bTxt  = ctaTxt.textContent || '';
 
-      // Reduced motion: show everything immediately (still ensure CTA visible)
       if (prefersReduced) {
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
         return;
       }
 
-      // Hide content for typing
       titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
       if (sub2El) sub2El.textContent = '';
@@ -978,7 +1016,6 @@
       }
       const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
 
-      // Wait for an element's transition to complete (fallback timeout)
       function afterTransition(el, fallbackMs = 900){
         return new Promise((resolve)=>{
           let done = false;
@@ -991,30 +1028,19 @@
 
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
-
-        // 1) Title
         await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
-
-        // 2) Sub1
         if (sub1El){ await wait(cfg.staggerMs|0); await typeHero(sub1El, s1, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-
-        // 3) Sub2 (must finish before CTA starts)
         if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-
-        // 4) CTA fades in (no text yet) — wait for transition to finish
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-visible'));
         await afterTransition(ctaBtn, 900);
-
-        // 5) CTA label types
         await wait(60);
         document.dispatchEvent(new Event('oc:cta-text-start'));
         await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
         document.dispatchEvent(new Event('oc:cta-text-done'));
       }
 
-      // Gate start: must be in view AND (optionally) page blur has begun to fade
       let started = false;
       let inView = !cfg.startOnView;
       let blurReady = !cfg.waitForBlur;
@@ -1242,29 +1268,22 @@
     attributeChangedCallback(){ this.render(); }
 
     render(){
-      // —— Defaults for the Apple-style look ——
-      const dir       = (this.getAttribute('dir') || 'down').toLowerCase();   // down|right|left|up
+      const dir       = (this.getAttribute('dir') || 'down').toLowerCase();
       const size      = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
       const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
-      const alpha     = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85'))); // transparency
-      const amp       = (this.getAttribute('amp') || '14%').trim();           // bounce amplitude
-      const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();       // bounce speed
-      const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();      // breathing speed
+      const alpha     = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
+      const amp       = (this.getAttribute('amp') || '14%').trim();
+      const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();
+      const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();
 
-      // Color: defaults to solid white; you can override with from/via/to
       const from = this.getAttribute('from') || '#ffffff';
       const via  = this.getAttribute('via')  || from;
       const to   = this.getAttribute('to')   || from;
 
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      // Base arrow is RIGHT; rotate to requested direction
       const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
-
-      // Unique gradient id per instance
       const gid = 'grad_' + Math.random().toString(36).slice(2);
 
-      // Gentle, downward “flowing” gradient — subtle with white, can be recolored
       const animateTag = reduce ? '' : `
         <animateTransform attributeName="gradientTransform"
                           type="translate"
@@ -1288,7 +1307,6 @@
             0%, 100% { transform: translateY(0); }
             50%      { transform: translateY(var(--amp)); }
           }
-          /* Soft “breathing” glow/brightness, very Apple-y */
           @keyframes oc-breathe {
             0%, 100% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22))
                              drop-shadow(0 10px 26px rgba(255,255,255,.15)); }
@@ -1317,7 +1335,6 @@
               </linearGradient>
             </defs>
 
-            <!-- Apple-like: single rounded shaft + chevron head -->
             <path class="stroke" d="M12 32 H44" />
             <path class="stroke" d="M44 20 L56 32 L44 44" />
           </svg>
