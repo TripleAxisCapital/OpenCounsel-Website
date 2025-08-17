@@ -399,10 +399,11 @@
       </div>
     </div>
 
-    <!-- Decorative down arrow anchored to the bottom; does not affect layout -->
+    <!-- Decorative down arrow (initially hidden; fades in after CTA typing completes) -->
     <oc-down-arrow
+      id="heroArrow"
       aria-hidden="true"
-      class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-6"
+      class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-6 opacity-0 transition-opacity duration-700 ease-out"
       size="56"
       thickness="3"
       alpha="0.85"
@@ -412,6 +413,59 @@
     ></oc-down-arrow>
   </div>
 </section>
+
+<!-- Fade-in controller: show the arrow once the CTA text finishes typing -->
+<script>
+(() => {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function fadeInArrow(arrow){
+    if (!arrow) return;
+    arrow.classList.add('opacity-100');
+    arrow.classList.remove('opacity-0');
+  }
+
+  function setup(){
+    const arrow  = document.getElementById('heroArrow');
+    const ctaTxt = document.querySelector('#home .hero-cta-text');
+    if (!arrow) return;
+
+    // If reduced motion is on, content isn't typed; reveal immediately.
+    if (prefersReduced) { requestAnimationFrame(() => fadeInArrow(arrow)); return; }
+
+    // If there's no CTA text node to watch, reveal after a short delay (safe fallback).
+    if (!ctaTxt) { setTimeout(() => fadeInArrow(arrow), 1200); return; }
+
+    const FULL = 'Download';
+    let seenCleared = false; // hero typer clears text to "" before streaming it back
+
+    const mo = new MutationObserver(() => {
+      const txt = (ctaTxt.textContent || '').trim();
+      if (!seenCleared && txt.length === 0) seenCleared = true;     // saw it get cleared
+      if (seenCleared && txt === FULL) {                             // fully re-typed
+        fadeInArrow(arrow);
+        mo.disconnect();
+      }
+    });
+
+    // Observe changes to the CTA text while it types
+    mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
+
+    // Extra safety: if we somehow miss the mutation, reveal after a reasonable timeout
+    setTimeout(() => {
+      if (arrow.classList.contains('opacity-0')) fadeInArrow(arrow);
+    }, 6000);
+  }
+
+  // Run after DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup, { once: true });
+  } else {
+    setup();
+  }
+})();
+</script>
+
 
 
   <!-- Secure. Local. Yours. -->
@@ -670,8 +724,8 @@
       startDelayMs: 200,
       staggerMs: 50,
       streamSpeed: 1.0,
-      titleCharMin: 45,
-      titleCharMax: 70,
+      titleCharMin: 50,
+      titleCharMax: 50,
       lineCharMin: 5,
       lineCharMax: 10,
       buttonCharMin: 5,
