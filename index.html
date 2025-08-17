@@ -398,7 +398,7 @@
           </a>
         </div>
 
-        <oc-down-arrow size="300" from="#FFFFFFFFF" via="#FFFFFFFFF" to="#111827" speed="8s"></oc-down-arrow>
+        <oc-down-arrow size="200" thickness="2" alpha="0.5" bounce="2.8s" breathe="5s"></oc-down-arrow>
 
       </div>
     </div>
@@ -1101,60 +1101,74 @@
       }, { threshold:.35 });
       if (wrap) ob.observe(wrap);
     })();
-    (() => {
+(() => {
   class OCDownArrow extends HTMLElement {
     static get observedAttributes() {
-      return ['dir','size','speed','thickness','from','via','to','glow','alpha','opacity','flow'];
+      return [
+        'dir','size','thickness','alpha',      // look & layout
+        'amp','bounce','breathe',              // motion controls
+        'from','via','to'                      // color stops (optional)
+      ];
     }
     constructor(){ super(); this.attachShadow({mode:'open'}); }
     connectedCallback(){ this.render(); }
     attributeChangedCallback(){ this.render(); }
 
     render(){
-      // ↓ default is now "down"
+      // —— Defaults for the Apple-style look ——
       const dir       = (this.getAttribute('dir') || 'down').toLowerCase();   // down|right|left|up
       const size      = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
-      const speed     = (this.getAttribute('speed') || '6s').trim();
       const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
-      const from      = this.getAttribute('from') || '#111111';
-      const via       = this.getAttribute('via')  || from;
-      const to        = this.getAttribute('to')   || from;
-      const glow      = this.hasAttribute('glow');
-      const alphaAttr = this.getAttribute('alpha') ?? this.getAttribute('opacity');
-      const alpha     = Math.min(1, Math.max(0, alphaAttr ? parseFloat(alphaAttr) : 1));
-      const reduce    = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const alpha     = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85'))); // transparency
+      const amp       = (this.getAttribute('amp') || '14%').trim();           // bounce amplitude
+      const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();       // bounce speed
+      const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();      // breathing speed
 
-      // gradient flow defaults to arrow direction (so: down)
-      const flow = (this.getAttribute('flow') || dir).toLowerCase();
-      const flowMap = {
-        right: {from:'-1 0', to:'1 0'},
-        left:  {from:'1 0',  to:'-1 0'},
-        down:  {from:'0 -1', to:'0 1'},
-        up:    {from:'0 1',  to:'0 -1'}
-      };
-      const gAnim = flowMap[flow] || flowMap.down;
+      // Color: defaults to solid white; you can override with from/via/to
+      const from = this.getAttribute('from') || '#ffffff';
+      const via  = this.getAttribute('via')  || from;
+      const to   = this.getAttribute('to')   || from;
 
-      // rotate base RIGHT arrow to requested dir
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Base arrow is RIGHT; rotate to requested direction
       const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
 
+      // Unique gradient id per instance
       const gid = 'grad_' + Math.random().toString(36).slice(2);
+
+      // Gentle, downward “flowing” gradient — subtle with white, can be recolored
       const animateTag = reduce ? '' : `
         <animateTransform attributeName="gradientTransform"
                           type="translate"
-                          from="${gAnim.from}" to="${gAnim.to}"
-                          dur="${speed}" repeatCount="indefinite" />`;
+                          from="0 -1" to="0 1"
+                          dur="8s" repeatCount="indefinite" />`;
 
       this.shadowRoot.innerHTML = `
         <style>
           :host { display:inline-block; line-height:0; }
           .wrap {
-            display:inline-block;
-            opacity:${alpha};
-            ${glow ? `filter:
-              drop-shadow(0 1px 6px ${from}40)
-              drop-shadow(0 6px 18px ${to}26);` : ''}
-            will-change: transform, filter;
+            --amp: ${amp};
+            opacity: ${alpha};
+            will-change: transform, filter, opacity;
+            ${reduce ? '' : `animation:
+              oc-bounce ${bounceDur} ease-in-out infinite,
+              oc-breathe ${breatheDur} ease-in-out infinite;`}
+            backface-visibility: hidden; transform: translateZ(0);
           }
+
+          @keyframes oc-bounce {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(var(--amp)); }
+          }
+          /* Soft “breathing” glow/brightness, very Apple-y */
+          @keyframes oc-breathe {
+            0%, 100% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22))
+                             drop-shadow(0 10px 26px rgba(255,255,255,.15)); }
+            50%      { filter: drop-shadow(0 6px 18px rgba(255,255,255,.40))
+                             drop-shadow(0 16px 40px rgba(255,255,255,.22)); }
+          }
+
           svg { width:${size}px; height:${size}px; overflow:visible; }
           .stroke {
             stroke: url(#${gid});
@@ -1163,7 +1177,6 @@
             stroke-linejoin: round;
             fill: none;
           }
-          svg, .wrap { backface-visibility:hidden; transform:translateZ(0); }
         </style>
 
         <div class="wrap" part="wrap" aria-hidden="true">
@@ -1177,7 +1190,7 @@
               </linearGradient>
             </defs>
 
-            <!-- Apple-like: rounded shaft + chevron head -->
+            <!-- Apple-like: single rounded shaft + chevron head -->
             <path class="stroke" d="M12 32 H44" />
             <path class="stroke" d="M44 20 L56 32 L44 44" />
           </svg>
@@ -1186,10 +1199,12 @@
     }
   }
 
+  // Define (or reuse if already defined)
   if (!customElements.get('oc-down-arrow')) {
     customElements.define('oc-down-arrow', OCDownArrow);
   }
 })();
+
 
   </script>
 </body>
