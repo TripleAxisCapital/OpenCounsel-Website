@@ -399,7 +399,7 @@
       </div>
     </div>
 
-    <!-- Decorative down arrow (initially hidden; fades in after CTA typing completes) -->
+    <!-- Decorative down arrow — starts invisible; fades in after CTA appears & finishes typing -->
     <oc-down-arrow
       id="heroArrow"
       aria-hidden="true"
@@ -414,57 +414,76 @@
   </div>
 </section>
 
-<!-- Fade-in controller: show the arrow once the CTA text finishes typing -->
+<!-- Controller: reveal arrow after CTA is visible and its text stops changing -->
 <script>
 (() => {
+  const arrow  = document.getElementById('heroArrow');
+  const ctaBtn = document.getElementById('heroCtaBtn');
+  const ctaTxt = document.querySelector('#home .hero-cta-text');
+  if (!arrow || !ctaBtn) return;
+
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function fadeInArrow(arrow){
-    if (!arrow) return;
-    arrow.classList.add('opacity-100');
+  const reveal = () => {
     arrow.classList.remove('opacity-0');
-  }
+    arrow.classList.add('opacity-100');
+  };
 
-  function setup(){
-    const arrow  = document.getElementById('heroArrow');
-    const ctaTxt = document.querySelector('#home .hero-cta-text');
-    if (!arrow) return;
+  // When CTA is on-screen, wait for its label to stop changing (typing done), then reveal arrow.
+  const onCtaInView = () => {
+    if (prefersReduced) { reveal(); return; } // no typing in reduced motion
 
-    // If reduced motion is on, content isn't typed; reveal immediately.
-    if (prefersReduced) { requestAnimationFrame(() => fadeInArrow(arrow)); return; }
+    if (!ctaTxt) { setTimeout(reveal, 500); return; }
 
-    // If there's no CTA text node to watch, reveal after a short delay (safe fallback).
-    if (!ctaTxt) { setTimeout(() => fadeInArrow(arrow), 1200); return; }
-
-    const FULL = 'Download';
-    let seenCleared = false; // hero typer clears text to "" before streaming it back
-
-    const mo = new MutationObserver(() => {
-      const txt = (ctaTxt.textContent || '').trim();
-      if (!seenCleared && txt.length === 0) seenCleared = true;     // saw it get cleared
-      if (seenCleared && txt === FULL) {                             // fully re-typed
-        fadeInArrow(arrow);
-        mo.disconnect();
+    // Watch CTA label for changes; when stable for a short moment, fade in.
+    let lastChange = Date.now();
+    let mo;
+    const observeDone = () => {
+      // consider "done" when text exists and hasn't changed for ~300ms
+      const idleMs = Date.now() - lastChange;
+      const hasText = (ctaTxt.textContent || '').trim().length > 0;
+      if (hasText && idleMs > 300) {
+        mo?.disconnect();
+        reveal();
+        return true;
       }
-    });
+      return false;
+    };
 
-    // Observe changes to the CTA text while it types
+    mo = new MutationObserver(() => { lastChange = Date.now(); });
     mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
 
-    // Extra safety: if we somehow miss the mutation, reveal after a reasonable timeout
-    setTimeout(() => {
-      if (arrow.classList.contains('opacity-0')) fadeInArrow(arrow);
-    }, 6000);
-  }
+    // Drive a tiny loop to detect stability without relying on scroll
+    let raf;
+    const tick = () => {
+      if (!observeDone()) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
 
-  // Run after DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setup, { once: true });
-  } else {
-    setup();
-  }
+    // Safety fallback
+    setTimeout(() => {
+      if (arrow.classList.contains('opacity-0')) {
+        mo.disconnect();
+        reveal();
+      }
+    }, 6000);
+  };
+
+  // Fire when the CTA button itself enters the viewport (initial load or later).
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) {
+        onCtaInView();
+        io.disconnect();
+        break;
+      }
+    }
+  }, { threshold: 0.35 });
+
+  io.observe(ctaBtn);
 })();
 </script>
+
 
 
 
@@ -724,8 +743,8 @@
       startDelayMs: 200,
       staggerMs: 50,
       streamSpeed: 1.0,
-      titleCharMin: 50,
-      titleCharMax: 50,
+      titleCharMin: 5,
+      titleCharMax: 30,
       lineCharMin: 5,
       lineCharMax: 10,
       buttonCharMin: 5,
