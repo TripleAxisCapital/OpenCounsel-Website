@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B1B2B">
+  <title>Download — OpenCounsel</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
+          colors: { oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' } },
+          boxShadow: { card:'0 6px 30px rgba(16,24,40,0.08)', glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)' }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root{
+      --pad-mobile-x:24px; --pad-desktop-x:32px; --line:#E7EDF2;
+      --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
+      --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
+      --logo-width:64px; --logo-height:64px;
+    }
+
+    html, body { max-width:100%; overflow-x:clip!important; }
+    .oc-container { padding-left:var(--pad-mobile-x); padding-right:var(--pad-mobile-x); }
+
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .grad-anim{ background:linear-gradient(var(--angle),var(--from),var(--via),var(--to)); background-size:300% 300%; animation:gradientShift var(--speed) ease-in-out infinite; }
+    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
+    .nav-link { font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
+    .nav-link:hover { font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
+
+    .g-grad{ background:linear-gradient(var(--angle),var(--from),var(--via),var(--to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; }
+    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition:backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
+    .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
+
+    /* —— Mobile menu visibility fix (prevents stray CTA showing on page load) —— */
+    #mobileMenu[hidden]{ display:none !important; }
+    #mobileMenu { position:fixed; inset:0; z-index:60; display:block; pointer-events:none; } /* block so we can toggle [hidden] attr; it remains hidden via [hidden] */
+    #mobileMenu .menu-scrim{ position:absolute; inset:0; background:rgba(255,255,255,.92); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); opacity:0; transition:opacity 2s ease, backdrop-filter 2s ease }
+    #mobileMenu .menu-panel{ position:absolute; top:0; left:0; height:100%; width:min(88vw,420px); background:#fff; border-right:1px solid rgba(0,0,0,.06); box-shadow:0 24px 60px rgba(0,0,0,.12); transform:translateX(-100%); opacity:.98; filter:blur(12px); transition:transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px; }
+    #mobileMenu.active{ pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0); backdrop-filter:blur(0); }
+    #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
+
+    .drawer-title{ font-weight:700; letter-spacing:-.01em; background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; animation:gradientShift 16s ease-in-out infinite; }
+    .hamburger{ width:32px; height:28px; display:inline-flex; flex-direction:column; justify-content:center; gap:6px; }
+    .hamburger span{ height:3px; width:100%; border-radius:9999px; background:linear-gradient(var(--angle),var(--from),var(--via),var(--to)); background-size:300% 300%; animation:gradientShift var(--speed) ease-in-out infinite; transition:transform .4s ease, opacity .2s ease; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform:translateY(9px) rotate(45deg) }
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity:0 }
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform:translateY(-9px) rotate(-45deg) }
+
+    .drawer-nav a{ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; transition:transform .18s ease, opacity .18s ease; animation:gradientShift 16s ease-in-out infinite; }
+    .drawer-nav a:hover{ transform:translateY(-1px); opacity:.95; }
+    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; color:#fff!important; -webkit-text-fill-color:#fff!important; }
+
+    .border-hairline{border:1px solid var(--line)}
+    @media (min-width:1024px){ .hero-card{ min-height: calc(80svh - var(--pad-desktop-x))!important; } }
+  </style>
+</head>
+<body class="bg-white text-oc-ink font-sans antialiased">
+  <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 bg-white">
+    <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" aria-label="OpenCounsel home"><span class="logo-anim" role="img" aria-label="OpenCounsel"></span></a>
+      </div>
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="index.html">OpenCounsel</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="contact.html">Contact</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="download.html">Download</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button id="hamburgerBtn" class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MOBILE MENU (starts fully hidden; no stray CTA) -->
+    <div id="mobileMenu" aria-hidden="true" hidden>
+      <div class="menu-scrim"></div>
+      <aside class="menu-panel">
+        <div class="drawer-head flex items-center justify-between pb-1">
+          <span class="drawer-title">OpenCounsel</span>
+          <button id="closeMenuBtn" class="drawer-close inline-flex items-center justify-center w-10 h-10 rounded-xl border border-black/10 bg-white/80 hover:bg-white" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <nav class="drawer-nav mt-2">
+          <a href="index.html">OpenCounsel</a>
+          <a href="contact.html">Contact</a>
+          <a href="download.html">Download</a>
+          <div class="h-px my-2 bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
+          <a href="download.html" class="drawer-cta grad-anim rounded-2xl px-6 py-3 font-semibold text-white inline-flex items-center justify-center">
+            <i class="ph ph-download text-xl mr-2"></i> <span>Get OpenCounsel</span>
+          </a>
+        </nav>
+      </aside>
+    </div>
+  </header>
+
+  <!-- DESKTOP SPACER -->
+  <div class="hidden lg:block h-14" aria-hidden="true"></div>
+
+  <!-- DOWNLOAD HERO -->
+  <section class="mx-auto max-w-[1200px] oc-container">
+    <div class="hero-card relative g-grad rounded-2xl overflow-hidden border border-oc-line flex items-center">
+      <div class="w-full text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)] py-16">
+        <h1 class="font-semibold text-white text-4xl md:text-6xl leading-tight">Download OpenCounsel</h1>
+        <p class="mt-3 text-white/85 text-lg md:text-xl">Private, local AI built for legal work — on your desktop.</p>
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto">
+          <a href="#" class="inline-flex items-center justify-center gap-3 rounded-2xl bg-white text-oc-ink px-5 py-4 font-semibold hover:bg-gray-100 focus:ring-2 focus:ring-white/50">
+            <i class="ph ph-apple-logo text-xl"></i> macOS (Universal)
+          </a>
+          <a href="#" class="inline-flex items-center justify-center gap-3 rounded-2xl border border-white/30 bg-white/10 text-white px-5 py-4 font-semibold hover:bg-white/20 focus:ring-2 focus:ring-white/40">
+            <i class="ph ph-windows-logo text-xl"></i> Windows
+          </a>
+          <a href="#" class="inline-flex items-center justify-center gap-3 rounded-2xl border border-white/30 bg-white/10 text-white px-5 py-4 font-semibold hover:bg-white/20 focus:ring-2 focus:ring-white/40">
+            <i class="ph ph-linux-logo text-xl"></i> Linux (AppImage)
+          </a>
+        </div>
+        <p class="mt-3 text-white/75 text-sm">Coming soon on the web. By downloading, you agree to our Terms.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAILS -->
+  <section class="mx-auto max-w-[1200px] oc-container my-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="rounded-3xl border border-oc-line p-6 bg-white">
+        <h3 class="text-lg font-semibold">System requirements</h3>
+        <ul class="mt-3 text-sm text-neutral-700 space-y-2">
+          <li>• macOS 12+, Apple Silicon or Intel</li>
+          <li>• Windows 10/11, 64-bit</li>
+          <li>• Linux x86_64 with glibc 2.31+</li>
+          <li>• 8 GB RAM (16 GB recommended)</li>
+          <li>• 2 GB free disk space</li>
+        </ul>
+      </div>
+      <div class="rounded-3xl border border-oc-line p-6 bg-white">
+        <h3 class="text-lg font-semibold">What’s included</h3>
+        <ul class="mt-3 text-sm text-neutral-700 space-y-2">
+          <li>• Local models & retrieval</li>
+          <li>• Document search & case analysis</li>
+          <li>• Private, offline mode</li>
+          <li>• Auto-updates</li>
+        </ul>
+      </div>
+      <div class="rounded-3xl border border-oc-line p-6 bg-white">
+        <h3 class="text-lg font-semibold">Need help?</h3>
+        <p class="mt-2 text-sm text-neutral-700">Questions about installation or enterprise deployment?</p>
+        <a href="contact.html" class="mt-4 inline-flex items-center gap-2 rounded-2xl bg-neutral-900 text-white px-4 py-2 font-medium hover:opacity-90">
+          <i class="ph ph-chat-circle-dots"></i> Contact support
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-oc-line">
+    <div class="mx-auto max-w-[1200px] oc-container py-10 flex items-center flex-col gap-6 text-oc-ink/60 text-sm">
+      <div class="text-center">
+        <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
+      </div>
+      <div class="flex items-center gap-4">
+        <a class="hover:text-oc-ink" href="#">Privacy</a>
+        <a class="hover:text-oc-ink" href="#">Terms</a>
+        <a class="hover:text-oc-ink" href="download.html">Download</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Year
+    const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
+
+    // Page blur fade
+    window.addEventListener('load', () => {
+      const pageBlur = document.getElementById('pageBlur');
+      if (!pageBlur) return;
+      pageBlur.classList.add('hide');
+      setTimeout(() => pageBlur.remove(), 1300);
+    });
+
+    // Mobile menu logic (now uses [hidden] for reliable initial hiding)
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+    function openMenu(){
+      if (window.matchMedia('(min-width: 768px)').matches) return;
+      mobileMenu.hidden = false;
+      // force reflow before adding .active for smoothness
+      void mobileMenu.offsetWidth;
+      mobileMenu.classList.add('active');
+      hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded','true');
+      mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeMenu(){
+      mobileMenu.classList.remove('active');
+      hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded','false');
+      mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      // hide after animation ends
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.hidden = true; }, 500);
+    }
+
+    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+    closeMenuBtn?.addEventListener('click', closeMenu);
+    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
+    document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeMenu(); });
+
+    const mq = window.matchMedia('(min-width:768px)');
+    function handleMQ(e){ if (e.matches) closeMenu(); }
+    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+  </script>
+</body>
+</html>
