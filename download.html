@@ -1,46 +1,23 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-  <!-- Pretty URLs for GitHub Pages: use once per page AND as 404.html -->
+  <!-- Pretty URL helper: set the desired slug once -->
 <script>
-(function (L, D) {
-  /* ===== EDIT ONLY THESE ===== */
-  var BASE = ""; // e.g. "/yourrepo" for Project Pages, else "" for root sites
-  var MAP  = {   // pretty slug  -> real file
-    home:     "/index.html",
-    contact:  "/contact.html",
-    download: "/download.html"
-  };
-  /* =========================== */
+  window.PAGE_NAME = 'Downloads'; // ← change per page: 'home', 'contact', 'download', etc.
 
-  function canon(href){
-    var ln = D.querySelector('link[rel="canonical"]') || D.createElement('link');
-    ln.rel = "canonical"; ln.href = href; if (!ln.parentNode) D.head.appendChild(ln);
-  }
-
-  try {
-    var p = L.pathname.replace(/\/+$/,'');                      // trim trailing slash
-    if (BASE && p.startsWith(BASE)) p = p.slice(BASE.length) || "/";
-
-    var file = (p === "/") ? "/index.html" : p;                 // normalize root
-
-    // 1) If we're on a real file, swap to the pretty slug (no reload)
-    for (var slug in MAP) {
-      if (MAP[slug] === file) {
-        var pretty = BASE + "/" + slug;
-        if (L.pathname !== pretty) history.replaceState(null, "", pretty + L.search + L.hash);
-        canon(pretty);
-        return;
+  (function (l, n) {
+    try {
+      if (l.pathname === '/' ||
+          /\/download\.html?$/i.test(l.pathname) ||
+          new RegExp('/' + n + '\\.html?$', 'i').test(l.pathname)) {
+        history.replaceState(null, '', '/' + n + l.search + l.hash);
       }
-    }
-
-    // 2) If we're on a pretty slug (likely served by 404.html), send to real file
-    var s = p.replace(/^\/+/, "");
-    if (MAP[s]) L.replace(BASE + MAP[s] + L.search + L.hash);
-  } catch (_) {}
-})(location, document);
+      (document.querySelector('link[rel=canonical]') ||
+       document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'canonical' })))
+       .href = '/' + n;
+    } catch (_) {}
+  })(location, window.PAGE_NAME);
 </script>
-
 
   <title>OpenCounsel — Downloads</title>
   <meta charset="UTF-8" />
