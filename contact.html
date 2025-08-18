@@ -2,23 +2,25 @@
 <html lang="en" class="scroll-smooth">
 <head>
 
-  <!-- Pretty URL helper: set the desired slug once -->
+ <!-- Pretty URL for THIS page -->
 <script>
-  window.PAGE_NAME = 'Hello'; // ← change per page: 'home', 'contact', 'download', etc.
+  // EDIT per page:
+  window.OC = {
+    base: "",            // for project pages set "/your-repo", else ""
+    slug: "Hello",        // pretty URL you want (e.g., "home", "contact")
+    file: "/contact.html"  // the actual file for this page
+  };
 
-  (function (l, n) {
-    try {
-      if (l.pathname === '/' ||
-          /\/contact\.html?$/i.test(l.pathname) ||
-          new RegExp('/' + n + '\\.html?$', 'i').test(l.pathname)) {
-        history.replaceState(null, '', '/' + n + l.search + l.hash);
-      }
-      (document.querySelector('link[rel=canonical]') ||
-       document.head.appendChild(Object.assign(document.createElement('link'), { rel: 'canonical' })))
-       .href = '/' + n;
-    } catch (_) {}
-  })(location, window.PAGE_NAME);
+  (function (L, D, C) { try {
+    var B=C.base||"", S="/"+(C.slug||"home"), F=C.file||"/index.html";
+    var p=L.pathname.replace(/\/+$/,""); if(B && p.startsWith(B)) p=p.slice(B.length)||"/";
+    var ln=D.querySelector('link[rel=canonical]'); if(ln) ln.href=B+S;
+    if (p===F || p==="/") history.replaceState(null,"",B+S+L.search+L.hash);
+    else if (p===S) L.replace(B+F+L.search+L.hash);
+  } catch(_){} })(location, document, window.OC);
 </script>
+<link rel="canonical" href="/home">
+
 
   <title>OpenCounsel — Hello</title>
   <meta charset="UTF-8" />
