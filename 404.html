@@ -1,9 +1,32 @@
-<!doctype html><meta charset="utf-8"><title>Routing…</title>
+<!doctype html>
+<meta charset="utf-8">
+<title>Loading…</title>
+<style>
+  html,body{height:100%;margin:0;display:grid;place-items:center;font:14px/1.4 system-ui}
+</style>
 <script>
-  (function (L) {
-    var BASE = ""; // set "/your-repo" for project pages
-    var MAP  = { home:"/index.html", contact:"/contact.html", download:"/download.html" };
-    var p=L.pathname.replace(/\/+$/,""); if(BASE && p.startsWith(BASE)) p=p.slice(BASE.length)||"/";
-    var s=p.replace(/^\/+/,""); if (MAP[s]) L.replace(BASE+MAP[s]+L.search+L.hash);
+  // Set base for Project Pages ("/your-repo"); keep "" for User/Org site
+  var BASE = "";  // e.g., "/opencounsel-site"
+
+  // Map pretty slugs → real files
+  var MAP = {
+    home: "/index.html",
+    contact: "/contact.html",
+    download: "/download.html"
+  };
+
+  (function(L){
+    try{
+      var p=L.pathname.replace(/\/+$/,"");
+      if(BASE && p.startsWith(BASE)) p=p.slice(BASE.length)||"/";
+      var parts=p.split("/").filter(Boolean);
+      var slug = parts.pop() || "home";
+      var file = MAP[slug] || "/index.html";
+      L.replace((BASE||"") + file + L.search + L.hash);
+    }catch(e){
+      // Fallback: go to root index
+      L.replace((BASE||"") + "/index.html");
+    }
   })(location);
 </script>
+<p>Routing…</p>
