@@ -40,30 +40,47 @@
     .nav-link { font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
     .nav-link:hover { font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
 
-    /* Page blur */
+    /* Page blur (same as index) */
     .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition:backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
 
-    /* Mobile menu */
-    #mobileMenu[hidden]{ display:none !important; }
-    #mobileMenu { position:fixed; inset:0; z-index:60; display:block; pointer-events:none; }
-    #mobileMenu .menu-scrim{ position:absolute; inset:0; background:rgba(255,255,255,.92); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); opacity:0; transition:opacity 2s ease, backdrop-filter 2s ease }
-    #mobileMenu .menu-panel{ position:absolute; top:0; left:0; height:100%; width:min(88vw,420px); background:#fff; border-right:1px solid rgba(0,0,0,.06); box-shadow:0 24px 60px rgba(0,0,0,.12); transform:translateX(-100%); opacity:.98; filter:blur(12px); transition:transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px; }
-    #mobileMenu.active{ pointer-events:auto; }
-    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0); backdrop-filter:blur(0); }
+    /* Mobile slide-in menu (EXACT as index) */
+    #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
+    #mobileMenu .menu-scrim{
+      position:absolute; inset:0; background: rgba(255,255,255,0.92);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      opacity:0; transition: opacity 2s ease, backdrop-filter 2s ease, -webkit-backdrop-filter 2s ease;
+    }
+    #mobileMenu .menu-panel{
+      position:absolute; top:0; left:0; height:100%; width:min(88vw, 420px); background:#fff;
+      border-right: 1px solid rgba(0,0,0,.06); box-shadow: 0 24px 60px rgba(0,0,0,.12);
+      transform: translateX(-100%); opacity:.98; filter: blur(12px);
+      transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s;
+      display:flex; flex-direction:column; padding:18px 20px;
+    }
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px); }
     #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
+
     .drawer-title{ font-weight:700; letter-spacing:-.01em; background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; animation:gradientShift 16s ease-in-out infinite; }
-    .hamburger{ width:32px; height:28px; display:inline-flex; flex-direction:column; justify-content:center; gap:6px; }
-    .hamburger span{ height:3px; width:100%; border-radius:9999px; background:linear-gradient(var(--angle),var(--from),var(--via),var(--to)); background-size:300% 300%; animation:gradientShift var(--speed) ease-in-out infinite; transition:transform .4s ease, opacity .2s ease; }
-    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform:translateY(9px) rotate(45deg) }
-    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity:0 }
-    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform:translateY(-9px) rotate(-45deg) }
+    .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); transition: background .2s ease, transform .2s ease; }
+    .drawer-close:hover{ background:#fff; transform:translateY(-1px); }
+    .drawer-nav a:not(.drawer-cta){
+      display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .drawer-cta{
+      display:inline-flex!important; align-items:center; justify-content:center; width:100%;
+      text-align:center; color:#fff!important; -webkit-text-fill-color:#fff!important;
+    }
 
     /* Hero CTA fade (same as index) */
     .hero-cta-fade{ opacity:0; transform:translateY(8px); transition: opacity .66s cubic-bezier(.22,.8,.22,1), transform .66s cubic-bezier(.22,.8,.22,1); will-change:opacity, transform; }
     .hero-cta-fade.cta-visible{ opacity:1; transform:translateY(0); }
 
-    .border-hairline{border:1px solid var(--line)}
     @media (min-width:1024px){ .hero-card{ min-height: calc(80svh - var(--pad-desktop-x))!important; } }
   </style>
 </head>
@@ -82,20 +99,26 @@
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="download.html">Download</a>
       </nav>
       <div class="flex items-center gap-2">
-        <button id="hamburgerBtn" class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        <button id="hamburgerBtn"
+          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
         </button>
       </div>
     </div>
 
-    <!-- MOBILE MENU -->
-    <div id="mobileMenu" aria-hidden="true" hidden>
+    <!-- MOBILE MENU (exact behavior as index) -->
+    <div id="mobileMenu" aria-hidden="true">
       <div class="menu-scrim"></div>
       <aside class="menu-panel">
         <div class="drawer-head flex items-center justify-between pb-1">
           <span class="drawer-title">OpenCounsel</span>
-          <button id="closeMenuBtn" class="drawer-close inline-flex items-center justify-center w-10 h-10 rounded-xl border border-black/10 bg-white/80 hover:bg-white" aria-label="Close menu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
+          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
         <nav class="drawer-nav mt-2">
@@ -104,7 +127,7 @@
           <a href="download.html">Download</a>
           <div class="h-px my-2 bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
           <a href="download.html" class="drawer-cta grad-anim rounded-2xl px-6 py-3 font-semibold text-white inline-flex items-center justify-center">
-            <i class="ph ph-download text-xl mr-2"></i> <span>Get OpenCounsel</span>
+            <i class="ph ph-download text-xl mr-2"></i><span>Get OpenCounsel</span>
           </a>
         </nav>
       </aside>
@@ -114,7 +137,7 @@
   <!-- DESKTOP SPACER -->
   <div class="hidden lg:block h-14" aria-hidden="true"></div>
 
-  <!-- HERO (id=home to reuse same JS sequence) -->
+  <!-- HERO (id=home so we can reuse the index hero typing) -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container">
     <div class="hero-card relative g-grad rounded-2xl overflow-hidden border border-oc-line flex items-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)] py-16">
       <div class="w-full max-w-3xl mx-auto flex flex-col items-center">
@@ -122,33 +145,19 @@
         <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Private, local AI built for legal work — on your desktop.</p>
         <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Choose your platform to begin.</p>
 
-        <div class="mt-8 flex flex-col items-center gap-5">
-          <!-- Primary CTA (fades in, label types exactly like index) -->
-          <a id="heroCtaBtn"
-             href="#platforms"
-             class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
-                    focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                    shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                    transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 grad-anim"
-             style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;">
-            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
-                  style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-            <i class="ph ph-download text-xl"></i>
-            <span class="hero-cta-text">Get OpenCounsel</span>
-          </a>
+        <!-- Removed the TOP green button by request -->
 
-          <!-- Platform buttons (fade in after CTA is visible) -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full" id="platformButtons">
-            <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl bg-white text-oc-ink px-5 py-4 font-semibold hover:bg-gray-100 focus:ring-2 focus:ring-white/50">
-              <i class="ph ph-apple-logo text-xl"></i> macOS (Universal)
-            </a>
-            <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl border border-white/30 bg-white/10 text-white px-5 py-4 font-semibold hover:bg-white/20 focus:ring-2 focus:ring-white/40">
-              <i class="ph ph-windows-logo text-xl"></i> Windows
-            </a>
-            <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl border border-white/30 bg-white/10 text-white px-5 py-4 font-semibold hover:bg-white/20 focus:ring-2 focus:ring-white/40">
-              <i class="ph ph-linux-logo text-xl"></i> Linux (AppImage)
-            </a>
-          </div>
+        <!-- Platform buttons (fade in like index CTAs) -->
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full" id="platformButtons">
+          <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl bg-white text-oc-ink px-5 py-4 font-semibold hover:bg-gray-100 focus:ring-2 focus:ring-white/50">
+            <i class="ph ph-apple-logo text-xl"></i> macOS (Universal)
+          </a>
+          <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl border border-white/30 bg-white/10 text-white px-5 py-4 font-semibold hover:bg-white/20 focus:ring-2 focus:ring-white/40">
+            <i class="ph ph-windows-logo text-xl"></i> Windows
+          </a>
+          <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl border border-white/30 bg-white/10 text-white px-5 py-4 font-semibold hover:bg-white/20 focus:ring-2 focus:ring-white/40">
+            <i class="ph ph-linux-logo text-xl"></i> Linux (AppImage)
+          </a>
         </div>
 
         <!-- Decorative down arrow -->
@@ -205,21 +214,13 @@
   </footer>
 
   <script>
-    // ===== GLOBAL DEMO-LIKE SETTINGS (same knobs as index) =====
+    // ===== Global knobs (same feel as index) =====
     window.OC_DEMO_STREAM_SPEED = 1.0;
     window.OC_HERO = Object.assign({
-      enabled: true,
-      startOnView: true,
-      waitForBlur: true,
-      startDelayMs: 200,
-      staggerMs: 50,
-      streamSpeed: 1.0,
-      titleCharMin: 60,
-      titleCharMax: 60,
-      lineCharMin: 5,
-      lineCharMax: 10,
-      buttonCharMin: 5,
-      buttonCharMax: 50
+      enabled: true, startOnView: true, waitForBlur: true,
+      startDelayMs: 200, staggerMs: 50, streamSpeed: 1.0,
+      titleCharMin: 60, titleCharMax: 60,
+      lineCharMin: 5,  lineCharMax: 10
     }, window.OC_HERO || {});
 
     // Year + blur fade
@@ -232,23 +233,37 @@
       setTimeout(() => pageBlur.remove(), 1300);
     });
 
-    // Mobile menu
+    // ===== MOBILE MENU (exactly like index) =====
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const mobileMenu   = document.getElementById('mobileMenu');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
-    function openMenu(){ if (window.matchMedia('(min-width:768px)').matches) return; mobileMenu.hidden=false; void mobileMenu.offsetWidth; mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active'); hamburgerBtn.setAttribute('aria-expanded','true'); mobileMenu.setAttribute('aria-hidden','false'); document.body.classList.add('overflow-hidden'); }
-    function closeMenu(){ mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active'); hamburgerBtn.setAttribute('aria-expanded','false'); mobileMenu.setAttribute('aria-hidden','true'); document.body.classList.remove('overflow-hidden'); setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.hidden=true; }, 500); }
+
+    function openMenu() {
+      if (window.matchMedia('(min-width: 768px)').matches) return;
+      mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
+      mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+    function closeMenu() {
+      mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+    }
     hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
     closeMenuBtn?.addEventListener('click', closeMenu);
     mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
-    document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeMenu(); });
-    const mq = window.matchMedia('(min-width:768px)'); (mq.addEventListener?mq.addEventListener('change',e=>{if(e.matches)closeMenu();}):mq.addListener(e=>{if(e.matches)closeMenu();}));
+    const mq = window.matchMedia('(min-width: 768px)');
+    function handleMQ(e){ if (e.matches) closeMenu(); }
+    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
 
-    // ===== Helpers copied from index =====
+    // ===== Helpers (same as index) =====
     function sp(ms){ const f = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0) ? window.OC_DEMO_STREAM_SPEED : 1.0; return ms * f; }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    // ===== Hero typing sequence (exactly like index) =====
+    // ===== Hero typing sequence (works without a primary CTA) =====
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
       if (!cfg.enabled) return;
@@ -259,21 +274,14 @@
       const titleEl = hero.querySelector('.hero-title');
       const sub1El  = hero.querySelector('.hero-sub1');
       const sub2El  = hero.querySelector('.hero-sub2');
-      const ctaTxt  = hero.querySelector('.hero-cta-text');
-      const ctaBtn  = hero.querySelector('#heroCtaBtn');
-
-      if (!titleEl || !ctaTxt || !ctaBtn) return;
 
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       const tText = titleEl.textContent || '';
       const s1    = sub1El ? (sub1El.textContent || '') : '';
       const s2    = sub2El ? (sub2El.textContent || '') : '';
-      const bTxt  = ctaTxt.textContent || '';
 
       if (prefersReduced) {
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-text-done'));
         document.querySelectorAll('.extra-cta').forEach(el=>el.classList.add('cta-visible'));
         document.getElementById('heroArrow')?.classList.add('opacity-100');
         return;
@@ -282,9 +290,6 @@
       titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
       if (sub2El) sub2El.textContent = '';
-      ctaTxt.textContent = '';
-      ctaBtn.classList.remove('cta-visible');
-      document.querySelectorAll('.extra-cta').forEach(el=>el.classList.remove('cta-visible'));
 
       function spH(ms){ const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0; return ms * f; }
       function typeHero(el, text, min, max){
@@ -307,26 +312,19 @@
         if (sub1El){ await wait(cfg.staggerMs|0); await typeHero(sub1El, s1, cfg.lineCharMin|0, cfg.lineCharMax|0); }
         if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
         await wait(cfg.staggerMs|0);
-        // Fade in primary CTA
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-visible'));
-        // Cascade fade for platform buttons
+
+        // Fade in platform buttons like CTAs
         const extras = Array.from(document.querySelectorAll('.extra-cta'));
         extras.forEach((el, idx)=> setTimeout(()=> el.classList.add('cta-visible'), 120*idx + 80));
-        // Type CTA label
-        await wait(60);
-        document.dispatchEvent(new Event('oc:cta-text-start'));
-        await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
-        document.dispatchEvent(new Event('oc:cta-text-done'));
-        // Reveal arrow
+
+        // Reveal arrow after buttons sequence begins
         const arrow = document.getElementById('heroArrow');
-        if (arrow) { arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); }
+        if (arrow) { setTimeout(()=>{ arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); }, 250); }
       }
 
       let started = false;
       let inView = !cfg.startOnView;
       let blurReady = !cfg.waitForBlur;
-
       function tryStart(){ if (!started && inView && blurReady){ started = true; run(); } }
 
       if (cfg.startOnView){
