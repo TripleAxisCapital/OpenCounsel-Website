@@ -30,6 +30,7 @@
       --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
       --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
       --logo-width:64px; --logo-height:64px;
+      --hamburger-inset:13px;
     }
     html, body { max-width:100%; overflow-x:clip!important; }
     .oc-container { padding-left:var(--pad-mobile-x); padding-right:var(--pad-mobile-x); }
@@ -40,11 +41,28 @@
     .nav-link { font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
     .nav-link:hover { font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
 
-    /* Page blur (same as index) */
+    /* ===== Page blur like index ===== */
     .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition:backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
 
-    /* Mobile slide-in menu (EXACT as index) */
+    /* ===== Hamburger styles (missing before) ===== */
+    #hamburgerBtn .hamburger {
+      --from:#00CFFFcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --angle:135deg; --speed:16s;
+    }
+    .hamburger { width:32px; height:28px; display:inline-flex; flex-direction:column; justify-content:center; gap:6px; }
+    .hamburger span{
+      height:3px; width:100%; border-radius:9999px;
+      background:linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
+      background-size:300% 300%; animation:gradientShift var(--speed,16s) ease-in-out infinite;
+      transition: transform .4s ease, opacity .2s ease;
+    }
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity:0; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
+    #hamburgerBtn { display:flex; align-items:center; justify-content:center; height:56px; padding:0; margin-right: var(--hamburger-inset); }
+    @media (min-width:768px){ #hamburgerBtn{ display:none!important; } #mobileMenu{ display:none!important; } }
+
+    /* ===== Mobile drawer (same as index) ===== */
     #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
     #mobileMenu .menu-scrim{
       position:absolute; inset:0; background: rgba(255,255,255,0.92);
@@ -77,7 +95,7 @@
       text-align:center; color:#fff!important; -webkit-text-fill-color:#fff!important;
     }
 
-    /* Hero CTA fade (same as index) */
+    /* ===== Hero CTA fade (like index) ===== */
     .hero-cta-fade{ opacity:0; transform:translateY(8px); transition: opacity .66s cubic-bezier(.22,.8,.22,1), transform .66s cubic-bezier(.22,.8,.22,1); will-change:opacity, transform; }
     .hero-cta-fade.cta-visible{ opacity:1; transform:translateY(0); }
 
@@ -100,16 +118,14 @@
       </nav>
       <div class="flex items-center gap-2">
         <button id="hamburgerBtn"
-          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          class="md:hidden rounded-xl bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
           aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger" aria-hidden="true">
-            <span></span><span></span><span></span>
-          </span>
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
         </button>
       </div>
     </div>
 
-    <!-- MOBILE MENU (exact behavior as index) -->
+    <!-- MOBILE MENU -->
     <div id="mobileMenu" aria-hidden="true">
       <div class="menu-scrim"></div>
       <aside class="menu-panel">
@@ -137,7 +153,7 @@
   <!-- DESKTOP SPACER -->
   <div class="hidden lg:block h-14" aria-hidden="true"></div>
 
-  <!-- HERO (id=home so we can reuse the index hero typing) -->
+  <!-- HERO -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container">
     <div class="hero-card relative g-grad rounded-2xl overflow-hidden border border-oc-line flex items-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)] py-16">
       <div class="w-full max-w-3xl mx-auto flex flex-col items-center">
@@ -145,9 +161,7 @@
         <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Private, local AI built for legal work — on your desktop.</p>
         <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Choose your platform to begin.</p>
 
-        <!-- Removed the TOP green button by request -->
-
-        <!-- Platform buttons (fade in like index CTAs) -->
+        <!-- Platform buttons (fade-in CTAs). No extra green button above. -->
         <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full" id="platformButtons">
           <a href="#" class="extra-cta hero-cta-fade inline-flex items-center justify-center gap-3 rounded-2xl bg-white text-oc-ink px-5 py-4 font-semibold hover:bg-gray-100 focus:ring-2 focus:ring-white/50">
             <i class="ph ph-apple-logo text-xl"></i> macOS (Universal)
@@ -160,7 +174,6 @@
           </a>
         </div>
 
-        <!-- Decorative down arrow -->
         <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none mt-8 opacity-0 transition-opacity duration-700 ease-out"
           size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s"></oc-down-arrow>
       </div>
@@ -214,16 +227,15 @@
   </footer>
 
   <script>
-    // ===== Global knobs (same feel as index) =====
+    // Globals
     window.OC_DEMO_STREAM_SPEED = 1.0;
     window.OC_HERO = Object.assign({
-      enabled: true, startOnView: true, waitForBlur: true,
-      startDelayMs: 200, staggerMs: 50, streamSpeed: 1.0,
-      titleCharMin: 60, titleCharMax: 60,
-      lineCharMin: 5,  lineCharMax: 10
+      enabled:true, startOnView:true, waitForBlur:true,
+      startDelayMs:200, staggerMs:50, streamSpeed:1.0,
+      titleCharMin:60, titleCharMax:60, lineCharMin:5, lineCharMax:10
     }, window.OC_HERO || {});
 
-    // Year + blur fade
+    // Year + page blur
     const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
     window.addEventListener('load', () => {
       const pageBlur = document.getElementById('pageBlur');
@@ -233,7 +245,7 @@
       setTimeout(() => pageBlur.remove(), 1300);
     });
 
-    // ===== MOBILE MENU (exactly like index) =====
+    // ===== MOBILE MENU (like index) =====
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const mobileMenu   = document.getElementById('mobileMenu');
     const closeMenuBtn = document.getElementById('closeMenuBtn');
@@ -259,11 +271,11 @@
     if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
 
-    // ===== Helpers (same as index) =====
+    // Helpers
     function sp(ms){ const f = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0) ? window.OC_DEMO_STREAM_SPEED : 1.0; return ms * f; }
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    // ===== Hero typing sequence (works without a primary CTA) =====
+    // Hero typing
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
       if (!cfg.enabled) return;
@@ -313,11 +325,9 @@
         if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
         await wait(cfg.staggerMs|0);
 
-        // Fade in platform buttons like CTAs
         const extras = Array.from(document.querySelectorAll('.extra-cta'));
         extras.forEach((el, idx)=> setTimeout(()=> el.classList.add('cta-visible'), 120*idx + 80));
 
-        // Reveal arrow after buttons sequence begins
         const arrow = document.getElementById('heroArrow');
         if (arrow) { setTimeout(()=>{ arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); }, 250); }
       }
@@ -338,7 +348,7 @@
       } else { blurReady = true; tryStart(); }
     })();
 
-    // ===== Down arrow web component (same as index) =====
+    // Down arrow component
     (() => {
       class OCDownArrow extends HTMLElement {
         static get observedAttributes(){ return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to']; }
