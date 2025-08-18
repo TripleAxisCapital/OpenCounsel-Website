@@ -447,10 +447,15 @@
   <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
 
   <!-- HERO -->
-<section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0">
+<section
+  id="home"
+  class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0"
+  style="--gap-mobile: 24px; --gap-desktop: 24px;"
+>
   <div
     class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border
-           min-h-[calc(100svh-56px-24px)] lg:min-h-[calc(100svh-56px-24px)]
+           min-h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
+           lg:min-h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
            flex items-center justify-center text-center
            px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
   >
@@ -492,6 +497,19 @@
     ></oc-down-arrow>
   </div>
 </section>
+
+<!-- Measure header height once and on resize -->
+<script>
+  (function setHeaderVar() {
+    const compute = () => {
+      const header = document.querySelector('header, #siteHeader, .site-header');
+      const h = header ? header.getBoundingClientRect().height : 56; // fallback if no header found
+      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+    };
+    compute();
+    window.addEventListener('resize', compute, { passive: true });
+  })();
+</script>
 
 
 <!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
