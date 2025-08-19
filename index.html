@@ -618,6 +618,82 @@
   <!-- ===== END DEMO SECTION ===== -->
 
 
+<!-- ===== LOGO STRIP (drop-in) ===== -->
+<script>
+/* === CONFIG (edit these) === */
+const OC_GRADIENT = { from:'#0B1B2B', via:'#0E6F5C', to:'#00CFFF' }; // colors
+const OC_SPEED    = { grad:'14s', pulse:'3.8s', pop:'700ms', stagger:'140ms' }; // timings
+
+const logo1 = 'logo.svg';
+const logo2 = 'logo.svg';
+const logo3 = 'logo.svg';
+/* ============================ */
+</script>
+
+<div id="logoStrip" class="oc-logo-strip"></div>
+
+<style>
+  .oc-logo-strip{width:100%;}
+  .oc-logo-row{display:flex;align-items:center;justify-content:center;gap:clamp(2rem,8vw,8rem);padding:8px 0;}
+
+  .oc-logo{
+    position:relative; --i:0;
+    width:clamp(110px,14vw,180px); height:clamp(48px,7vw,96px);
+    display:grid;place-items:center; color:#0b0b0b;
+    opacity:0; transform:translateY(8px) scale(.97);
+    animation:oc-pop var(--pop) cubic-bezier(.2,.8,.2,1) forwards;
+    animation-delay:calc(var(--i)*var(--stagger));
+  }
+  .oc-logo img{width:100%;height:100%;object-fit:contain;display:block;z-index:1}
+
+  /* breathing gradient glow */
+  .oc-logo::after{
+    content:"";position:absolute;inset:-12px;border-radius:16px;pointer-events:none;z-index:0;
+    background:linear-gradient(90deg,var(--from),var(--via),var(--to));
+    background-size:200% 200%;filter:blur(18px);opacity:0;mix-blend-mode:screen;
+    animation:
+      oc-glow-reveal 240ms ease forwards,
+      oc-gradient-shift var(--grad) linear infinite,
+      oc-breathe var(--pulse) ease-in-out infinite;
+    animation-delay:
+      calc(var(--pop) + var(--i)*var(--stagger)),
+      calc(var(--pop) + var(--i)*var(--stagger)),
+      calc(var(--pop) + var(--i)*var(--stagger));
+  }
+
+  @keyframes oc-pop{0%{opacity:0;transform:translateY(8px) scale(.97)}60%{opacity:1;transform:translateY(0) scale(1.02)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes oc-gradient-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  @keyframes oc-breathe{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.06);opacity:.9}}
+  @keyframes oc-glow-reveal{to{opacity:.85}}
+
+  @media (max-width:640px){.oc-logo-row{gap:clamp(1.5rem,6vw,3rem)}.oc-logo{width:clamp(92px,28vw,140px);height:clamp(40px,10vw,80px)}}
+  @media (prefers-reduced-motion:reduce){.oc-logo,.oc-logo::after{animation:none!important;opacity:1!important;transform:none!important}}
+</style>
+
+<script>
+(function(){
+  const root = document.getElementById('logoStrip');
+  if(!root) return;
+
+  // apply CSS vars from config
+  root.style.setProperty('--from',   OC_GRADIENT.from);
+  root.style.setProperty('--via',    OC_GRADIENT.via);
+  root.style.setProperty('--to',     OC_GRADIENT.to);
+  root.style.setProperty('--grad',   OC_SPEED.grad);
+  root.style.setProperty('--pulse',  OC_SPEED.pulse);
+  root.style.setProperty('--pop',    OC_SPEED.pop);
+  root.style.setProperty('--stagger',OC_SPEED.stagger);
+
+  const row = document.createElement('div'); row.className='oc-logo-row';
+  [logo1, logo2, logo3].forEach((src,i)=>{
+    const fig=document.createElement('figure'); fig.className='oc-logo'; fig.style.setProperty('--i',i);
+    const img=new Image(); img.src=src; img.alt='logo'; img.loading='lazy';
+    fig.appendChild(img); row.appendChild(fig);
+  });
+  root.appendChild(row);
+})();
+</script>
+<!-- ===== /LOGO STRIP ===== -->
 
 
 
