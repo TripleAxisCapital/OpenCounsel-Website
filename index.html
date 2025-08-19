@@ -619,124 +619,118 @@
 
 
 
-<!-- ===== LOGO STRIP (drop-in) — Left → Middle → Right pop, then breathe ===== -->
+<!-- ========= SCROLL-REVEAL LOGO STRIP (drop-in) ========= -->
 <script>
 /* === CONFIG (edit these) === */
 const OC_STYLE = {
-  // Gradient colors for the glow
-  from:'#0B1B2B', via:'#0E6F5C', to:'#00CFFF',
-  // Timings
-  pop:'650ms',          // initial pop duration
-  stagger:'180ms',      // delay between left→middle→right
-  breathe:'3.6s',       // continuous breathing speed
-  grad:'14s',           // gradient sweep speed
-  // Breathing scale range
-  breathMin: 1.00,
-  breathMax: 1.06
+  pop: '650ms',        // pop-in duration
+  stagger: '180ms',    // left → middle → right delay
+  breathe: '3.6s',     // breathing speed
+  breathMin: 1.00,     // scale range
+  breathMax: 1.05
 };
-// Paths to your SVG logos
-const logo1 = 'logo.svg';        // left
-const logo2 = 'logo.svg';    // middle
-const logo3 = 'logo.svg'; // right
-/* ==================================================== */
+// SVG (transparent) logos
+const logo1 = 'logo.svg';        // LEFT
+const logo2 = 'logo.svg';    // MIDDLE
+const logo3 = 'logo.svg'; // RIGHT
+/* ========================================= */
 </script>
 
 <div id="logoStrip" class="oc-logo-strip"></div>
 
 <style>
-  .oc-logo-strip{width:100%}
+  .oc-logo-strip{ width:100%; }
   .oc-logo-row{
-    display:flex;align-items:center;justify-content:center;
-    gap:clamp(2rem,8vw,8rem);padding:8px 0
+    display:flex; align-items:center; justify-content:center;
+    gap:clamp(2rem,8vw,8rem); padding:8px 0; background:transparent;
   }
 
-  /* figure handles POP-IN; inner handles BREATHING so transforms don't conflict */
+  /* POP lives on the figure; BREATH lives on the inner wrapper so transforms don't fight */
   .oc-logo{
     --i:0;
     position:relative;
-    width:clamp(110px,14vw,180px);height:clamp(48px,7vw,96px);
-    display:grid;place-items:center;
-    opacity:0;filter:blur(6px);transform:translateY(14px) scale(.85) rotate(-1deg);
-    animation:oc-pop-in var(--pop) cubic-bezier(.2,.8,.2,1) forwards;
-    animation-delay:calc(var(--i)*var(--stagger)); /* left → middle → right */
+    width:clamp(110px,14vw,180px); height:clamp(48px,7vw,96px);
+    display:grid; place-items:center; background:transparent;
+    opacity:0; filter:blur(6px); transform:translateY(14px) scale(.9);
+    /* no animation until container becomes .is-active (scroll reveal) */
   }
+  .is-active .oc-logo{
+    animation: oc-pop-in var(--pop,650ms) cubic-bezier(.2,.8,.2,1) forwards;
+    animation-delay: calc(var(--i) * var(--stagger,180ms));
+  }
+
   .oc-logo-inner{
-    width:100%;height:100%;display:grid;place-items:center;
-    animation:oc-breathe var(--breathe) ease-in-out infinite;
-    animation-delay:calc(var(--pop) + var(--i)*var(--stagger)); /* start AFTER pop */
+    width:100%; height:100%; display:grid; place-items:center; background:transparent;
+    /* breathing waits until pop finishes */
   }
-  .oc-logo img{width:100%;height:100%;object-fit:contain;display:block;z-index:1}
-
-  /* soft breathing gradient glow behind each logo */
-  .oc-logo::after{
-    content:"";position:absolute;inset:-14px;border-radius:18px;pointer-events:none;z-index:0;
-    background:linear-gradient(90deg,var(--from),var(--via),var(--to));
-    background-size:200% 200%;filter:blur(20px);opacity:0;mix-blend-mode:screen;
-    animation:
-      oc-glow-reveal 260ms ease forwards,
-      oc-gradient-shift var(--grad) linear infinite,
-      oc-breathe var(--breathe) ease-in-out infinite;
-    animation-delay:
-      calc(var(--pop) + var(--i)*var(--stagger)),
-      calc(var(--pop) + var(--i)*var(--stagger)),
-      calc(var(--pop) + var(--i)*var(--stagger));
+  .is-active .oc-logo-inner{
+    animation: oc-breathe var(--breathe,3.6s) ease-in-out infinite;
+    animation-delay: calc(var(--pop,650ms) + var(--i) * var(--stagger,180ms));
   }
 
-  /* ANIMATIONS */
+  .oc-logo img{
+    width:100%; height:100%; display:block; object-fit:contain; background:transparent;
+  }
+
+  /* Animations (typing-like staged reveal → settle → idle motion) */
   @keyframes oc-pop-in{
-    0%   { opacity:0; filter:blur(6px); transform:translateY(14px) scale(.85) rotate(-1deg); }
-    70%  { opacity:1; filter:blur(0px); transform:translateY(0) scale(1.08) rotate(0deg); }
-    100% { opacity:1; filter:blur(0px); transform:translateY(0) scale(1) rotate(0deg); }
+    0%   { opacity:0; filter:blur(6px); transform:translateY(14px) scale(.9); }
+    70%  { opacity:1; filter:blur(0);   transform:translateY(0)    scale(1.06); }
+    100% { opacity:1; filter:blur(0);   transform:translateY(0)    scale(1); }
   }
   @keyframes oc-breathe{
-    0%,100% { transform: scale(var(--breath-min)); }
-    50%     { transform: scale(var(--breath-max)); }
+    0%,100% { transform: scale(var(--breath-min,1)) translateY(0); }
+    50%     { transform: scale(var(--breath-max,1.05)) translateY(-2px); }
   }
-  @keyframes oc-gradient-shift{
-    0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
-  }
-  @keyframes oc-glow-reveal{ to{ opacity:.85 } }
 
   /* Responsive + accessibility */
   @media (max-width:640px){
-    .oc-logo-row{ gap:clamp(1.5rem,6vw,3rem) }
-    .oc-logo{ width:clamp(92px,28vw,140px);height:clamp(40px,10vw,80px) }
+    .oc-logo-row{ gap:clamp(1.5rem,6vw,3rem); }
+    .oc-logo{ width:clamp(92px,28vw,140px); height:clamp(40px,10vw,80px); }
   }
-  @media (prefers-reduced-motion:reduce){
-    .oc-logo,.oc-logo::after,.oc-logo-inner{ animation:none!important; opacity:1!important; transform:none!important; filter:none!important }
+  @media (prefers-reduced-motion: reduce){
+    .oc-logo, .oc-logo-inner{ animation:none !important; opacity:1 !important; transform:none !important; filter:none !important; }
   }
 </style>
 
 <script>
-(function(){
+(() => {
   const root = document.getElementById('logoStrip');
-  if(!root) return;
+  if (!root) return;
 
-  // Apply CSS variables from config
-  root.style.setProperty('--from', OC_STYLE.from);
-  root.style.setProperty('--via',  OC_STYLE.via);
-  root.style.setProperty('--to',   OC_STYLE.to);
-  root.style.setProperty('--pop',  OC_STYLE.pop);
+  // Apply timing vars
+  root.style.setProperty('--pop', OC_STYLE.pop);
   root.style.setProperty('--stagger', OC_STYLE.stagger);
   root.style.setProperty('--breathe', OC_STYLE.breathe);
-  root.style.setProperty('--grad', OC_STYLE.grad);
   root.style.setProperty('--breath-min', OC_STYLE.breathMin);
   root.style.setProperty('--breath-max', OC_STYLE.breathMax);
 
-  const row = document.createElement('div'); row.className='oc-logo-row';
-
-  [logo1, logo2, logo3].forEach((src,i)=>{
-    const fig = document.createElement('figure');
-    fig.className='oc-logo'; fig.style.setProperty('--i', i);
-    const inner = document.createElement('div'); inner.className='oc-logo-inner';
-    const img = new Image(); img.src = src; img.alt = `logo ${i+1}`; img.loading='lazy';
+  // Build DOM (left, middle, right)
+  const row = document.createElement('div'); row.className = 'oc-logo-row';
+  [logo1, logo2, logo3].forEach((src, i) => {
+    const fig = document.createElement('figure'); fig.className = 'oc-logo'; fig.style.setProperty('--i', i);
+    const inner = document.createElement('div'); inner.className = 'oc-logo-inner';
+    const img = new Image(); img.src = src; img.alt = `logo ${i+1}`; img.loading = 'lazy';
     inner.appendChild(img); fig.appendChild(inner); row.appendChild(fig);
   });
-
   root.appendChild(row);
+
+  // Scroll-trigger (copying your hero's IO pattern)
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const activate = () => root.classList.add('is-active');
+
+  if (prefersReduced) { activate(); return; }
+
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { activate(); io.disconnect(); break; }
+    }
+  }, { threshold: 0.35 }); // similar to hero threshold
+
+  io.observe(root);
 })();
 </script>
-<!-- ===== /LOGO STRIP ===== -->
+<!-- ========= /SCROLL-REVEAL LOGO STRIP ========= -->
 
 
   
