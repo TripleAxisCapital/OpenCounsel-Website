@@ -623,16 +623,22 @@
 <script>
 /* === CONFIG (edit these) === */
 const OC_STYLE = {
-  pop: '650ms',        // pop-in duration
-  stagger: '180ms',    // left → middle → right delay
-  breathe: '3.6s',     // breathing speed
-  breathMin: 1.00,     // scale range
-  breathMax: 1.05
+  // Animation
+  pop: '650ms',       // pop-in duration
+  stagger: '180ms',   // left → middle → right delay
+  breathe: '3.6s',    // breathing speed
+  breathMin: 1.00,    // scale range
+  breathMax: 1.05,
+
+  // Global vertical padding (even top & bottom)
+  padY: '48px',        // desktop/tablet
+  padYMobile: '32px'   // mobile (<=640px)
 };
-// SVG (transparent) logos
-const logo1 = 'logo.svg';        // LEFT
-const logo2 = 'logo.svg';    // MIDDLE
-const logo3 = 'logo.svg'; // RIGHT
+
+// Transparent SVG (or PNG) logos
+const logo1 = '/assets/logos/gm.svg';        // LEFT
+const logo2 = '/assets/logos/target.svg';    // MIDDLE
+const logo3 = '/assets/logos/paramount.svg'; // RIGHT
 /* ========================================= */
 </script>
 
@@ -640,12 +646,16 @@ const logo3 = 'logo.svg'; // RIGHT
 
 <style>
   .oc-logo-strip{ width:100%; }
+
   .oc-logo-row{
     display:flex; align-items:center; justify-content:center;
-    gap:clamp(2rem,8vw,8rem); padding:8px 0; background:transparent;
+    gap:clamp(2rem,8vw,8rem);
+    /* even top/bottom padding via CSS var */
+    padding-block: var(--pad-y,48px);
+    background:transparent;
   }
 
-  /* POP lives on the figure; BREATH lives on the inner wrapper so transforms don't fight */
+  /* POP lives on the figure; BREATH lives on the inner wrapper so transforms don't conflict */
   .oc-logo{
     --i:0;
     position:relative;
@@ -661,7 +671,6 @@ const logo3 = 'logo.svg'; // RIGHT
 
   .oc-logo-inner{
     width:100%; height:100%; display:grid; place-items:center; background:transparent;
-    /* breathing waits until pop finishes */
   }
   .is-active .oc-logo-inner{
     animation: oc-breathe var(--breathe,3.6s) ease-in-out infinite;
@@ -672,7 +681,7 @@ const logo3 = 'logo.svg'; // RIGHT
     width:100%; height:100%; display:block; object-fit:contain; background:transparent;
   }
 
-  /* Animations (typing-like staged reveal → settle → idle motion) */
+  /* Animations */
   @keyframes oc-pop-in{
     0%   { opacity:0; filter:blur(6px); transform:translateY(14px) scale(.9); }
     70%  { opacity:1; filter:blur(0);   transform:translateY(0)    scale(1.06); }
@@ -685,7 +694,7 @@ const logo3 = 'logo.svg'; // RIGHT
 
   /* Responsive + accessibility */
   @media (max-width:640px){
-    .oc-logo-row{ gap:clamp(1.5rem,6vw,3rem); }
+    .oc-logo-row{ padding-block: var(--pad-y-mobile, var(--pad-y,48px)); gap:clamp(1.5rem,6vw,3rem); }
     .oc-logo{ width:clamp(92px,28vw,140px); height:clamp(40px,10vw,80px); }
   }
   @media (prefers-reduced-motion: reduce){
@@ -698,12 +707,14 @@ const logo3 = 'logo.svg'; // RIGHT
   const root = document.getElementById('logoStrip');
   if (!root) return;
 
-  // Apply timing vars
+  // Apply timing & padding vars
   root.style.setProperty('--pop', OC_STYLE.pop);
   root.style.setProperty('--stagger', OC_STYLE.stagger);
   root.style.setProperty('--breathe', OC_STYLE.breathe);
   root.style.setProperty('--breath-min', OC_STYLE.breathMin);
   root.style.setProperty('--breath-max', OC_STYLE.breathMax);
+  root.style.setProperty('--pad-y', OC_STYLE.padY);
+  root.style.setProperty('--pad-y-mobile', OC_STYLE.padYMobile);
 
   // Build DOM (left, middle, right)
   const row = document.createElement('div'); row.className = 'oc-logo-row';
@@ -715,7 +726,7 @@ const logo3 = 'logo.svg'; // RIGHT
   });
   root.appendChild(row);
 
-  // Scroll-trigger (copying your hero's IO pattern)
+  // Scroll-trigger (hero-like IO pattern)
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const activate = () => root.classList.add('is-active');
 
@@ -725,7 +736,7 @@ const logo3 = 'logo.svg'; // RIGHT
     for (const e of entries) {
       if (e.isIntersecting) { activate(); io.disconnect(); break; }
     }
-  }, { threshold: 0.35 }); // similar to hero threshold
+  }, { threshold: 0.35 });
 
   io.observe(root);
 })();
