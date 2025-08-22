@@ -41,8 +41,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- (kept) Icons + Tailwind -->
+  <!-- Icons + Tailwind -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <!-- Google Fonts: Material Symbols (used for non-OS icons + fallback) -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24..48,400..700,0..1,0..200" rel="stylesheet" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -96,6 +100,14 @@
       /* ===== Demo Stage Dimensions (fixed like a video) ===== */
       --demo-stage-h-sm: 360px;
       --demo-stage-h-lg: 440px;
+    }
+
+    /* Material Symbols tuning */
+    .material-symbols-rounded{
+      font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+      line-height: 1;
+      vertical-align: -2px;
+      user-select: none;
     }
 
     /* Kill horizontal scroll without breaking sticky */
@@ -395,8 +407,21 @@
     .brand-logo:hover{ filter: grayscale(0); opacity: 1; transform: translateY(-2px) scale(1.02); }
     .brand-note{ font-size: 11px; color: #6b7280; }
 
-    /* Size helper for OS images */
-    .os-img { width: 22px; height: 22px; display:inline-block; }
+    /* ===== OS logo next to Download buttons ===== */
+    .os-logo {
+      display:inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items:center;
+      justify-content:center;
+    }
+    .os-logo svg {
+      width: 1em;
+      height: 1em;
+      display:block;
+      fill: currentColor; /* inherits text color (white on dark, black on light) */
+    }
+    .icon-fallback { display:none; } /* only shown if SVG inject fails */
   </style>
 </head>
 
@@ -445,7 +470,7 @@
           </button>
         </div>
 
-        <!-- UPDATED MOBILE MENU LINKS (remove OpenCounsel item) -->
+        <!-- UPDATED MOBILE MENU LINKS -->
         <nav class="drawer-nav mt-2">
           <a href="contact.html">Contact</a>
           <a href="download.html">Download</a>
@@ -459,8 +484,10 @@
                    grad-anim mt-2 w-full justify-center"
             style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
           >
-            <!-- OS image goes here -->
-            <img class="os-img" data-os-img data-os-color="light" alt="Download" loading="eager" decoding="async" />
+            <!-- OS logo image will be injected here -->
+            <span class="os-logo" data-os-logo aria-hidden="true"></span>
+            <!-- Fallback if detection fails -->
+            <span class="material-symbols-rounded icon-fallback" data-os-icon-fallback aria-hidden="true">download</span>
             <span>Download</span>
           </a>
         </nav>
@@ -499,8 +526,10 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <!-- OS image goes here -->
-          <img class="os-img" data-os-img data-os-color="light" alt="Download" loading="eager" decoding="async" />
+          <!-- OS logo image will be injected here -->
+          <span class="os-logo" data-os-logo aria-hidden="true"></span>
+          <!-- Fallback if detection fails -->
+          <span class="material-symbols-rounded icon-fallback" data-os-icon-fallback aria-hidden="true">download</span>
           <span class="hero-cta-text">Download</span>
         </a>
       </div>
@@ -538,11 +567,10 @@
   })();
 </script>
 
-
-<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
+<!-- Controller for the arrow timing (unchanged) -->
 <script>
 (() => {
-  const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
+  const ARROW_AFTER_CTA_MS = 40;
   const arrow  = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
@@ -591,7 +619,7 @@
 
   <!-- Secure. Local. Yours. -->
 <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
-  <!-- Soft background glows (subtle, Apple-y) -->
+  <!-- Soft background glows -->
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl"
          style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
@@ -601,9 +629,7 @@
 
   <div class="w-full py-24 md:py-32">
     <div class="mx-auto max-w-[900px] text-center">
-      <h2
-        class="sly-title text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight"
-      >
+      <h2 class="sly-title text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">
         <span class="inline-block">Secure.</span>
         <span class="inline-block opacity-90">Local.</span>
         <span class="inline-block opacity-90">Yours.</span>
@@ -611,10 +637,8 @@
 
       <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
 
-      <p
-        class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] grad-text grad-move-left"
-        style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;"
-      >
+      <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] grad-text grad-move-left"
+         style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
         For Everyone
       </p>
     </div>
@@ -623,33 +647,27 @@
 
 <!-- ===== LIVE CHAT DEMO — FIXED "VIDEO-LIKE" STAGE ===== -->
 <section id="chat-demo" class="section-clip mx-auto max-w-[1200px] oc-container reveal mb-12 md:mb-16">
-  <!-- Soft glows behind the device frame -->
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute left-1/2 top-[-3rem] h-56 w-[36rem] -translate-x-1/2 rounded-full blur-3xl"
          style="background: radial-gradient(60% 60% at 50% 40%, rgba(231,231,255,.24), rgba(231,231,255,0) 70%);"></div>
   </div>
 
   <div class="w-full flex items-center justify-center">
-    <!-- Device-like frame (minimal, Apple-y) -->
     <div class="relative w-full max-w-[980px] rounded-[22px] border border-black/10 bg-white/70 shadow-[0_20px_60px_rgba(10,13,16,0.08)] backdrop-blur">
-      <!-- Minimal window chrome -->
       <div class="flex items-center gap-2 px-4 pt-3 pb-2">
         <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57] border border-black/10"></span>
         <span class="h-2.5 w-2.5 rounded-full bg-[#ffbd2e] border border-black/10"></span>
         <span class="h-2.5 w-2.5 rounded-full bg-[#28c840] border border-black/10"></span>
       </div>
-
-      <!-- Stage wrapper with comfy padding -->
       <div class="px-4 pb-4 md:px-6 md:pb-6">
-        <div id="demoStage"
-             class="demo-stage rounded-2xl !border !border-neutral-200 !bg-white shadow-[0_10px_30px_rgba(10,13,16,0.06)]">
-          <!-- Scenes are injected here absolutely, one pair at a time -->
+        <div id="demoStage" class="demo-stage rounded-2xl !border !border-neutral-200 !bg-white shadow-[0_10px_30px_rgba(10,13,16,0.06)]">
+          <!-- Scenes injected by JS -->
         </div>
       </div>
     </div>
   </div>
 
-  <!-- bubble templates (unchanged, required by existing JS) -->
+  <!-- bubble templates (unchanged) -->
   <template id="demoTplUser">
     <div class="msg-row msg-user">
       <div class="bubble bubble-user font-semibold"></div>
@@ -666,879 +684,861 @@
 </section>
 <!-- ===== END DEMO SECTION ===== -->
 
+<!-- ===== BRANDS ===== -->
+<section id="brands" class="mx-auto max-w-[1200px] oc-container reveal">
+  <div class="mission-wrap relative z-10 mx-auto max-w-[980px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+    <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Foundation</div>
+    <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Built on OpenAI, Google &amp; Meta</h2>
+    <p class="mx-auto mt-4 max-w-[720px] text-center text-lg leading-relaxed text-neutral-700">
+      OpenCounsel integrates with leading AI ecosystems to deliver best-in-class reasoning, search, and on-device tooling.
+      Local-first by design — private, fast, and reliable.
+    </p>
+    <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
 
+    <ul class="mt-8 grid grid-cols-1 sm:grid-cols-3 items-center justify-items-center gap-8">
+      <li class="flex items-center justify-center">
+        <img data-oc-brand="google" alt="Google" class="brand-logo" />
+      </li>
+      <li class="flex items-center justify-center">
+        <img data-oc-brand="openai" alt="OpenAI" class="brand-logo" />
+      </li>
+      <li class="flex items-center justify-center">
+        <img data-oc-brand="meta" alt="Meta" class="brand-logo" />
+      </li>
+    </ul>
 
-
-<!-- ===== EDIT HERE PUT BRANDS HERE===== -->
-  <!-- BRANDS / PLATFORM FOUNDATION -->
-  <section id="brands" class="mx-auto max-w-[1200px] oc-container reveal">
-    <div class="mission-wrap relative z-10 mx-auto max-w-[980px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
-      <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Foundation</div>
-      <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Built on OpenAI, Google &amp; Meta</h2>
-      <p class="mx-auto mt-4 max-w-[720px] text-center text-lg leading-relaxed text-neutral-700">
-        OpenCounsel integrates with leading AI ecosystems to deliver best-in-class reasoning, search, and on-device tooling.
-        Local-first by design — private, fast, and reliable.
-      </p>
-      <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
-
-      <ul class="mt-8 grid grid-cols-1 sm:grid-cols-3 items-center justify-items-center gap-8">
-        <li class="flex items-center justify-center">
-          <img data-oc-brand="google" alt="Google" class="brand-logo" />
-        </li>
-        <li class="flex items-center justify-center">
-          <img data-oc-brand="openai" alt="OpenAI" class="brand-logo" />
-        </li>
-        <li class="flex items-center justify-center">
-          <img data-oc-brand="meta" alt="Meta" class="brand-logo" />
-        </li>
-      </ul>
-
-      <div class="mt-6 text-center brand-note">
-        Logos are trademarks of their respective owners. Used here for identification only.
-      </div>
+    <div class="mt-6 text-center brand-note">
+      Logos are trademarks of their respective owners. Used here for identification only.
     </div>
-  </section>
+  </div>
+</section>
 <!-- ===== END BRANDS ===== -->
 
-  
-  <!-- EDGE / WHY IT WINS -->
-  <section id="edge" class="mx-auto max-w-[1200px] oc-container reveal">
-    <div class="mt-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border_white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
-            <i class="ph ph-lock text-white text-[20px]"></i>
-          </div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Private by Design</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Models, search, and data stay on your device. Your work never leaves your hands.</p>
-          </div>
+<!-- EDGE / WHY IT WINS -->
+<section id="edge" class="mx-auto max-w-[1200px] oc-container reveal">
+  <div class="mt-6 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
+    <article class="scroll-fade group relative overflow-hidden rounded-3xl border border_white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+      <div class="flex items-start gap-4">
+        <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+          <i class="ph ph-lock text-white text-[20px]"></i>
         </div>
-        <div class="mt-auto"></div>
-      </article>
-
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
-            <i class="ph-light ph-open-ai-logo text-white text-[20px]"></i>
-          </div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Industry-leading intelligence, fine-tuned with deep legal expertise.</p>
-          </div>
-        </div>
-        <div class="mt-auto"></div>
-      </article>
-
-      <article class="scroll-fade group relative overflow_hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Legal Knowledge Base</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Trusted by government. Curated by leading counsel. Built for absolute clarity.</p>
-          </div>
-        </div>
-        <div class="mt-auto"></div>
-      </article>
-    </div>
-  </section>
-
-  <!-- COUNSEL FOR EVERYONE -->
-  <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-12 pb-0 bg-white">
-    <!-- Decorative glows -->
-    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
-      <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
-      <div class="absolute left-[-8%] bottom-[-6%] h-72 w-72 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(244,114,182,.18), rgba(244,114,182,0) 70%);"></div>
-    </div>
-    <div class="absolute inset-0 z-0 bg-white"></div>
-
-    <div class="mission-wrap relative z-10 mx-auto max-w-[900px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
-      <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Mission</div>
-      <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Counsel for Everyone</h2>
-      <p class="mx-auto mt-4 max-w-[650px] text-center text-lg leading-relaxed text-neutral-700">
-        OpenCounsel makes legal intelligence as accessible as the internet itself.
-        No barriers. No gatekeepers. Just powerful, private counsel — for anyone, anywhere.
-      </p>
-      <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
-
-      <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal grid-stretch">
-        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p class="font-semibold text-neutral-900">Accessible</p>
-          </div>
-          <p class="mt-2 text-sm text-neutral-600">Powerful legal AI, designed for everyone.</p>
-          <div class="mt-auto"></div>
-        </div>
-        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p class="font-semibold text-neutral-900">Private</p>
-          </div>
-          <p class="mt-2 text-sm text-neutral-600">Runs locally. Your data never leaves your device.</p>
-          <div class="mt-auto"></div>
-        </div>
-        <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3">
-            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <p class="font-semibold text-neutral-900">Verified</p>
-          </div>
-          <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
-          <div class="mt-auto"></div>
-        </div>
-      </div>
-
-      <div class="mt-10 flex items-center justify-center gap-3">
-        <a href="download.html" class="inline-flex items-center rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90">Get OpenCounsel</a>
-        <a href="#learn-more" class="inline-flex items-center rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-50">Learn more</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Tomorrow's Counsel Today -->
-  <section id="tct" class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
-    <div class="w-full mt-24 md:py-24 mb-24 flex items-center justify-center">
-      <div>
-        <p class="tct-title text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Tomorrow’s Counsel.</p>
-        <span class="tct-sub mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
-              style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
-          Today
-        </span>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section id="features" class="mx-auto max-w-[1200px] oc-container reveal">
-    <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Verifiable Outputs</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Every answer, backed by sources. Every step, documented.</p>
-          </div>
-        </div>
-        <div class="mt-auto"></div>
-      </article>
-
-      <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Custom Databases</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Curated case law, contracts, filings, and legal statistics — all in one place.</p>
-          </div>
-        </div>
-        <div class="mt-auto"></div>
-      </article>
-
-      <article class="scroll-fade group relative overflow_hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
-        <div class="flex items-start gap-4">
-          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div>
-          <div>
-            <h3 class="font-semibold text-white tracking-tight">Your Local Library</h3>
-            <p class="mt-2 text-sm leading-relaxed text-white/80">Build your own on-disk databases. Drag-and-drop files for instant semantic search.</p>
-          </div>
-        </div>
-        <div class="mt-auto"></div>
-      </article>
-    </div>
-  </section>
-
-  <!-- DOWNLOAD CTA (kept on home but header points to dedicated page) -->
-  <section id="download" class="section-clip mx-auto max-w-[1200px] oc-container mt-12 reveal">
-    <div class="scroll-fade g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
-      <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 class="text-2xl md:text-3xl font-semibold text-white">Get OpenCounsel</h2>
-          <p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-3">
-          <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
-          <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
-          <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
+          <h3 class="font-semibold text-white tracking-tight">Private by Design</h3>
+          <p class="mt-2 text-sm leading-relaxed text-white/80">Models, search, and data stay on your device. Your work never leaves your hands.</p>
         </div>
       </div>
-    </div>
-  </section>
+      <div class="mt-auto"></div>
+    </article>
 
-  <!-- Centered animated logo -->
-  <div class="mx-auto my-10 md:my-10 flex items-center justify-center">
-    <span class="logo-anim LargeAniLogo" aria-label="OpenCounsel" style="--logo-size: clamp(56px, 30vw, 500px);"></span>
+    <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+      <div class="flex items-start gap-4">
+        <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center">
+          <i class="ph-light ph-open-ai-logo text-white text-[20px]"></i>
+        </div>
+        <div>
+          <h3 class="font-semibold text-white tracking-tight">Built on GPT-5</h3>
+          <p class="mt-2 text-sm leading-relaxed text-white/80">Industry-leading intelligence, fine-tuned with deep legal expertise.</p>
+        </div>
+      </div>
+      <div class="mt-auto"></div>
+    </article>
+
+    <article class="scroll-fade group relative overflow_hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <div class="flex items-start gap-4">
+        <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
+        <div>
+          <h3 class="font-semibold text-white tracking-tight">Legal Knowledge Base</h3>
+          <p class="mt-2 text-sm leading-relaxed text-white/80">Trusted by government. Curated by leading counsel. Built for absolute clarity.</p>
+        </div>
+      </div>
+      <div class="mt-auto"></div>
+    </article>
   </div>
+</section>
 
-  <!-- FOOTER -->
-  <footer class="border-t border-oc-line">
-    <div class="mx-auto max-w-[1200px] oc-container py-10 flex items-center flex-col gap-6 text-oc-ink/60 text-sm">
-      <div class="text-center">
-        <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
+<!-- COUNSEL FOR EVERYONE -->
+<section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-12 pb-0 bg-white">
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
+    <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
+    <div class="absolute left-[-8%] bottom-[-6%] h-72 w-72 rounded-full blur-2xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(244,114,182,.18), rgba(244,114,182,0) 70%);"></div>
+  </div>
+  <div class="absolute inset-0 z-0 bg-white"></div>
+
+  <div class="mission-wrap relative z-10 mx-auto max-w-[900px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+    <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Mission</div>
+    <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Counsel for Everyone</h2>
+    <p class="mx-auto mt-4 max-w-[650px] text-center text-lg leading-relaxed text-neutral-700">
+      OpenCounsel makes legal intelligence as accessible as the internet itself.
+      No barriers. No gatekeepers. Just powerful, private counsel — for anyone, anywhere.
+    </p>
+    <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
+
+    <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal grid-stretch">
+      <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+        <div class="flex items-center gap-3">
+          <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p class="font-semibold text-neutral-900">Accessible</p>
+        </div>
+        <p class="mt-2 text-sm text-neutral-600">Powerful legal AI, designed for everyone.</p>
+        <div class="mt-auto"></div>
       </div>
-      <div class="flex items-center gap-4">
-        <a class="hover:text-oc-ink" href="#">Privacy</a>
-        <a class="hover:text-oc-ink" href="#">Terms</a>
-        <a class="hover:text-oc-ink" href="download.html">Download</a>
+      <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+        <div class="flex items-center gap-3">
+          <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p class="font-semibold text-neutral-900">Private</p>
+        </div>
+        <p class="mt-2 text-sm text-neutral-600">Runs locally. Your data never leaves your device.</p>
+        <div class="mt-auto"></div>
+      </div>
+      <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
+        <div class="flex items-center gap-3">
+          <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p class="font-semibold text-neutral-900">Verified</p>
+        </div>
+        <p class="mt-2 text-sm text-neutral-600">Answers backed by case law and precedent.</p>
+        <div class="mt-auto"></div>
       </div>
     </div>
-  </footer>
 
-  <script>
-    // ================================
-    // GLOBAL DEMO SETTINGS
-    // ================================
-    window.OC_DEMO_STREAM_SPEED = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
+    <div class="mt-10 flex items-center justify-center gap-3">
+      <a href="download.html" class="inline-flex items-center rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90">Get OpenCounsel</a>
+      <a href="#learn-more" class="inline-flex items-center rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-50">Learn more</a>
+    </div>
+  </div>
+</section>
+
+<!-- Tomorrow's Counsel Today -->
+<section id="tct" class="mx-auto max-w-[1200px] oc-container reveal flex items-center justify-center text-center" style="padding-top:0;padding-bottom:0">
+  <div class="w-full mt-24 md:py-24 mb-24 flex items-center justify-center">
+    <div>
+      <p class="tct-title text-2xl md:text-4xl font-semibold tracking-tight text-oc-ink">Tomorrow’s Counsel.</p>
+      <span class="tct-sub mt-2 block text-xs md:text-sm uppercase tracking-widest grad-text"
+            style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+        Today
+      </span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="mx-auto max-w-[1200px] oc-container reveal">
+  <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 rows-equal grid-stretch">
+    <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+      <div class="flex items-start gap-4">
+        <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div>
+        <div>
+          <h3 class="font-semibold text-white tracking-tight">Verifiable Outputs</h3>
+          <p class="mt-2 text-sm leading-relaxed text-white/80">Every answer, backed by sources. Every step, documented.</p>
+        </div>
+      </div>
+      <div class="mt-auto"></div>
+    </article>
+
+    <article class="scroll-fade group relative overflow-hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <div class="absolute inset-0 ring-1 ring-white/10 rounded-3xl pointer-events-none"></div>
+      <div class="flex items-start gap-4">
+        <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
+        <div>
+          <h3 class="font-semibold text-white tracking-tight">Custom Databases</h3>
+          <p class="mt-2 text-sm leading-relaxed text-white/80">Curated case law, contracts, filings, and legal statistics — all in one place.</p>
+        </div>
+      </div>
+      <div class="mt-auto"></div>
+    </article>
+
+    <article class="scroll-fade group relative overflow_hidden rounded-3xl border border-white/20 g-grad grad-anim p-6 backdrop-blur-md hover:shadow-card tilt transition-transform duration-300 will-change-transform card-glass">
+      <div class="flex items-start gap-4">
+        <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div>
+        <div>
+          <h3 class="font-semibold text-white tracking-tight">Your Local Library</h3>
+          <p class="mt-2 text-sm leading-relaxed text-white/80">Build your own on-disk databases. Drag-and-drop files for instant semantic search.</p>
+        </div>
+      </div>
+      <div class="mt-auto"></div>
+    </article>
+  </div>
+</section>
+
+<!-- DOWNLOAD CTA -->
+<section id="download" class="section-clip mx-auto max-w-[1200px] oc-container mt-12 reveal">
+  <div class="scroll-fade g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
+    <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 class="text-2xl md:text-3xl font-semibold text-white">Get OpenCounsel</h2>
+        <p class="mt-2 text-white/80 max-w-xl">Your private legal assistant. Always on your desk. Always offline. Always yours.</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
+        <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
+        <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
+        <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Centered animated logo -->
+<div class="mx-auto my-10 md:my-10 flex items-center justify-center">
+  <span class="logo-anim LargeAniLogo" aria-label="OpenCounsel" style="--logo-size: clamp(56px, 30vw, 500px);"></span>
+</div>
+
+<!-- FOOTER -->
+<footer class="border-t border-oc-line">
+  <div class="mx-auto max-w-[1200px] oc-container py-10 flex items-center flex-col gap-6 text-oc-ink/60 text-sm">
+    <div class="text-center">
+      <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
+    </div>
+    <div class="flex items-center gap-4">
+      <a class="hover:text-oc-ink" href="#">Privacy</a>
+      <a class="hover:text-oc-ink" href="#">Terms</a>
+      <a class="hover:text-oc-ink" href="download.html">Download</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ================================
+  // GLOBAL DEMO SETTINGS
+  // ================================
+  window.OC_DEMO_STREAM_SPEED = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
+    ? window.OC_DEMO_STREAM_SPEED : 1.0;
+
+  window.OC_DEMO_DWELL_MS = (typeof window.OC_DEMO_DWELL_MS === 'number' && window.OC_DEMO_DWELL_MS >= 0)
+    ? window.OC_DEMO_DWELL_MS : 2000;
+
+  window.OC_DEMO_SOUND = Object.assign({
+    enabled: true,
+    url: 'bass-drop.mp3',
+    volume: 0.9
+  }, window.OC_DEMO_SOUND || {});
+
+  // BRAND LOGO PATHS
+  window.OC_BRANDS = Object.assign({
+    openai: 'OAILogo.png',
+    google: 'googleLogo.svg',
+    meta:   'metaLogo.svg'
+  }, window.OC_BRANDS || {});
+
+  // HERO TYPE-IN GLOBALS
+  window.OC_HERO = Object.assign({
+    enabled: true,
+    startOnView: true,
+    waitForBlur: true,
+    startDelayMs: 200,
+    staggerMs: 50,
+    streamSpeed: 1.0,
+    titleCharMin: 60,
+    titleCharMax: 60,
+    lineCharMin: 5,
+    lineCharMax: 10,
+    buttonCharMin: 5,
+    buttonCharMax: 50
+  }, window.OC_HERO || {});
+
+  // SECTION TYPE-IN GLOBALS
+  window.OC_SLY = Object.assign({
+    enabled: true,
+    startOnView: true,
+    startDelayMs: 0,
+    staggerMs: 0,
+    streamSpeed: 1.0,
+    titleCharMin: 30,
+    titleCharMax: 30,
+    lineCharMin: 10,
+    lineCharMax: 10
+  }, window.OC_SLY || {});
+
+  window.OC_TCT = Object.assign({
+    enabled: true,
+    startOnView: true,
+    startDelayMs: 0,
+    staggerMs: 0,
+    streamSpeed: 1.0,
+    titleCharMin: 30,
+    titleCharMax: 30,
+    lineCharMin: 10,
+    lineCharMax: 10
+  }, window.OC_TCT || {});
+
+  let __OC_AUDIO = null;
+  function playBassDrop(){
+    if (!window.OC_DEMO_SOUND?.enabled) return;
+    const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
+    const url = (window.OC_DEMO_SOUND.url || '').trim();
+    if (url){
+      if (!__OC_AUDIO){
+        __OC_AUDIO = new Audio(url);
+        __OC_AUDIO.preload = 'auto';
+        __OC_AUDIO.crossOrigin = 'anonymous';
+      }
+      try {
+        __OC_AUDIO.currentTime = 0;
+        __OC_AUDIO.volume = vol;
+        __OC_AUDIO.play().catch(()=>{});
+      } catch(e){}
+      return;
+    }
+    try{
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(100, ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+      o.connect(g).connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 1.25);
+      if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+    }catch(e){}
+  }
+
+  // Year
+  const yr = document.getElementById('yr');
+  if (yr) yr.textContent = new Date().getFullYear();
+
+  // Scroll reveal (one-shot)
+  const io = new IntersectionObserver((entries)=>{
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // ===== MOBILE SLIDE-IN MENU =====
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const mobileMenu   = document.getElementById('mobileMenu');
+  const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+  function openMenu() {
+    if (window.matchMedia('(min-width: 768px)').matches) return;
+    mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
+    mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
+    hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
+    document.body.classList.add('overflow-hidden');
+  }
+  function closeMenu() {
+    mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
+    hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
+    document.body.classList.remove('overflow-hidden');
+    setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+  }
+
+  hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+  closeMenuBtn?.addEventListener('click', closeMenu);
+  mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
+
+  const mq = window.matchMedia('(min-width: 768px)');
+  function handleMQ(e){ if (e.matches) closeMenu(); }
+  if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+
+  document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+
+  window.addEventListener('load', () => {
+    const pageBlur = document.getElementById('pageBlur');
+    if (!pageBlur) return;
+    pageBlur.classList.add('hide');
+    document.dispatchEvent(new Event('oc:page-blur-fade'));
+    setTimeout(() => pageBlur.remove(), 1300);
+  });
+
+  // BLUR-ON-SCROLL OBSERVER
+  const sbo = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in-view');
+        sbo.unobserve(e.target);
+      }
+    }
+  }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
+  document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
+  // ===== Helpers =====
+  function sp(ms){
+    const f = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
       ? window.OC_DEMO_STREAM_SPEED : 1.0;
+    return ms * f;
+  }
+  function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    window.OC_DEMO_DWELL_MS = (typeof window.OC_DEMO_DWELL_MS === 'number' && window.OC_DEMO_DWELL_MS >= 0)
-      ? window.OC_DEMO_DWELL_MS : 2000;
-
-    window.OC_DEMO_SOUND = Object.assign({
-      enabled: true,
-      url: 'bass-drop.mp3',
-      volume: 0.9
-    }, window.OC_DEMO_SOUND || {});
-
-    // ================================
-    // BRAND LOGO PATHS (global, easy to swap)
-    // ================================
-    window.OC_BRANDS = Object.assign({
-      openai: 'OAILogo.png',
-      google: 'googleLogo.svg',
-      meta:   'metaLogo.svg'
-    }, window.OC_BRANDS || {});
-
-    // ================================
-    // HERO TYPE-IN GLOBALS
-    // ================================
-    window.OC_HERO = Object.assign({
-      enabled: true,
-      startOnView: true,
-      waitForBlur: true,
-      startDelayMs: 200,
-      staggerMs: 50,
-      streamSpeed: 1.0,
-      titleCharMin: 60,
-      titleCharMax: 60,
-      lineCharMin: 5,
-      lineCharMax: 10,
-      buttonCharMin: 5,
-      buttonCharMax: 50
-    }, window.OC_HERO || {});
-
-    // ================================
-    // SECTION TYPE-IN GLOBALS
-    // ================================
-    window.OC_SLY = Object.assign({
-      enabled: true,
-      startOnView: true,
-      startDelayMs: 0,
-      staggerMs: 0,
-      streamSpeed: 1.0,
-      titleCharMin: 30,
-      titleCharMax: 30,
-      lineCharMin: 10,
-      lineCharMax: 10
-    }, window.OC_SLY || {});
-
-    window.OC_TCT = Object.assign({
-      enabled: true,
-      startOnView: true,
-      startDelayMs: 0,
-      staggerMs: 0,
-      streamSpeed: 1.0,
-      titleCharMin: 30,
-      titleCharMax: 30,
-      lineCharMin: 10,
-      lineCharMax: 10
-    }, window.OC_TCT || {});
-
-    let __OC_AUDIO = null;
-    function playBassDrop(){
-      if (!window.OC_DEMO_SOUND?.enabled) return;
-      const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
-      const url = (window.OC_DEMO_SOUND.url || '').trim();
-      if (url){
-        if (!__OC_AUDIO){
-          __OC_AUDIO = new Audio(url);
-          __OC_AUDIO.preload = 'auto';
-          __OC_AUDIO.crossOrigin = 'anonymous';
-        }
-        try {
-          __OC_AUDIO.currentTime = 0;
-          __OC_AUDIO.volume = vol;
-          __OC_AUDIO.play().catch(()=>{});
-        } catch(e){}
-        return;
-      }
-      try{
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new Ctx();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = 'sine';
-        o.frequency.setValueAtTime(100, ctx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
-        g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
-        o.connect(g).connect(ctx.destination);
-        o.start();
-        o.stop(ctx.currentTime + 1.25);
-        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
-      }catch(e){}
-    }
-
-    // Year
-    const yr = document.getElementById('yr');
-    if (yr) yr.textContent = new Date().getFullYear();
-
-    // Scroll reveal (one-shot)
-    const io = new IntersectionObserver((entries)=>{
-      for (const e of entries) {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-      }
-    },{threshold:.12});
-    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-
-    // ===== MOBILE SLIDE-IN MENU =====
-    const hamburgerBtn = document.getElementById('hamburgerBtn');
-    const mobileMenu   = document.getElementById('mobileMenu');
-    const closeMenuBtn = document.getElementById('closeMenuBtn');
-
-    function openMenu() {
-      if (window.matchMedia('(min-width: 768px)').matches) return;
-      mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
-      mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
-      hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
-      document.body.classList.add('overflow-hidden');
-    }
-    function closeMenu() {
-      mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
-      hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
-      document.body.classList.remove('overflow-hidden');
-      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
-    }
-
-    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
-    closeMenuBtn?.addEventListener('click', closeMenu);
-    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
-
-    const mq = window.matchMedia('(min-width: 768px)');
-    function handleMQ(e){ if (e.matches) closeMenu(); }
-    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
-
-    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
-
-    window.addEventListener('load', () => {
-      const pageBlur = document.getElementById('pageBlur');
-      if (!pageBlur) return;
-      pageBlur.classList.add('hide');
-      document.dispatchEvent(new Event('oc:page-blur-fade'));
-      setTimeout(() => pageBlur.remove(), 1300);
+  // Typewriter
+  function typewriter(el, text, min=10, max=18){
+    return new Promise((resolve)=>{
+      let i = 0;
+      el.textContent = '';
+      const tn = document.createTextNode('');
+      el.appendChild(tn);
+      (function tick(){
+        tn.textContent = text.slice(0, i++);
+        if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
+        else resolve();
+      })();
     });
+  }
 
-    // ================================
-    // BLUR-ON-SCROLL OBSERVER (ONE-SHOT, PERSISTS UNTIL REFRESH)
-    // ================================
-    const sbo = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.classList.add('in-view');
-          sbo.unobserve(e.target);
+  // Stream HTML
+  async function streamHTML(el, html, charMin=10, charMax=18){
+    const container = document.createElement('div');
+    container.innerHTML = html.trim();
+
+    async function walk(srcNode, dstParent){
+      const children = Array.from(srcNode.childNodes);
+      for (const child of children){
+        if (child.nodeType === Node.TEXT_NODE){
+          const text = child.textContent || '';
+          await new Promise(res=>{
+            let i=0;
+            const tn = document.createTextNode('');
+            dstParent.appendChild(tn);
+            (function tick(){
+              tn.textContent = text.slice(0, i++);
+              if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
+              else res();
+            })();
+          });
+        } else if (child.nodeType === Node.ELEMENT_NODE){
+          const clone = child.cloneNode(false);
+          dstParent.appendChild(clone);
+          await walk(child, clone);
         }
       }
-    }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
-    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+    }
+    el.innerHTML = '';
+    await walk(container, el);
+  }
 
-    // ===== Helpers =====
-    function sp(ms){
-      const f = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
-        ? window.OC_DEMO_STREAM_SPEED : 1.0;
+  // HERO TYPE-IN
+  (function heroTyping(){
+    const cfg = window.OC_HERO || {};
+    if (!cfg.enabled) return;
+
+    const hero = document.getElementById('home');
+    if (!hero) return;
+
+    const titleEl = hero.querySelector('.hero-title');
+    const sub1El  = hero.querySelector('.hero-sub1');
+    const sub2El  = hero.querySelector('.hero-sub2');
+    const ctaTxt  = hero.querySelector('.hero-cta-text');
+    const ctaBtn  = hero.querySelector('#heroCtaBtn');
+
+    if (!titleEl || !ctaTxt || !ctaBtn) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const tText = titleEl.textContent || '';
+    const s1    = sub1El ? (sub1El.textContent || '') : '';
+    const s2    = sub2El ? (sub2El.textContent || '') : '';
+    const bTxt  = ctaTxt.textContent || '';
+
+    if (prefersReduced) {
+      ctaBtn.classList.add('cta-visible');
+      document.dispatchEvent(new Event('oc:cta-text-done'));
+      return;
+    }
+
+    titleEl.textContent = '';
+    if (sub1El) sub1El.textContent = '';
+    if (sub2El) sub2El.textContent = '';
+    ctaTxt.textContent = '';
+    ctaBtn.classList.remove('cta-visible');
+
+    function spH(ms){
+      const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
       return ms * f;
     }
-    function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-
-    // Typewriter for plain text into an element
-    function typewriter(el, text, min=10, max=18){
-      return new Promise((resolve)=>{
-        let i = 0;
-        el.textContent = '';
+    function typeHero(el, text, min, max){
+      return new Promise(resolve=>{
+        let i=0;
         const tn = document.createTextNode('');
         el.appendChild(tn);
         (function tick(){
-          tn.textContent = text.slice(0, i++);
-          if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
+          tn.textContent = text.slice(0, ++i);
+          if (i <= text.length) setTimeout(tick, spH(rand(min,max)));
           else resolve();
         })();
       });
     }
+    const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
 
-    // Stream HTML with structure preserved (safe DOM walk; types text nodes char-by-char)
-    async function streamHTML(el, html, charMin=10, charMax=18){
-      const container = document.createElement('div');
-      container.innerHTML = html.trim();
-
-      async function walk(srcNode, dstParent){
-        const children = Array.from(srcNode.childNodes);
-        for (const child of children){
-          if (child.nodeType === Node.TEXT_NODE){
-            const text = child.textContent || '';
-            await new Promise(res=>{
-              let i=0;
-              const tn = document.createTextNode('');
-              dstParent.appendChild(tn);
-              (function tick(){
-                tn.textContent = text.slice(0, i++);
-                if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
-                else res();
-              })();
-            });
-          } else if (child.nodeType === Node.ELEMENT_NODE){
-            const clone = child.cloneNode(false);
-            dstParent.appendChild(clone);
-            await walk(child, clone);
-          }
-        }
-      }
-      el.innerHTML = '';
-      await walk(container, el);
+    function afterTransition(el, fallbackMs = 900){
+      return new Promise((resolve)=>{
+        let done = false;
+        const finish = ()=>{ if (done) return; done = true; resolve(); };
+        const onEnd = (e)=>{ if (e.target === el) finish(); };
+        el.addEventListener('transitionend', onEnd, { once: true });
+        setTimeout(()=>{ el.removeEventListener('transitionend', onEnd); finish(); }, fallbackMs);
+      });
     }
 
-    // ================================
-    // HERO TYPE-IN (strict sequence)
-    // ================================
-    (function heroTyping(){
-      const cfg = window.OC_HERO || {};
-      if (!cfg.enabled) return;
+    async function run(){
+      await wait(Math.max(0, cfg.startDelayMs|0));
+      await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+      if (sub1El){ await wait(cfg.staggerMs|0); await typeHero(sub1El, s1, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+      if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+      await wait(cfg.staggerMs|0);
+      ctaBtn.classList.add('cta-visible');
+      document.dispatchEvent(new Event('oc:cta-visible'));
+      await afterTransition(ctaBtn, 900);
+      await wait(60);
+      document.dispatchEvent(new Event('oc:cta-text-start'));
+      await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
+      document.dispatchEvent(new Event('oc:cta-text-done'));
+    }
 
-      const hero = document.getElementById('home');
-      if (!hero) return;
+    let started = false;
+    let inView = !cfg.startOnView;
+    let blurReady = !cfg.waitForBlur;
 
-      const titleEl = hero.querySelector('.hero-title');
-      const sub1El  = hero.querySelector('.hero-sub1');
-      const sub2El  = hero.querySelector('.hero-sub2');
-      const ctaTxt  = hero.querySelector('.hero-cta-text');
-      const ctaBtn  = hero.querySelector('#heroCtaBtn');
-
-      if (!titleEl || !ctaTxt || !ctaBtn) return;
-
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      const tText = titleEl.textContent || '';
-      const s1    = sub1El ? (sub1El.textContent || '') : '';
-      const s2    = sub2El ? (sub2El.textContent || '') : '';
-      const bTxt  = ctaTxt.textContent || '';
-
-      if (prefersReduced) {
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-text-done'));
-        return;
-      }
-
-      titleEl.textContent = '';
-      if (sub1El) sub1El.textContent = '';
-      if (sub2El) sub2El.textContent = '';
-      ctaTxt.textContent = '';
-      ctaBtn.classList.remove('cta-visible');
-
-      function spH(ms){
-        const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
-        return ms * f;
-      }
-      function typeHero(el, text, min, max){
-        return new Promise(resolve=>{
-          let i=0;
-          const tn = document.createTextNode('');
-          el.appendChild(tn);
-          (function tick(){
-            tn.textContent = text.slice(0, ++i);
-            if (i <= text.length) setTimeout(tick, spH(rand(min,max)));
-            else resolve();
-          })();
-        });
-      }
-      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
-
-      function afterTransition(el, fallbackMs = 900){
-        return new Promise((resolve)=>{
-          let done = false;
-          const finish = ()=>{ if (done) return; done = true; resolve(); };
-          const onEnd = (e)=>{ if (e.target === el) finish(); };
-          el.addEventListener('transitionend', onEnd, { once: true });
-          setTimeout(()=>{ el.removeEventListener('transitionend', onEnd); finish(); }, fallbackMs);
-        });
-      }
-
-      async function run(){
-        await wait(Math.max(0, cfg.startDelayMs|0));
-        await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
-        if (sub1El){ await wait(cfg.staggerMs|0); await typeHero(sub1El, s1, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-        if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-        await wait(cfg.staggerMs|0);
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-visible'));
-        await afterTransition(ctaBtn, 900);
-        await wait(60);
-        document.dispatchEvent(new Event('oc:cta-text-start'));
-        await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
-        document.dispatchEvent(new Event('oc:cta-text-done'));
-      }
-
-      let started = false;
-      let inView = !cfg.startOnView;
-      let blurReady = !cfg.waitForBlur;
-
-      function tryStart(){
-        if (!started && inView && blurReady){
-          started = true; run();
-        }
-      }
-
-      if (cfg.startOnView){
-        const ob = new IntersectionObserver((entries)=>{
-          for (const e of entries){
-            if (e.isIntersecting){
-              inView = true; tryStart(); ob.disconnect();
-            }
-          }
-        }, { threshold:.35 });
-        ob.observe(hero);
-      }
-
-      if (cfg.waitForBlur){
-        document.addEventListener('oc:page-blur-fade', () => { blurReady = true; tryStart(); }, { once:true });
-      } else {
-        blurReady = true; tryStart();
-      }
-    })();
-
-    // ================================
-    // SECTION TYPERS
-    // ================================
-    function makeSectionTyper(rootSel, titleSel, subSel, cfg){
-      const root  = document.querySelector(rootSel);
-      if (!root || !cfg?.enabled) return;
-
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) return;
-
-      const titleEl = root.querySelector(titleSel);
-      const subEl   = root.querySelector(subSel);
-
-      if (!titleEl && !subEl) return;
-
-      const tText = titleEl ? (titleEl.textContent || '') : '';
-      const sText = subEl   ? (subEl.textContent   || '') : '';
-
-      if (titleEl) titleEl.textContent = '';
-      if (subEl)   subEl.textContent   = '';
-
-      function spLocal(ms){
-        const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
-        return ms * f;
-      }
-      function typeLocal(el, text, min, max){
-        return new Promise(resolve=>{
-          let i=0;
-          const tn = document.createTextNode('');
-          el.appendChild(tn);
-          (function tick(){
-            tn.textContent = text.slice(0, ++i);
-            if (i <= text.length) setTimeout(tick, spLocal(rand(min,max)));
-            else resolve();
-          })();
-        });
-      }
-      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
-
-      async function run(){
-        await wait(Math.max(0, cfg.startDelayMs|0));
-        if (titleEl) await typeLocal(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
-        if (subEl){ await wait(cfg.staggerMs|0); await typeLocal(subEl, sText, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-      }
-
-      if (cfg.startOnView){
-        let started = false;
-        const ob = new IntersectionObserver((entries)=>{
-          for (const e of entries){
-            if (e.isIntersecting && !started){
-              started = true;
-              run();
-              ob.disconnect();
-            }
-          }
-        }, { threshold:.35 });
-        ob.observe(root);
-      } else {
-        run();
+    function tryStart(){
+      if (!started && inView && blurReady){
+        started = true; run();
       }
     }
 
-    makeSectionTyper('#sly', '.sly-title', '.sly-sub', window.OC_SLY);
-    makeSectionTyper('#tct', '.tct-title', '.tct-sub', window.OC_TCT);
-
-    // ================================
-    // LIVE CHAT DEMO — ONE PAIR AT A TIME
-    // ================================
-    (function chatDemo(){
-      const wrap    = document.getElementById('chat-demo');
-      const stage   = document.getElementById('demoStage');
-      const tplU    = document.getElementById('demoTplUser');
-      const tplB    = document.getElementById('demoTplBot');
-
-      const scenes = [
-        {
-          user: "Can my non-compete stop me from joining a competitor in Ontario?",
-          answer: `
-            <strong>Likely no for employees.</strong> Ontario bans most employment non-competes; limited exceptions (e.g., executives or sale of business).
-            <br><strong>Still enforceable?</strong> Only if narrow (time/scope), protects legitimate interests, and not public-policy barred.
-            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.ontario.ca/document/your-guide-employment-standards-act-0/non-compete-agreements" target="_blank" rel="noopener">Ontario ESA – Non-compete agreements</a></div>
-            <em>General information — not legal advice.</em>
-          `
-        },
-        {
-          user: "Terminated without cause in B.C. after 3 years — what severance can I claim?",
-          answer: `
-            <strong>Minimums:</strong> Employment Standards gives <b>~3 weeks' pay</b> at 3 years.<br>
-            <strong>Common-law notice:</strong> often higher (months), based on role, tenure, age, job market.<br>
-            <strong>Act now:</strong> preserve evidence, avoid signing under pressure, get an independent review.
-            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/termination" target="_blank" rel="noopener">BC Employment Standards — Termination</a></div>
-          `
-        },
-        {
-          user: "Can officers search my phone at the Canadian border?",
-          answer: `
-            <strong>Border powers are broad.</strong> Digital devices can be examined under border laws with a heightened threshold.<br>
-            <strong>Practical:</strong> travel mode, separate work data, strong passcodes; refusal can lead to detention/seizure.
-            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.cbsa-asfc.gc.ca/publications/dm-md/d19/d19-14-1-eng.html" target="_blank" rel="noopener">CBSA — Examination of digital devices</a></div>
-            <em>General info — policies evolve; check current guidance.</em>
-          `
-        }
-      ];
-
-      function elFromTpl(tpl){ return tpl.content.cloneNode(true); }
-
-      function makeScenePair(userText, htmlAnswer){
-        const scene = document.createElement('div');
-        scene.className = 'scene';
-
-        const uNode = elFromTpl(tplU);
-        const uBubble = uNode.querySelector('.bubble-user');
-        scene.appendChild(uNode);
-
-        const bNode   = elFromTpl(tplB);
-        const bBubble = bNode.querySelector('.bubble-bot');
-        const thinkEl = bBubble.querySelector('.ai-think');
-        const finalEl = bBubble.querySelector('.ai-final');
-        scene.appendChild(bNode);
-
-        scene.run = async () => {
-          stage.appendChild(scene);
-          requestAnimationFrame(()=> scene.classList.add('active'));
-
-          await typewriter(uBubble, userText, 12, 18);
-
-          let dots = 0;
-          const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
-
-          await new Promise((resolve)=>{
-            setTimeout(async ()=>{
-              clearInterval(dotsTimer);
-              thinkEl.classList.add('fade-away');
-              setTimeout(()=>{ thinkEl.remove(); }, 380);
-
-              finalEl.classList.remove('hidden');
-              finalEl.style.opacity = 0;
-              requestAnimationFrame(()=> {
-                finalEl.style.transition = 'opacity .28s ease';
-                finalEl.style.opacity = 1;
-              });
-
-              await streamHTML(finalEl, htmlAnswer, 9, 16);
-              resolve();
-            }, sp(650 + Math.random()*500));
-          });
-
-          await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
-        };
-
-        scene.teardown = async () => {
-          scene.classList.add('exit');
-          await new Promise(r => setTimeout(r, 280));
-          scene.remove();
-        };
-
-        return scene;
-      }
-
-      let looping = false;
-
-      async function loopCarousel(){
-        if (looping) return;
-        looping = true;
-
-        while (looping) {
-          playBassDrop();
-          for (let i=0; i<scenes.length; i++){
-            const pair = makeScenePair(scenes[i].user, scenes[i].answer);
-            await pair.run();
-            await pair.teardown();
+    if (cfg.startOnView){
+      const ob = new IntersectionObserver((entries)=>{
+        for (const e of entries){
+          if (e.isIntersecting){
+            inView = true; tryStart(); ob.disconnect();
           }
         }
-      }
+      }, { threshold:.35 });
+      ob.observe(hero);
+    } else {
+      tryStart();
+    }
 
+    if (cfg.waitForBlur){
+      document.addEventListener('oc:page-blur-fade', () => { blurReady = true; tryStart(); }, { once:true });
+    } else {
+      blurReady = true; tryStart();
+    }
+  })();
+
+  // SECTION TYPERS
+  function makeSectionTyper(rootSel, titleSel, subSel, cfg){
+    const root  = document.querySelector(rootSel);
+    if (!root || !cfg?.enabled) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) return;
+
+    const titleEl = root.querySelector(titleSel);
+    const subEl   = root.querySelector(subSel);
+
+    if (!titleEl && !subEl) return;
+
+    const tText = titleEl ? (titleEl.textContent || '') : '';
+    const sText = subEl   ? (subEl.textContent   || '') : '';
+
+    if (titleEl) titleEl.textContent = '';
+    if (subEl)   subEl.textContent   = '';
+
+    function spLocal(ms){
+      const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
+      return ms * f;
+    }
+    function typeLocal(el, text, min, max){
+      return new Promise(resolve=>{
+        let i=0;
+        const tn = document.createTextNode('');
+        el.appendChild(tn);
+        (function tick(){
+          tn.textContent = text.slice(0, ++i);
+          if (i <= text.length) setTimeout(tick, spLocal(rand(min,max)));
+          else resolve();
+        })();
+      });
+    }
+    const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+
+    async function run(){
+      await wait(Math.max(0, cfg.startDelayMs|0));
+      if (titleEl) await typeLocal(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+      if (subEl){ await wait(cfg.staggerMs|0); await typeLocal(subEl, sText, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+    }
+
+    if (cfg.startOnView){
       let started = false;
       const ob = new IntersectionObserver((entries)=>{
         for (const e of entries){
           if (e.isIntersecting && !started){
-            started = true; loopCarousel(); ob.unobserve(wrap);
+            started = true;
+            run();
+            ob.disconnect();
           }
         }
       }, { threshold:.35 });
-      if (wrap) ob.observe(wrap);
-    })();
+      ob.observe(root);
+    } else {
+      run();
+    }
+  }
 
-    // ===== Apply BRAND logo paths to <img data-oc-brand> =====
-    (function applyBrandLogos(){
-      const map = window.OC_BRANDS || {};
-      document.querySelectorAll('img[data-oc-brand]').forEach(img=>{
-        const key = img.getAttribute('data-oc-brand');
-        if (map[key]) img.src = map[key];
-      });
-    })();
+  makeSectionTyper('#sly', '.sly-title', '.sly-sub', window.OC_SLY);
+  makeSectionTyper('#tct', '.tct-title', '.tct-sub', window.OC_TCT);
 
-    /* ========= OS IMAGE SWITCHER (real SVG images) ========= */
-    (function osImageSwitcher(){
-      function detectOS(){
-        const ua  = navigator.userAgent || "";
-        const plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
-        const isIOS = /iPad|iPhone|iPod/.test(ua) || (plat === "MacIntel" && navigator.maxTouchPoints > 1);
-        const isMac = !isIOS && (/Mac|Macintosh|MacIntel|MacPPC|Mac68K/.test(plat) || /Mac OS X/.test(ua));
-        const isWin = /Win/.test(plat) || /Windows/.test(ua);
-        return isMac ? "mac" : (isWin ? "windows" : "linux"); // sensible fallback
+  // LIVE CHAT DEMO (unchanged)
+  (function chatDemo(){
+    const wrap    = document.getElementById('chat-demo');
+    const stage   = document.getElementById('demoStage');
+    const tplU    = document.getElementById('demoTplUser');
+    const tplB    = document.getElementById('demoTplBot');
+
+    const scenes = [
+      {
+        user: "Can my non-compete stop me from joining a competitor in Ontario?",
+        answer: `
+          <strong>Likely no for employees.</strong> Ontario bans most employment non-competes; limited exceptions (e.g., executives or sale of business).
+          <br><strong>Still enforceable?</strong> Only if narrow (time/scope), protects legitimate interests, and not public-policy barred.
+          <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.ontario.ca/document/your-guide-employment-standards-act-0/non-compete-agreements" target="_blank" rel="noopener">Ontario ESA – Non-compete agreements</a></div>
+          <em>General information — not legal advice.</em>
+        `
+      },
+      {
+        user: "Terminated without cause in B.C. after 3 years — what severance can I claim?",
+        answer: `
+          <strong>Minimums:</strong> Employment Standards gives <b>~3 weeks' pay</b> at 3 years.<br>
+          <strong>Common-law notice:</strong> often higher (months), based on role, tenure, age, job market.<br>
+          <strong>Act now:</strong> preserve evidence, avoid signing under pressure, get an independent review.
+          <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/termination" target="_blank" rel="noopener">BC Employment Standards — Termination</a></div>
+        `
+      },
+      {
+        user: "Can officers search my phone at the Canadian border?",
+        answer: `
+          <strong>Border powers are broad.</strong> Digital devices can be examined under border laws with a heightened threshold.<br>
+          <strong>Practical:</strong> travel mode, separate work data, strong passcodes; refusal can lead to detention/seizure.
+          <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.cbsa-asfc.gc.ca/publications/dm-md/d19/d19-14-1-eng.html" target="_blank" rel="noopener">CBSA — Examination of digital devices</a></div>
+          <em>General info — policies evolve; check current guidance.</em>
+        `
       }
+    ];
 
-      // SimpleIcons CDN (brand SVGs). Color picked per element (light/dark).
-      const ICONS = {
-        mac:     { light: "https://cdn.simpleicons.org/apple/FFFFFF",   dark: "https://cdn.simpleicons.org/apple/111827" },
-        windows: { light: "https://cdn.simpleicons.org/windows/FFFFFF", dark: "https://cdn.simpleicons.org/windows/111827" },
-        linux:   { light: "https://cdn.simpleicons.org/linux/FFFFFF",   dark: "https://cdn.simpleicons.org/linux/111827" }
+    function elFromTpl(tpl){ return tpl.content.cloneNode(true); }
+
+    function makeScenePair(userText, htmlAnswer){
+      const scene = document.createElement('div');
+      scene.className = 'scene';
+
+      const uNode = elFromTpl(tplU);
+      const uBubble = uNode.querySelector('.bubble-user');
+      scene.appendChild(uNode);
+
+      const bNode   = elFromTpl(tplB);
+      const bBubble = bNode.querySelector('.bubble-bot');
+      const thinkEl = bBubble.querySelector('.ai-think');
+      const finalEl = bBubble.querySelector('.ai-final');
+      scene.appendChild(bNode);
+
+      scene.run = async () => {
+        stage.appendChild(scene);
+        requestAnimationFrame(()=> scene.classList.add('active'));
+
+        await typewriter(uBubble, userText, 12, 18);
+
+        let dots = 0;
+        const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
+
+        await new Promise((resolve)=>{
+          setTimeout(async ()=>{
+            clearInterval(dotsTimer);
+            thinkEl.classList.add('fade-away');
+            setTimeout(()=>{ thinkEl.remove(); }, 380);
+
+            finalEl.classList.remove('hidden');
+            finalEl.style.opacity = 0;
+            requestAnimationFrame(()=> {
+              finalEl.style.transition = 'opacity .28s ease';
+              finalEl.style.opacity = 1;
+            });
+
+            await streamHTML(finalEl, htmlAnswer, 9, 16);
+            resolve();
+          }, sp(650 + Math.random()*500));
+        });
+
+        await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
       };
-      const ALTS = { mac: "Apple logo", windows: "Windows logo", linux: "Linux logo" };
 
-      const os = detectOS();
-      document.querySelectorAll('[data-os-img]').forEach(img=>{
-        const shade = (img.getAttribute('data-os-color') || 'light').toLowerCase();
-        const src = (ICONS[os] && ICONS[os][shade]) ? ICONS[os][shade] : ICONS.windows.light;
-        img.src = src;
-        img.alt = ALTS[os] || "Download";
-        img.width = img.width || 22;
-        img.height = img.height || 22;
-        img.decoding = "async";
-        img.loading = "eager";
-        img.referrerPolicy = "no-referrer";
-        img.setAttribute('data-os-detected', os);
-      });
-    })();
+      scene.teardown = async () => {
+        scene.classList.add('exit');
+        await new Promise(r => setTimeout(r, 280));
+        scene.remove();
+      };
 
-(() => {
-  class OCDownArrow extends HTMLElement {
-    static get observedAttributes() {
-      return [
-        'dir','size','thickness','alpha',
-        'amp','bounce','breathe',
-        'from','via','to'
-      ];
+      return scene;
     }
-    constructor(){ super(); this.attachShadow({mode:'open'}); }
-    connectedCallback(){ this.render(); }
-    attributeChangedCallback(){ this.render(); }
 
-    render(){
-      const dir       = (this.getAttribute('dir') || 'down').toLowerCase();
-      const size      = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
-      const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
-      const alpha     = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
-      const amp       = (this.getAttribute('amp') || '14%').trim();
-      const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();
-      const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();
+    let looping = false;
 
-      const from = this.getAttribute('from') || '#ffffff';
-      const via  = this.getAttribute('via')  || from;
-      const to   = this.getAttribute('to')   || from;
+    async function loopCarousel(){
+      if (looping) return;
+      looping = true;
 
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
-      const gid = 'grad_' + Math.random().toString(36).slice(2);
-
-      const animateTag = reduce ? '' : `
-        <animateTransform attributeName="gradientTransform"
-                          type="translate"
-                          from="0 -1" to="0 1"
-                          dur="8s" repeatCount="indefinite" />`;
-
-      this.shadowRoot.innerHTML = `
-        <style>
-          :host { display:inline-block; line-height:0; }
-          .wrap {
-            --amp: ${amp};
-            opacity: ${alpha};
-            will-change: transform, filter, opacity;
-            ${reduce ? '' : `animation:
-              oc-bounce ${bounceDur} ease-in-out infinite,
-              oc-breathe ${breatheDur} ease-in-out infinite;`}
-            backface-visibility: hidden; transform: translateZ(0);
-          }
-
-          @keyframes oc-bounce {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(var(--amp)); }
-          }
-          @keyframes oc-breathe {
-            0%, 100% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22))
-                             drop-shadow(0 10px 26px rgba(255,255,255,.15)); }
-            50%      { filter: drop-shadow(0 6px 18px rgba(255,255,255,.40))
-                             drop-shadow(0 16px 40px rgba(255,255,255,.22)); }
-          }
-
-          svg { width:${size}px; height:${size}px; overflow:visible; }
-          .stroke {
-            stroke: url(#${gid});
-            stroke-width:${thickness};
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            fill: none;
-          }
-        </style>
-
-        <div class="wrap" part="wrap" aria-hidden="true">
-          <svg viewBox="0 0 64 64" role="img" aria-label="Down arrow" style="transform: rotate(${rotation}deg);">
-            <defs>
-              <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                <stop offset="0%"   stop-color="${from}" />
-                <stop offset="50%"  stop-color="${via}" />
-                <stop offset="100%" stop-color="${to}" />
-                ${animateTag}
-              </linearGradient>
-            </defs>
-
-            <path class="stroke" d="M12 32 H44" />
-            <path class="stroke" d="M44 20 L56 32 L44 44" />
-          </svg>
-        </div>
-      `;
+      while (looping) {
+        playBassDrop();
+        for (let i=0; i<scenes.length; i++){
+          const pair = makeScenePair(scenes[i].user, scenes[i].answer);
+          await pair.run();
+          await pair.teardown();
+        }
+      }
     }
-  }
 
-  if (!customElements.get('oc-down-arrow')) {
-    customElements.define('oc-down-arrow', OCDownArrow);
-  }
-})();
-  </script>
+    let started = false;
+    const ob = new IntersectionObserver((entries)=>{
+      for (const e of entries){
+        if (e.isIntersecting && !started){
+          started = true; loopCarousel(); ob.unobserve(wrap);
+        }
+      }
+    }, { threshold:.35 });
+    if (wrap) ob.observe(wrap);
+  })();
+
+  // Apply BRAND logo paths
+  (function applyBrandLogos(){
+    const map = window.OC_BRANDS || {};
+    document.querySelectorAll('img[data-oc-brand]').forEach(img=>{
+      const key = img.getAttribute('data-oc-brand');
+      if (map[key]) img.src = map[key];
+    });
+  })();
+
+  /* ===== OS DETECTION → inject an IMAGE (SVG) next to Download buttons =====
+     - Shows Apple logo on macOS, Windows logo on Windows.
+     - Inherits text color via 'currentColor' so it looks good on dark/light buttons.
+     - Falls back to Material "download" icon if detection/injection fails.
+  */
+  (function osLogoInject(){
+    const WIN_SVG = `
+      <svg viewBox="0 0 256 256" role="img" aria-label="Windows logo" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0 28l118-16v108H0V28zm138-18l118-16v142H138V10zM0 138h118v108L0 230V138zm138 0h118v126l-118-16V138z"/>
+      </svg>`;
+    const APPLE_SVG = `
+      <svg viewBox="0 0 256 256" role="img" aria-label="Apple logo" xmlns="http://www.w3.org/2000/svg">
+        <path d="M170 52c-9 12-22 19-35 18 1-12 7-23 17-31 9-7 21-11 32-12-2 9-7 18-14 25z"/>
+        <path d="M128 74c-22 0-41 12-52 31-12 21-13 51 2 78 8 14 20 29 37 29 9 0 15-3 21-3s12 3 21 3c17 0 29-15 37-29 15-27 14-57 2-78-11-19-30-31-52-31z"/>
+      </svg>`;
+
+    function detectOS(){
+      const p = (navigator.platform || '').toLowerCase();
+      const ua = (navigator.userAgent || '').toLowerCase();
+      if (p.includes('mac') || ua.includes('mac os x') || ua.includes('macintosh')) return 'mac';
+      if (p.includes('win') || ua.includes('windows')) return 'windows';
+      return 'other';
+    }
+    const os = detectOS();
+    document.documentElement.setAttribute('data-os', os);
+
+    document.querySelectorAll('[data-os-logo]').forEach(slot=>{
+      try{
+        if (os === 'mac') slot.innerHTML = APPLE_SVG;
+        else if (os === 'windows') slot.innerHTML = WIN_SVG;
+        else slot.innerHTML = ''; // nothing for other OS (linux gets text fallback)
+      }catch(e){ slot.innerHTML = ''; }
+      // If nothing injected, show fallback icon
+      if (!slot.innerHTML.trim()){
+        const fb = slot.parentElement?.querySelector?.('[data-os-icon-fallback]');
+        if (fb) fb.style.display = 'inline-flex';
+      }
+    });
+  })();
+
+  // Custom element (unchanged)
+  (() => {
+    class OCDownArrow extends HTMLElement {
+      static get observedAttributes() {
+        return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to'];
+      }
+      constructor(){ super(); this.attachShadow({mode:'open'}); }
+      connectedCallback(){ this.render(); }
+      attributeChangedCallback(){ this.render(); }
+
+      render(){
+        const dir       = (this.getAttribute('dir') || 'down').toLowerCase();
+        const size      = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
+        const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
+        const alpha     = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
+        const amp       = (this.getAttribute('amp') || '14%').trim();
+        const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();
+        const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();
+
+        const from = this.getAttribute('from') || '#ffffff';
+        const via  = this.getAttribute('via')  || from;
+        const to   = this.getAttribute('to')   || from;
+
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
+        const gid = 'grad_' + Math.random().toString(36).slice(2);
+
+        const animateTag = reduce ? '' : `
+          <animateTransform attributeName="gradientTransform"
+                            type="translate"
+                            from="0 -1" to="0 1"
+                            dur="8s" repeatCount="indefinite" />`;
+
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host { display:inline-block; line-height:0; }
+            .wrap {
+              --amp: ${amp};
+              opacity: ${alpha};
+              will-change: transform, filter, opacity;
+              ${reduce ? '' : `animation:
+                oc-bounce ${bounceDur} ease-in-out infinite,
+                oc-breathe ${breatheDur} ease-in-out infinite;`}
+              backface-visibility: hidden; transform: translateZ(0);
+            }
+            @keyframes oc-bounce {
+              0%, 100% { transform: translateY(0); }
+              50%      { transform: translateY(var(--amp)); }
+            }
+            @keyframes oc-breathe {
+              0%, 100% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22))
+                               drop-shadow(0 10px 26px rgba(255,255,255,.15)); }
+              50%      { filter: drop-shadow(0 6px 18px rgba(255,255,255,.40))
+                               drop-shadow(0 16px 40px rgba(255,255,255,.22)); }
+            }
+            svg { width:${size}px; height:${size}px; overflow:visible; }
+            .stroke {
+              stroke: url(#${gid});
+              stroke-width:${thickness};
+              stroke-linecap: round;
+              stroke-linejoin: round;
+              fill: none;
+            }
+          </style>
+
+          <div class="wrap" part="wrap" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="Down arrow" style="transform: rotate(${rotation}deg);">
+              <defs>
+                <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                  <stop offset="0%"   stop-color="${from}" />
+                  <stop offset="50%"  stop-color="${via}" />
+                  <stop offset="100%" stop-color="${to}" />
+                  ${animateTag}
+                </linearGradient>
+              </defs>
+
+              <path class="stroke" d="M12 32 H44" />
+              <path class="stroke" d="M44 20 L56 32 L44 44" />
+            </svg>
+          </div>
+        `;
+      }
+    }
+    if (!customElements.get('oc-down-arrow')) {
+      customElements.define('oc-down-arrow', OCDownArrow);
+    }
+  })();
+</script>
 </body>
 </html>
