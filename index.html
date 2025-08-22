@@ -16,6 +16,19 @@
 </script>
 <link rel="canonical" href="/home">
 
+<!-- OS detect (used for hero CTA icon) -->
+<script>
+  (function(){
+    try{
+      const ua = navigator.userAgent || "";
+      const plat = (navigator.userAgentData && navigator.userAgentData.platform)
+                   || navigator.platform || ua;
+      const isWin = /win/i.test(plat) || /windows/i.test(ua);
+      const isMac = /mac/i.test(plat) || /(macintosh|mac os x|macintel)/i.test(ua) || /iPhone|iPad|iPod/i.test(ua);
+      window.OC_OS = isWin ? "windows" : (isMac ? "mac" : "other");
+    }catch(_){ window.OC_OS = "other"; }
+  })();
+</script>
 
   <title>OpenCounsel</title>
   
@@ -498,7 +511,8 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <i class="ph ph-download text-xl"></i>
+          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
+          <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
           <span class="hero-cta-text">Download</span>
         </a>
       </div>
@@ -1408,6 +1422,23 @@
         const key = img.getAttribute('data-oc-brand');
         if (map[key]) img.src = map[key];
       });
+    })();
+
+    // ===== Set HERO CTA icon based on OS (Windows ⇄ macOS) =====
+    (function setHeroCtaIcon(){
+      const el = document.getElementById('heroCtaIcon');
+      if (!el) return;
+      const os = (window.OC_OS || '').toLowerCase();
+      el.classList.remove('ph-download','ph-apple-logo','ph-windows-logo');
+      if (os === 'windows'){
+        el.classList.add('ph-windows-logo');
+        el.setAttribute('title','Windows');
+        el.setAttribute('aria-label','Windows');
+      } else {
+        el.classList.add('ph-apple-logo');
+        el.setAttribute('title','macOS');
+        el.setAttribute('aria-label','macOS');
+      }
     })();
 
 (() => {
