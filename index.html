@@ -408,14 +408,15 @@
     .brand-logo:hover{ filter: grayscale(0); opacity: 1; transform: translateY(-2px) scale(1.02); }
     .brand-note{ font-size: 11px; color: #6b7280; }
 
-    /* ===== HERO blinking caret ===== */
+    /* ===== HERO blinking caret (now fully controllable via CSS vars) ===== */
     .hero-caret{
       display:inline-block;
-      width: 0.6ch;
-      margin-left:.04em;
-      border-right: 2px solid rgba(255,255,255,.9);
-      transform: translateY(.05em);
+      height: 1em;
+      vertical-align: -0.12em; /* subtle baseline alignment */
+      margin-left: .05em;
+      border-right: var(--caret-w, 2px) solid var(--caret-color, rgba(255,255,255,.9));
       animation: heroBlink var(--caret-blink, 900ms) steps(1) infinite;
+      pointer-events:none;
     }
     @keyframes heroBlink {
       0%, 49% { opacity: 1; }
@@ -512,8 +513,7 @@
 
       <!-- SUBTITLE: bigger + rotating word with blinking caret -->
       <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        <!-- JS will type the prefix + first word, then loop the rotating words -->
-        <!-- Structure is inserted by JS to allow character-by-character typing -->
+        <!-- JS will insert structure + caret and handle mobile split -->
       </p>
 
       <!-- REMOVED per request: Research. Law. Business. Life. -->
@@ -1174,10 +1174,20 @@
     }, window.OC_HERO || {});
 
     // ================================
-    // NEW: HERO ROTATING WORD CONFIG (easy knobs)
+    // NEW: HERO ROTATING WORD CONFIG (easy knobs + caret controls + mobile split)
     // ================================
     window.OC_HERO_ROTATOR = Object.assign({
+      /* Desktop single-line prefix */
       prefix: 'Your Counsel. For ',
+
+      /* Mobile split behavior */
+      mobileSplit: true,          // ← set to false to keep single line on mobile
+      mobileBreakpoint: 768,      // ← Tailwind md breakpoint
+
+      /* Mobile line texts (used only when mobileSplit === true) */
+      prefixLine1: 'Your Counsel.',  // static top line on mobile
+      prefixLine2: 'For ',           // second-line static prefix before rotating word
+
       words: [
         'everything.',
         'entrepreneurs.',
@@ -1187,12 +1197,17 @@
         'designers.',
         'business owners.'
       ],
-      dwellMs: 2000,         // wait after a word is fully typed
-      typeMin: 50,           // typing speed range (ms/char)
+
+      dwellMs: 2000,          // wait after a word is fully typed
+      typeMin: 50,            // typing speed range (ms/char)
       typeMax: 70,
-      deleteMin: 20,         // backspace speed range (ms/char)
+      deleteMin: 20,          // backspace speed range (ms/char)
       deleteMax: 30,
-      caretBlinkMs: 900      // CSS blink period; injected as --caret-blink
+
+      // Caret controls (CSS variables injected on the container)
+      caretBlinkMs: 900,                 // blink period
+      caretWidthPx: 2,                   // border width in px
+      caretColor: 'rgba(255,255,255,.92)'// caret color
     }, window.OC_HERO_ROTATOR || {});
 
     // ================================
@@ -1397,7 +1412,7 @@
       const bTxt  = ctaTxt.textContent || '';
 
       if (prefersReduced) {
-        // For reduced motion, just set a static line and skip animations.
+        // Reduced motion: static line only.
         if (sub1El) {
           const rCfg = window.OC_HERO_ROTATOR || {};
           sub1El.textContent = (rCfg.prefix || 'Your Counsel. For ') + (rCfg.words?.[0] || 'everything.');
@@ -1407,7 +1422,7 @@
         return;
       }
 
-      // Clear text to prepare typing
+      // Prepare for typing
       titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
       ctaTxt.textContent = '';
@@ -1443,13 +1458,11 @@
         });
       }
 
-      // Rotating word engine
+      // Rotating word helpers
       async function typeWord(el, word, rCfg){
-        // type the word char-by-char
         await typeHero(el, word, rCfg.typeMin|0, rCfg.typeMax|0);
       }
       async function deleteWord(el, rCfg){
-        // backspace one char at a time for reverse typing effect
         return new Promise((resolve)=>{
           const step = () => {
             const t = el.textContent || '';
@@ -1461,27 +1474,52 @@
         });
       }
 
-      async function typePrefixThenFirstWord(rCfg){
+      // Build structure and type depending on mobileSplit
+      async function setupAndTypeFirst(rCfg){
         if (!sub1El) return;
-        // Inject structured spans so we can animate only the final word
-        sub1El.innerHTML = '<span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
-        // allow caret blink period to be configured
+        const isMobileSplit = !!rCfg.mobileSplit && window.innerWidth < (rCfg.mobileBreakpoint||768);
+
+        // caret controls (CSS vars)
         sub1El.style.setProperty('--caret-blink', (rCfg.caretBlinkMs||900) + 'ms');
+        sub1El.style.setProperty('--caret-w', (rCfg.caretWidthPx||2) + 'px');
+        sub1El.style.setProperty('--caret-color', rCfg.caretColor || 'rgba(255,255,255,.92)');
 
-        const pEl = sub1El.querySelector('.hero-prefix');
-        const wEl = sub1El.querySelector('.hero-word');
-        const prefix = rCfg.prefix || 'Your Counsel. For ';
-        const words  = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
+        if (isMobileSplit){
+          // Two-line structure on mobile: line1 static "Your Counsel.", line2 "For " + rotating word + caret
+          sub1El.innerHTML = `
+            <span class="hero-line1 block md:inline"></span>
+            <span class="hidden md:inline">&nbsp;</span>
+            <span class="hero-line2 block md:inline">
+              <span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>
+            </span>
+          `;
+          const l1 = sub1El.querySelector('.hero-line1');
+          const pEl = sub1El.querySelector('.hero-prefix');
+          const wEl = sub1El.querySelector('.hero-word');
 
-        // type prefix with the same hero speed to keep consistency
-        await typeHero(pEl, prefix, cfg.lineCharMin|0, cfg.lineCharMax|0);
-        // type the first word fully, then return the word element + list so the rotator can continue
-        await typeWord(wEl, words[0], rCfg);
-        return { wEl, words };
+          const line1 = rCfg.prefixLine1 || 'Your Counsel.';
+          const line2Prefix = rCfg.prefixLine2 || 'For ';
+          const words = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
+
+          await typeHero(l1, line1, cfg.lineCharMin|0, cfg.lineCharMax|0);
+          await typeHero(pEl, line2Prefix, cfg.lineCharMin|0, cfg.lineCharMax|0);
+          await typeWord(wEl, words[0], rCfg);
+          return { wEl, words };
+        } else {
+          // Single-line desktop: "Your Counsel. For " + rotating word + caret
+          sub1El.innerHTML = '<span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
+          const pEl = sub1El.querySelector('.hero-prefix');
+          const wEl = sub1El.querySelector('.hero-word');
+          const prefix = rCfg.prefix || 'Your Counsel. For ';
+          const words  = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
+
+          await typeHero(pEl, prefix, cfg.lineCharMin|0, cfg.lineCharMax|0);
+          await typeWord(wEl, words[0], rCfg);
+          return { wEl, words };
+        }
       }
 
       function startRotatorLoop(wEl, words, rCfg){
-        // continue from the second word onwards; loop forever
         let idx = 1 % words.length;
         (async function loop(){
           await wait(spH(rCfg.dwellMs|0));
@@ -1497,9 +1535,8 @@
         await wait(Math.max(0, cfg.startDelayMs|0));
         await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
 
-        // NEW: type prefix + first word, then begin rotating loop
         const rCfg = window.OC_HERO_ROTATOR || {};
-        const first = await typePrefixThenFirstWord(rCfg);
+        const first = await setupAndTypeFirst(rCfg);
         if (first && first.wEl) startRotatorLoop(first.wEl, first.words, rCfg);
 
         await wait(cfg.staggerMs|0);
