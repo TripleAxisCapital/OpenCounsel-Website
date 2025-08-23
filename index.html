@@ -496,13 +496,11 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- Bigger subhead + explicit dynamic word target (locked layout) -->
+      <!-- Bigger subhead + explicit dynamic word target (layout locked) -->
       <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed oc-inline">
         <span class="oc-prefix">Your Counsel. For</span>
         <span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
       </p>
-
-      <!-- (Removed) Research. Law. Business. Life. -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -609,18 +607,19 @@
 })();
 </script>
 
-<!-- Type & reverse animation (configurable) -->
+<!-- Type & reverse animation (configurable & motion-safe) -->
 <script>
 (function(){
   // === EASY CONFIG ===
   const CFG = {
     words: ['everything.', 'entrepreneur', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
-    typeMs: 55,      // per-char typing speed
-    deleteMs: 45,    // per-char deleting speed
-    holdMs: 2000,    // time to hold full word (ms)
-    startDelayMs: 400,
-    caret: true,
-    loop: true
+    typeMs: 55,          // per-char typing speed
+    deleteMs: 45,        // per-char deleting speed
+    holdMs: 2000,        // time to hold full word (ms)
+    startDelayMs: 400,   // delay before first type (ms)
+    caret: true,         // blinking caret
+    loop: true,          // loop forever
+    respectReducedMotion: false // set true to honor OS "Reduce motion"
   };
   // ===================
 
@@ -634,8 +633,15 @@
     el.style.minWidth = maxLen + 'ch';
     if (CFG.caret) el.classList.add('oc-caret');
 
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce){ el.textContent = CFG.words[0] || 'everything.'; return; }
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (CFG.respectReducedMotion && reduce){
+      el.textContent = CFG.words[0] || 'everything.'; // static fallback
+      return;
+    }
+
+    // Prevent double-boot if scripts are re-run
+    if (el.dataset.ocBooted) return;
+    el.dataset.ocBooted = '1';
 
     let i = 0, ch = 0, typing = true;
 
