@@ -495,8 +495,14 @@
   >
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
-      <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Your Counsel. For everything.</p>
-      <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Research. Law. Business. Life.</p>
+
+      <!-- Bigger subhead + dynamic word -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+        Your Counsel. For
+        <span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
+      </p>
+
+      <!-- Removed the line: Research. Law. Business. Life. -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -532,9 +538,22 @@
   </div>
 </section>
 
+<!-- Tiny caret style (optional) -->
+<style>
+  .oc-caret::after {
+    content: "";
+    display: inline-block;
+    width: 1px;
+    height: 0.9em;
+    margin-left: 2px;
+    vertical-align: -0.1em;
+    background: currentColor;
+    animation: ocBlink 1s steps(1) infinite;
+  }
+  @keyframes ocBlink { 50% { opacity: 0; } }
+</style>
 
-
-<!-- Measure actual header height (handles desktop vs mobile, sticky headers, etc.) -->
+<!-- Measure actual header height (unchanged) -->
 <script>
   (function setHeaderVar() {
     const pickHeader = () =>
@@ -551,7 +570,6 @@
     if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
   })();
 </script>
-
 
 <!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
 <script>
@@ -602,6 +620,65 @@
   io.observe(ctaBtn);
 })();
 </script>
+
+<!-- Type & reverse animation for the dynamic word -->
+<script>
+(() => {
+  // ===== EASY TUNING =====
+  const OC_TYPE = {
+    // Words cycle. First item will appear first.
+    words: ['everything.', 'entrepreneuwer', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
+    typeMs: 55,        // per character while typing
+    deleteMs: 45,      // per character while deleting
+    holdMs: 2000,      // time to hold the full word before deleting (ms)
+    startDelayMs: 400, // delay before starting (ms)
+    caret: true,       // show a blinking caret
+    loop: true         // loop forever
+  };
+  // =======================
+
+  const el = document.getElementById('ocDynamicWord');
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!el) return;
+
+  // Reserve space to avoid layout shift: width of the longest word (in ch)
+  const maxLen = OC_TYPE.words.reduce((m, w) => Math.max(m, (w || '').length), 0);
+  el.style.display = 'inline-block';
+  el.style.minWidth = maxLen + 'ch';
+  if (OC_TYPE.caret) el.classList.add('oc-caret');
+
+  if (prefersReduced) { el.textContent = OC_TYPE.words[0] || ''; return; }
+
+  let i = 0, ch = 0, typing = true;
+
+  const step = () => {
+    const word = OC_TYPE.words[i % OC_TYPE.words.length] || '';
+    if (typing) {
+      ch++;
+      el.textContent = word.slice(0, ch);
+      if (ch < word.length) {
+        setTimeout(step, OC_TYPE.typeMs);
+      } else {
+        // hold, then delete
+        setTimeout(() => { typing = false; step(); }, OC_TYPE.holdMs);
+      }
+    } else {
+      ch--;
+      el.textContent = word.slice(0, ch);
+      if (ch > 0) {
+        setTimeout(step, OC_TYPE.deleteMs);
+      } else {
+        typing = true;
+        i++;
+        setTimeout(step, 10);
+      }
+    }
+  };
+
+  setTimeout(step, OC_TYPE.startDelayMs);
+})();
+</script>
+
 <!-- COUNSEL FOR LIFE -->
 <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-12 pb-0 bg-white">
   <!-- Decorative glows -->
