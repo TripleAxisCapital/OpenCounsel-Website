@@ -496,11 +496,21 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- Bigger tagline with dynamic last word -->
+      <!-- Bigger tagline with progressive-enhancement fallback -->
       <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        <span id="hcPrefix" aria-label="Your Counsel. For "></span><span id="hcWord"></span>
+        Your Counsel. For
+        <!-- The JS animates ONLY this span; the rest is static so it’s always visible -->
+        <span
+          id="hcWord"
+          data-words='["everything.","entrepreneuwer","student","inventor","lawyer","designer","business owner"]'
+          data-type-speed="55"      <!-- ms per typed character -->
+          data-delete-speed="45"    <!-- ms per deleted character -->
+          data-hold="2000"          <!-- ms to hold full word before erase -->
+          data-gap="200"            <!-- ms pause between erase and next word -->
+        >everything.</span>
       </p>
-      <!-- Removed: <p class="hero-sub2 ...">Research. Law. Business. Life.</p> -->
+
+      <!-- removed the old line: Research. Law. Business. Life. -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -515,7 +525,7 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
+          <!-- OS-SWITCHED ICON (default mac, changed elsewhere if you have that script) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
           <span class="hero-cta-text">Download</span>
         </a>
@@ -536,25 +546,25 @@
   </div>
 </section>
 
-<!-- Measure actual header height -->
+<!-- Measure actual header height (desktop vs mobile, sticky headers, etc.) -->
 <script>
-  (function setHeaderVar() {
-    const pickHeader = () =>
-      document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-    const set = () => {
-      const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56; // fallback
-      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-    };
-    set();
-    window.addEventListener('resize', set, { passive: true });
-    window.addEventListener('orientationchange', set, { passive: true });
+(() => {
+  const pickHeader = () =>
+    document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+  const set = () => {
     const el = pickHeader();
-    if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-  })();
+    const h = el ? el.getBoundingClientRect().height : 56; // fallback
+    document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+  };
+  set();
+  window.addEventListener('resize', set, { passive: true });
+  window.addEventListener('orientationchange', set, { passive: true });
+  const el = pickHeader();
+  if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+})();
 </script>
 
-<!-- Down-arrow reveal controller (unchanged) -->
+<!-- Reveal the down arrow after CTA text is stable -->
 <script>
 (() => {
   const ARROW_AFTER_CTA_MS = 40;
@@ -604,93 +614,45 @@
 })();
 </script>
 
-<!-- HERO typed/reverse-typed word loop -->
+<!-- HERO typed / reverse-typed loop (reads config from data-* on #hcWord) -->
 <script>
 (() => {
-  // ========= Adjustable config =========
-  const HERO_TYPER = {
-    prefixText: 'Your Counsel. For ', // text that stays in front of the rotating word
-    words: [
-      'everything.',
-      'entrepreneuwer',
-      'student',
-      'inventor',
-      'lawyer',
-      'designer',
-      'business owner'
-    ],
-    typingMsPerChar: 55,     // speed for typing characters
-    deletingMsPerChar: 45,   // speed for backspacing characters
-    initialDelayMs: 300,     // pause before ANY typing starts
-    dwellFullWordMs: 2000,   // how long to keep a completed word before erasing
-    betweenWordsPauseMs: 200,// pause after erasing before next word starts
-    typePrefixOnce: true,    // type the prefix once (true) or paint it instantly (false)
-    loop: true               // loop through words forever
-  };
-  // ====================================
+  const el = document.getElementById('hcWord');
+  if (!el) return;
+
+  // Config from data attributes (easy to tweak without editing JS)
+  let words;
+  try { words = JSON.parse(el.dataset.words || '["everything."]'); }
+  catch { words = ["everything."]; }
+
+  const typeMs = +(el.dataset.typeSpeed   || 55);
+  const delMs  = +(el.dataset.deleteSpeed || 45);
+  const holdMs = +(el.dataset.hold        || 2000);
+  const gapMs  = +(el.dataset.gap         || 200);
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const elPrefix = document.getElementById('hcPrefix');
-  const elWord   = document.getElementById('hcWord');
-  if (!elPrefix || !elWord) return;
-
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-  async function typeInto(el, text, msPerChar) {
-    for (let i = 0; i < text.length; i++) {
-      el.textContent += text[i];
-      await sleep(msPerChar);
-    }
+  if (prefersReduced || !words.length) {
+    el.textContent = words[0] || el.textContent || 'everything.';
+    return;
   }
 
-  async function deleteFrom(el, count, msPerChar) {
-    for (let i = 0; i < count; i++) {
-      el.textContent = el.textContent.slice(0, -1);
-      await sleep(msPerChar);
-    }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function type(text) { for (let i=0;i<text.length;i++){ el.textContent += text[i]; await sleep(typeMs); } }
+  async function erase(n)   { for (let i=0;i<n;i++){ el.textContent = el.textContent.slice(0,-1); await sleep(delMs); } }
+
+  // Ensure we start aligned with first word (HTML fallback already sets "everything.")
+  let idx = 0;
+  if (el.textContent !== words[0]) { el.textContent = ''; await type(words[0]); }
+  await sleep(holdMs);
+
+  while (true) {
+    const next = words[(idx + 1) % words.length];
+    await erase(el.textContent.length); // erase only the word span
+    await sleep(gapMs);
+    await type(next);
+    await sleep(holdMs);
+    idx = (idx + 1) % words.length;
   }
-
-  async function run() {
-    // Static or reduced-motion shortcut:
-    if (prefersReduced) {
-      elPrefix.textContent = HERO_TYPER.prefixText;
-      elWord.textContent   = (HERO_TYPER.words[0] || 'everything.');
-      return;
-    }
-
-    await sleep(HERO_TYPER.initialDelayMs);
-
-    // Type or paint the prefix
-    if (HERO_TYPER.typePrefixOnce) {
-      await typeInto(elPrefix, HERO_TYPER.prefixText, HERO_TYPER.typingMsPerChar);
-    } else {
-      elPrefix.textContent = HERO_TYPER.prefixText;
-    }
-
-    // Loop through words
-    let i = 0;
-    while (true) {
-      const word = HERO_TYPER.words[i % HERO_TYPER.words.length] || '';
-      // Type the word
-      await typeInto(elWord, word, HERO_TYPER.typingMsPerChar);
-      // Hold the completed word
-      await sleep(HERO_TYPER.dwellFullWordMs);
-      // Reverse type (erase only the word)
-      await deleteFrom(elWord, word.length, HERO_TYPER.deletingMsPerChar);
-      // Short pause before next word
-      await sleep(HERO_TYPER.betweenWordsPauseMs);
-
-      i++;
-      if (!HERO_TYPER.loop && i >= HERO_TYPER.words.length) break;
-    }
-  }
-
-  // Ensure containers start empty for clean animation
-  elPrefix.textContent = '';
-  elWord.textContent = '';
-
-  // Kick it off after next frame (layout settled)
-  requestAnimationFrame(run);
 })();
 </script>
 
