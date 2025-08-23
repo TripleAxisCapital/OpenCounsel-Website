@@ -496,9 +496,10 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- Bigger subhead + dynamic word target -->
-      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        Your Counsel. For&nbsp;<span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
+      <!-- Bigger subhead + explicit dynamic word target (locked layout) -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed oc-inline">
+        <span class="oc-prefix">Your Counsel. For</span>
+        <span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
       </p>
 
       <!-- (Removed) Research. Law. Business. Life. -->
@@ -536,8 +537,10 @@
   </div>
 </section>
 
-<!-- Caret style (optional) -->
+<!-- Helpers: keep phrase on one line & caret -->
 <style>
+  .oc-inline { display: inline-flex; align-items: baseline; gap: .35ch; white-space: nowrap; }
+  .oc-prefix { display: inline-block; }
   .oc-caret::after {
     content: "";
     display: inline-block;
@@ -606,60 +609,46 @@
 })();
 </script>
 
-<!-- Type & reverse animation (robust, DOM-ready, iOS-safe) -->
+<!-- Type & reverse animation (configurable) -->
 <script>
 (function(){
+  // === EASY CONFIG ===
   const CFG = {
-    words: ['everything.', 'entrepreneuwer', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
-    typeMs: 55,     // per-char typing speed
-    deleteMs: 45,   // per-char deleting speed
-    holdMs: 2000,   // time to hold full word
+    words: ['everything.', 'entrepreneur', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
+    typeMs: 55,      // per-char typing speed
+    deleteMs: 45,    // per-char deleting speed
+    holdMs: 2000,    // time to hold full word (ms)
     startDelayMs: 400,
     caret: true,
     loop: true
   };
+  // ===================
 
   function boot(){
-    // Ensure the target span exists; create if missing
-    let el = document.getElementById('ocDynamicWord');
-    if (!el) {
-      const host = document.querySelector('#home .hero-sub1');
-      el = document.createElement('span');
-      el.id = 'ocDynamicWord';
-      host && host.appendChild(el);
-    }
+    const el = document.getElementById('ocDynamicWord');
     if (!el) return;
 
-    // Reserve space to prevent layout shift (longest word)
+    // Reserve width to prevent layout shift
     const maxLen = CFG.words.reduce((m,w)=>Math.max(m,(w||'').length),0);
     el.style.display = 'inline-block';
     el.style.minWidth = maxLen + 'ch';
-
     if (CFG.caret) el.classList.add('oc-caret');
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Always show something even with reduced motion
-    if (reduce) { el.textContent = CFG.words[0] || 'everything.'; return; }
+    if (reduce){ el.textContent = CFG.words[0] || 'everything.'; return; }
 
     let i = 0, ch = 0, typing = true;
 
     const tick = () => {
-      const word = CFG.words[i % CFG.words.length] || '';
-      if (typing) {
-        el.textContent = word.slice(0, ++ch);
-        if (ch < word.length) {
-          setTimeout(tick, CFG.typeMs);
-        } else {
-          setTimeout(()=>{ typing = false; tick(); }, CFG.holdMs);
-        }
+      const w = CFG.words[i % CFG.words.length] || '';
+      if (typing){
+        el.textContent = w.slice(0, ++ch);
+        if (ch < w.length) setTimeout(tick, CFG.typeMs);
+        else setTimeout(()=>{ typing = false; tick(); }, CFG.holdMs);
       } else {
-        el.textContent = word.slice(0, --ch);
-        if (ch > 0) {
-          setTimeout(tick, CFG.deleteMs);
-        } else {
-          typing = true; i++;
-          setTimeout(tick, 10);
-        }
+        el.textContent = w.slice(0, --ch);
+        if (ch > 0) setTimeout(tick, CFG.deleteMs);
+        else { typing = true; i++; setTimeout(tick, 10); }
       }
     };
 
