@@ -497,9 +497,9 @@
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
       <!-- Bigger subhead + explicit dynamic word target (layout locked) -->
-      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed oc-inline">
+      <p class="hero-sub1 mt-4 text-3xl md:text-4xl text-white/90 leading-relaxed oc-inline">
         <span class="oc-prefix">Your Counsel. For</span>
-        <span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
+        <span id="ocDynamicWord" class="align-baseline" aria-live="polite">everything.</span>
       </p>
 
       <div class="mt-8 flex justify-center">
@@ -540,11 +540,9 @@
   .oc-inline { display: inline-flex; align-items: baseline; gap: .35ch; white-space: nowrap; }
   .oc-prefix { display: inline-block; }
   .oc-caret::after {
-    content: "";
-    display: inline-block;
-    width: 1px; height: 0.9em;
-    margin-left: 2px; vertical-align: -0.1em;
-    background: currentColor; animation: ocBlink 1s steps(1) infinite;
+    content: ""; display: inline-block; width: 1px; height: 0.9em;
+    margin-left: 2px; vertical-align: -0.1em; background: currentColor;
+    animation: ocBlink 1s steps(1) infinite;
   }
   @keyframes ocBlink { 50% { opacity: 0; } }
 </style>
@@ -607,10 +605,10 @@
 })();
 </script>
 
-<!-- Type & reverse animation (configurable & motion-safe) -->
+<!-- Type & reverse animation (bulletproof + configurable) -->
 <script>
 (function(){
-  // === EASY CONFIG ===
+  // ===== CONFIG YOU CAN EDIT =====
   const CFG = {
     words: ['everything.', 'entrepreneur', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
     typeMs: 55,          // per-char typing speed
@@ -619,15 +617,12 @@
     startDelayMs: 400,   // delay before first type (ms)
     caret: true,         // blinking caret
     loop: true,          // loop forever
-    respectReducedMotion: false // set true to honor OS "Reduce motion"
+    respectReducedMotion: false // true = static first word if OS "Reduce motion" is on
   };
-  // ===================
+  // =================================
 
-  function boot(){
-    const el = document.getElementById('ocDynamicWord');
-    if (!el) return;
-
-    // Reserve width to prevent layout shift
+  function start(el){
+    // Reserve width (prevents layout shift)
     const maxLen = CFG.words.reduce((m,w)=>Math.max(m,(w||'').length),0);
     el.style.display = 'inline-block';
     el.style.minWidth = maxLen + 'ch';
@@ -635,33 +630,45 @@
 
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (CFG.respectReducedMotion && reduce){
-      el.textContent = CFG.words[0] || 'everything.'; // static fallback
+      el.textContent = CFG.words[0] || 'everything.';
       return;
     }
 
-    // Prevent double-boot if scripts are re-run
+    // Prevent double init if scripts hot-reload
     if (el.dataset.ocBooted) return;
     el.dataset.ocBooted = '1';
 
-    let i = 0, ch = 0, typing = true;
+    let idx = 0, i = 0, dir = 1; // dir: 1=typing, -1=deleting
 
-    const tick = () => {
-      const w = CFG.words[i % CFG.words.length] || '';
-      if (typing){
-        el.textContent = w.slice(0, ++ch);
-        if (ch < w.length) setTimeout(tick, CFG.typeMs);
-        else setTimeout(()=>{ typing = false; tick(); }, CFG.holdMs);
+    function loop(){
+      const w = CFG.words[idx % CFG.words.length] || '';
+      i += dir;
+      el.textContent = w.slice(0, i);
+
+      if (dir === 1 && i === w.length){
+        setTimeout(() => { dir = -1; loop(); }, CFG.holdMs);
+      } else if (dir === -1 && i === 0){
+        idx++; dir = 1;
+        setTimeout(loop, 50);
       } else {
-        el.textContent = w.slice(0, --ch);
-        if (ch > 0) setTimeout(tick, CFG.deleteMs);
-        else { typing = true; i++; setTimeout(tick, 10); }
+        setTimeout(loop, dir === 1 ? CFG.typeMs : CFG.deleteMs);
       }
-    };
+    }
 
-    setTimeout(tick, CFG.startDelayMs);
+    setTimeout(loop, CFG.startDelayMs);
   }
 
-  if (document.readyState === 'loading') {
+  function boot(){
+    const el = document.getElementById('ocDynamicWord');
+    if (el) { start(el); return; }
+    // if not yet in DOM, try again on load
+    window.addEventListener('load', () => {
+      const el2 = document.getElementById('ocDynamicWord');
+      if (el2) start(el2);
+    }, { once:true });
+  }
+
+  if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot, { once:true });
   } else { boot(); }
 })();
