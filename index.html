@@ -407,6 +407,20 @@
     }
     .brand-logo:hover{ filter: grayscale(0); opacity: 1; transform: translateY(-2px) scale(1.02); }
     .brand-note{ font-size: 11px; color: #6b7280; }
+
+    /* ===== HERO blinking caret ===== */
+    .hero-caret{
+      display:inline-block;
+      width: 0.6ch;
+      margin-left:.04em;
+      border-right: 2px solid rgba(255,255,255,.9);
+      transform: translateY(.05em);
+      animation: heroBlink var(--caret-blink, 900ms) steps(1) infinite;
+    }
+    @keyframes heroBlink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
   </style>
 </head>
 
@@ -495,8 +509,15 @@
   >
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
-      <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Your Counsel. For everything.</p>
-      <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Research. Law. Business. Life.</p>
+
+      <!-- SUBTITLE: bigger + rotating word with blinking caret -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+        <!-- JS will type the prefix + first word, then loop the rotating words -->
+        <!-- Structure is inserted by JS to allow character-by-character typing -->
+      </p>
+
+      <!-- REMOVED per request: Research. Law. Business. Life. -->
+      <!-- <p class="hero-sub2 ...">…</p> -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -1153,6 +1174,28 @@
     }, window.OC_HERO || {});
 
     // ================================
+    // NEW: HERO ROTATING WORD CONFIG (easy knobs)
+    // ================================
+    window.OC_HERO_ROTATOR = Object.assign({
+      prefix: 'Your Counsel. For ',
+      words: [
+        'everything.',
+        'entrepreneur',
+        'student',
+        'inventor',
+        'lawyer',
+        'designer',
+        'business owner'
+      ],
+      dwellMs: 2000,         // wait after a word is fully typed
+      typeMin: 18,           // typing speed range (ms/char)
+      typeMax: 28,
+      deleteMin: 10,         // backspace speed range (ms/char)
+      deleteMax: 18,
+      caretBlinkMs: 900      // CSS blink period; injected as --caret-blink
+    }, window.OC_HERO_ROTATOR || {});
+
+    // ================================
     // SECTION TYPE-IN GLOBALS
     // ================================
     window.OC_SLY = Object.assign({
@@ -1332,7 +1375,7 @@
     }
 
     // ================================
-    // HERO TYPE-IN (strict sequence)
+    // HERO TYPE-IN (strict sequence) + rotating word
     // ================================
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
@@ -1343,7 +1386,6 @@
 
       const titleEl = hero.querySelector('.hero-title');
       const sub1El  = hero.querySelector('.hero-sub1');
-      const sub2El  = hero.querySelector('.hero-sub2');
       const ctaTxt  = hero.querySelector('.hero-cta-text');
       const ctaBtn  = hero.querySelector('#heroCtaBtn');
 
@@ -1352,22 +1394,26 @@
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       const tText = titleEl.textContent || '';
-      const s1    = sub1El ? (sub1El.textContent || '') : '';
-      const s2    = sub2El ? (sub2El.textContent || '') : '';
       const bTxt  = ctaTxt.textContent || '';
 
       if (prefersReduced) {
+        // For reduced motion, just set a static line and skip animations.
+        if (sub1El) {
+          const rCfg = window.OC_HERO_ROTATOR || {};
+          sub1El.textContent = (rCfg.prefix || 'Your Counsel. For ') + (rCfg.words?.[0] || 'everything.');
+        }
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
         return;
       }
 
+      // Clear text to prepare typing
       titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
-      if (sub2El) sub2El.textContent = '';
       ctaTxt.textContent = '';
       ctaBtn.classList.remove('cta-visible');
 
+      // local speed helpers honoring OC_HERO.streamSpeed
       function spH(ms){
         const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
         return ms * f;
@@ -1376,6 +1422,7 @@
         return new Promise(resolve=>{
           let i=0;
           const tn = document.createTextNode('');
+          el.textContent = '';
           el.appendChild(tn);
           (function tick(){
             tn.textContent = text.slice(0, ++i);
@@ -1396,11 +1443,65 @@
         });
       }
 
+      // Rotating word engine
+      async function typeWord(el, word, rCfg){
+        // type the word char-by-char
+        await typeHero(el, word, rCfg.typeMin|0, rCfg.typeMax|0);
+      }
+      async function deleteWord(el, rCfg){
+        // backspace one char at a time for reverse typing effect
+        return new Promise((resolve)=>{
+          const step = () => {
+            const t = el.textContent || '';
+            if (!t.length) { resolve(); return; }
+            el.textContent = t.slice(0, -1);
+            setTimeout(step, spH(rand(rCfg.deleteMin|0, rCfg.deleteMax|0)));
+          };
+          step();
+        });
+      }
+
+      async function typePrefixThenFirstWord(rCfg){
+        if (!sub1El) return;
+        // Inject structured spans so we can animate only the final word
+        sub1El.innerHTML = '<span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
+        // allow caret blink period to be configured
+        sub1El.style.setProperty('--caret-blink', (rCfg.caretBlinkMs||900) + 'ms');
+
+        const pEl = sub1El.querySelector('.hero-prefix');
+        const wEl = sub1El.querySelector('.hero-word');
+        const prefix = rCfg.prefix || 'Your Counsel. For ';
+        const words  = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
+
+        // type prefix with the same hero speed to keep consistency
+        await typeHero(pEl, prefix, cfg.lineCharMin|0, cfg.lineCharMax|0);
+        // type the first word fully, then return the word element + list so the rotator can continue
+        await typeWord(wEl, words[0], rCfg);
+        return { wEl, words };
+      }
+
+      function startRotatorLoop(wEl, words, rCfg){
+        // continue from the second word onwards; loop forever
+        let idx = 1 % words.length;
+        (async function loop(){
+          await wait(spH(rCfg.dwellMs|0));
+          await deleteWord(wEl, rCfg);
+          const next = words[idx];
+          await typeWord(wEl, next, rCfg);
+          idx = (idx + 1) % words.length;
+          loop();
+        })();
+      }
+
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
         await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
-        if (sub1El){ await wait(cfg.staggerMs|0); await typeHero(sub1El, s1, cfg.lineCharMin|0, cfg.lineCharMax|0); }
-        if (sub2El){ await wait(cfg.staggerMs|0); await typeHero(sub2El, s2, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+
+        // NEW: type prefix + first word, then begin rotating loop
+        const rCfg = window.OC_HERO_ROTATOR || {};
+        const first = await typePrefixThenFirstWord(rCfg);
+        if (first && first.wEl) startRotatorLoop(first.wEl, first.words, rCfg);
+
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-visible'));
