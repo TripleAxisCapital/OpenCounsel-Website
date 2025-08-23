@@ -495,20 +495,8 @@
   >
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
-
-      <!-- Bigger tagline with progressive-enhancement fallback -->
-      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        Your Counsel. For&nbsp;
-        <span
-          id="hcWord"
-          data-words='["everything.","entrepreneuwer","student","inventor","lawyer","designer","business owner"]'
-          data-type-speed="55"     <!-- ms per typed char -->
-          data-delete-speed="45"   <!-- ms per deleted char -->
-          data-hold="2000"         <!-- ms to hold full word before delete -->
-          data-gap="200"           <!-- ms pause after delete before typing next -->
-          data-respect-reduced="false"
-        >everything.</span>
-      </p>
+      <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Your Counsel. For everything.</p>
+      <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Research. Law. Business. Life.</p>
 
       <div class="mt-8 flex justify-center">
         <a
@@ -523,6 +511,7 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
           <span class="hero-cta-text">Download</span>
         </a>
@@ -543,28 +532,31 @@
   </div>
 </section>
 
-<!-- Measure actual header height -->
+
+
+<!-- Measure actual header height (handles desktop vs mobile, sticky headers, etc.) -->
 <script>
-(() => {
-  const pickHeader = () =>
-    document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-  const set = () => {
+  (function setHeaderVar() {
+    const pickHeader = () =>
+      document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+    const set = () => {
+      const el = pickHeader();
+      const h = el ? el.getBoundingClientRect().height : 56; // fallback
+      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+    };
+    set();
+    window.addEventListener('resize', set, { passive: true });
+    window.addEventListener('orientationchange', set, { passive: true });
     const el = pickHeader();
-    const h = el ? el.getBoundingClientRect().height : 56;
-    document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-  };
-  set();
-  window.addEventListener('resize', set, { passive: true });
-  window.addEventListener('orientationchange', set, { passive: true });
-  const el = pickHeader();
-  if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-})();
+    if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+  })();
 </script>
 
-<!-- Reveal the down arrow after CTA text is stable -->
+
+<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
 <script>
 (() => {
-  const ARROW_AFTER_CTA_MS = 40;
+  const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
   const arrow  = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
@@ -610,93 +602,6 @@
   io.observe(ctaBtn);
 })();
 </script>
-
-<!-- HERO typed / reverse-typed loop (state machine, no async/await) -->
-<script>
-window.addEventListener('DOMContentLoaded', () => {
-  const el = document.getElementById('hcWord');
-  if (!el) return;
-
-  // Config from data-* (tweak without editing JS)
-  let words;
-  try { words = JSON.parse(el.dataset.words || '["everything."]'); }
-  catch { words = ["everything."]; }
-  if (!Array.isArray(words) || words.length === 0) words = ["everything."];
-
-  const typeMs = +(el.dataset.typeSpeed   || 55);
-  const delMs  = +(el.dataset.deleteSpeed || 45);
-  const holdMs = +(el.dataset.hold        || 2000);
-  const gapMs  = +(el.dataset.gap         || 200);
-  const respectReduced = (el.dataset.respectReduced || 'false') === 'true';
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (prefersReduced && respectReduced) {
-    el.textContent = words[0];
-    return;
-  }
-
-  // Ensure the span initially shows the first word (fallback already does)
-  if (el.textContent !== String(words[0])) el.textContent = String(words[0]);
-
-  // Finite state machine
-  const state = {
-    mode: 'hold',              // 'hold' -> 'delete' -> 'gap' -> 'type' -> 'hold' ...
-    wordIndex: 0,
-    charIndex: el.textContent.length
-  };
-
-  function schedule(delay) { setTimeout(tick, delay); }
-
-  function tick() {
-    const current = String(words[state.wordIndex]);
-
-    if (state.mode === 'hold') {
-      state.mode = 'delete';
-      schedule(holdMs);
-      return;
-    }
-
-    if (state.mode === 'delete') {
-      if (state.charIndex > 0) {
-        el.textContent = el.textContent.slice(0, -1);
-        state.charIndex--;
-        schedule(delMs);
-      } else {
-        state.mode = 'gap';
-        schedule(gapMs);
-      }
-      return;
-    }
-
-    if (state.mode === 'gap') {
-      // Move to next word and start typing it
-      state.wordIndex = (state.wordIndex + 1) % words.length;
-      state.charIndex = 0;
-      el.textContent = '';
-      state.mode = 'type';
-      schedule(0);
-      return;
-    }
-
-    if (state.mode === 'type') {
-      const nextWord = String(words[state.wordIndex]);
-      if (state.charIndex < nextWord.length) {
-        el.textContent += nextWord[state.charIndex];
-        state.charIndex++;
-        schedule(typeMs);
-      } else {
-        state.mode = 'hold';
-        schedule(holdMs);
-      }
-      return;
-    }
-  }
-
-  // Start the loop
-  schedule(0);
-});
-</script>
-
 <!-- COUNSEL FOR LIFE -->
 <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-12 pb-0 bg-white">
   <!-- Decorative glows -->
