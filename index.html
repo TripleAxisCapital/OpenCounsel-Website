@@ -6,7 +6,6 @@
 <!-- Pretty URL (client-side mask) -->
 <script>
   window.OC = { base:"", slug:"Home", file:"/index.html" }; // ← change per page
-
   (function(L,C){try{
     var B=C.base||"", S="/"+(C.slug||"home"), F=C.file||"/index.html";
     var p=L.pathname.replace(/\/+$/,"");
@@ -31,24 +30,19 @@
 </script>
 
   <title>OpenCounsel</title>
-  
   <meta charset="UTF-8" />
-
-  <!-- Viewport updated to support iOS safe areas/fullscreen -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- iOS/Standalone (lets users hide Safari UI when launched from Home Screen) -->
+  <!-- iOS/Standalone -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="OpenCounsel">
-  <!-- Optional icons/manifest (add these files to fully enable the standalone PWA look) -->
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
   <meta name="theme-color" content="#0B1B2B">
 
   <title>OpenCounsel — Private, Local AI Legal Assistant</title>
   <meta name="description" content="OpenCounsel: a private, local AI legal assistant with RAG, document search, and case analysis. Download for macOS, Windows, and Linux." />
-  <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,43 +69,31 @@
   </script>
 
   <style>
-    /* ================================
-       GLOBAL CONTROLS
-       ================================ */
     :root {
       --pad-mobile-x: 24px;
       --pad-desktop-x: 32px;
       --hamburger-inset: 13px;
-
-      /* ==== Global Scroll-Blur Controls (content inside cards) ==== */
       --scroll-blur-start: 16px;
       --scroll-blur-end: 0px;
-      --scroll-blur-duration: 1100ms; /* smoother */
-      --scroll-blur-ease: cubic-bezier(.16,1,.3,1); /* Apple-y ease-out */
+      --scroll-blur-duration: 1100ms;
+      --scroll-blur-ease: cubic-bezier(.16,1,.3,1);
       --scroll-blur-opacity-start: .65;
       --scroll-blur-opacity-end: 1;
       --scroll-blur-translate: 8px;
-
-      /* ==== Card backdrop blur controls (the glass card itself) ==== */
       --card-blur-start: 12px;
       --card-blur-end: 0px;
       --card-blur-duration: 900ms;
       --card-blur-ease: cubic-bezier(.16,1,.3,1);
-
-      /* Chat demo palette hooks */
       --line:#E7EDF2;
       --brand-angle:135deg;
       --brand-1:#0B1B2B;
       --brand-2:#0E6F5C;
       --brand-3:#00CFFF;
       --lilac:#E7E7FF;
-
-      /* ===== Demo Stage Dimensions (fixed like a video) ===== */
       --demo-stage-h-sm: 360px;
       --demo-stage-h-lg: 440px;
     }
 
-    /* Kill horizontal scroll without breaking sticky */
     html, body { max-width: 100%; overflow-x: clip !important; }
     @supports not (overflow-x: clip) { html, body { overflow-x: hidden !important; } }
     .section-clip { position: relative; overflow-x: clip; }
@@ -130,9 +112,6 @@
     @keyframes logoIntro { from { transform: translateY(6px) scale(.92); opacity:0 } to { transform: translateY(0) scale(1); opacity:1 } }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===========================================
-       PER-SECTION GRADIENT CONTROLS
-       =========================================== */
     #hamburgerBtn .hamburger {
       --from: #00CFFFcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --angle:135deg; --speed:16s;
     }
@@ -147,7 +126,6 @@
     #edge { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --speed:16s; --angle:135deg; }
     #features { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --speed:16s; --angle:135deg; }
 
-    /* ========= PRIMITIVES ========= */
     .g-grad, .grad-anim{
       background: linear-gradient(var(--angle, 135deg), var(--from, #0a1f44cc), var(--via, #0b3d3dcc), var(--to, #064420cc));
       background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
@@ -168,7 +146,6 @@
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
     }
 
-    /* NEW: one-way gradient motion helpers (override .grad-text animation) */
     @keyframes gradientShiftRight { 0%{background-position:0% 50%} 100%{background-position: 100% 50%} }
     @keyframes gradientShiftLeft  { 0%{background-position:100% 50%} 100%{background-position: 0% 50%} }
     .grad-move-right { animation: gradientShiftRight var(--speed,16s) linear infinite !important; }
@@ -197,7 +174,6 @@
     @media (min-width: 1280px){ .mission-wrap{ max-width: 980px; } }
     @media (min-width: 1536px){ .mission-wrap{ max-width: 1040px; } }
 
-    /* ===== PAGE START BLUR (unchanged as requested) ===== */
     .page-blur{
       position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
       background: rgba(255,255,255,.28); z-index:9999; pointer-events:none;
@@ -206,7 +182,6 @@
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
     @media (prefers-reduced-motion: reduce){ .page-blur{ transition:none; } }
 
-    /* Mobile slide-in menu */
     #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
     #mobileMenu .menu-scrim{
       position:absolute; inset:0; background: rgba(255,255,255,0.92);
@@ -255,7 +230,6 @@
     .drawer-cta > span{ z-index:0!important; }
     .drawer-cta i, .drawer-cta span, .drawer-cta::before, .drawer-cta::after{ position:relative; }
 
-    /* ======= SCROLL BLUR (content inside cards) ======= */
     .scroll-fade { isolation:isolate; }
     .scroll-fade > * {
       filter: blur(var(--scroll-blur-start));
@@ -273,7 +247,6 @@
       transform: translateY(0);
     }
 
-    /* ======= Card backdrop blur (the glass card itself) — smoother to clear, then stays clear ======= */
     .scroll-fade.card-glass {
       -webkit-backdrop-filter: blur(var(--card-blur-start)) !important;
       backdrop-filter: blur(var(--card-blur-start)) !important;
@@ -294,7 +267,6 @@
     }
     @media (prefers-reduced-motion: reduce) { .nav-link { transition:none; } }
 
-    /* ===== Chat Demo visuals (bubbles on background) ===== */
     .brand-gradient{ background-image:linear-gradient(var(--brand-angle),var(--brand-1),var(--brand-2),var(--brand-3)); background-size:200% 200%; }
     @keyframes breathe{0%{background-position:0% 50%;filter:saturate(.95)}50%{background-position:100% 50%;filter:saturate(1.05)}100%{background-position:0% 50%;filter:saturate(.95)}}
     .breathing{animation:breathe 6s ease-in-out infinite}
@@ -310,7 +282,6 @@
     .chip{font-size:12px;line-height:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.6),0 6px 14px rgba(10,13,16,.06);transition:transform .12s ease}
     .chip:hover{transform:translateY(-1px)}
 
-    /* Chat stream layout (ChatGPT-like indent) */
     .chat-wrap { width:min(900px,100%); margin:0 auto; }
     .chat-stream { display:flex; flex-direction:column; gap:10px; }
     .msg-row { display:flex; width:100%; }
@@ -324,7 +295,6 @@
     .bubble-bot { background: color-mix(in srgb, var(--lilac) 35%, white); border:1px solid var(--line); overflow: visible; }
     .bubble .ai-final{ color:#0A0D10; white-space:normal; }
 
-    /* ===== Document Preview (kept for parity) ===== */
     .doc-page{
       background:#fff; border:1px solid rgba(10,13,16,.06); box-shadow: 0 10px 28px rgba(10,13,16,.10);
       border-radius: 14px; padding: 28px 28px 32px 28px;
@@ -344,7 +314,6 @@
     .doc-fade{ opacity:0; transform: translateY(4px); transition: opacity .25s ease, transform .25s ease; }
     .doc-fade.in{ opacity:1; transform: translateY(0); }
 
-    /* ====== Fixed-size Demo Stage ====== */
     .demo-stage{
       position: relative;
       height: var(--demo-stage-h-sm);
@@ -370,31 +339,23 @@
     .scene.active{ opacity:1; transform: scale(1); }
     .scene.exit{ opacity:0; transform: scale(.99); transition: opacity .28s ease, transform .28s ease; }
 
-    /* ===== Hero CTA fade (Apple-smooth) ===== */
-    .hero-cta-fade {
-      opacity: 0;
-      transform: translateY(8px);
+    .hero-cta-fade { opacity: 0; transform: translateY(8px);
       transition: opacity .66s cubic-bezier(.22,.8,.22,1), transform .66s cubic-bezier(.22,.8,.22,1);
-      will-change: opacity, transform;
+      will-change: opacity, transform; }
+    .hero-cta-fade.cta-visible { opacity: 1; transform: translateY(0); }
+
+    /* Hero height rules */
+    #home .hero-card{
+      height: calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px));
+      min-height: calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px));
     }
-    .hero-cta-fade.cta-visible {
-      opacity: 1;
-      transform: translateY(0);
+    @media (min-width: 1024px){
+      #home .hero-card{
+        height: calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px)) !important;
+        min-height: calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px)) !important;
+      }
     }
 
-    /* ===== Hero height rules (exact bottom gap) ===== */
-#home .hero-card{
-  height: calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px));
-  min-height: calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px));
-}
-@media (min-width: 1024px){
-  #home .hero-card{
-    height: calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px)) !important;
-    min-height: calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px)) !important;
-  }
-}
-
-    /* ===== Brands section (Apple-like) ===== */
     .brand-logo{
       height: clamp(28px, 3.2vw, 44px);
       width: auto;
@@ -407,11 +368,24 @@
     }
     .brand-logo:hover{ filter: grayscale(0); opacity: 1; transform: translateY(-2px) scale(1.02); }
     .brand-note{ font-size: 11px; color: #6b7280; }
+
+    /* Blinking caret that follows the typed text */
+    #heroSubtitleText::after{
+      content:"";
+      display:inline-block;
+      border-right:2px solid rgba(255,255,255,0.95);
+      width:0;
+      height:1.05em;
+      margin-left:2px;
+      transform: translateY(2px);
+      animation: heroCaretBlink 1.05s steps(1,end) infinite;
+    }
+    @keyframes heroCaretBlink { 50% { border-color: transparent; } }
   </style>
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
-  <!-- FULL-PAGE BLUR OVERLAY (unchanged) -->
+  <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
   <!-- HEADER -->
@@ -423,7 +397,6 @@
         </a>
       </div>
 
-      <!-- UPDATED HEADER LINKS (now real pages) -->
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="index.html">OpenCounsel</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="contact.html">Contact</a>
@@ -446,7 +419,6 @@
       <div class="menu-scrim"></div>
       <aside class="menu-panel">
         <div class="drawer-head">
-          <!-- Title now links to home for parity with other pages -->
           <a href="index.html" class="drawer-title">OpenCounsel</a>
           <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -455,7 +427,6 @@
           </button>
         </div>
 
-        <!-- UPDATED MOBILE MENU LINKS (remove OpenCounsel item) -->
         <nav class="drawer-nav mt-2">
           <a href="contact.html">Contact</a>
           <a href="download.html">Download</a>
@@ -477,131 +448,223 @@
     </div>
   </header>
 
-  <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
-  <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
-
   <!-- HERO -->
-<section
-  id="home"
-  class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0"
-  style="--gap-mobile: 24px; --gap-desktop: 24px;"
->
-  <div
-    class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border
-           h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
-           lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
-           flex items-center justify-center text-center
-           px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+  <section
+    id="home"
+    class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0"
+    style="--gap-mobile: 24px; --gap-desktop: 24px;"
   >
-    <div class="flex flex-col items-center max-w-2xl">
-      <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
-      <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Your Counsel. For everything.</p>
-      <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Research. Law. Business. Life.</p>
+    <div
+      class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border
+             h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
+             lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
+             flex items-center justify-center text-center
+             px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+    >
+      <div class="flex flex-col items-center max-w-2xl">
+        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <div class="mt-8 flex justify-center">
-        <a
-          id="heroCtaBtn"
-          href="download.html"
-          class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                 grad-anim"
-          style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
-        >
-          <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
-                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
-          <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
-          <span class="hero-cta-text">Download</span>
-        </a>
+        <!-- SUBTITLE (bigger; dynamic; caret follows text via ::after) -->
+        <p id="heroSubtitle" class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+          <span id="heroSubtitleText" aria-live="polite" aria-atomic="true"></span>
+        </p>
+
+        <!-- Removed: Research. Law. Business. Life. -->
+
+        <div class="mt-8 flex justify-center">
+          <a
+            id="heroCtaBtn"
+            href="download.html"
+            class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                   grad-anim"
+            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
+          >
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
+                  style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+            <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
+            <span class="hero-cta-text">Download</span>
+          </a>
+        </div>
       </div>
+
+      <oc-down-arrow
+        id="heroArrow"
+        aria-hidden="true"
+        class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out"
+        size="56"
+        thickness="3"
+        alpha="0.85"
+        amp="12%"
+        bounce="2s"
+        breathe="4s"
+      ></oc-down-arrow>
     </div>
+  </section>
 
-    <oc-down-arrow
-      id="heroArrow"
-      aria-hidden="true"
-      class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out"
-      size="56"
-      thickness="3"
-      alpha="0.85"
-      amp="12%"
-      bounce="2s"
-      breathe="4s"
-    ></oc-down-arrow>
-  </div>
-</section>
-
-
-
-<!-- Measure actual header height (handles desktop vs mobile, sticky headers, etc.) -->
-<script>
-  (function setHeaderVar() {
-    const pickHeader = () =>
-      document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-    const set = () => {
+  <!-- Measure header height -->
+  <script>
+    (function setHeaderVar() {
+      const pickHeader = () =>
+        document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+      const set = () => {
+        const el = pickHeader();
+        const h = el ? el.getBoundingClientRect().height : 56;
+        document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+      };
+      set();
+      window.addEventListener('resize', set, { passive: true });
+      window.addEventListener('orientationchange', set, { passive: true });
       const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56; // fallback
-      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-    };
-    set();
-    window.addEventListener('resize', set, { passive: true });
-    window.addEventListener('orientationchange', set, { passive: true });
-    const el = pickHeader();
-    if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-  })();
-</script>
+      if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+    })();
+  </script>
 
+  <!-- HERO TYPEWRITER CONFIG (edit these values) -->
+  <script>
+    // Override any value by setting window.OC_HERO_CONFIG before this runs.
+    window.OC_HERO_CONFIG = Object.assign({
+      prefix: 'Your Counsel. For ',
+      words: [
+        'everything.',
+        'entrepreneur',
+        'student',
+        'inventor',
+        'lawyer',
+        'designer',
+        'business owner'
+      ],
+      typeSpeed: 42,            // ms per character when typing
+      deleteSpeed: 38,          // ms per character when deleting
+      pauseAfterWordMs: 2000,   // wait after a word is fully typed
+      pauseBetweenWordsMs: 350, // wait after deletion before next word begins
+      startDelayMs: 200,        // delay before starting the very first type
+      loop: true                // cycle forever
+    }, window.OC_HERO_CONFIG || {});
+  </script>
 
-<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
-<script>
-(() => {
-  const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
-  const arrow  = document.getElementById('heroArrow');
-  const ctaBtn = document.getElementById('heroCtaBtn');
-  const ctaTxt = document.querySelector('#home .hero-cta-text');
-  if (!arrow || !ctaBtn) return;
+  <!-- HERO TYPEWRITER (robust + caret) -->
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const el = document.getElementById('heroSubtitleText');
+      if (!el) return;
 
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const cfg = window.OC_HERO_CONFIG || {};
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  const reveal = () => {
-    arrow.classList.remove('opacity-0');
-    arrow.classList.add('opacity-100');
-  };
-
-  document.addEventListener('oc:cta-text-done', () => {
-    if (prefersReduced) { reveal(); return; }
-    setTimeout(reveal, ARROW_AFTER_CTA_MS);
-  }, { once: true });
-
-  const onCtaInView = () => {
-    if (prefersReduced) { reveal(); return; }
-    if (!ctaTxt) { setTimeout(reveal, 300); return; }
-    let lastChange = Date.now();
-    const mo = new MutationObserver(() => { lastChange = Date.now(); });
-    mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
-
-    const checkStable = () => {
-      const idleMs = Date.now() - lastChange;
-      if ((ctaTxt.textContent || '').trim() && idleMs > 250) {
-        mo.disconnect(); reveal(); return true;
+      async function type(text, speed){
+        for(let i=0;i<text.length;i++){
+          el.textContent += text[i];
+          await sleep(speed);
+        }
       }
-      return false;
-    };
-    const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
-    requestAnimationFrame(tick);
-    setTimeout(() => { try { mo.disconnect(); } catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
-  };
+      async function del(count, speed){
+        for(let i=0;i<count;i++){
+          el.textContent = el.textContent.slice(0, -1);
+          await sleep(speed);
+        }
+      }
 
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
-    }
-  }, { threshold: 0.35 });
+      (async () => {
+        try{
+          // Ensure we start clean
+          el.textContent = '';
+          await sleep(cfg.startDelayMs);
 
-  io.observe(ctaBtn);
-})();
-</script>
+          // 1) Type prefix once
+          await type(cfg.prefix, cfg.typeSpeed);
+
+          // 2) Loop words: type → pause → delete only the word → pause → next
+          let i = 0;
+          while (true) {
+            const word = cfg.words[i % cfg.words.length] || '';
+            await type(word, cfg.typeSpeed);
+            await sleep(cfg.pauseAfterWordMs);
+            await del(word.length, cfg.deleteSpeed);
+            await sleep(cfg.pauseBetweenWordsMs);
+
+            i++;
+            if (!cfg.loop && i >= cfg.words.length) break;
+          }
+        }catch(e){
+          // Fail safe: at least show first state
+          el.textContent = cfg.prefix + (cfg.words && cfg.words[0] ? cfg.words[0] : '');
+        }
+      })();
+    });
+  </script>
+
+  <!-- OS icon swap for CTA -->
+  <script>
+    (function(){
+      try{
+        const icon = document.getElementById('heroCtaIcon');
+        if (!icon) return;
+        if (window.OC_OS === 'windows') {
+          icon.className = 'ph ph-windows-logo text-xl';
+          icon.setAttribute('title','Windows');
+        } else if (window.OC_OS === 'mac') {
+          icon.className = 'ph ph-apple-logo text-xl';
+          icon.setAttribute('title','macOS');
+        }
+      }catch(_){}
+    })();
+  </script>
+
+  <!-- Arrow reveal controller (unchanged) -->
+  <script>
+    (() => {
+      const ARROW_AFTER_CTA_MS = 40;
+      const arrow  = document.getElementById('heroArrow');
+      const ctaBtn = document.getElementById('heroCtaBtn');
+      const ctaTxt = document.querySelector('#home .hero-cta-text');
+      if (!arrow || !ctaBtn) return;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const reveal = () => {
+        arrow.classList.remove('opacity-0');
+        arrow.classList.add('opacity-100');
+      };
+
+      document.addEventListener('oc:cta-text-done', () => {
+        if (prefersReduced) { reveal(); return; }
+        setTimeout(reveal, ARROW_AFTER_CTA_MS);
+      }, { once: true });
+
+      const onCtaInView = () => {
+        if (prefersReduced) { reveal(); return; }
+        if (!ctaTxt) { setTimeout(reveal, 300); return; }
+        let lastChange = Date.now();
+        const mo = new MutationObserver(() => { lastChange = Date.now(); });
+        mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
+
+        const checkStable = () => {
+          const idleMs = Date.now() - lastChange;
+          if ((ctaTxt.textContent || '').trim() && idleMs > 250) {
+            mo.disconnect(); reveal(); return true;
+          }
+          return false;
+        };
+        const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+        setTimeout(() => { try { mo.disconnect(); } catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
+      };
+
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
+        }
+      }, { threshold: 0.35 });
+
+      io.observe(ctaBtn);
+    })();
+  </script>
+</body>
+</html>
+
 <!-- COUNSEL FOR LIFE -->
 <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-12 pb-0 bg-white">
   <!-- Decorative glows -->
