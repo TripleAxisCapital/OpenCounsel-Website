@@ -496,13 +496,12 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- Bigger subhead + dynamic word -->
+      <!-- Bigger subhead + dynamic word target -->
       <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        Your Counsel. For
-        <span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
+        Your Counsel. For&nbsp;<span id="ocDynamicWord" class="align-baseline" aria-live="polite"></span>
       </p>
 
-      <!-- Removed the line: Research. Law. Business. Life. -->
+      <!-- (Removed) Research. Law. Business. Life. -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -517,7 +516,6 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
           <span class="hero-cta-text">Download</span>
         </a>
@@ -538,144 +536,139 @@
   </div>
 </section>
 
-<!-- Tiny caret style (optional) -->
+<!-- Caret style (optional) -->
 <style>
   .oc-caret::after {
     content: "";
     display: inline-block;
-    width: 1px;
-    height: 0.9em;
-    margin-left: 2px;
-    vertical-align: -0.1em;
-    background: currentColor;
-    animation: ocBlink 1s steps(1) infinite;
+    width: 1px; height: 0.9em;
+    margin-left: 2px; vertical-align: -0.1em;
+    background: currentColor; animation: ocBlink 1s steps(1) infinite;
   }
   @keyframes ocBlink { 50% { opacity: 0; } }
 </style>
 
 <!-- Measure actual header height (unchanged) -->
 <script>
-  (function setHeaderVar() {
-    const pickHeader = () =>
-      document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-    const set = () => {
-      const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56; // fallback
-      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-    };
-    set();
-    window.addEventListener('resize', set, { passive: true });
-    window.addEventListener('orientationchange', set, { passive: true });
+(function setHeaderVar(){
+  const pickHeader = () => document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+  const set = () => {
     const el = pickHeader();
-    if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-  })();
+    const h = el ? el.getBoundingClientRect().height : 56;
+    document.documentElement.style.setProperty('--header-h', Math.round(h)+'px');
+  };
+  set();
+  window.addEventListener('resize', set, {passive:true});
+  window.addEventListener('orientationchange', set, {passive:true});
+  const el = pickHeader();
+  if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+})();
 </script>
 
-<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
+<!-- Reveal arrow after CTA stable (unchanged) -->
 <script>
 (() => {
-  const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
-  const arrow  = document.getElementById('heroArrow');
+  const ARROW_AFTER_CTA_MS = 40;
+  const arrow = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
   if (!arrow || !ctaBtn) return;
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const reveal = () => {
-    arrow.classList.remove('opacity-0');
-    arrow.classList.add('opacity-100');
-  };
+  const reveal = () => { arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
 
   document.addEventListener('oc:cta-text-done', () => {
     if (prefersReduced) { reveal(); return; }
     setTimeout(reveal, ARROW_AFTER_CTA_MS);
-  }, { once: true });
+  }, { once:true });
 
   const onCtaInView = () => {
     if (prefersReduced) { reveal(); return; }
     if (!ctaTxt) { setTimeout(reveal, 300); return; }
     let lastChange = Date.now();
     const mo = new MutationObserver(() => { lastChange = Date.now(); });
-    mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
+    mo.observe(ctaTxt, { childList:true, characterData:true, subtree:true });
 
     const checkStable = () => {
-      const idleMs = Date.now() - lastChange;
-      if ((ctaTxt.textContent || '').trim() && idleMs > 250) {
+      if (((ctaTxt.textContent||'').trim()) && (Date.now()-lastChange) > 250) {
         mo.disconnect(); reveal(); return true;
       }
       return false;
     };
     const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
-    setTimeout(() => { try { mo.disconnect(); } catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
+    setTimeout(() => { try{mo.disconnect()}catch{}; if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
   };
 
-  const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
-    }
-  }, { threshold: 0.35 });
-
-  io.observe(ctaBtn);
+  new IntersectionObserver((es,io)=>{
+    for (const e of es) if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
+  }, { threshold:0.35 }).observe(ctaBtn);
 })();
 </script>
 
-<!-- Type & reverse animation for the dynamic word -->
+<!-- Type & reverse animation (robust, DOM-ready, iOS-safe) -->
 <script>
-(() => {
-  // ===== EASY TUNING =====
-  const OC_TYPE = {
-    // Words cycle. First item will appear first.
-    words: ['everything.', 'entrepreneur', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
-    typeMs: 55,        // per character while typing
-    deleteMs: 45,      // per character while deleting
-    holdMs: 2000,      // time to hold the full word before deleting (ms)
-    startDelayMs: 400, // delay before starting (ms)
-    caret: true,       // show a blinking caret
-    loop: true         // loop forever
+(function(){
+  const CFG = {
+    words: ['everything.', 'entrepreneuwer', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
+    typeMs: 55,     // per-char typing speed
+    deleteMs: 45,   // per-char deleting speed
+    holdMs: 2000,   // time to hold full word
+    startDelayMs: 400,
+    caret: true,
+    loop: true
   };
-  // =======================
 
-  const el = document.getElementById('ocDynamicWord');
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!el) return;
-
-  // Reserve space to avoid layout shift: width of the longest word (in ch)
-  const maxLen = OC_TYPE.words.reduce((m, w) => Math.max(m, (w || '').length), 0);
-  el.style.display = 'inline-block';
-  el.style.minWidth = maxLen + 'ch';
-  if (OC_TYPE.caret) el.classList.add('oc-caret');
-
-  if (prefersReduced) { el.textContent = OC_TYPE.words[0] || ''; return; }
-
-  let i = 0, ch = 0, typing = true;
-
-  const step = () => {
-    const word = OC_TYPE.words[i % OC_TYPE.words.length] || '';
-    if (typing) {
-      ch++;
-      el.textContent = word.slice(0, ch);
-      if (ch < word.length) {
-        setTimeout(step, OC_TYPE.typeMs);
-      } else {
-        // hold, then delete
-        setTimeout(() => { typing = false; step(); }, OC_TYPE.holdMs);
-      }
-    } else {
-      ch--;
-      el.textContent = word.slice(0, ch);
-      if (ch > 0) {
-        setTimeout(step, OC_TYPE.deleteMs);
-      } else {
-        typing = true;
-        i++;
-        setTimeout(step, 10);
-      }
+  function boot(){
+    // Ensure the target span exists; create if missing
+    let el = document.getElementById('ocDynamicWord');
+    if (!el) {
+      const host = document.querySelector('#home .hero-sub1');
+      el = document.createElement('span');
+      el.id = 'ocDynamicWord';
+      host && host.appendChild(el);
     }
-  };
+    if (!el) return;
 
-  setTimeout(step, OC_TYPE.startDelayMs);
+    // Reserve space to prevent layout shift (longest word)
+    const maxLen = CFG.words.reduce((m,w)=>Math.max(m,(w||'').length),0);
+    el.style.display = 'inline-block';
+    el.style.minWidth = maxLen + 'ch';
+
+    if (CFG.caret) el.classList.add('oc-caret');
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Always show something even with reduced motion
+    if (reduce) { el.textContent = CFG.words[0] || 'everything.'; return; }
+
+    let i = 0, ch = 0, typing = true;
+
+    const tick = () => {
+      const word = CFG.words[i % CFG.words.length] || '';
+      if (typing) {
+        el.textContent = word.slice(0, ++ch);
+        if (ch < word.length) {
+          setTimeout(tick, CFG.typeMs);
+        } else {
+          setTimeout(()=>{ typing = false; tick(); }, CFG.holdMs);
+        }
+      } else {
+        el.textContent = word.slice(0, --ch);
+        if (ch > 0) {
+          setTimeout(tick, CFG.deleteMs);
+        } else {
+          typing = true; i++;
+          setTimeout(tick, 10);
+        }
+      }
+    };
+
+    setTimeout(tick, CFG.startDelayMs);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once:true });
+  } else { boot(); }
 })();
 </script>
 
