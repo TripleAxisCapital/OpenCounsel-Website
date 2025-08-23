@@ -407,14 +407,6 @@
     }
     .brand-logo:hover{ filter: grayscale(0); opacity: 1; transform: translateY(-2px) scale(1.02); }
     .brand-note{ font-size: 11px; color: #6b7280; }
-
-    /* ===== Hero typewriter caret (subtle) ===== */
-    .hero-caret{
-      display:inline-block; border-right:2px solid rgba(255,255,255,0.92);
-      width:.6ch; margin-left:1px; transform: translateY(1px);
-      animation: heroCaretBlink 1.1s steps(1,end) infinite;
-    }
-    @keyframes heroCaretBlink { 50% { border-color: transparent; } }
   </style>
 </head>
 
@@ -504,13 +496,19 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- SUBTITLE (larger + animated) -->
-      <p id="heroSubtitle" class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        <span id="heroSubtitleText" aria-live="polite" aria-atomic="true"></span>
-        <span class="hero-caret" aria-hidden="true"></span>
+      <!-- Bigger tagline with progressive-enhancement fallback -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+        Your Counsel. For&nbsp;
+        <span
+          id="hcWord"
+          data-words='["everything.","entrepreneuwer","student","inventor","lawyer","designer","business owner"]'
+          data-type-speed="55"     <!-- ms per typed char -->
+          data-delete-speed="45"   <!-- ms per deleted char -->
+          data-hold="2000"         <!-- ms to hold full word before delete -->
+          data-gap="200"           <!-- ms pause after delete before typing next -->
+          data-respect-reduced="false"
+        >everything.</span>
       </p>
-
-      <!-- REMOVED: Research. Law. Business. Life. -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -525,7 +523,6 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
           <span class="hero-cta-text">Download</span>
         </a>
@@ -546,125 +543,28 @@
   </div>
 </section>
 
-
-
-<!-- Measure actual header height (handles desktop vs mobile, sticky headers, etc.) -->
-<script>
-  (function setHeaderVar() {
-    const pickHeader = () =>
-      document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-    const set = () => {
-      const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56; // fallback
-      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-    };
-    set();
-    window.addEventListener('resize', set, { passive: true });
-    window.addEventListener('orientationchange', set, { passive: true });
-    const el = pickHeader();
-    if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-  })();
-</script>
-
-<!-- HERO TYPEWRITER CONFIG (edit these values) -->
-<script>
-  // You can override any of these at runtime: window.OC_HERO_CONFIG = { words:[...], typeSpeed: 40, ... }
-  window.OC_HERO_CONFIG = Object.assign({
-    prefix: 'Your Counsel. For ',
-    words: [
-      'everything.',
-      'entrepreneur',
-      'student',
-      'inventor',
-      'lawyer',
-      'designer',
-      'business owner'
-    ],
-    typeSpeed: 42,          // ms/character when typing
-    deleteSpeed: 38,        // ms/character when deleting
-    pauseAfterWordMs: 2000, // wait after a word is fully typed, before deleting it
-    pauseBetweenWordsMs: 350, // wait after deletion before typing the next word
-    startDelayMs: 300,      // wait before starting the very first type
-    loop: true              // keep cycling the word list forever
-  }, window.OC_HERO_CONFIG || {});
-</script>
-
-<!-- HERO TYPEWRITER (types full line once, then replaces only the last word forever) -->
+<!-- Measure actual header height -->
 <script>
 (() => {
-  const el = document.getElementById('heroSubtitleText');
-  const container = document.getElementById('heroSubtitle');
-  if (!el || !container) return;
-
-  const cfg = window.OC_HERO_CONFIG || {};
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-  async function typeInto(target, text, speed){
-    for(let i=0;i<text.length;i++){
-      target.textContent += text[i];
-      await sleep(speed);
-    }
-  }
-  async function deleteChars(target, count, speed){
-    for(let i=0;i<count;i++){
-      target.textContent = target.textContent.slice(0, -1);
-      await sleep(speed);
-    }
-  }
-
-  (async function run(){
-    if (prefersReduced) {
-      // Respect reduced motion: show the first variant statically
-      el.textContent = cfg.prefix + (cfg.words[0] || '');
-      return;
-    }
-
-    await sleep(cfg.startDelayMs);
-
-    // 1) Type the prefix once
-    await typeInto(el, cfg.prefix, cfg.typeSpeed);
-
-    let idx = 0;
-    // 2) Loop through words
-    while (true) {
-      const word = cfg.words[idx % cfg.words.length] || '';
-      // type the word
-      await typeInto(el, word, cfg.typeSpeed);
-      await sleep(cfg.pauseAfterWordMs);
-      // delete ONLY the word, keep prefix intact
-      await deleteChars(el, word.length, cfg.deleteSpeed);
-      await sleep(cfg.pauseBetweenWordsMs);
-      idx++;
-
-      if (!cfg.loop && idx >= cfg.words.length) break;
-    }
-  })();
+  const pickHeader = () =>
+    document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+  const set = () => {
+    const el = pickHeader();
+    const h = el ? el.getBoundingClientRect().height : 56;
+    document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+  };
+  set();
+  window.addEventListener('resize', set, { passive: true });
+  window.addEventListener('orientationchange', set, { passive: true });
+  const el = pickHeader();
+  if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
 })();
 </script>
 
-<!-- (Optional) OS icon swap for CTA if you rely on OC_OS elsewhere -->
-<script>
-  (function(){
-    try{
-      const icon = document.getElementById('heroCtaIcon');
-      if (!icon) return;
-      if (window.OC_OS === 'windows') {
-        icon.className = 'ph ph-windows-logo text-xl';
-        icon.setAttribute('title','Windows');
-      } else if (window.OC_OS === 'mac') {
-        icon.className = 'ph ph-apple-logo text-xl';
-        icon.setAttribute('title','macOS');
-      }
-    }catch(_){}
-  })();
-</script>
-
-<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
+<!-- Reveal the down arrow after CTA text is stable -->
 <script>
 (() => {
-  const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
+  const ARROW_AFTER_CTA_MS = 40;
   const arrow  = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
@@ -710,8 +610,92 @@
   io.observe(ctaBtn);
 })();
 </script>
-</body>
-</html>
+
+<!-- HERO typed / reverse-typed loop (state machine, no async/await) -->
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('hcWord');
+  if (!el) return;
+
+  // Config from data-* (tweak without editing JS)
+  let words;
+  try { words = JSON.parse(el.dataset.words || '["everything."]'); }
+  catch { words = ["everything."]; }
+  if (!Array.isArray(words) || words.length === 0) words = ["everything."];
+
+  const typeMs = +(el.dataset.typeSpeed   || 55);
+  const delMs  = +(el.dataset.deleteSpeed || 45);
+  const holdMs = +(el.dataset.hold        || 2000);
+  const gapMs  = +(el.dataset.gap         || 200);
+  const respectReduced = (el.dataset.respectReduced || 'false') === 'true';
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (prefersReduced && respectReduced) {
+    el.textContent = words[0];
+    return;
+  }
+
+  // Ensure the span initially shows the first word (fallback already does)
+  if (el.textContent !== String(words[0])) el.textContent = String(words[0]);
+
+  // Finite state machine
+  const state = {
+    mode: 'hold',              // 'hold' -> 'delete' -> 'gap' -> 'type' -> 'hold' ...
+    wordIndex: 0,
+    charIndex: el.textContent.length
+  };
+
+  function schedule(delay) { setTimeout(tick, delay); }
+
+  function tick() {
+    const current = String(words[state.wordIndex]);
+
+    if (state.mode === 'hold') {
+      state.mode = 'delete';
+      schedule(holdMs);
+      return;
+    }
+
+    if (state.mode === 'delete') {
+      if (state.charIndex > 0) {
+        el.textContent = el.textContent.slice(0, -1);
+        state.charIndex--;
+        schedule(delMs);
+      } else {
+        state.mode = 'gap';
+        schedule(gapMs);
+      }
+      return;
+    }
+
+    if (state.mode === 'gap') {
+      // Move to next word and start typing it
+      state.wordIndex = (state.wordIndex + 1) % words.length;
+      state.charIndex = 0;
+      el.textContent = '';
+      state.mode = 'type';
+      schedule(0);
+      return;
+    }
+
+    if (state.mode === 'type') {
+      const nextWord = String(words[state.wordIndex]);
+      if (state.charIndex < nextWord.length) {
+        el.textContent += nextWord[state.charIndex];
+        state.charIndex++;
+        schedule(typeMs);
+      } else {
+        state.mode = 'hold';
+        schedule(holdMs);
+      }
+      return;
+    }
+  }
+
+  // Start the loop
+  schedule(0);
+});
+</script>
 
 <!-- COUNSEL FOR LIFE -->
 <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 mt-12 pb-0 bg-white">
