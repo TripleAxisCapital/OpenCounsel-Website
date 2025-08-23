@@ -423,51 +423,6 @@
       50%, 100% { opacity: 0; }
     }
   </style>
-
-
-<!-- DROP-IN: slow only the subtitle + put a hard break after "For" -->
-<script id="oc-hero-tweaks">
-(function () {
-  // --- 1) Slow ONLY the subtitle ("Your Counsel. For …") ---
-  // (A) Prefix typing speed (subtitle line 1)
-  window.OC_HERO = Object.assign(window.OC_HERO || {}, {
-    lineCharMin: 80,   // was 5
-    lineCharMax: 120   // was 10
-  });
-
-  // (B) Rotating words speed (subtitle line 2)
-  var currentPrefix =
-    (window.OC_HERO_ROTATOR && window.OC_HERO_ROTATOR.prefix) || 'Your Counsel. For';
-  window.OC_HERO_ROTATOR = Object.assign(window.OC_HERO_ROTATOR || {}, {
-    // Remove trailing space; CSS below will insert a newline instead
-    prefix: currentPrefix.replace(/\s+$/, ''),
-    dwellMs: 2200,
-    typeMin: 90,  typeMax: 130,   // slower typing
-    deleteMin: 40, deleteMax: 60  // slower backspace
-  });
-
-  // --- 2) Put "Your Counsel. For" on line 1 and rotating word on line 2 (CSS-only) ---
-  // Default: applies at all screen sizes. For mobile-only behavior, use the commented CSS below.
-  var css = `
-    .hero-sub1 .hero-prefix { white-space: nowrap; }
-    .hero-sub1 .hero-prefix::after { content: '\\A'; white-space: pre; }
-
-    /* MOBILE-ONLY VERSION (uncomment this block and delete the two rules above if you only want the break on small screens)
-    .hero-sub1 .hero-prefix { white-space: normal; }
-    .hero-sub1 .hero-prefix::after { content: none; }
-    @media (max-width: 767px) {
-      .hero-sub1 .hero-prefix { white-space: nowrap; }
-      .hero-sub1 .hero-prefix::after { content: '\\A'; white-space: pre; }
-    }
-    */
-  `;
-  var style = document.createElement('style');
-  style.setAttribute('data-oc-hero-tweaks', '');
-  style.appendChild(document.createTextNode(css));
-  document.head.appendChild(style);
-})();
-</script>
-
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
