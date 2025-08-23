@@ -496,11 +496,11 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- Bigger subhead + explicit dynamic word target (layout locked) -->
-      <p class="hero-sub1 mt-4 text-3xl md:text-4xl text-white/90 leading-relaxed oc-inline">
-        <span class="oc-prefix">Your Counsel. For</span>
-        <span id="ocDynamicWord" class="align-baseline" aria-live="polite">everything.</span>
+      <!-- Bigger tagline with dynamic last word -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+        <span id="hcPrefix" aria-label="Your Counsel. For "></span><span id="hcWord"></span>
       </p>
+      <!-- Removed: <p class="hero-sub2 ...">Research. Law. Business. Life.</p> -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -515,6 +515,7 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
           <span class="hero-cta-text">Download</span>
         </a>
@@ -535,142 +536,161 @@
   </div>
 </section>
 
-<!-- Helpers: keep phrase on one line & caret -->
-<style>
-  .oc-inline { display: inline-flex; align-items: baseline; gap: .35ch; white-space: nowrap; }
-  .oc-prefix { display: inline-block; }
-  .oc-caret::after {
-    content: ""; display: inline-block; width: 1px; height: 0.9em;
-    margin-left: 2px; vertical-align: -0.1em; background: currentColor;
-    animation: ocBlink 1s steps(1) infinite;
-  }
-  @keyframes ocBlink { 50% { opacity: 0; } }
-</style>
-
-<!-- Measure actual header height (unchanged) -->
+<!-- Measure actual header height -->
 <script>
-(function setHeaderVar(){
-  const pickHeader = () => document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-  const set = () => {
+  (function setHeaderVar() {
+    const pickHeader = () =>
+      document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+    const set = () => {
+      const el = pickHeader();
+      const h = el ? el.getBoundingClientRect().height : 56; // fallback
+      document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
+    };
+    set();
+    window.addEventListener('resize', set, { passive: true });
+    window.addEventListener('orientationchange', set, { passive: true });
     const el = pickHeader();
-    const h = el ? el.getBoundingClientRect().height : 56;
-    document.documentElement.style.setProperty('--header-h', Math.round(h)+'px');
-  };
-  set();
-  window.addEventListener('resize', set, {passive:true});
-  window.addEventListener('orientationchange', set, {passive:true});
-  const el = pickHeader();
-  if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-})();
+    if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+  })();
 </script>
 
-<!-- Reveal arrow after CTA stable (unchanged) -->
+<!-- Down-arrow reveal controller (unchanged) -->
 <script>
 (() => {
   const ARROW_AFTER_CTA_MS = 40;
-  const arrow = document.getElementById('heroArrow');
+  const arrow  = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
   if (!arrow || !ctaBtn) return;
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const reveal = () => { arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
+
+  const reveal = () => {
+    arrow.classList.remove('opacity-0');
+    arrow.classList.add('opacity-100');
+  };
 
   document.addEventListener('oc:cta-text-done', () => {
     if (prefersReduced) { reveal(); return; }
     setTimeout(reveal, ARROW_AFTER_CTA_MS);
-  }, { once:true });
+  }, { once: true });
 
   const onCtaInView = () => {
     if (prefersReduced) { reveal(); return; }
     if (!ctaTxt) { setTimeout(reveal, 300); return; }
     let lastChange = Date.now();
     const mo = new MutationObserver(() => { lastChange = Date.now(); });
-    mo.observe(ctaTxt, { childList:true, characterData:true, subtree:true });
+    mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
 
     const checkStable = () => {
-      if (((ctaTxt.textContent||'').trim()) && (Date.now()-lastChange) > 250) {
+      const idleMs = Date.now() - lastChange;
+      if ((ctaTxt.textContent || '').trim() && idleMs > 250) {
         mo.disconnect(); reveal(); return true;
       }
       return false;
     };
     const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
-    setTimeout(() => { try{mo.disconnect()}catch{}; if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
+    setTimeout(() => { try { mo.disconnect(); } catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
   };
 
-  new IntersectionObserver((es,io)=>{
-    for (const e of es) if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
-  }, { threshold:0.35 }).observe(ctaBtn);
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { onCtaInView(); io.disconnect(); break; }
+    }
+  }, { threshold: 0.35 });
+
+  io.observe(ctaBtn);
 })();
 </script>
 
-<!-- Type & reverse animation (bulletproof + configurable) -->
+<!-- HERO typed/reverse-typed word loop -->
 <script>
-(function(){
-  // ===== CONFIG YOU CAN EDIT =====
-  const CFG = {
-    words: ['everything.', 'entrepreneur', 'student', 'inventor', 'lawyer', 'designer', 'business owner'],
-    typeMs: 55,          // per-char typing speed
-    deleteMs: 45,        // per-char deleting speed
-    holdMs: 2000,        // time to hold full word (ms)
-    startDelayMs: 400,   // delay before first type (ms)
-    caret: true,         // blinking caret
-    loop: true,          // loop forever
-    respectReducedMotion: false // true = static first word if OS "Reduce motion" is on
+(() => {
+  // ========= Adjustable config =========
+  const HERO_TYPER = {
+    prefixText: 'Your Counsel. For ', // text that stays in front of the rotating word
+    words: [
+      'everything.',
+      'entrepreneuwer',
+      'student',
+      'inventor',
+      'lawyer',
+      'designer',
+      'business owner'
+    ],
+    typingMsPerChar: 55,     // speed for typing characters
+    deletingMsPerChar: 45,   // speed for backspacing characters
+    initialDelayMs: 300,     // pause before ANY typing starts
+    dwellFullWordMs: 2000,   // how long to keep a completed word before erasing
+    betweenWordsPauseMs: 200,// pause after erasing before next word starts
+    typePrefixOnce: true,    // type the prefix once (true) or paint it instantly (false)
+    loop: true               // loop through words forever
   };
-  // =================================
+  // ====================================
 
-  function start(el){
-    // Reserve width (prevents layout shift)
-    const maxLen = CFG.words.reduce((m,w)=>Math.max(m,(w||'').length),0);
-    el.style.display = 'inline-block';
-    el.style.minWidth = maxLen + 'ch';
-    if (CFG.caret) el.classList.add('oc-caret');
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const elPrefix = document.getElementById('hcPrefix');
+  const elWord   = document.getElementById('hcWord');
+  if (!elPrefix || !elWord) return;
 
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (CFG.respectReducedMotion && reduce){
-      el.textContent = CFG.words[0] || 'everything.';
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  async function typeInto(el, text, msPerChar) {
+    for (let i = 0; i < text.length; i++) {
+      el.textContent += text[i];
+      await sleep(msPerChar);
+    }
+  }
+
+  async function deleteFrom(el, count, msPerChar) {
+    for (let i = 0; i < count; i++) {
+      el.textContent = el.textContent.slice(0, -1);
+      await sleep(msPerChar);
+    }
+  }
+
+  async function run() {
+    // Static or reduced-motion shortcut:
+    if (prefersReduced) {
+      elPrefix.textContent = HERO_TYPER.prefixText;
+      elWord.textContent   = (HERO_TYPER.words[0] || 'everything.');
       return;
     }
 
-    // Prevent double init if scripts hot-reload
-    if (el.dataset.ocBooted) return;
-    el.dataset.ocBooted = '1';
+    await sleep(HERO_TYPER.initialDelayMs);
 
-    let idx = 0, i = 0, dir = 1; // dir: 1=typing, -1=deleting
-
-    function loop(){
-      const w = CFG.words[idx % CFG.words.length] || '';
-      i += dir;
-      el.textContent = w.slice(0, i);
-
-      if (dir === 1 && i === w.length){
-        setTimeout(() => { dir = -1; loop(); }, CFG.holdMs);
-      } else if (dir === -1 && i === 0){
-        idx++; dir = 1;
-        setTimeout(loop, 50);
-      } else {
-        setTimeout(loop, dir === 1 ? CFG.typeMs : CFG.deleteMs);
-      }
+    // Type or paint the prefix
+    if (HERO_TYPER.typePrefixOnce) {
+      await typeInto(elPrefix, HERO_TYPER.prefixText, HERO_TYPER.typingMsPerChar);
+    } else {
+      elPrefix.textContent = HERO_TYPER.prefixText;
     }
 
-    setTimeout(loop, CFG.startDelayMs);
+    // Loop through words
+    let i = 0;
+    while (true) {
+      const word = HERO_TYPER.words[i % HERO_TYPER.words.length] || '';
+      // Type the word
+      await typeInto(elWord, word, HERO_TYPER.typingMsPerChar);
+      // Hold the completed word
+      await sleep(HERO_TYPER.dwellFullWordMs);
+      // Reverse type (erase only the word)
+      await deleteFrom(elWord, word.length, HERO_TYPER.deletingMsPerChar);
+      // Short pause before next word
+      await sleep(HERO_TYPER.betweenWordsPauseMs);
+
+      i++;
+      if (!HERO_TYPER.loop && i >= HERO_TYPER.words.length) break;
+    }
   }
 
-  function boot(){
-    const el = document.getElementById('ocDynamicWord');
-    if (el) { start(el); return; }
-    // if not yet in DOM, try again on load
-    window.addEventListener('load', () => {
-      const el2 = document.getElementById('ocDynamicWord');
-      if (el2) start(el2);
-    }, { once:true });
-  }
+  // Ensure containers start empty for clean animation
+  elPrefix.textContent = '';
+  elWord.textContent = '';
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', boot, { once:true });
-  } else { boot(); }
+  // Kick it off after next frame (layout settled)
+  requestAnimationFrame(run);
 })();
 </script>
 
