@@ -506,10 +506,9 @@
           data-delete-speed="45"
           data-hold="2000"
           data-gap="200"
+          data-respect-reduced="false"
         >everything.</span>
       </p>
-
-      <!-- (Removed) Research. Law. Business. Life. -->
 
       <div class="mt-8 flex justify-center">
         <a
@@ -544,14 +543,14 @@
   </div>
 </section>
 
-<!-- Measure actual header height (desktop vs mobile, sticky headers, etc.) -->
+<!-- Measure actual header height -->
 <script>
 (() => {
   const pickHeader = () =>
     document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
   const set = () => {
     const el = pickHeader();
-    const h = el ? el.getBoundingClientRect().height : 56; // fallback
+    const h = el ? el.getBoundingClientRect().height : 56;
     document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
   };
   set();
@@ -618,7 +617,7 @@
   const el = document.getElementById('hcWord');
   if (!el) return;
 
-  // Config from data attributes (easy to tweak without editing JS)
+  // Config from data attributes
   let words;
   try { words = JSON.parse(el.dataset.words || '["everything."]'); }
   catch { words = ["everything."]; }
@@ -627,9 +626,10 @@
   const delMs  = +(el.dataset.deleteSpeed || 45);
   const holdMs = +(el.dataset.hold        || 2000);
   const gapMs  = +(el.dataset.gap         || 200);
+  const respectReduced = (el.dataset.respectReduced || 'false') === 'true';
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (prefersReduced || !words.length) {
+  if ((prefersReduced && respectReduced) || !words.length) {
     el.textContent = words[0] || el.textContent || 'everything.';
     return;
   }
@@ -638,14 +638,14 @@
   async function type(text) { for (let i=0;i<text.length;i++){ el.textContent += text[i]; await sleep(typeMs); } }
   async function erase(n)   { for (let i=0;i<n;i++){ el.textContent = el.textContent.slice(0,-1); await sleep(delMs); } }
 
-  // Ensure we start aligned with first word (HTML fallback already sets "everything.")
+  // Align with first word and dwell
   let idx = 0;
   if (el.textContent !== words[0]) { el.textContent = ''; await type(words[0]); }
   await sleep(holdMs);
 
   while (true) {
     const next = words[(idx + 1) % words.length];
-    await erase(el.textContent.length); // erase only the word span
+    await erase(el.textContent.length);
     await sleep(gapMs);
     await type(next);
     await sleep(holdMs);
