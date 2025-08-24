@@ -1616,125 +1616,164 @@
     makeSectionTyper('#tct', '.tct-title', '.tct-sub', window.OC_TCT);
 
     // ================================
-    // LIVE CHAT DEMO — ONE PAIR AT A TIME
-    // ================================
-    (function chatDemo(){
-      const wrap    = document.getElementById('chat-demo');
-      const stage   = document.getElementById('demoStage');
-      const tplU    = document.getElementById('demoTplUser');
-      const tplB    = document.getElementById('demoTplBot');
+// LIVE CHAT DEMO — ONE PAIR AT A TIME
+// ================================
+(function chatDemo(){
+  const wrap    = document.getElementById('chat-demo');
+  const stage   = document.getElementById('demoStage');
+  const tplU    = document.getElementById('demoTplUser');
+  const tplB    = document.getElementById('demoTplBot');
 
-      const scenes = [
-        {
-          user: "Can my non-compete stop me from joining a competitor in Ontario?",
-          answer: `
-            <strong>Likely no for employees.</strong> Ontario bans most employment non-competes; limited exceptions (e.g., executives or sale of business).
-            <br><strong>Still enforceable?</strong> Only if narrow (time/scope), protects legitimate interests, and not public-policy barred.
-            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.ontario.ca/document/your-guide-employment-standards-act-0/non-compete-agreements" target="_blank" rel="noopener">Ontario ESA – Non-compete agreements</a></div>
-            <em>General information — not legal advice.</em>
-          `
-        },
-        {
-          user: "Terminated without cause in B.C. after 3 years — what severance can I claim?",
-          answer: `
-            <strong>Minimums:</strong> Employment Standards gives <b>~3 weeks' pay</b> at 3 years.<br>
-            <strong>Common-law notice:</strong> often higher (months), based on role, tenure, age, job market.<br>
-            <strong>Act now:</strong> preserve evidence, avoid signing under pressure, get an independent review.
-            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/termination" target="_blank" rel="noopener">BC Employment Standards — Termination</a></div>
-          `
-        },
-        {
-          user: "Can officers search my phone at the Canadian border?",
-          answer: `
-            <strong>Border powers are broad.</strong> Digital devices can be examined under border laws with a heightened threshold.<br>
-            <strong>Practical:</strong> travel mode, separate work data, strong passcodes; refusal can lead to detention/seizure.
-            <div class="mt-2 text-xs text-neutral-600">Source: <a class="underline" href="https://www.cbsa-asfc.gc.ca/publications/dm-md/d19/d19-14-1-eng.html" target="_blank" rel="noopener">CBSA — Examination of digital devices</a></div>
-            <em>General info — policies evolve; check current guidance.</em>
-          `
-        }
-      ];
+  const scenes = [
+    // 1) BUSINESS OWNERS
+    {
+      user: "Write a calm, 3-line email to customers about a 3–5 day shipping delay. Offer a small credit.",
+      answer: `
+        <strong>Subject:</strong> Your order is in great hands<br>
+        Thanks for your patience — we’re running a 3–5 day delay while we finish quality checks.<br>
+        A $10 credit has been added to your account automatically. No action needed.<br>
+        <em>— OpenCounsel draft (edit before sending)</em>
+      `
+    },
 
-      function elFromTpl(tpl){ return tpl.content.cloneNode(true); }
+    // 2) PRODUCT R&D
+    {
+      user: "From user feedback (speed, onboarding, docs), list the top 3 issues and 2 quick wins.",
+      answer: `
+        <strong>Top issues</strong>
+        <ul class="list-disc pl-5">
+          <li>P95 project open time ≈ high (users feel slow on first load)</li>
+          <li>First-run setup unclear (new users miss key steps)</li>
+          <li>Docs are hard to surface (search/findability gaps)</li>
+        </ul>
+        <strong>Quick wins</strong>
+        <ul class="list-disc pl-5">
+          <li>Preload last workspace + lazy-load heavy modules</li>
+          <li>60-second setup checklist on first run with links to docs</li>
+        </ul>
+        <div class="mt-1 text-xs text-neutral-600">Convert to a 2-week sprint: profile → preload → checklist UX → doc surfacing → QA.</div>
+      `
+    },
 
-      function makeScenePair(userText, htmlAnswer){
-        const scene = document.createElement('div');
-        scene.className = 'scene';
+    // 3) STUDENTS
+    {
+      user: "Explain correlation vs. causation in ≤4 sentences with a simple example.",
+      answer: `
+        <strong>Short explain:</strong> Correlation means two things change together; causation means one change makes the other happen.<br>
+        Ice-cream sales and beach attendance correlate — hot weather causes both.<br>
+        Correlation can hint at a link, but doesn’t prove cause.<br>
+        <em>Exam tip:</em> Look for a plausible mechanism or a third factor; if none fits, treat it as correlation.
+      `
+    },
 
-        const uNode = elFromTpl(tplU);
-        const uBubble = uNode.querySelector('.bubble-user');
-        scene.appendChild(uNode);
+    // 4) RESEARCH
+    {
+      user: "Summarize recent lithium-air battery findings into 3 bullets and add a reproducibility caveat.",
+      answer: `
+        <ul class="list-disc pl-5">
+          <li>Catalyst strategies aim to lower overpotential and improve round-trip efficiency.</li>
+          <li>Solid/gel electrolytes target dendrite control and cycle life.</li>
+          <li>Lab reports show high specific energy in small cells (verify against methods before comparison).</li>
+        </ul>
+        <div class="mt-1 text-xs text-neutral-600"><em>Caveat:</em> Small-sample coin cells + strict humidity control → results may not generalize to scaled packs.</div>
+      `
+    },
 
-        const bNode   = elFromTpl(tplB);
-        const bBubble = bNode.querySelector('.bubble-bot');
-        const thinkEl = bBubble.querySelector('.ai-think');
-        const finalEl = bBubble.querySelector('.ai-final');
-        scene.appendChild(bNode);
+    // 5) LAW & LAWYERS
+    {
+      user: "Draft a mutual NDA residuals clause, plain English, 2-year term, with a carve-out so residuals can’t reconstruct documents.",
+      answer: `
+        <strong>Residuals (plain English)</strong><br>
+        Each party may use ideas, concepts, or know-how retained in the unaided memory of personnel who had access to Confidential Information (“Residuals”).<br>
+        Residuals <em>do not</em> include source code, customer lists, pricing, or any verbatim materials.<br>
+        <strong>Carve-out:</strong> Residuals may not be used to (a) reconstruct confidential documents or (b) design around to disclose protected materials.<br>
+        <strong>Term:</strong> 2 years from disclosure. <span class="text-xs text-neutral-600">(General information — not legal advice.)</span>
+      `
+    }
+  ];
 
-        scene.run = async () => {
-          stage.appendChild(scene);
-          requestAnimationFrame(()=> scene.classList.add('active'));
+  function elFromTpl(tpl){ return tpl.content.cloneNode(true); }
 
-          await typewriter(uBubble, userText, 12, 18);
+  function makeScenePair(userText, htmlAnswer){
+    const scene = document.createElement('div');
+    scene.className = 'scene';
 
-          let dots = 0;
-          const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
+    const uNode = elFromTpl(tplU);
+    const uBubble = uNode.querySelector('.bubble-user');
+    scene.appendChild(uNode);
 
-          await new Promise((resolve)=>{
-            setTimeout(async ()=>{
-              clearInterval(dotsTimer);
-              thinkEl.classList.add('fade-away');
-              setTimeout(()=>{ thinkEl.remove(); }, 380);
+    const bNode   = elFromTpl(tplB);
+    const bBubble = bNode.querySelector('.bubble-bot');
+    const thinkEl = bBubble.querySelector('.ai-think');
+    const finalEl = bBubble.querySelector('.ai-final');
+    scene.appendChild(bNode);
 
-              finalEl.classList.remove('hidden');
-              finalEl.style.opacity = 0;
-              requestAnimationFrame(()=> {
-                finalEl.style.transition = 'opacity .28s ease';
-                finalEl.style.opacity = 1;
-              });
+    scene.run = async () => {
+      stage.appendChild(scene);
+      requestAnimationFrame(()=> scene.classList.add('active'));
 
-              await streamHTML(finalEl, htmlAnswer, 9, 16);
-              resolve();
-            }, sp(650 + Math.random()*500));
+      await typewriter(uBubble, userText, 12, 18);
+
+      let dots = 0;
+      const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
+
+      await new Promise((resolve)=>{
+        setTimeout(async ()=>{
+          clearInterval(dotsTimer);
+          thinkEl.classList.add('fade-away');
+          setTimeout(()=>{ thinkEl.remove(); }, 380);
+
+          finalEl.classList.remove('hidden');
+          finalEl.style.opacity = 0;
+          requestAnimationFrame(()=> {
+            finalEl.style.transition = 'opacity .28s ease';
+            finalEl.style.opacity = 1;
           });
 
-          await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
-        };
+          await streamHTML(finalEl, htmlAnswer, 9, 16);
+          resolve();
+        }, sp(650 + Math.random()*500));
+      });
 
-        scene.teardown = async () => {
-          scene.classList.add('exit');
-          await new Promise(r => setTimeout(r, 280));
-          scene.remove();
-        };
+      await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
+    };
 
-        return scene;
+    scene.teardown = async () => {
+      scene.classList.add('exit');
+      await new Promise(r => setTimeout(r, 280));
+      scene.remove();
+    };
+
+    return scene;
+  }
+
+  let looping = false;
+
+  async function loopCarousel(){
+    if (looping) return;
+    looping = true;
+
+    while (looping) {
+      playBassDrop();
+      for (let i=0; i<scenes.length; i++){
+        const pair = makeScenePair(scenes[i].user, scenes[i].answer);
+        await pair.run();
+        await pair.teardown();
       }
+    }
+  }
 
-      let looping = false;
-
-      async function loopCarousel(){
-        if (looping) return;
-        looping = true;
-
-        while (looping) {
-          playBassDrop();
-          for (let i=0; i<scenes.length; i++){
-            const pair = makeScenePair(scenes[i].user, scenes[i].answer);
-            await pair.run();
-            await pair.teardown();
-          }
-        }
+  let started = false;
+  const ob = new IntersectionObserver((entries)=>{
+    for (const e of entries){
+      if (e.isIntersecting && !started){
+        started = true; loopCarousel(); ob.unobserve(wrap);
       }
+    }
+  }, { threshold:.35 });
+  if (wrap) ob.observe(wrap);
+})();
 
-      let started = false;
-      const ob = new IntersectionObserver((entries)=>{
-        for (const e of entries){
-          if (e.isIntersecting && !started){
-            started = true; loopCarousel(); ob.unobserve(wrap);
-          }
-        }
-      }, { threshold:.35 });
-      if (wrap) ob.observe(wrap);
-    })();
 
     // ===== Apply BRAND logo paths to <img data-oc-brand> =====
     (function applyBrandLogos(){
