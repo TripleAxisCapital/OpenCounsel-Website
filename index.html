@@ -422,67 +422,6 @@
       0%, 49% { opacity: 1; }
       50%, 100% { opacity: 0; }
     }
-
-    /* =========================================
-       APPLE-STYLE AMBIENT BACKGROUND (global)
-       Behind all content, minimal & mostly white
-       ========================================= */
-    #ocBg {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
-      /* Ensure it sits under everything else */
-    }
-    #ocBg .oc-bg-base {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, #ffffff 0%, #ffffff 60%, #fafafa 100%);
-    }
-    #ocBg .oc-bg-sheen {
-      position: absolute; inset: 0;
-      background:
-        radial-gradient(120% 80% at 50% -10%, rgba(0,0,0,.035), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.12), transparent 16%);
-      mix-blend-mode: soft-light;
-    }
-    #ocBg .oc-bg-grain {
-      position: absolute; inset: 0; opacity: .015;
-      background-image: radial-gradient(circle at 1px 1px, #000 1px, transparent 1.4px);
-      background-size: 6px 6px;
-      mix-blend-mode: multiply;
-    }
-    #ocBg .oc-bg-blur {
-      position: absolute; inset: -12vmax; filter: blur(42px) saturate(1.02);
-    }
-    #ocBg .blob {
-      position: absolute; width: 58vmax; aspect-ratio: 1; border-radius: 50%;
-      opacity: .32; will-change: transform;
-      /* layered subtle color under a white core to keep it bright/minimal */
-      background:
-        radial-gradient(closest-side, rgba(255,255,255,.96), rgba(255,255,255,.72) 38%, rgba(255,255,255,0) 70%),
-        radial-gradient(closest-side, var(--tint, rgba(0,207,255,.12)), transparent 62%);
-      mix-blend-mode: lighten;
-      animation: var(--anim, ocBlob1) var(--dur, 34s) ease-in-out infinite alternate;
-    }
-    #ocBg .blob.b1 { top: -6vmax; left: -10vmax; --tint: rgba(0,207,255,.10); --anim: ocBlob1; --dur: 36s; }
-    #ocBg .blob.b2 { bottom: -10vmax; right: -12vmax; --tint: rgba(23,141,116,.10); --anim: ocBlob2; --dur: 40s; }
-    #ocBg .blob.b3 { top: 30vh; left: 45vw; width: 46vmax; --tint: rgba(160,228,212,.10); --anim: ocBlob3; --dur: 44s; opacity:.28; }
-
-    @keyframes ocBlob1 {
-      0%   { transform: translate3d(0,0,0) scale(1); }
-      50%  { transform: translate3d(5vmax, 2vmax, 0) scale(1.035); }
-      100% { transform: translate3d(0, 6vmax, 0) scale(1.02); }
-    }
-    @keyframes ocBlob2 {
-      0%   { transform: translate3d(0,0,0) scale(1.02); }
-      50%  { transform: translate3d(-4vmax, -2vmax, 0) scale(1.04); }
-      100% { transform: translate3d(-1vmax, 4vmax, 0) scale(1.01); }
-    }
-    @keyframes ocBlob3 {
-      0%   { transform: translate3d(0,0,0) scale(1); }
-      50%  { transform: translate3d(3vmax, -3vmax, 0) scale(1.03); }
-      100% { transform: translate3d(-2vmax, 1vmax, 0) scale(1.01); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      #ocBg .blob { animation: none !important; }
-    }
   </style>
 
 <style id="oc-hero-bold-rotator">
@@ -493,18 +432,6 @@
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
-  <!-- APPLE-STYLE AMBIENT BACKGROUND (fixed, behind all content) -->
-  <div id="ocBg" aria-hidden="true" role="presentation">
-    <div class="oc-bg-base"></div>
-    <div class="oc-bg-blur">
-      <span class="blob b1"></span>
-      <span class="blob b2"></span>
-      <span class="blob b3"></span>
-    </div>
-    <div class="oc-bg-sheen"></div>
-    <div class="oc-bg-grain"></div>
-  </div>
-
   <!-- FULL-PAGE BLUR OVERLAY (unchanged) -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
@@ -1204,4 +1131,781 @@
     window.OC_HERO = Object.assign({
       enabled: true,
       startOnView: true,
-      wait
+      waitForBlur: true,
+      startDelayMs: 200,
+      staggerMs: 50,
+      streamSpeed: 1.0,
+      titleCharMin: 60,
+      titleCharMax: 60,
+      lineCharMin: 50,
+      lineCharMax: 50,
+      buttonCharMin: 50,
+      buttonCharMax: 50
+    }, window.OC_HERO || {});
+
+    // ================================
+    // NEW: HERO ROTATING WORD CONFIG (easy knobs + caret controls + mobile split)
+    // ================================
+    window.OC_HERO_ROTATOR = Object.assign({
+      /* Desktop single-line prefix */
+      prefix: 'Your Counsel. For ',
+
+      /* Mobile split behavior */
+      mobileSplit: true,          // ← set to false to keep single line on mobile
+      mobileBreakpoint: 768,      // ← Tailwind md breakpoint
+
+      /* Mobile line texts (used only when mobileSplit === true) */
+      prefixLine1: 'Your Counsel.',  // static top line on mobile
+      prefixLine2: 'For ',           // second-line static prefix before rotating word
+
+      words: [
+        'everything.',
+        'entrepreneurs.',
+        'students.',
+        'inventors.',
+        'lawyers.',
+        'designers.',
+        'business owners.'
+      ],
+
+      dwellMs: 2000,          // wait after a word is fully typed
+      typeMin: 50,            // typing speed range (ms/char)
+      typeMax: 70,
+      deleteMin: 20,          // backspace speed range (ms/char)
+      deleteMax: 30,
+
+      // Caret controls (CSS variables injected on the container)
+      caretBlinkMs: 900,                 // blink period
+      caretWidthPx: 2,                   // border width in px
+      caretColor: 'rgba(255,255,255,.92)'// caret color
+    }, window.OC_HERO_ROTATOR || {});
+
+    // ================================
+    // SECTION TYPE-IN GLOBALS
+    // ================================
+    window.OC_SLY = Object.assign({
+      enabled: true,
+      startOnView: true,
+      startDelayMs: 0,
+      staggerMs: 0,
+      streamSpeed: 1.0,
+      titleCharMin: 30,
+      titleCharMax: 30,
+      lineCharMin: 10,
+      lineCharMax: 10
+    }, window.OC_SLY || {});
+
+    window.OC_TCT = Object.assign({
+      enabled: true,
+      startOnView: true,
+      startDelayMs: 0,
+      staggerMs: 0,
+      streamSpeed: 1.0,
+      titleCharMin: 30,
+      titleCharMax: 30,
+      lineCharMin: 10,
+      lineCharMax: 10
+    }, window.OC_TCT || {});
+
+    let __OC_AUDIO = null;
+    function playBassDrop(){
+      if (!window.OC_DEMO_SOUND?.enabled) return;
+      const vol = Math.max(0, Math.min(window.OC_DEMO_SOUND.volume ?? 1, 1));
+      const url = (window.OC_DEMO_SOUND.url || '').trim();
+      if (url){
+        if (!__OC_AUDIO){
+          __OC_AUDIO = new Audio(url);
+          __OC_AUDIO.preload = 'auto';
+          __OC_AUDIO.crossOrigin = 'anonymous';
+        }
+        try {
+          __OC_AUDIO.currentTime = 0;
+          __OC_AUDIO.volume = vol;
+          __OC_AUDIO.play().catch(()=>{});
+        } catch(e){}
+        return;
+      }
+      try{
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new Ctx();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(100, ctx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(28, ctx.currentTime + 0.85);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.2);
+        o.connect(g).connect(ctx.destination);
+        o.start();
+        o.stop(ctx.currentTime + 1.25);
+        if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
+      }catch(e){}
+    }
+
+    // Year
+    const yr = document.getElementById('yr');
+    if (yr) yr.textContent = new Date().getFullYear();
+
+    // Scroll reveal (one-shot)
+    const io = new IntersectionObserver((entries)=>{
+      for (const e of entries) {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      }
+    },{threshold:.12});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+    // ===== MOBILE SLIDE-IN MENU =====
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+
+    function openMenu() {
+      if (window.matchMedia('(min-width: 768px)').matches) return;
+      mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
+      mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+    function closeMenu() {
+      mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+    }
+
+    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+    closeMenuBtn?.addEventListener('click', closeMenu);
+    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
+
+    const mq = window.matchMedia('(min-width: 768px)');
+    function handleMQ(e){ if (e.matches) closeMenu(); }
+    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+
+    window.addEventListener('load', () => {
+      const pageBlur = document.getElementById('pageBlur');
+      if (!pageBlur) return;
+      pageBlur.classList.add('hide');
+      document.dispatchEvent(new Event('oc:page-blur-fade'));
+      setTimeout(() => pageBlur.remove(), 1300);
+    });
+
+    // ================================
+    // BLUR-ON-SCROLL OBSERVER (ONE-SHOT, PERSISTS UNTIL REFRESH)
+    // ================================
+    const sbo = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in-view');
+          sbo.unobserve(e.target);
+        }
+      }
+    }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
+    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
+
+    // ===== Helpers =====
+    function sp(ms){
+      const f = (typeof window.OC_DEMO_STREAM_SPEED === 'number' && window.OC_DEMO_STREAM_SPEED > 0)
+        ? window.OC_DEMO_STREAM_SPEED : 1.0;
+      return ms * f;
+    }
+    function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+
+    // Typewriter for plain text into an element
+    function typewriter(el, text, min=10, max=18){
+      return new Promise((resolve)=>{
+        let i = 0;
+        el.textContent = '';
+        const tn = document.createTextNode('');
+        el.appendChild(tn);
+        (function tick(){
+          tn.textContent = text.slice(0, i++);
+          if (i <= text.length) setTimeout(tick, sp(rand(min,max)));
+          else resolve();
+        })();
+      });
+    }
+
+    // Stream HTML with structure preserved (safe DOM walk; types text nodes char-by-char)
+    async function streamHTML(el, html, charMin=10, charMax=18){
+      const container = document.createElement('div');
+      container.innerHTML = html.trim();
+
+      async function walk(srcNode, dstParent){
+        const children = Array.from(srcNode.childNodes);
+        for (const child of children){
+          if (child.nodeType === Node.TEXT_NODE){
+            const text = child.textContent || '';
+            await new Promise(res=>{
+              let i=0;
+              const tn = document.createTextNode('');
+              dstParent.appendChild(tn);
+              (function tick(){
+                tn.textContent = text.slice(0, i++);
+                if (i <= text.length) setTimeout(tick, sp(rand(charMin,charMax)));
+                else res();
+              })();
+            });
+          } else if (child.nodeType === Node.ELEMENT_NODE){
+            const clone = child.cloneNode(false);
+            dstParent.appendChild(clone);
+            await walk(child, clone);
+          }
+        }
+      }
+      el.innerHTML = '';
+      await walk(container, el);
+    }
+
+    // ================================
+    // HERO TYPE-IN (strict sequence) + rotating word
+    // ================================
+    (function heroTyping(){
+      const cfg = window.OC_HERO || {};
+      if (!cfg.enabled) return;
+
+      const hero = document.getElementById('home');
+      if (!hero) return;
+
+      const titleEl = hero.querySelector('.hero-title');
+      const sub1El  = hero.querySelector('.hero-sub1');
+      const ctaTxt  = hero.querySelector('.hero-cta-text');
+      const ctaBtn  = hero.querySelector('#heroCtaBtn');
+
+      if (!titleEl || !ctaTxt || !ctaBtn) return;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const tText = titleEl.textContent || '';
+      const bTxt  = ctaTxt.textContent || '';
+
+      if (prefersReduced) {
+        // Reduced motion: static line only.
+        if (sub1El) {
+          const rCfg = window.OC_HERO_ROTATOR || {};
+          sub1El.textContent = (rCfg.prefix || 'Your Counsel. For ') + (rCfg.words?.[0] || 'everything.');
+        }
+        ctaBtn.classList.add('cta-visible');
+        document.dispatchEvent(new Event('oc:cta-text-done'));
+        return;
+      }
+
+      // Prepare for typing
+      titleEl.textContent = '';
+      if (sub1El) sub1El.textContent = '';
+      ctaTxt.textContent = '';
+      ctaBtn.classList.remove('cta-visible');
+
+      // local speed helpers honoring OC_HERO.streamSpeed
+      function spH(ms){
+        const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
+        return ms * f;
+      }
+      function typeHero(el, text, min, max){
+        return new Promise(resolve=>{
+          let i=0;
+          const tn = document.createTextNode('');
+          el.textContent = '';
+          el.appendChild(tn);
+          (function tick(){
+            tn.textContent = text.slice(0, ++i);
+            if (i <= text.length) setTimeout(tick, spH(rand(min,max)));
+            else resolve();
+          })();
+        });
+      }
+      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+
+      function afterTransition(el, fallbackMs = 900){
+        return new Promise((resolve)=>{
+          let done = false;
+          const finish = ()=>{ if (done) return; done = true; resolve(); };
+          const onEnd = (e)=>{ if (e.target === el) finish(); };
+          el.addEventListener('transitionend', onEnd, { once: true });
+          setTimeout(()=>{ el.removeEventListener('transitionend', onEnd); finish(); }, fallbackMs);
+        });
+      }
+
+      // Rotating word helpers
+      async function typeWord(el, word, rCfg){
+        await typeHero(el, word, rCfg.typeMin|0, rCfg.typeMax|0);
+      }
+      async function deleteWord(el, rCfg){
+        return new Promise((resolve)=>{
+          const step = () => {
+            const t = el.textContent || '';
+            if (!t.length) { resolve(); return; }
+            el.textContent = t.slice(0, -1);
+            setTimeout(step, spH(rand(rCfg.deleteMin|0, rCfg.deleteMax|0)));
+          };
+          step();
+        });
+      }
+
+      // Build structure and type depending on mobileSplit
+      async function setupAndTypeFirst(rCfg){
+        if (!sub1El) return;
+        const isMobileSplit = !!rCfg.mobileSplit && window.innerWidth < (rCfg.mobileBreakpoint||768);
+
+        // caret controls (CSS vars)
+        sub1El.style.setProperty('--caret-blink', (rCfg.caretBlinkMs||900) + 'ms');
+        sub1El.style.setProperty('--caret-w', (rCfg.caretWidthPx||2) + 'px');
+        sub1El.style.setProperty('--caret-color', rCfg.caretColor || 'rgba(255,255,255,.92)');
+
+        if (isMobileSplit){
+          // Two-line structure on mobile: line1 static "Your Counsel.", line2 "For " + rotating word + caret
+          sub1El.innerHTML = `
+            <span class="hero-line1 block md:inline"></span>
+            <span class="hidden md:inline">&nbsp;</span>
+            <span class="hero-line2 block md:inline">
+              <span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>
+            </span>
+          `;
+          const l1 = sub1El.querySelector('.hero-line1');
+          const pEl = sub1El.querySelector('.hero-prefix');
+          const wEl = sub1El.querySelector('.hero-word');
+
+          const line1 = rCfg.prefixLine1 || 'Your Counsel.';
+          const line2Prefix = rCfg.prefixLine2 || 'For ';
+          const words = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
+
+          await typeHero(l1, line1, cfg.lineCharMin|0, cfg.lineCharMax|0);
+          await typeHero(pEl, line2Prefix, cfg.lineCharMin|0, cfg.lineCharMax|0);
+          await typeWord(wEl, words[0], rCfg);
+          return { wEl, words };
+        } else {
+          // Single-line desktop: "Your Counsel. For " + rotating word + caret
+          sub1El.innerHTML = '<span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
+          const pEl = sub1El.querySelector('.hero-prefix');
+          const wEl = sub1El.querySelector('.hero-word');
+          const prefix = rCfg.prefix || 'Your Counsel. For ';
+          const words  = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
+
+          await typeHero(pEl, prefix, cfg.lineCharMin|0, cfg.lineCharMax|0);
+          await typeWord(wEl, words[0], rCfg);
+          return { wEl, words };
+        }
+      }
+
+      function startRotatorLoop(wEl, words, rCfg){
+        let idx = 1 % words.length;
+        (async function loop(){
+          await wait(spH(rCfg.dwellMs|0));
+          await deleteWord(wEl, rCfg);
+          const next = words[idx];
+          await typeWord(wEl, next, rCfg);
+          idx = (idx + 1) % words.length;
+          loop();
+        })();
+      }
+
+      async function run(){
+        await wait(Math.max(0, cfg.startDelayMs|0));
+        await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+
+        const rCfg = window.OC_HERO_ROTATOR || {};
+        const first = await setupAndTypeFirst(rCfg);
+        if (first && first.wEl) startRotatorLoop(first.wEl, first.words, rCfg);
+
+        await wait(cfg.staggerMs|0);
+        ctaBtn.classList.add('cta-visible');
+        document.dispatchEvent(new Event('oc:cta-visible'));
+        await afterTransition(ctaBtn, 900);
+        await wait(60);
+        document.dispatchEvent(new Event('oc:cta-text-start'));
+        await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
+        document.dispatchEvent(new Event('oc:cta-text-done'));
+      }
+
+      let started = false;
+      let inView = !cfg.startOnView;
+      let blurReady = !cfg.waitForBlur;
+
+      function tryStart(){
+        if (!started && inView && blurReady){
+          started = true; run();
+        }
+      }
+
+      if (cfg.startOnView){
+        const ob = new IntersectionObserver((entries)=>{
+          for (const e of entries){
+            if (e.isIntersecting){
+              inView = true; tryStart(); ob.disconnect();
+            }
+          }
+        }, { threshold:.35 });
+        ob.observe(hero);
+      }
+
+      if (cfg.waitForBlur){
+        document.addEventListener('oc:page-blur-fade', () => { blurReady = true; tryStart(); }, { once:true });
+      } else {
+        blurReady = true; tryStart();
+      }
+    })();
+
+    // ================================
+    // SECTION TYPERS
+    // ================================
+    function makeSectionTyper(rootSel, titleSel, subSel, cfg){
+      const root  = document.querySelector(rootSel);
+      if (!root || !cfg?.enabled) return;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) return;
+
+      const titleEl = root.querySelector(titleSel);
+      const subEl   = root.querySelector(subSel);
+
+      if (!titleEl && !subEl) return;
+
+      const tText = titleEl ? (titleEl.textContent || '') : '';
+      const sText = subEl   ? (subEl.textContent   || '') : '';
+
+      if (titleEl) titleEl.textContent = '';
+      if (subEl)   subEl.textContent   = '';
+
+      function spLocal(ms){
+        const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
+        return ms * f;
+      }
+      function typeLocal(el, text, min, max){
+        return new Promise(resolve=>{
+          let i=0;
+          const tn = document.createTextNode('');
+          el.appendChild(tn);
+          (function tick(){
+            tn.textContent = text.slice(0, ++i);
+            if (i <= text.length) setTimeout(tick, spLocal(rand(min,max)));
+            else resolve();
+          })();
+        });
+      }
+      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+
+      async function run(){
+        await wait(Math.max(0, cfg.startDelayMs|0));
+        if (titleEl) await typeLocal(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+        if (subEl){ await wait(cfg.staggerMs|0); await typeLocal(subEl, sText, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+      }
+
+      if (cfg.startOnView){
+        let started = false;
+        const ob = new IntersectionObserver((entries)=>{
+          for (const e of entries){
+            if (e.isIntersecting && !started){
+              started = true;
+              run();
+              ob.disconnect();
+            }
+          }
+        }, { threshold:.35 });
+        ob.observe(root);
+      } else {
+        run();
+      }
+    }
+
+    makeSectionTyper('#sly', '.sly-title', '.sly-sub', window.OC_SLY);
+    makeSectionTyper('#sly-2', '.sly-title', '.sly-sub', window.OC_SLY);
+    makeSectionTyper('#sly-3', '.sly-title', '.sly-sub', window.OC_SLY);
+    makeSectionTyper('#sly-4', '.sly-title', '.sly-sub', window.OC_SLY);
+    makeSectionTyper('#tct', '.tct-title', '.tct-sub', window.OC_TCT);
+
+    // ================================
+// LIVE CHAT DEMO — ONE PAIR AT A TIME
+// ================================
+(function chatDemo(){
+  const wrap    = document.getElementById('chat-demo');
+  const stage   = document.getElementById('demoStage');
+  const tplU    = document.getElementById('demoTplUser');
+  const tplB    = document.getElementById('demoTplBot');
+
+  const scenes = [
+    // — Business Owners —
+    {
+      user: "Review this vendor agreement and highlight the top risks I should negotiate.",
+      answer: `
+        <strong>OpenCounsel — Contract risk snapshot (Top 5):</strong>
+        <ul class="list-disc ml-5 mt-2">
+          <li><b>Auto-renewal:</b> Add 30–60 day notice and a clear opt-out.</li>
+          <li><b>Indemnity (one-sided):</b> Make mutual; cap at fees or insurance limits.</li>
+          <li><b>Scope creep:</b> Define deliverables, SLAs, and change-order process.</li>
+          <li><b>Price escalators:</b> Tie increases to CPI with annual cap.</li>
+          <li><b>Governing law/jurisdiction:</b> Move to your province/state.</li>
+        </ul>
+        <div class="mt-3 text-sm">Ready-to-paste redlines generated below. <em>General information — not legal advice.</em></div>
+      `
+    },
+
+    // — Product R&D —
+    {
+      user: "Synthesize user feedback on v2.0 and propose 3 testable experiments with sample sizes.",
+      answer: `
+        <strong>OpenCounsel R&D brief:</strong>
+        <div class="mt-2"><b>Themes:</b> onboarding friction, battery life, price sensitivity.</div>
+        <ol class="list-decimal ml-5 mt-2">
+          <li><b>Guided onboarding (A/B):</b> Hypothesis: completion ↑. Metric: activation rate. <span class="text-xs">n≈800/arm.</span></li>
+          <li><b>Power-saver mode:</b> Hypothesis: drain ↓ &gt;15%. Metric: avg. %/hr. <span class="text-xs">n≈200 devices.</span></li>
+          <li><b>Price ladder test:</b> $19/$24/$29 with value copy. Metric: conversion/ARPU. <span class="text-xs">n≈1,200 sessions.</span></li>
+        </ol>
+        <div class="mt-3 text-sm">Includes KPI formulas and precomputed sample sizes.</div>
+      `
+    },
+
+    // — Students —
+    {
+      user: "Explain quantum tunneling like I’m in first-year physics. Add 3 practice problems with answers.",
+      answer: `
+        <strong>OpenCounsel study aid — Quantum tunneling:</strong>
+        <div class="mt-2">Particles behave like waves; a wavefunction can extend through a barrier, giving a non-zero chance the particle appears on the other side.</div>
+        <div class="mt-3"><b>Practice:</b></div>
+        <ol class="list-decimal ml-5 mt-2">
+          <li>Sketch barrier + wavefunction. <span class="text-xs">Ans: exponential decay inside barrier.</span></li>
+          <li>What increases tunneling probability? <span class="text-xs">Ans: thinner/lower barrier, higher energy, lower mass.</span></li>
+          <li>Name a device using tunneling. <span class="text-xs">Ans: STM or tunnel diode.</span></li>
+        </ol>
+      `
+    },
+
+    // — Research —
+    {
+      user: "Do a rapid literature scan on oral GLP-1 delivery (2021–2025). Summarize methods and note sample sizes.",
+      answer: `
+        <strong>OpenCounsel literature snapshot:</strong>
+        <ul class="list-disc ml-5 mt-2">
+          <li><b>Approaches:</b> enteric coatings, enzyme inhibitors, permeation enhancers, nanoparticle carriers.</li>
+          <li><b>Findings:</b> modest bioavailability; adherence ↑ vs injections; safety generally acceptable.</li>
+          <li><b>Evidence base:</b> small–mid size trials; heterogeneity high.</li>
+        </ul>
+        <div class="mt-3 text-sm">Output: 6 key papers with one-line takeaways + BibTeX. <em>Informational summary — not medical advice.</em></div>
+      `
+    },
+
+    // — Law & Lawyers —
+    {
+      user: "Draft a cease-and-desist for trademark misuse under Canadian law. Firm, professional tone.",
+      answer: `
+        <strong>OpenCounsel draft scaffold:</strong>
+        <ul class="list-disc ml-5 mt-2">
+          <li>Parties and marks at issue</li>
+          <li>Specific infringing uses (attach exhibits)</li>
+          <li>Legal basis: confusion / passing off</li>
+          <li>Demands: cease use, destroy materials, written confirmation within 7 days</li>
+          <li>"Without prejudice" reservation</li>
+        </ul>
+        <div class="mt-3 text-sm">Editable paragraphs inserted for facts/proofs. <em>General information — not legal advice.</em></div>
+      `
+    }
+  ];
+
+  function elFromTpl(tpl){ return tpl.content.cloneNode(true); }
+
+  function makeScenePair(userText, htmlAnswer){
+    const scene = document.createElement('div');
+    scene.className = 'scene';
+
+    const uNode = elFromTpl(tplU);
+    const uBubble = uNode.querySelector('.bubble-user');
+    scene.appendChild(uNode);
+
+    const bNode   = elFromTpl(tplB);
+    const bBubble = bNode.querySelector('.bubble-bot');
+    const thinkEl = bBubble.querySelector('.ai-think');
+    const finalEl = bBubble.querySelector('.ai-final');
+    scene.appendChild(bNode);
+
+    scene.run = async () => {
+      stage.appendChild(scene);
+      requestAnimationFrame(()=> scene.classList.add('active'));
+
+      await typewriter(uBubble, userText, 12, 18);
+
+      let dots = 0;
+      const dotsTimer = setInterval(()=>{ dots = (dots + 1) % 4; thinkEl.textContent = 'Thinking' + '.'.repeat(dots); }, sp(300));
+
+      await new Promise((resolve)=>{
+        setTimeout(async ()=>{
+          clearInterval(dotsTimer);
+          thinkEl.classList.add('fade-away');
+          setTimeout(()=>{ thinkEl.remove(); }, 380);
+
+          finalEl.classList.remove('hidden');
+          finalEl.style.opacity = 0;
+          requestAnimationFrame(()=> {
+            finalEl.style.transition = 'opacity .28s ease';
+            finalEl.style.opacity = 1;
+          });
+
+          await streamHTML(finalEl, htmlAnswer, 9, 16);
+          resolve();
+        }, sp(650 + Math.random()*500));
+      });
+
+      await new Promise(r => setTimeout(r, Math.max(0, window.OC_DEMO_DWELL_MS)));
+    };
+
+    scene.teardown = async () => {
+      scene.classList.add('exit');
+      await new Promise(r => setTimeout(r, 280));
+      scene.remove();
+    };
+
+    return scene;
+  }
+
+  let looping = false;
+
+  async function loopCarousel(){
+    if (looping) return;
+    looping = true;
+
+    while (looping) {
+      playBassDrop();
+      for (let i=0; i<scenes.length; i++){
+        const pair = makeScenePair(scenes[i].user, scenes[i].answer);
+        await pair.run();
+        await pair.teardown();
+      }
+    }
+  }
+
+  let started = false;
+  const ob = new IntersectionObserver((entries)=>{
+    for (const e of entries){
+      if (e.isIntersecting && !started){
+        started = true; loopCarousel(); ob.unobserve(wrap);
+      }
+    }
+  }, { threshold:.35 });
+  if (wrap) ob.observe(wrap);
+})();
+
+
+    // ===== Apply BRAND logo paths to <img data-oc-brand> =====
+    (function applyBrandLogos(){
+      const map = window.OC_BRANDS || {};
+      document.querySelectorAll('img[data-oc-brand]').forEach(img=>{
+        const key = img.getAttribute('data-oc-brand');
+        if (map[key]) img.src = map[key];
+      });
+    })();
+
+    // ===== Set HERO CTA icon based on OS (Windows ⇄ macOS) =====
+    (function setHeroCtaIcon(){
+      const el = document.getElementById('heroCtaIcon');
+      if (!el) return;
+      const os = (window.OC_OS || '').toLowerCase();
+      el.classList.remove('ph-download','ph-apple-logo','ph-windows-logo');
+      if (os === 'windows'){
+        el.classList.add('ph-windows-logo');
+        el.setAttribute('title','Windows');
+        el.setAttribute('aria-label','Windows');
+      } else {
+        el.classList.add('ph-apple-logo');
+        el.setAttribute('title','macOS');
+        el.setAttribute('aria-label','macOS');
+      }
+    })();
+
+(() => {
+  class OCDownArrow extends HTMLElement {
+    static get observedAttributes() {
+      return [
+        'dir','size','thickness','alpha',
+        'amp','bounce','breathe',
+        'from','via','to'
+      ];
+    }
+    constructor(){ super(); this.attachShadow({mode:'open'}); }
+    connectedCallback(){ this.render(); }
+    attributeChangedCallback(){ this.render(); }
+
+    render(){
+      const dir       = (this.getAttribute('dir') || 'down').toLowerCase();
+      const size      = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
+      const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
+      const alpha     = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
+      const amp       = (this.getAttribute('amp') || '14%').trim();
+      const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();
+      const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();
+
+      const from = this.getAttribute('from') || '#ffffff';
+      const via  = this.getAttribute('via')  || from;
+      const to   = this.getAttribute('to')   || from;
+
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
+      const gid = 'grad_' + Math.random().toString(36).slice(2);
+
+      const animateTag = reduce ? '' : `
+        <animateTransform attributeName="gradientTransform"
+                          type="translate"
+                          from="0 -1" to="0 1"
+                          dur="8s" repeatCount="indefinite" />`;
+
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host { display:inline-block; line-height:0; }
+          .wrap {
+            --amp: ${amp};
+            opacity: ${alpha};
+            will-change: transform, filter, opacity;
+            ${reduce ? '' : `animation:
+              oc-bounce ${bounceDur} ease-in-out infinite,
+              oc-breathe ${breatheDur} ease-in-out infinite;`}
+            backface-visibility: hidden; transform: translateZ(0);
+          }
+
+          @keyframes oc-bounce {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(var(--amp)); }
+          }
+          @keyframes oc-breathe {
+            0%, 100% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22))
+                             drop-shadow(0 10px 26px rgba(255,255,255,.15)); }
+            50%      { filter: drop-shadow(0 6px 18px rgba(255,255,255,.40))
+                             drop-shadow(0 16px 40px rgba(255,255,255,.22)); }
+          }
+
+          svg { width:${size}px; height:${size}px; overflow:visible; }
+          .stroke {
+            stroke: url(#${gid});
+            stroke-width:${thickness};
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+          }
+        </style>
+
+        <div class="wrap" part="wrap" aria-hidden="true">
+          <svg viewBox="0 0 64 64" role="img" aria-label="Down arrow" style="transform: rotate(${rotation}deg);">
+            <defs>
+              <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                <stop offset="0%"   stop-color="${from}" />
+                <stop offset="50%"  stop-color="${via}" />
+                <stop offset="100%" stop-color="${to}" />
+                ${animateTag}
+              </linearGradient>
+            </defs>
+
+            <path class="stroke" d="M12 32 H44" />
+            <path class="stroke" d="M44 20 L56 32 L44 44" />
+          </svg>
+        </div>
+      `;
+    }
+  }
+
+  if (!customElements.get('oc-down-arrow')) {
+    customElements.define('oc-down-arrow', OCDownArrow);
+  }
+})();
+  </script>
+
+  
+</body>
+</html>
