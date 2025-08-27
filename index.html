@@ -739,6 +739,215 @@
   </div>
 </section>
 
+<!-- ==========================
+  OpenCounsel — Apple-style Product Gallery (Drop-in Section)
+  Paste this whole block between your hero (“Accurate. Local. AI.”)
+  and the “From study to strategy” card.
+
+  Replace the four screenshot src/srcset values with your real UI images.
+  Uses Tailwind + tiny vanilla JS only.
+========================== -->
+
+<section id="oc-showcase" class="relative isolate overflow-hidden bg-white">
+  <!-- ====== Tunable variables (edit to taste) ====== -->
+  <style>
+    :root {
+      /* Accent & glow */
+      --oc-glow-from: #22d3ee; /* cyan-400 */
+      --oc-glow-to:   #8b5cf6; /* violet-500 */
+      /* Card + shadows */
+      --oc-card-radius: 28px;
+      --oc-frame-pad: 14px;
+      --oc-shadow: 0 24px 72px rgba(2, 6, 23, 0.12), 0 2px 8px rgba(2, 6, 23, 0.06);
+      --oc-ring: rgba(2, 6, 23, 0.08);
+      --oc-nav-bg: rgba(255,255,255,0.9);
+      --oc-nav-border: rgba(2,6,23,0.08);
+      --oc-caption: #475569; /* slate-600 */
+    }
+
+    /* Breathing gradient halo */
+    @keyframes oc-breathe { 0%,100%{ transform: translate(-50%, 0) scale(1);} 50%{ transform: translate(-50%, 10px) scale(1.05);} }
+    .animate-oc-breathe { animation: oc-breathe 14s ease-in-out infinite; }
+
+    /* Polished device frame */
+    .oc-card { scroll-snap-align: center; }
+    .oc-frame {
+      position: relative; border-radius: var(--oc-card-radius); padding: var(--oc-frame-pad);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.68));
+      box-shadow: var(--oc-shadow);
+      border: 1px solid var(--oc-ring);
+      transform: perspective(1200px) translateZ(0);
+      transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease;
+      will-change: transform;
+    }
+    .oc-frame::before{ /* subtle glass highlight */
+      content:""; position:absolute; inset:0; border-radius: var(--oc-card-radius);
+      background:
+        radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,.9), transparent 60%),
+        linear-gradient(120deg, rgba(255,255,255,.7), transparent 40%);
+      pointer-events:none;
+    }
+    .oc-caption{ margin-top:.75rem; font-size:.825rem; line-height:1.2; color:var(--oc-caption); text-align:center; }
+
+    /* Lightbox */
+    #ocLightbox img { transition: transform .25s ease; }
+
+    /* Hide native scrollbar for the rail */
+    #ocShowcaseRail::-webkit-scrollbar{ display:none; }
+    #ocShowcaseRail{ -ms-overflow-style:none; scrollbar-width:none; }
+  </style>
+
+  <!-- Soft animated gradient halo behind the gallery -->
+  <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-[-8rem] -z-10 h-[28rem] w-[58rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-[var(--oc-glow-from)] to-[var(--oc-glow-to)] opacity-25 blur-[80px] animate-oc-breathe"></div>
+
+  <div class="mx-auto max-w-7xl px-6 py-20 sm:py-24">
+    <header class="mb-10 text-center">
+      <!-- Swapped-in logo (root path) -->
+      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-black/5 backdrop-blur">
+        <img src="/logo1.svg" alt="OpenCounsel" class="h-7 w-7 opacity-90" />
+      </div>
+      <p class="text-[11px] font-medium tracking-[0.22em] text-slate-500">PRODUCT GALLERY</p>
+      <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">OpenCounsel in action</h2>
+      <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-600">A focused, Apple-grade showcase of real UI. Swipe/drag, click to zoom.</p>
+    </header>
+
+    <div class="relative">
+      <!-- Carousel rail (scroll-snap; drag/swipe) -->
+      <div id="ocShowcaseRail" class="group flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-6" aria-label="OpenCounsel screenshots">
+        <!-- Slide 1 -->
+        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Chat — Local & Private" data-zoom="/assets/oc/oc-chat@2x.png">
+          <div class="oc-frame">
+            <img class="w-full rounded-[22px]" src="/assets/oc/oc-chat@1x.png" srcset="/assets/oc/oc-chat@1x.png 1x, /assets/oc/oc-chat@2x.png 2x" alt="OpenCounsel chat UI" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="oc-caption">Chat · Local-first · Fast</figcaption>
+        </figure>
+        <!-- Slide 2 -->
+        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Research — Sources that matter" data-zoom="/assets/oc/oc-research@2x.png">
+          <div class="oc-frame">
+            <img class="w-full rounded-[22px]" src="/assets/oc/oc-research@1x.png" srcset="/assets/oc/oc-research@1x.png 1x, /assets/oc/oc-research@2x.png 2x" alt="OpenCounsel research view" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="oc-caption">Research · Trusted sources · Citations</figcaption>
+        </figure>
+        <!-- Slide 3 -->
+        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Law Mode — Built for real work" data-zoom="/assets/oc/oc-law@2x.png">
+          <div class="oc-frame">
+            <img class="w-full rounded-[22px]" src="/assets/oc/oc-law@1x.png" srcset="/assets/oc/oc-law@1x.png 1x, /assets/oc/oc-law@2x.png 2x" alt="OpenCounsel law mode" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="oc-caption">Law + Life · Structured drafting</figcaption>
+        </figure>
+        <!-- Slide 4 -->
+        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Settings — Personal & precise" data-zoom="/assets/oc/oc-settings@2x.png">
+          <div class="oc-frame">
+            <img class="w-full rounded-[22px]" src="/assets/oc/oc-settings@1x.png" srcset="/assets/oc/oc-settings@1x.png 1x, /assets/oc/oc-settings@2x.png 2x" alt="OpenCounsel settings" loading="lazy" decoding="async" />
+          </div>
+          <figcaption class="oc-caption">Settings · Control the details</figcaption>
+        </figure>
+      </div>
+
+      <!-- Prev/Next controls (glass buttons) -->
+      <div class="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
+        <button type="button" class="oc-nav oc-prev pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-[var(--oc-nav-border)] bg-[var(--oc-nav-bg)] shadow-xl backdrop-blur transition will-change-transform hover:-translate-y-0.5" aria-label="Previous slide">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4 text-slate-700"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+        </button>
+        <button type="button" class="oc-nav oc-next pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-[var(--oc-nav-border)] bg-[var(--oc-nav-bg)] shadow-xl backdrop-blur transition will-change-transform hover:-translate-y-0.5" aria-label="Next slide">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4 text-slate-700"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+        </button>
+      </div>
+
+      <!-- Dots -->
+      <div id="ocShowcaseDots" class="mt-6 flex items-center justify-center gap-2" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- Lightbox (click any slide) -->
+  <div id="ocLightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
+    <button class="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-900 shadow" aria-label="Close lightbox (Esc)">Esc</button>
+    <img class="max-h-[85vh] max-w-[92vw] rounded-2xl shadow-2xl" alt="OpenCounsel screenshot" />
+  </div>
+
+  <!-- Minimal, isolated JS (no globals leaked) -->
+  <script>
+    (() => {
+      const section = document.getElementById('oc-showcase');
+      const rail = section.querySelector('#ocShowcaseRail');
+      const cards = Array.from(rail.querySelectorAll('.oc-card'));
+      const prev = section.querySelector('.oc-prev');
+      const next = section.querySelector('.oc-next');
+      const dotsWrap = section.querySelector('#ocShowcaseDots');
+      const lightbox = section.querySelector('#ocLightbox');
+      const lbImg = lightbox.querySelector('img');
+
+      // Fade-in on view
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((en) => {
+          if (en.isIntersecting) en.target.classList.add('opacity-100','translate-y-0');
+        });
+      }, { threshold: 0.2 });
+      cards.forEach(c => io.observe(c));
+
+      // 3D tilt on hover (desktop)
+      cards.forEach(card => {
+        const frame = card.querySelector('.oc-frame');
+        let rect;
+        const onMove = (e) => {
+          rect = rect || frame.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width;
+          const y = (e.clientY - rect.top) / rect.height;
+          frame.style.transform = `perspective(1200px) rotateX(${(0.5 - y) * 6}deg) rotateY(${(x - 0.5) * 6}deg)`;
+        };
+        card.addEventListener('mouseenter', () => { rect = null; });
+        card.addEventListener('mousemove', onMove, { passive: true });
+        card.addEventListener('mouseleave', () => { frame.style.transform = 'perspective(1200px) rotateX(0) rotateY(0)'; });
+      });
+
+      // Dots
+      const makeDot = (i) => {
+        const b = document.createElement('button');
+        b.className = 'h-1.5 w-1.5 rounded-full bg-slate-300 transition-all aria-[current=true]:w-5 aria-[current=true]:bg-slate-600';
+        b.setAttribute('aria-label', `Go to slide ${i+1}`);
+        b.addEventListener('click', () => {
+          const target = cards[i];
+          rail.scrollTo({ left: target.offsetLeft - (rail.clientWidth - target.clientWidth)/2, behavior: 'smooth' });
+        });
+        return b;
+      };
+      const dots = cards.map((_,i) => { const d = makeDot(i); dotsWrap.appendChild(d); return d; });
+
+      // Active dot based on center proximity
+      const updateActive = () => {
+        const center = rail.scrollLeft + rail.clientWidth/2;
+        let best = 0, bestDist = Infinity;
+        cards.forEach((el, i) => {
+          const mid = el.offsetLeft + el.clientWidth/2;
+          const d = Math.abs(mid - center);
+          if (d < bestDist){ best = i; bestDist = d; }
+        });
+        dots.forEach((d,i) => d.setAttribute('aria-current', i===best ? 'true':'false'));
+      };
+      rail.addEventListener('scroll', updateActive, { passive: true });
+      updateActive();
+
+      // Nav buttons
+      const move = (dir) => rail.scrollBy({ left: rail.clientWidth * 0.8 * dir, behavior: 'smooth' });
+      prev.addEventListener('click', () => move(-1));
+      next.addEventListener('click', () => move(1));
+
+      // Lightbox
+      const openLB = (src) => { lbImg.src = src; lightbox.classList.remove('hidden'); lightbox.classList.add('flex'); document.documentElement.classList.add('overflow-hidden'); };
+      const closeLB = () => { lightbox.classList.add('hidden'); lightbox.classList.remove('flex'); document.documentElement.classList.remove('overflow-hidden'); lbImg.src = ''; };
+      lightbox.addEventListener('click', (e) => { if (e.target === lightbox || e.target.tagName === 'BUTTON') closeLB(); });
+      window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLB(); });
+
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          const hi = card.getAttribute('data-zoom');
+          const imgEl = card.querySelector('img');
+          openLB(hi || imgEl.currentSrc || imgEl.src);
+        });
+      });
+    })();
+  </script>
+</section>
 
 
 <!-- COUNSEL FOR LIFE -->
