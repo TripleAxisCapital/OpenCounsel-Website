@@ -739,212 +739,352 @@
   </div>
 </section>
 
-<!-- ==========================
-  OpenCounsel — Apple-style Product Gallery (Drop-in Section)
-  Paste this whole block between your hero (“Accurate. Local. AI.”)
-  and the “From study to strategy” card.
+<!-- ==========================================================
+  OpenCounsel — Apple-grade Product Gallery (drop-in section)
+  Paste this whole block between the hero and “From study to strategy”.
+  Tailwind CSS required. No other deps.
+========================================================== -->
 
-  Replace the four screenshot src/srcset values with your real UI images.
-  Uses Tailwind + tiny vanilla JS only.
-========================== -->
-
-<section id="oc-showcase" class="relative isolate overflow-hidden bg-white">
-  <!-- ====== Tunable variables (edit to taste) ====== -->
+<section id="oc-pro-gallery" class="relative isolate overflow-hidden bg-white">
+  <!-- Tunable variables (theme) -->
   <style>
-    :root {
-      /* Accent & glow */
-      --oc-glow-from: #22d3ee; /* cyan-400 */
-      --oc-glow-to:   #8b5cf6; /* violet-500 */
-      /* Card + shadows */
-      --oc-card-radius: 28px;
-      --oc-frame-pad: 14px;
-      --oc-shadow: 0 24px 72px rgba(2, 6, 23, 0.12), 0 2px 8px rgba(2, 6, 23, 0.06);
-      --oc-ring: rgba(2, 6, 23, 0.08);
-      --oc-nav-bg: rgba(255,255,255,0.9);
-      --oc-nav-border: rgba(2,6,23,0.08);
-      --oc-caption: #475569; /* slate-600 */
+    #oc-pro-gallery {
+      --oc-glow-a: #22d3ee;  /* cyan-400 */
+      --oc-glow-b: #8b5cf6;  /* violet-500 */
+      --oc-ink:     #0f172a; /* slate-900 */
+      --oc-sub:     #475569; /* slate-600 */
+      --oc-ring:    rgba(2,6,23,.08);
+      --oc-card-r:  28px;
+      --oc-pad:     16px;
+      --oc-shadow:  0 30px 80px rgba(2, 6, 23, .14), 0 4px 14px rgba(2, 6, 23, .06);
     }
+    /* soft breathing aura */
+    @keyframes ocAura {
+      0%,100%{ transform: translate(-50%,-10%) scale(1); }
+      50%{ transform: translate(-50%,-8%) scale(1.04); }
+    }
+    .oc-aura { animation: ocAura 16s ease-in-out infinite; }
 
-    /* Breathing gradient halo */
-    @keyframes oc-breathe { 0%,100%{ transform: translate(-50%, 0) scale(1);} 50%{ transform: translate(-50%, 10px) scale(1.05);} }
-    .animate-oc-breathe { animation: oc-breathe 14s ease-in-out infinite; }
-
-    /* Polished device frame */
-    .oc-card { scroll-snap-align: center; }
-    .oc-frame {
-      position: relative; border-radius: var(--oc-card-radius); padding: var(--oc-frame-pad);
-      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.68));
+    /* device frame */
+    .oc-device {
+      position: relative;
+      border-radius: var(--oc-card-r);
+      padding: var(--oc-pad);
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.72));
       box-shadow: var(--oc-shadow);
       border: 1px solid var(--oc-ring);
-      transform: perspective(1200px) translateZ(0);
+      overflow: hidden;
+      transform: translateZ(0);
       transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s ease;
-      will-change: transform;
     }
-    .oc-frame::before{ /* subtle glass highlight */
-      content:""; position:absolute; inset:0; border-radius: var(--oc-card-radius);
+    .oc-device::before {
+      /* beveled highlight */
+      content:"";
+      position:absolute; inset:0; border-radius: calc(var(--oc-card-r) - 2px);
       background:
-        radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,.9), transparent 60%),
-        linear-gradient(120deg, rgba(255,255,255,.7), transparent 40%);
-      pointer-events:none;
+        radial-gradient(120% 80% at 50% -15%, rgba(255,255,255,.9), transparent 60%),
+        linear-gradient(120deg, rgba(255,255,255,.5), transparent 50%);
+      pointer-events: none;
     }
-    .oc-caption{ margin-top:.75rem; font-size:.825rem; line-height:1.2; color:var(--oc-caption); text-align:center; }
+    .oc-shot {
+      border-radius: calc(var(--oc-card-r) - 8px);
+      width: 100%; height: 100%;
+      object-fit: cover; background: transparent;
+      display: block;
+    }
+    .oc-fallback {
+      border-radius: calc(var(--oc-card-r) - 8px);
+      display: grid; place-items: center;
+      background: radial-gradient(120% 100% at 20% 0%, rgba(255,255,255,.85) 0%, rgba(255,255,255,.3) 40%, transparent 70%),
+                  linear-gradient(90deg, var(--oc-glow-a), var(--oc-glow-b));
+      opacity: .9;
+    }
 
-    /* Lightbox */
-    #ocLightbox img { transition: transform .25s ease; }
-
-    /* Hide native scrollbar for the rail */
-    #ocShowcaseRail::-webkit-scrollbar{ display:none; }
-    #ocShowcaseRail{ -ms-overflow-style:none; scrollbar-width:none; }
+    /* slider core */
+    .oc-track { will-change: transform; }
+    .oc-slide  { contain: layout paint; }
+    .oc-dot[aria-current="true"] { width: 20px; background: #475569; }
+    .oc-dot { width: 6px; height: 6px; border-radius: 9999px; background:#cbd5e1; transition: all .2s ease; }
+    .oc-thumb { transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease; }
+    .oc-thumb[aria-current="true"] { box-shadow: 0 0 0 2px rgba(15,23,42,.75); transform: translateY(-2px); }
+    @media (prefers-reduced-motion: reduce) {
+      .oc-aura { animation: none; }
+    }
   </style>
 
-  <!-- Soft animated gradient halo behind the gallery -->
-  <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-[-8rem] -z-10 h-[28rem] w-[58rem] -translate-x-1/2 rounded-full bg-gradient-to-r from-[var(--oc-glow-from)] to-[var(--oc-glow-to)] opacity-25 blur-[80px] animate-oc-breathe"></div>
+  <!-- Aura background -->
+  <div aria-hidden="true"
+       class="pointer-events-none absolute left-1/2 top-0 -z-10 h-[34rem] w-[82rem] -translate-x-1/2 rounded-[50%]
+              bg-gradient-to-r from-[var(--oc-glow-a)] to-[var(--oc-glow-b)] opacity-25 blur-[100px] oc-aura"></div>
 
-  <div class="mx-auto max-w-7xl px-6 py-20 sm:py-24">
+  <div class="mx-auto max-w-7xl px-6 pt-16 pb-10 sm:pt-20 sm:pb-14">
+    <!-- Header -->
     <header class="mb-10 text-center">
-      <!-- Swapped-in logo (root path) -->
-      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-md ring-1 ring-black/5 backdrop-blur">
+      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow ring-1 ring-black/5 backdrop-blur">
         <img src="/logo1.svg" alt="OpenCounsel" class="h-7 w-7 opacity-90" />
       </div>
       <p class="text-[11px] font-medium tracking-[0.22em] text-slate-500">PRODUCT GALLERY</p>
       <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">OpenCounsel in action</h2>
-      <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-600">A focused, Apple-grade showcase of real UI. Swipe/drag, click to zoom.</p>
+      <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-600">Swipe, click arrows, or use your keyboard. Click to zoom full-screen.</p>
     </header>
 
+    <!-- Slider -->
     <div class="relative">
-      <!-- Carousel rail (scroll-snap; drag/swipe) -->
-      <div id="ocShowcaseRail" class="group flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-6" aria-label="OpenCounsel screenshots">
-        <!-- Slide 1 -->
-        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Chat — Local & Private" data-zoom="/assets/oc/oc-chat@2x.png">
-          <div class="oc-frame">
-            <img class="w-full rounded-[22px]" src="/assets/oc/oc-chat@1x.png" srcset="/assets/oc/oc-chat@1x.png 1x, /assets/oc/oc-chat@2x.png 2x" alt="OpenCounsel chat UI" loading="lazy" decoding="async" />
-          </div>
-          <figcaption class="oc-caption">Chat · Local-first · Fast</figcaption>
-        </figure>
-        <!-- Slide 2 -->
-        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Research — Sources that matter" data-zoom="/assets/oc/oc-research@2x.png">
-          <div class="oc-frame">
-            <img class="w-full rounded-[22px]" src="/assets/oc/oc-research@1x.png" srcset="/assets/oc/oc-research@1x.png 1x, /assets/oc/oc-research@2x.png 2x" alt="OpenCounsel research view" loading="lazy" decoding="async" />
-          </div>
-          <figcaption class="oc-caption">Research · Trusted sources · Citations</figcaption>
-        </figure>
-        <!-- Slide 3 -->
-        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Law Mode — Built for real work" data-zoom="/assets/oc/oc-law@2x.png">
-          <div class="oc-frame">
-            <img class="w-full rounded-[22px]" src="/assets/oc/oc-law@1x.png" srcset="/assets/oc/oc-law@1x.png 1x, /assets/oc/oc-law@2x.png 2x" alt="OpenCounsel law mode" loading="lazy" decoding="async" />
-          </div>
-          <figcaption class="oc-caption">Law + Life · Structured drafting</figcaption>
-        </figure>
-        <!-- Slide 4 -->
-        <figure class="oc-card snap-center shrink-0 w-[88%] sm:w-[72%] lg:w-[56%] xl:w-[48%] opacity-0 translate-y-2 transition duration-700 ease-out" data-title="Settings — Personal & precise" data-zoom="/assets/oc/oc-settings@2x.png">
-          <div class="oc-frame">
-            <img class="w-full rounded-[22px]" src="/assets/oc/oc-settings@1x.png" srcset="/assets/oc/oc-settings@1x.png 1x, /assets/oc/oc-settings@2x.png 2x" alt="OpenCounsel settings" loading="lazy" decoding="async" />
-          </div>
-          <figcaption class="oc-caption">Settings · Control the details</figcaption>
-        </figure>
-      </div>
+      <!-- Main viewport -->
+      <div id="ocViewport"
+           class="relative mx-auto max-w-[1100px] rounded-3xl bg-gradient-to-b from-white to-white/70 p-4 ring-1 ring-black/5 shadow-[0_20px_60px_rgba(2,6,23,.06)]">
+        <div class="oc-device aspect-[16/10]">
+          <!-- Track -->
+          <ul id="ocTrack" class="oc-track flex h-full w-full translate-x-0 transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)]"
+              style="touch-action: pan-y pinch-zoom;" role="listbox" aria-label="Screenshots">
+            <!-- Slide 1 -->
+            <li class="oc-slide relative h-full w-full shrink-0 basis-full" role="option" aria-label="Chat — Local & Private">
+              <picture class="absolute inset-0">
+                <source srcset="/ui/oc-chat@2x.webp 2x, /ui/oc-chat.webp 1x" type="image/webp" />
+                <img class="oc-shot" src="/ui/oc-chat.png" srcset="/ui/oc-chat.png 1x, /ui/oc-chat@2x.png 2x"
+                     alt="OpenCounsel chat UI" loading="eager" decoding="async"
+                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+                <div class="oc-fallback absolute inset-0 hidden">
+                  <img src="/logo1.svg" alt="" class="h-10 w-10 opacity-90" />
+                </div>
+              </picture>
+            </li>
+            <!-- Slide 2 -->
+            <li class="oc-slide relative h-full w-full shrink-0 basis-full" role="option" aria-label="Research — Sources that matter">
+              <picture class="absolute inset-0">
+                <source srcset="/ui/oc-research@2x.webp 2x, /ui/oc-research.webp 1x" type="image/webp" />
+                <img class="oc-shot" src="/ui/oc-research.png" srcset="/ui/oc-research.png 1x, /ui/oc-research@2x.png 2x"
+                     alt="OpenCounsel research view" loading="lazy" decoding="async"
+                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+                <div class="oc-fallback absolute inset-0 hidden">
+                  <img src="/logo1.svg" alt="" class="h-10 w-10 opacity-90" />
+                </div>
+              </picture>
+            </li>
+            <!-- Slide 3 -->
+            <li class="oc-slide relative h-full w-full shrink-0 basis-full" role="option" aria-label="Law Mode — Built for real work">
+              <picture class="absolute inset-0">
+                <source srcset="/ui/oc-law@2x.webp 2x, /ui/oc-law.webp 1x" type="image/webp" />
+                <img class="oc-shot" src="/ui/oc-law.png" srcset="/ui/oc-law.png 1x, /ui/oc-law@2x.png 2x"
+                     alt="OpenCounsel law mode" loading="lazy" decoding="async"
+                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+                <div class="oc-fallback absolute inset-0 hidden">
+                  <img src="/logo1.svg" alt="" class="h-10 w-10 opacity-90" />
+                </div>
+              </picture>
+            </li>
+            <!-- Slide 4 -->
+            <li class="oc-slide relative h-full w-full shrink-0 basis-full" role="option" aria-label="Settings — Personal & precise">
+              <picture class="absolute inset-0">
+                <source srcset="/ui/oc-settings@2x.webp 2x, /ui/oc-settings.webp 1x" type="image/webp" />
+                <img class="oc-shot" src="/ui/oc-settings.png" srcset="/ui/oc-settings.png 1x, /ui/oc-settings@2x.png 2x"
+                     alt="OpenCounsel settings" loading="lazy" decoding="async"
+                     onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+                <div class="oc-fallback absolute inset-0 hidden">
+                  <img src="/logo1.svg" alt="" class="h-10 w-10 opacity-90" />
+                </div>
+              </picture>
+            </li>
+          </ul>
 
-      <!-- Prev/Next controls (glass buttons) -->
-      <div class="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2">
-        <button type="button" class="oc-nav oc-prev pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-[var(--oc-nav-border)] bg-[var(--oc-nav-bg)] shadow-xl backdrop-blur transition will-change-transform hover:-translate-y-0.5" aria-label="Previous slide">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4 text-slate-700"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-        </button>
-        <button type="button" class="oc-nav oc-next pointer-events-auto grid h-11 w-11 place-items-center rounded-full border border-[var(--oc-nav-border)] bg-[var(--oc-nav-bg)] shadow-xl backdrop-blur transition will-change-transform hover:-translate-y-0.5" aria-label="Next slide">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4 text-slate-700"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-        </button>
+          <!-- Hover tilt (subtle) -->
+          <div class="pointer-events-none absolute inset-0 rounded-[calc(var(--oc-card-r)-8px)] ring-1 ring-black/5"></div>
+        </div>
+
+        <!-- Caption + controls -->
+        <div class="mt-4 flex items-center justify-between gap-3">
+          <p id="ocCaption" class="min-h-[1.5rem] text-sm text-slate-600">Chat · Local-first · Fast</p>
+          <div class="flex items-center gap-2">
+            <button id="ocPrev" class="grid h-10 w-10 place-items-center rounded-full border border-[var(--oc-ring)] bg-white/90 shadow backdrop-blur transition hover:-translate-y-0.5"
+                    aria-label="Previous slide">
+              <svg class="h-4 w-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+            </button>
+            <button id="ocNext" class="grid h-10 w-10 place-items-center rounded-full border border-[var(--oc-ring)] bg-white/90 shadow backdrop-blur transition hover:-translate-y-0.5"
+                    aria-label="Next slide">
+              <svg class="h-4 w-4 text-slate-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Dots -->
-      <div id="ocShowcaseDots" class="mt-6 flex items-center justify-center gap-2" aria-hidden="true"></div>
+      <div id="ocDots" class="mt-6 flex items-center justify-center gap-2"></div>
+
+      <!-- Thumbnails -->
+      <div id="ocThumbs" class="mx-auto mt-6 grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-4">
+        <!-- Each button mirrors the slides order -->
+        <button class="oc-thumb group relative overflow-hidden rounded-xl border border-[var(--oc-ring)] bg-white p-1" aria-label="Go to Chat" aria-current="true">
+          <div class="aspect-[16/10] overflow-hidden rounded-lg">
+            <img class="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
+                 src="/ui/oc-chat-thumb.jpg" alt="" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+            <div class="oc-fallback hidden h-full w-full grid place-items-center">
+              <img src="/logo1.svg" alt="" class="h-6 w-6 opacity-90" />
+            </div>
+          </div>
+        </button>
+        <button class="oc-thumb group relative overflow-hidden rounded-xl border border-[var(--oc-ring)] bg-white p-1" aria-label="Go to Research">
+          <div class="aspect-[16/10] overflow-hidden rounded-lg">
+            <img class="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
+                 src="/ui/oc-research-thumb.jpg" alt="" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+            <div class="oc-fallback hidden h-full w-full grid place-items-center">
+              <img src="/logo1.svg" alt="" class="h-6 w-6 opacity-90" />
+            </div>
+          </div>
+        </button>
+        <button class="oc-thumb group relative overflow-hidden rounded-xl border border-[var(--oc-ring)] bg-white p-1" aria-label="Go to Law">
+          <div class="aspect-[16/10] overflow-hidden rounded-lg">
+            <img class="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
+                 src="/ui/oc-law-thumb.jpg" alt="" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+            <div class="oc-fallback hidden h-full w-full grid place-items-center">
+              <img src="/logo1.svg" alt="" class="h-6 w-6 opacity-90" />
+            </div>
+          </div>
+        </button>
+        <button class="oc-thumb group relative overflow-hidden rounded-xl border border-[var(--oc-ring)] bg-white p-1" aria-label="Go to Settings">
+          <div class="aspect-[16/10] overflow-hidden rounded-lg">
+            <img class="h-full w-full object-cover opacity-90 transition group-hover:opacity-100"
+                 src="/ui/oc-settings-thumb.jpg" alt="" onerror="this.style.display='none'; this.nextElementSibling.classList.remove('hidden');" />
+            <div class="oc-fallback hidden h-full w-full grid place-items-center">
+              <img src="/logo1.svg" alt="" class="h-6 w-6 opacity-90" />
+            </div>
+          </div>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Lightbox (click any slide) -->
+  <!-- Lightbox -->
   <div id="ocLightbox" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
-    <button class="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-900 shadow" aria-label="Close lightbox (Esc)">Esc</button>
-    <img class="max-h-[85vh] max-w-[92vw] rounded-2xl shadow-2xl" alt="OpenCounsel screenshot" />
+    <button class="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-900 shadow" aria-label="Close (Esc)">Esc</button>
+    <img class="max-h-[88vh] max-w-[94vw] rounded-2xl shadow-2xl" alt="OpenCounsel screenshot" />
   </div>
 
-  <!-- Minimal, isolated JS (no globals leaked) -->
+  <!-- JS: slider, thumbs, dots, keyboard, drag, lightbox -->
   <script>
     (() => {
-      const section = document.getElementById('oc-showcase');
-      const rail = section.querySelector('#ocShowcaseRail');
-      const cards = Array.from(rail.querySelectorAll('.oc-card'));
-      const prev = section.querySelector('.oc-prev');
-      const next = section.querySelector('.oc-next');
-      const dotsWrap = section.querySelector('#ocShowcaseDots');
-      const lightbox = section.querySelector('#ocLightbox');
+      const root = document.getElementById('oc-pro-gallery');
+      const track = root.querySelector('#ocTrack');
+      const slides = Array.from(track.children);
+      const caption = root.querySelector('#ocCaption');
+      const prevBtn = root.querySelector('#ocPrev');
+      const nextBtn = root.querySelector('#ocNext');
+      const dotsWrap = root.querySelector('#ocDots');
+      const thumbs = Array.from(root.querySelectorAll('#ocThumbs .oc-thumb'));
+      const lightbox = root.querySelector('#ocLightbox');
       const lbImg = lightbox.querySelector('img');
 
-      // Fade-in on view
-      const io = new IntersectionObserver((entries) => {
-        entries.forEach((en) => {
-          if (en.isIntersecting) en.target.classList.add('opacity-100','translate-y-0');
-        });
-      }, { threshold: 0.2 });
-      cards.forEach(c => io.observe(c));
+      const captions = [
+        'Chat · Local-first · Fast',
+        'Research · Trusted sources · Citations',
+        'Law + Life · Structured drafting',
+        'Settings · Personal & precise'
+      ];
 
-      // 3D tilt on hover (desktop)
-      cards.forEach(card => {
-        const frame = card.querySelector('.oc-frame');
-        let rect;
-        const onMove = (e) => {
-          rect = rect || frame.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width;
-          const y = (e.clientY - rect.top) / rect.height;
-          frame.style.transform = `perspective(1200px) rotateX(${(0.5 - y) * 6}deg) rotateY(${(x - 0.5) * 6}deg)`;
-        };
-        card.addEventListener('mouseenter', () => { rect = null; });
-        card.addEventListener('mousemove', onMove, { passive: true });
-        card.addEventListener('mouseleave', () => { frame.style.transform = 'perspective(1200px) rotateX(0) rotateY(0)'; });
-      });
+      let index = 0, width = 0, startX = 0, currentX = 0, dragging = false;
+
+      const resize = () => {
+        width = track.clientWidth;
+        goTo(index, false);
+      };
+      const ro = new ResizeObserver(resize);
+      ro.observe(track);
+
+      const goTo = (i, animate = true) => {
+        index = Math.max(0, Math.min(i, slides.length - 1));
+        track.style.transitionDuration = animate ? '500ms' : '0ms';
+        track.style.transform = `translateX(${-index * width}px)`;
+        caption.textContent = captions[index];
+        updateDots();
+        updateThumbs();
+      };
 
       // Dots
-      const makeDot = (i) => {
+      const dots = slides.map((_, i) => {
         const b = document.createElement('button');
-        b.className = 'h-1.5 w-1.5 rounded-full bg-slate-300 transition-all aria-[current=true]:w-5 aria-[current=true]:bg-slate-600';
-        b.setAttribute('aria-label', `Go to slide ${i+1}`);
-        b.addEventListener('click', () => {
-          const target = cards[i];
-          rail.scrollTo({ left: target.offsetLeft - (rail.clientWidth - target.clientWidth)/2, behavior: 'smooth' });
-        });
+        b.className = 'oc-dot';
+        b.setAttribute('aria-label', `Go to slide ${i + 1}`);
+        b.addEventListener('click', () => goTo(i));
+        dotsWrap.appendChild(b);
         return b;
-      };
-      const dots = cards.map((_,i) => { const d = makeDot(i); dotsWrap.appendChild(d); return d; });
+      });
+      const updateDots = () => dots.forEach((d, i) => d.setAttribute('aria-current', i === index));
 
-      // Active dot based on center proximity
-      const updateActive = () => {
-        const center = rail.scrollLeft + rail.clientWidth/2;
-        let best = 0, bestDist = Infinity;
-        cards.forEach((el, i) => {
-          const mid = el.offsetLeft + el.clientWidth/2;
-          const d = Math.abs(mid - center);
-          if (d < bestDist){ best = i; bestDist = d; }
+      // Thumbs
+      const updateThumbs = () => thumbs.forEach((t, i) => t.setAttribute('aria-current', i === index));
+      thumbs.forEach((t, i) => t.addEventListener('click', () => goTo(i)));
+
+      // Arrows
+      prevBtn.addEventListener('click', () => goTo(index - 1));
+      nextBtn.addEventListener('click', () => goTo(index + 1));
+
+      // Keyboard
+      root.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') goTo(index - 1);
+        if (e.key === 'ArrowRight') goTo(index + 1);
+        if (e.key === 'Home') goTo(0);
+        if (e.key === 'End') goTo(slides.length - 1);
+      });
+      root.tabIndex = 0; // enable keyboard focus
+
+      // Drag / swipe
+      const viewport = root.querySelector('#ocViewport');
+      const onDown = (x) => { dragging = true; startX = x; currentX = x; track.style.transitionDuration = '0ms'; };
+      const onMove = (x) => {
+        if (!dragging) return;
+        currentX = x;
+        const dx = currentX - startX;
+        track.style.transform = `translateX(${dx - index * width}px)`;
+      };
+      const onUp = () => {
+        if (!dragging) return;
+        dragging = false;
+        const dx = currentX - startX;
+        const th = Math.max(60, width * 0.12);
+        if (dx > th) goTo(index - 1); else if (dx < -th) goTo(index + 1); else goTo(index);
+      };
+      viewport.addEventListener('pointerdown', e => { viewport.setPointerCapture(e.pointerId); onDown(e.clientX); });
+      viewport.addEventListener('pointermove',  e => onMove(e.clientX));
+      viewport.addEventListener('pointerup',    onUp);
+      viewport.addEventListener('pointercancel',onUp);
+
+      // Lightbox (click main area)
+      slides.forEach(sl => {
+        sl.addEventListener('click', () => {
+          const img = sl.querySelector('img.oc-shot');
+          const src = (img && img.style.display !== 'none') ? (img.currentSrc || img.src) : null;
+          if (!src) return;
+          lbImg.src = src;
+          lightbox.classList.remove('hidden');
+          lightbox.classList.add('flex');
+          document.documentElement.classList.add('overflow-hidden');
         });
-        dots.forEach((d,i) => d.setAttribute('aria-current', i===best ? 'true':'false'));
+      });
+      const closeLB = () => {
+        lightbox.classList.add('hidden');
+        lightbox.classList.remove('flex');
+        document.documentElement.classList.remove('overflow-hidden');
+        lbImg.src = '';
       };
-      rail.addEventListener('scroll', updateActive, { passive: true });
-      updateActive();
-
-      // Nav buttons
-      const move = (dir) => rail.scrollBy({ left: rail.clientWidth * 0.8 * dir, behavior: 'smooth' });
-      prev.addEventListener('click', () => move(-1));
-      next.addEventListener('click', () => move(1));
-
-      // Lightbox
-      const openLB = (src) => { lbImg.src = src; lightbox.classList.remove('hidden'); lightbox.classList.add('flex'); document.documentElement.classList.add('overflow-hidden'); };
-      const closeLB = () => { lightbox.classList.add('hidden'); lightbox.classList.remove('flex'); document.documentElement.classList.remove('overflow-hidden'); lbImg.src = ''; };
       lightbox.addEventListener('click', (e) => { if (e.target === lightbox || e.target.tagName === 'BUTTON') closeLB(); });
       window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLB(); });
 
-      cards.forEach(card => {
-        card.addEventListener('click', () => {
-          const hi = card.getAttribute('data-zoom');
-          const imgEl = card.querySelector('img');
-          openLB(hi || imgEl.currentSrc || imgEl.src);
-        });
-      });
+      // Subtle tilt on hover (desktop)
+      const device = root.querySelector('.oc-device');
+      let rect;
+      const tilt = (e) => {
+        rect = rect || device.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        device.style.transform = `perspective(1200px) rotateX(${(0.5 - y) * 5}deg) rotateY(${(x - 0.5) * 6}deg)`;
+      };
+      device.addEventListener('mouseenter', () => { rect = null; });
+      device.addEventListener('mousemove', tilt, { passive: true });
+      device.addEventListener('mouseleave', () => { device.style.transform = 'perspective(1200px)'; });
+
+      // Init
+      resize();
+      updateDots();
+      updateThumbs();
     })();
   </script>
 </section>
