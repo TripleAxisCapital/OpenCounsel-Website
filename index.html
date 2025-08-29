@@ -1676,21 +1676,26 @@
         await wait(Math.max(0, cfg.startDelayMs|0));
         await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
 
-        // Reverse out the typed brand and swap to white logo
+        // As soon as the title finishes typing, start the subtitle typing in parallel.
         const rCfg = window.OC_HERO_ROTATOR || {};
-        await wait(cfg.titleDwellMs|0);
-        await deleteHero(titleEl, cfg.titleDeleteMin|0, cfg.titleDeleteMax|0);
-        // Insert local white logo (mask-based for crisp, offline-safe rendering)
-        titleEl.textContent = '';
-        const logoSpan = document.createElement('span');
-        logoSpan.className = 'hero-logo-white';
-        logoSpan.setAttribute('role','img');
-        logoSpan.setAttribute('aria-label','OpenCounsel');
-        titleEl.appendChild(logoSpan);
+        (async ()=>{
+          const first = await setupAndTypeFirst(rCfg);
+          if (first && first.wEl) startRotatorLoop(first.wEl, first.words, rCfg);
+        })();
 
-        const first = await setupAndTypeFirst(rCfg);
-        if (first && first.wEl) startRotatorLoop(first.wEl, first.words, rCfg);
+        // Independently reverse-type the title and swap to the logo without blocking subtitle.
+        (async ()=>{
+          await wait(cfg.titleDwellMs|0);
+          await deleteHero(titleEl, cfg.titleDeleteMin|0, cfg.titleDeleteMax|0);
+          titleEl.textContent = '';
+          const logoSpan = document.createElement('span');
+          logoSpan.className = 'hero-logo-white';
+          logoSpan.setAttribute('role','img');
+          logoSpan.setAttribute('aria-label','OpenCounsel');
+          titleEl.appendChild(logoSpan);
+        })();
 
+        // Proceed with CTA timing as before
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-visible'));
