@@ -579,7 +579,7 @@
   <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
   <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
 
-<!-- HERO (VARIATION 2: Segmented Capsule) -->
+  <!-- HERO -->
 <section
   id="home"
   class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0"
@@ -595,55 +595,30 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- SUBTITLE (unchanged placeholder for your rotating copy) -->
-      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
+      <!-- SUBTITLE: bigger + rotating word with blinking caret -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+        <!-- JS will insert structure + caret and handle mobile split -->
+      </p>
 
-      <!-- CTA -->
+      <!-- REMOVED per request: Research. Law. Business. Life. -->
+      <!-- <p class="hero-sub2 ...">…</p> -->
+
       <div class="mt-8 flex justify-center">
         <a
           id="heroCtaBtn"
           href="download.html"
-          class="hero-cta hero-cta-fade relative inline-grid grid-cols-[auto,1fr,auto] items-center
-                 rounded-full overflow-hidden
-                 text-base md:text-lg font-semibold text-white
+          class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
                  transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
-          aria-label="Download OpenCounsel"
+                 grad-anim"
+          style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
         >
-          <!-- Icon segment (left “well”) -->
-          <span
-            class="h-full flex items-center justify-center px-4 md:px-5 py-[10px] md:py-3
-                   backdrop-blur-xl bg-white/10 border border-white/15 border-r-white/10
-                   ring-1 ring-inset ring-white/10"
-          >
-            <i id="heroCtaIcon" class="ph ph-apple-logo text-xl md:text-2xl" aria-hidden="true"></i>
-          </span>
-
-          <!-- Label segment (center) with animated gradient underlay -->
-          <span
-            class="relative px-5 md:px-6 py-[10px] md:py-3 whitespace-nowrap
-                   border-y border-white/15
-                   grad-anim"
-            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:120deg;"
-          >
-            <!-- inner stroke for Apple-like crisp edge -->
-            <span class="pointer-events-none absolute inset-0"
-                  style="border-radius:999px;border:1px solid rgba(255,255,255,.12); mix-blend:screen;"></span>
-            <span class="hero-cta-text relative z-[1]" aria-live="polite">Download</span>
-          </span>
-
-          <!-- Chevron segment (right) -->
-          <span
-            class="h-full flex items-center justify-center px-3 md:px-4 py-[10px] md:py-3
-                   backdrop-blur-xl bg-white/10 border border-white/15 border-l-white/10
-                   ring-1 ring-inset ring-white/10"
-          >
-            <i class="ph ph-caret-right text-lg opacity-90" aria-hidden="true"></i>
-          </span>
-
-          <!-- Ambient glow -->
-          <span class="pointer-events-none absolute inset-0 -z-10 rounded-full blur-2xl opacity-60"
-                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.26), rgba(0,0,0,0));"></span>
+          <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
+                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
+          <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
+          <span class="hero-cta-text">Download</span>
         </a>
       </div>
     </div>
@@ -662,14 +637,16 @@
   </div>
 </section>
 
-<!-- Measure header height (unchanged) -->
+
+
+<!-- Measure actual header height (handles desktop vs mobile, sticky headers, etc.) -->
 <script>
   (function setHeaderVar() {
     const pickHeader = () =>
       document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
     const set = () => {
       const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56;
+      const h = el ? el.getBoundingClientRect().height : 56; // fallback
       document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
     };
     set();
@@ -680,10 +657,11 @@
   })();
 </script>
 
-<!-- Arrow reveal controller (unchanged) -->
+
+<!-- Controller: reveal arrow strictly after CTA label finishes typing (unchanged) -->
 <script>
 (() => {
-  const ARROW_AFTER_CTA_MS = 40;
+  const ARROW_AFTER_CTA_MS = 40; // tiny pause after text completes
   const arrow  = document.getElementById('heroArrow');
   const ctaBtn = document.getElementById('heroCtaBtn');
   const ctaTxt = document.querySelector('#home .hero-cta-text');
@@ -729,40 +707,6 @@
   io.observe(ctaBtn);
 })();
 </script>
-
-<!-- Automatic Apple → Windows icon + label (kept & hardened) -->
-<script>
-(() => {
-  const ctaTxt = document.querySelector('#home .hero-cta-text');
-  const iconEl = document.getElementById('heroCtaIcon');
-  const btn = document.getElementById('heroCtaBtn');
-  if (!ctaTxt || !iconEl || !btn) return;
-
-  const ua = navigator.userAgent || '';
-  const plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
-  const isWindows = /Win/i.test(plat) || /Windows/i.test(ua);
-  const isMac = /Mac/i.test(plat) || /(Macintosh|Mac OS X)/i.test(ua);
-
-  let label = 'Download';
-  if (isWindows) {
-    iconEl.className = 'ph ph-windows-logo text-xl md:text-2xl';
-    label = 'Download for Windows';
-    btn.dataset.platform = 'windows';
-  } else if (isMac) {
-    iconEl.className = 'ph ph-apple-logo text-xl md:text-2xl';
-    label = 'Download for macOS';
-    btn.dataset.platform = 'mac';
-  } else {
-    iconEl.className = 'ph ph-download-simple text-xl md:text-2xl';
-    label = 'Download for your OS';
-    btn.dataset.platform = 'other';
-  }
-
-  ctaTxt.textContent = label;
-  document.dispatchEvent(new CustomEvent('oc:cta-text-done'));
-})();
-</script>
-
 
 <section id="sly-4" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
   <!-- Soft background glows (subtle, Apple-y) -->
