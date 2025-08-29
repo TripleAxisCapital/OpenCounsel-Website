@@ -187,11 +187,6 @@
       /* ===== Demo Stage Dimensions (fixed like a video) ===== */
       --demo-stage-h-sm: 360px;
       --demo-stage-h-lg: 440px;
-
-      /* ===== Typing speeds (ms/char) ===== */
-      --type-title: 28;
-      --type-sub: 16;
-      --type-cta: 14;
     }
 
     /* Kill horizontal scroll without breaking sticky */
@@ -601,12 +596,7 @@
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
       <!-- SUBTITLE: bigger + rotating word with blinking caret -->
-      <p
-        class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed"
-        data-prefix="Private, offline AI counsel for "
-        data-rotate="students, founders, engineers, work &amp; life"
-        aria-live="polite"
-      >
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
         <!-- JS will insert structure + caret and handle mobile split -->
       </p>
 
@@ -626,7 +616,7 @@
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
           <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
-          <span class="hero-cta-text"></span>
+          <span class="hero-cta-text">Download</span>
         </a>
       </div>
     </div>
@@ -709,172 +699,46 @@
 })();
 </script>
 
-<!-- OS-aware CTA setup (icon + label for sequencer; no typing here) -->
+<!-- OS-aware CTA label & icon (new) -->
 <script>
 (() => {
-  const elBtn  = document.getElementById('heroCtaBtn');
+  const elBtn = document.getElementById('heroCtaBtn');
   const elIcon = document.getElementById('heroCtaIcon');
+  const elTxt = document.querySelector('#home .hero-cta-text');
+  if (!elBtn || !elTxt) return;
+
   const detectOS = () => {
     const ua = (navigator.userAgent || '').toLowerCase();
     const platRaw = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
     const p = String(platRaw).toLowerCase();
     const isWindows = p.includes('win') || ua.includes('windows');
-    const isApple   = p.includes('mac') || ua.includes('mac os x') || ua.includes('macintosh') || /iphone|ipad|ipod/.test(ua);
+    const isAppleDesktop = p.includes('mac') || ua.includes('mac os x') || ua.includes('macintosh');
+    const isIOS = /iphone|ipad|ipod/.test(ua);
     if (isWindows) return 'windows';
-    if (isApple)   return 'mac';
+    if (isAppleDesktop || isIOS) return 'mac';
     return 'other';
   };
-  if (!elBtn) return;
+
   const os = detectOS();
   const label = os === 'windows' ? 'Get for Windows' : (os === 'mac' ? 'Get for Mac' : 'Download');
-  elBtn.dataset.ctaLabel = label;
+
+  elTxt.textContent = label;
   elBtn.setAttribute('aria-label', label);
   elBtn.setAttribute('title', label);
-  if (elIcon) elIcon.className = os === 'windows' ? 'ph ph-microsoft-logo text-xl' : 'ph ph-apple-logo text-xl';
-})();
-</script>
 
-<!-- HERO SEQUENCER — Title → Subheading → Button (no pauses, Apple-smooth) -->
-<script>
-(() => {
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const titleEl = document.querySelector('#home .hero-title');
-  const subEl   = document.querySelector('#home .hero-sub1');
-  const ctaBtn  = document.getElementById('heroCtaBtn');
-  const ctaTxt  = ctaBtn ? ctaBtn.querySelector('.hero-cta-text') : null;
-
-  if (!titleEl || !subEl || !ctaBtn || !ctaTxt) return;
-
-  // Utilities
-  const typeText = (el, text, speedMs) => new Promise(resolve => {
-    if (prefersReduced || !text) { el.textContent = text; resolve(); return; }
-    el.textContent = '';
-    const target = String(text);
-    let i = 0, acc = 0, last = performance.now();
-    const interval = Math.max(6, Number(speedMs) || 18);
-
-    const step = (now) => {
-      const dt = now - last; last = now; acc += dt;
-      while (acc >= interval && i < target.length) {
-        el.textContent += target.charAt(i++);
-        acc -= interval;
-      }
-      if (i >= target.length) { resolve(); return; }
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  });
-
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-  // Setup subheading structure: [prefix][word][caret]
-  const prefix = subEl.getAttribute('data-prefix') || 'Private, offline AI counsel for ';
-  const rotate = (subEl.getAttribute('data-rotate') || 'students, founders, engineers, work & life')
-                  .split(',')
-                  .map(s => s.trim())
-                  .filter(Boolean);
-
-  const subWrap = document.createElement('span'); // holds prefix + rotating word
-  const wordSpan = document.createElement('span'); wordSpan.className = 'hero-word';
-  const caret = document.createElement('span'); caret.className = 'hero-caret';
-
-  subWrap.append(document.createTextNode('')); // prefix will be typed into this TextNode (firstChild)
-  subWrap.appendChild(wordSpan);
-  subEl.textContent = ''; // clear
-  subEl.appendChild(subWrap);
-  subEl.appendChild(caret);
-
-  // Save & clear original title text to type it
-  const titleText = titleEl.textContent.trim() || 'OpenCounsel';
-  if (!prefersReduced) titleEl.textContent = '';
-
-  // CTA label from dataset (set by OS script)
-  const ctaLabel = ctaBtn.dataset.ctaLabel || 'Download';
-
-  // Main sequence — zero idle between segments
-  (async () => {
-    // 1) Title typing
-    await typeText(titleEl, titleText, getComputedStyle(document.documentElement).getPropertyValue('--type-title') || 28);
-
-    // 2) Subheading typing: prefix then first rotating word
-    const prefixNode = subWrap.firstChild; // text node
-    // For text nodes, we type by replacing its nodeValue
-    const typeIntoTextNode = (node, text, speedMs) => new Promise(resolve => {
-      if (prefersReduced) { node.nodeValue = text; resolve(); return; }
-      node.nodeValue = '';
-      let i = 0, acc = 0, last = performance.now();
-      const interval = Math.max(6, Number(speedMs) || 16);
-      const step = (now) => {
-        const dt = now - last; last = now; acc += dt;
-        while (acc >= interval && i < text.length) {
-          node.nodeValue += text.charAt(i++);
-          acc -= interval;
-        }
-        if (i >= text.length) { resolve(); return; }
-        requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    });
-
-    await typeIntoTextNode(prefixNode, prefix, getComputedStyle(document.documentElement).getPropertyValue('--type-sub') || 16);
-    const firstWord = rotate[0] || 'everyone';
-    await typeText(wordSpan, firstWord + '.', getComputedStyle(document.documentElement).getPropertyValue('--type-sub') || 16);
-
-    // 3) CTA reveal + typing starts IMMEDIATELY (no pause)
-    ctaBtn.classList.add('cta-visible'); // fade in while typing text
-    await typeText(ctaTxt, ctaLabel, getComputedStyle(document.documentElement).getPropertyValue('--type-cta') || 14);
-
-    // Signal for arrow reveal (existing listener)
-    document.dispatchEvent(new CustomEvent('oc:cta-text-done'));
-
-    // 4) Begin rotating the subheading word after CTA is done (non-blocking)
-    if (rotate.length > 1 && !prefersReduced) {
-      let idx = 1;
-      const backspace = (el, count, speedMs) => new Promise(resolve => {
-        let remaining = count;
-        if (remaining <= 0) { resolve(); return; }
-        const interval = Math.max(6, Number(speedMs) || 16);
-        let acc = 0, last = performance.now();
-        const step = (now) => {
-          const dt = now - last; last = now; acc += dt;
-          while (acc >= interval && remaining > 0) {
-            el.textContent = el.textContent.slice(0, -1);
-            remaining--; acc -= interval;
-          }
-          if (remaining <= 0) { resolve(); return; }
-          requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      });
-
-      const rotLoop = async () => {
-        // gentle dwell
-        await sleep(1400);
-        // erase current word incl. dot
-        await backspace(wordSpan, wordSpan.textContent.length, 14);
-        // type next
-        const next = rotate[idx % rotate.length] + '.';
-        await typeText(wordSpan, next, 16);
-        idx++;
-        rotLoop();
-      };
-      rotLoop();
+  if (elIcon) {
+    if (os === 'windows') {
+      elIcon.className = 'ph ph-microsoft-logo text-xl';
+    } else {
+      elIcon.className = 'ph ph-apple-logo text-xl';
     }
-  })();
-
-  // Reduced motion: set everything immediately, still trigger arrow
-  if (prefersReduced) {
-    subEl.textContent = prefix + (rotate[0] ? rotate[0] + '.' : 'everyone.');
-    ctaTxt.textContent = ctaLabel;
-    ctaBtn.classList.add('cta-visible');
-    document.dispatchEvent(new CustomEvent('oc:cta-text-done'));
+    elIcon.setAttribute('aria-hidden', 'true');
   }
+
+  // Signal that CTA text is finalized (so your arrow reveal can trigger immediately)
+  setTimeout(() => { document.dispatchEvent(new CustomEvent('oc:cta-text-done')); }, 0);
 })();
 </script>
-</body>
-</html>
-
 
 
 <section id="sly-4" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
