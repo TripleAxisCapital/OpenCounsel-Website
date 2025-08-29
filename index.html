@@ -486,11 +486,11 @@
     .brand-logo:hover{ filter: grayscale(0); opacity: 1; transform: translateY(-2px) scale(1.02); }
     .brand-note{ font-size: 11px; color: #6b7280; }
 
-    /* ===== HERO blinking caret (now fully controllable via CSS vars) ===== */
+    /* ===== HERO blinking caret (reused) ===== */
     .hero-caret{
       display:inline-block;
       height: 1em;
-      vertical-align: -0.12em; /* subtle baseline alignment */
+      vertical-align: -0.12em;
       margin-left: .05em;
       border-right: var(--caret-w, 2px) solid var(--caret-color, rgba(255,255,255,.9));
       animation: heroBlink var(--caret-blink, 900ms) steps(1) infinite;
@@ -504,7 +504,7 @@
 
 <style id="oc-hero-bold-rotator">
   /* Bold only the rotating words like "everything.", "students.", etc. */
-  .hero-sub1 .hero-word { font-weight: 800; } /* or 700 if you prefer */
+  .hero-sub1 .hero-word { font-weight: 800; }
 </style>
 
 </head>
@@ -545,7 +545,6 @@
       <div class="menu-scrim"></div>
       <aside class="menu-panel">
         <div class="drawer-head">
-          <!-- Title now links to home for parity with other pages -->
           <a href="index.html" class="drawer-title">OpenCounsel</a>
           <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -554,7 +553,6 @@
           </button>
         </div>
 
-        <!-- UPDATED MOBILE MENU LINKS (remove OpenCounsel item) -->
         <nav class="drawer-nav mt-2">
           <a href="contact.html">Contact</a>
           <a href="download.html">Download</a>
@@ -576,9 +574,6 @@
     </div>
   </header>
 
-  <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
-  <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
-
 <!-- HERO -->
 <section
   id="home"
@@ -595,10 +590,8 @@
     <div class="flex flex-col items-center max-w-2xl">
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
-      <!-- SUBTITLE: bigger + rotating word with blinking caret -->
-      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
-        <!-- JS will insert structure + caret and handle mobile split -->
-      </p>
+      <!-- SUBTITLE (typed with caret) -->
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
 
       <div class="mt-8 flex justify-center">
         <a
@@ -614,9 +607,8 @@
         >
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70"
                 style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-          <!-- OS-SWITCHED ICON (default mac, changed by script if Windows) -->
           <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
-          <span class="hero-cta-text">Download</span>
+          <span class="hero-cta-text"></span>
         </a>
       </div>
     </div>
@@ -642,7 +634,7 @@
       document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
     const set = () => {
       const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56; // fallback
+      const h = el ? el.getBoundingClientRect().height : 56;
       document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
     };
     set();
@@ -653,7 +645,7 @@
   })();
 </script>
 
-<!-- Arrow reveal controller (unchanged) -->
+<!-- Arrow reveal controller (unchanged, waits for cta-text-done) -->
 <script>
 (() => {
   const ARROW_AFTER_CTA_MS = 40;
@@ -699,46 +691,108 @@
 })();
 </script>
 
-<!-- OS-aware CTA label & icon (new) -->
+<!-- Hero Typewriter Orchestrator (seamless: title → sub → button, zero gaps) -->
 <script>
 (() => {
-  const elBtn = document.getElementById('heroCtaBtn');
-  const elIcon = document.getElementById('heroCtaIcon');
-  const elTxt = document.querySelector('#home .hero-cta-text');
-  if (!elBtn || !elTxt) return;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const detectOS = () => {
-    const ua = (navigator.userAgent || '').toLowerCase();
-    const platRaw = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
-    const p = String(platRaw).toLowerCase();
-    const isWindows = p.includes('win') || ua.includes('windows');
-    const isAppleDesktop = p.includes('mac') || ua.includes('mac os x') || ua.includes('macintosh');
-    const isIOS = /iphone|ipad|ipod/.test(ua);
-    if (isWindows) return 'windows';
-    if (isAppleDesktop || isIOS) return 'mac';
-    return 'other';
-  };
+  const titleEl = document.querySelector('.hero-title');
+  const subEl   = document.querySelector('.hero-sub1');
+  const ctaBtn  = document.getElementById('heroCtaBtn');
+  const ctaTxt  = document.querySelector('#home .hero-cta-text');
+  const ctaIcon = document.getElementById('heroCtaIcon');
 
-  const os = detectOS();
-  const label = os === 'windows' ? 'Get for Windows' : (os === 'mac' ? 'Get for Mac' : 'Download');
+  if (!titleEl || !subEl || !ctaBtn || !ctaTxt) return;
 
-  elTxt.textContent = label;
-  elBtn.setAttribute('aria-label', label);
-  elBtn.setAttribute('title', label);
+  const titleText = (titleEl.textContent || 'OpenCounsel').trim();
+  const subText   = 'Private, offline AI counsel for students, founders, engineers, and everyday decisions — fast, secure, and yours.';
+  const os = (window.OC_OS || 'other');
+  const ctaLabel = os === 'windows' ? 'Get for Windows' : (os === 'mac' ? 'Get for Mac' : 'Download');
 
-  if (elIcon) {
-    if (os === 'windows') {
-      elIcon.className = 'ph ph-microsoft-logo text-xl';
-    } else {
-      elIcon.className = 'ph ph-apple-logo text-xl';
-    }
-    elIcon.setAttribute('aria-hidden', 'true');
+  // keep icon in sync with OS
+  if (ctaIcon) {
+    ctaIcon.className = os === 'windows' ? 'ph ph-microsoft-logo text-xl' : 'ph ph-apple-logo text-xl';
+    ctaIcon.setAttribute('aria-hidden','true');
   }
 
-  // Signal that CTA text is finalized (so your arrow reveal can trigger immediately)
-  setTimeout(() => { document.dispatchEvent(new CustomEvent('oc:cta-text-done')); }, 0);
+  // Typing utility with rAF for consistency
+  function typeText(el, text, opts = {}) {
+    const speed = Math.max(6, opts.speed || 22); // ms per char
+    const onDone = opts.onDone || (()=>{});
+    let i = 0, acc = 0, last = performance.now();
+
+    function step(now) {
+      acc += now - last; last = now;
+      while (acc >= speed && i < text.length) {
+        el.textContent += text[i++];
+        acc -= speed;
+      }
+      if (i < text.length) {
+        requestAnimationFrame(step);
+      } else {
+        onDone();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function addCaret(target) {
+    const caret = document.createElement('span');
+    caret.className = 'hero-caret';
+    target.appendChild(caret);
+    return caret;
+  }
+
+  function removeNode(n){ if(n && n.parentNode) n.parentNode.removeChild(n); }
+
+  function startSequence() {
+    if (prefersReduced) {
+      // No animation: set instantly and reveal
+      titleEl.textContent = titleText;
+      subEl.textContent = subText;
+      ctaTxt.textContent = ctaLabel;
+      ctaBtn.classList.add('cta-visible');
+      document.dispatchEvent(new CustomEvent('oc:cta-text-done'));
+      return;
+    }
+
+    // Prepare
+    titleEl.textContent = '';
+    subEl.textContent = '';
+    ctaTxt.textContent = '';
+
+    // Title → Sub (with caret) → CTA (fade+type immediately)
+    typeText(titleEl, titleText, { speed: 34, onDone: () => {
+      // SUBTITLE
+      const subTextSpan = document.createElement('span');
+      subEl.appendChild(subTextSpan);
+      const caret = addCaret(subEl);
+      typeText(subTextSpan, subText, { speed: 18, onDone: () => {
+        removeNode(caret);
+
+        // CTA: reveal and type with ZERO delay (no pause)
+        ctaBtn.classList.add('cta-visible');
+        // Start typing immediately on the same frame
+        typeText(ctaTxt, ctaLabel, { speed: 18, onDone: () => {
+          // signal for arrow reveal
+          document.dispatchEvent(new CustomEvent('oc:cta-text-done'));
+        }});
+      }});
+    }});
+  }
+
+  // Kick after fonts settle a tick for crisp kerning (no visible delay)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startSequence, { once:true });
+  } else {
+    startSequence();
+  }
 })();
 </script>
+
+</body>
+</html>
+
 
 
 <section id="sly-4" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
