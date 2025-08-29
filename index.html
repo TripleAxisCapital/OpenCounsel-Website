@@ -596,14 +596,14 @@
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OpenCounsel</span>
 
       <!-- SUBTITLE: bigger + rotating word with blinking caret -->
-      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
+      <p class="hero-sub1 mt-4 text-2xl md:text-3xl text-white/90 leading-relaxed">
+        <!-- JS will insert structure + caret and handle mobile split -->
+      </p>
 
       <div class="mt-8 flex justify-center">
         <a
           id="heroCtaBtn"
           href="download.html"
-          data-mac-href="downloads/OpenCounsel-mac.dmg"
-          data-win-href="downloads/OpenCounsel-setup.exe"
           class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
                  focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
                  shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
@@ -642,7 +642,7 @@
       document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
     const set = () => {
       const el = pickHeader();
-      const h = el ? el.getBoundingClientRect().height : 56;
+      const h = el ? el.getBoundingClientRect().height : 56; // fallback
       document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
     };
     set();
@@ -699,7 +699,7 @@
 })();
 </script>
 
-<!-- OS-aware CTA (label + icon + href mapping) -->
+<!-- OS-aware CTA label & icon (new) -->
 <script>
 (() => {
   const elBtn = document.getElementById('heroCtaBtn');
@@ -722,24 +722,20 @@
   const os = detectOS();
   const label = os === 'windows' ? 'Get for Windows' : (os === 'mac' ? 'Get for Mac' : 'Download');
 
-  // Update label + aria
   elTxt.textContent = label;
   elBtn.setAttribute('aria-label', label);
   elBtn.setAttribute('title', label);
 
-  // Swap icon
   if (elIcon) {
-    elIcon.className = (os === 'windows') ? 'ph ph-microsoft-logo text-xl' : 'ph ph-apple-logo text-xl';
+    if (os === 'windows') {
+      elIcon.className = 'ph ph-microsoft-logo text-xl';
+    } else {
+      elIcon.className = 'ph ph-apple-logo text-xl';
+    }
     elIcon.setAttribute('aria-hidden', 'true');
   }
 
-  // Optional: map to platform-specific binaries (graceful fallback to existing href)
-  const macHref = elBtn.getAttribute('data-mac-href');
-  const winHref = elBtn.getAttribute('data-win-href');
-  if (os === 'mac' && macHref) elBtn.href = macHref;
-  if (os === 'windows' && winHref) elBtn.href = winHref;
-
-  // Signal completion for arrow timing
+  // Signal that CTA text is finalized (so your arrow reveal can trigger immediately)
   setTimeout(() => { document.dispatchEvent(new CustomEvent('oc:cta-text-done')); }, 0);
 })();
 </script>
