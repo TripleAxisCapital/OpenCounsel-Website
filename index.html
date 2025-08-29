@@ -672,14 +672,14 @@
 
   const onCtaInView = () => {
     if (prefersReduced) { reveal(); return; }
-    if (!ctaTxt) { setTimeout(reveal, 300); return; }
+    if (!ctaTxt) { setTimeout(reveal, 10); return; }
     let lastChange = Date.now();
     const mo = new MutationObserver(() => { lastChange = Date.now(); });
     mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
 
     const checkStable = () => {
       const idleMs = Date.now() - lastChange;
-      if ((ctaTxt.textContent || '').trim() && idleMs > 250) {
+      if ((ctaTxt.textContent || '').trim() && idleMs > 10) {
         mo.disconnect(); reveal(); return true;
       }
       return false;
