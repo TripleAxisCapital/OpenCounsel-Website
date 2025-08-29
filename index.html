@@ -579,7 +579,7 @@
   <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
   <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
 
-<!-- HERO (VARIATION 1: Glass Pill) -->
+<!-- HERO (VARIATION 2: Segmented Capsule) -->
 <section
   id="home"
   class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0"
@@ -603,34 +603,47 @@
         <a
           id="heroCtaBtn"
           href="download.html"
-          class="hero-cta hero-cta-fade relative inline-flex items-center gap-3 rounded-full
-                 px-6 py-[14px] md:px-7 md:py-4 text-base md:text-lg font-semibold text-white
-                 backdrop-blur-xl bg-white/10 border border-white/15 ring-1 ring-inset ring-white/10
-                 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_44px_rgba(0,0,0,0.45)]
+          class="hero-cta hero-cta-fade relative inline-grid grid-cols-[auto,1fr,auto] items-center
+                 rounded-full overflow-hidden
+                 text-base md:text-lg font-semibold text-white
                  transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 grad-anim"
-          style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;"
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60"
           aria-label="Download OpenCounsel"
         >
+          <!-- Icon segment (left “well”) -->
+          <span
+            class="h-full flex items-center justify-center px-4 md:px-5 py-[10px] md:py-3
+                   backdrop-blur-xl bg-white/10 border border-white/15 border-r-white/10
+                   ring-1 ring-inset ring-white/10"
+          >
+            <i id="heroCtaIcon" class="ph ph-apple-logo text-xl md:text-2xl" aria-hidden="true"></i>
+          </span>
+
+          <!-- Label segment (center) with animated gradient underlay -->
+          <span
+            class="relative px-5 md:px-6 py-[10px] md:py-3 whitespace-nowrap
+                   border-y border-white/15
+                   grad-anim"
+            style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:18s; --angle:120deg;"
+          >
+            <!-- inner stroke for Apple-like crisp edge -->
+            <span class="pointer-events-none absolute inset-0"
+                  style="border-radius:999px;border:1px solid rgba(255,255,255,.12); mix-blend:screen;"></span>
+            <span class="hero-cta-text relative z-[1]" aria-live="polite">Download</span>
+          </span>
+
+          <!-- Chevron segment (right) -->
+          <span
+            class="h-full flex items-center justify-center px-3 md:px-4 py-[10px] md:py-3
+                   backdrop-blur-xl bg-white/10 border border-white/15 border-l-white/10
+                   ring-1 ring-inset ring-white/10"
+          >
+            <i class="ph ph-caret-right text-lg opacity-90" aria-hidden="true"></i>
+          </span>
+
           <!-- Ambient glow -->
           <span class="pointer-events-none absolute inset-0 -z-10 rounded-full blur-2xl opacity-60"
-                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.28), rgba(0,0,0,0));"></span>
-
-          <!-- Glass inner highlight (subtle “Apple gloss”) -->
-          <span class="pointer-events-none absolute inset-px rounded-[999px] opacity-70"
-                style="background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%);
-                       mask: radial-gradient(120% 100% at 50% -10%, #000 40%, transparent 60%);
-                       -webkit-mask: radial-gradient(120% 100% at 50% -10%, #000 40%, transparent 60%);"></span>
-
-          <!-- OS-switched icon -->
-          <i id="heroCtaIcon" class="ph ph-apple-logo text-xl md:text-2xl" aria-hidden="true"></i>
-
-          <!-- Dynamic label -->
-          <span class="hero-cta-text whitespace-nowrap" aria-live="polite">Download</span>
-
-          <!-- Trailing chevron for affordance -->
-          <i class="ph ph-caret-right text-lg opacity-80 -mr-1" aria-hidden="true"></i>
+                style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.26), rgba(0,0,0,0));"></span>
         </a>
       </div>
     </div>
@@ -746,7 +759,6 @@
   }
 
   ctaTxt.textContent = label;
-  // Signal completion for arrow timing
   document.dispatchEvent(new CustomEvent('oc:cta-text-done'));
 })();
 </script>
