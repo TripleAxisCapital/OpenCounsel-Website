@@ -1530,7 +1530,7 @@
     }
 
     // ================================
-    // HERO TYPE-IN (strict sequence) + rotating word
+    // HERO: Show logo immediately, then type two lines
     // ================================
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
@@ -1548,14 +1548,24 @@
 
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      const tText = titleEl.textContent || '';
       const bTxt  = ctaTxt.textContent || '';
 
+      // Two tagline lines to type under the logo
+      const TAG1 = 'The uncensored workspace for the 1%.';
+      const TAG2 = 'Private. Polished. Powerful.';
+
+      // Prepare hero: replace title with the logo immediately
+      titleEl.innerHTML = '';
+      const logoSpanNow = document.createElement('span');
+      logoSpanNow.className = 'hero-logo-white';
+      logoSpanNow.setAttribute('role','img');
+      logoSpanNow.setAttribute('aria-label','OpenCounsel');
+      titleEl.appendChild(logoSpanNow);
+
       if (prefersReduced) {
-        // Reduced motion: static line only.
+        // Reduced motion: static lines, reveal CTA
         if (sub1El) {
-          const rCfg = window.OC_HERO_ROTATOR || {};
-          sub1El.textContent = (rCfg.prefix || 'Your Counsel. For ') + (rCfg.words?.[0] || 'everything.');
+          sub1El.innerHTML = `<span class="hero-line1">${TAG1}</span><br><span class="hero-line2">${TAG2}</span>`;
         }
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
@@ -1563,7 +1573,6 @@
       }
 
       // Prepare for typing
-      titleEl.textContent = '';
       if (sub1El) sub1El.textContent = '';
       ctaTxt.textContent = '';
       ctaBtn.classList.remove('cta-visible');
@@ -1588,19 +1597,6 @@
       }
       const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
 
-      // Title reverse-typing (deleting characters)
-      function deleteHero(el, min, max){
-        return new Promise((resolve)=>{
-          const step = () => {
-            const t = el.textContent || '';
-            if (!t.length) { resolve(); return; }
-            el.textContent = t.slice(0, -1);
-            setTimeout(step, spH(rand(min|0, max|0)));
-          };
-          step();
-        });
-      }
-
       function afterTransition(el, fallbackMs = 900){
         return new Promise((resolve)=>{
           let done = false;
@@ -1610,116 +1606,24 @@
           setTimeout(()=>{ el.removeEventListener('transitionend', onEnd); finish(); }, fallbackMs);
         });
       }
-
-      // Rotating word helpers
-      async function typeWord(el, word, rCfg){
-        await typeHero(el, word, rCfg.typeMin|0, rCfg.typeMax|0);
-      }
-      async function deleteWord(el, rCfg){
-        return new Promise((resolve)=>{
-          const step = () => {
-            const t = el.textContent || '';
-            if (!t.length) { resolve(); return; }
-            el.textContent = t.slice(0, -1);
-            setTimeout(step, spH(rand(rCfg.deleteMin|0, rCfg.deleteMax|0)));
-          };
-          step();
-        });
-      }
-
-      // Build structure and type depending on mobileSplit
-      async function setupAndTypeFirst(rCfg){
-        if (!sub1El) return;
-        const isMobileSplit = !!rCfg.mobileSplit && window.innerWidth < (rCfg.mobileBreakpoint||768);
-
-        // caret controls (CSS vars)
-        sub1El.style.setProperty('--caret-blink', (rCfg.caretBlinkMs||900) + 'ms');
-        sub1El.style.setProperty('--caret-w', (rCfg.caretWidthPx||2) + 'px');
-        sub1El.style.setProperty('--caret-color', rCfg.caretColor || 'rgba(255,255,255,.92)');
-
-        if (isMobileSplit){
-          // Two-line structure on mobile: line1 static "Your Counsel.", line2 "For " + rotating word + caret
-          sub1El.innerHTML = `
-            <span class="hero-line1 block md:inline"></span>
-            <span class="hidden md:inline">&nbsp;</span>
-            <span class="hero-line2 block md:inline">
-              <span class="hero-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>
-            </span>
-          `;
-          const l1 = sub1El.querySelector('.hero-line1');
-          const pEl = sub1El.querySelector('.hero-prefix');
-          const wEl = sub1El.querySelector('.hero-word');
-
-          const line1 = rCfg.prefixLine1 || 'Your Counsel.';
-          const line2Prefix = rCfg.prefixLine2 || 'For ';
-          const words = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
-
-          const l1Min = ((cfg.line1CharMin!=null?cfg.line1CharMin:cfg.lineCharMin)|0);
-          const l1Max = ((cfg.line1CharMax!=null?cfg.line1CharMax:cfg.lineCharMax)|0);
-          const l2Min = ((cfg.line2CharMin!=null?cfg.line2CharMin:cfg.lineCharMin)|0);
-          const l2Max = ((cfg.line2CharMax!=null?cfg.line2CharMax:cfg.lineCharMax)|0);
-          await typeHero(l1, line1, l1Min, l1Max);
-          await typeHero(pEl, line2Prefix, l2Min, l2Max);
-          await typeWord(wEl, words[0], rCfg);
-          return { wEl, words };
-        } else {
-          // Single-line desktop: split prefix into two spans so we can slow only "Your Counsel." then type "For "
-          sub1El.innerHTML = '<span class="hero-prefix1"></span><span class="hero-prefix2"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
-          const p1El = sub1El.querySelector('.hero-prefix1');
-          const p2El = sub1El.querySelector('.hero-prefix2');
-          const wEl = sub1El.querySelector('.hero-word');
-          const prefix = rCfg.prefix || 'Your Counsel. For ';
-          const words  = Array.isArray(rCfg.words) && rCfg.words.length ? rCfg.words.slice() : ['everything.'];
-
-          // Derive segments (attempt split before last "For ")
-          let seg1 = prefix, seg2 = '';
-          const marker = 'For ';
-          const idx = prefix.lastIndexOf(marker);
-          if (idx >= 0){ seg1 = prefix.slice(0, idx); seg2 = prefix.slice(idx); }
-
-          const l1Min = ((cfg.line1CharMin!=null?cfg.line1CharMin:cfg.lineCharMin)|0);
-          const l1Max = ((cfg.line1CharMax!=null?cfg.line1CharMax:cfg.lineCharMax)|0);
-          const l2Min = ((cfg.line2CharMin!=null?cfg.line2CharMin:cfg.lineCharMin)|0);
-          const l2Max = ((cfg.line2CharMax!=null?cfg.line2CharMax:cfg.lineCharMax)|0);
-
-          await typeHero(p1El, seg1, l1Min, l1Max);
-          await typeHero(p2El, seg2, l2Min, l2Max);
-          await typeWord(wEl, words[0], rCfg);
-          return { wEl, words };
-        }
-      }
-
-      function startRotatorLoop(wEl, words, rCfg){
-        let idx = 1 % words.length;
-        (async function loop(){
-          await wait(spH(rCfg.dwellMs|0));
-          await deleteWord(wEl, rCfg);
-          const next = words[idx];
-          await typeWord(wEl, next, rCfg);
-          idx = (idx + 1) % words.length;
-          loop();
-        })();
-      }
-
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
-        await typeHero(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
+        // Type two tagline lines beneath the logo
+        if (sub1El){
+          const line1 = document.createElement('span');
+          const br = document.createElement('br');
+          const line2 = document.createElement('span');
+          line1.className = 'hero-line1';
+          line2.className = 'hero-line2';
+          sub1El.innerHTML = '';
+          sub1El.appendChild(line1);
+          sub1El.appendChild(br);
+          sub1El.appendChild(line2);
 
-        // Reverse out the typed brand and swap to white logo
-        const rCfg = window.OC_HERO_ROTATOR || {};
-        await wait(cfg.titleDwellMs|0);
-        await deleteHero(titleEl, cfg.titleDeleteMin|0, cfg.titleDeleteMax|0);
-        // Insert local white logo (mask-based for crisp, offline-safe rendering)
-        titleEl.textContent = '';
-        const logoSpan = document.createElement('span');
-        logoSpan.className = 'hero-logo-white';
-        logoSpan.setAttribute('role','img');
-        logoSpan.setAttribute('aria-label','OpenCounsel');
-        titleEl.appendChild(logoSpan);
-
-        const first = await setupAndTypeFirst(rCfg);
-        if (first && first.wEl) startRotatorLoop(first.wEl, first.words, rCfg);
-
+          await typeHero(line1, TAG1, cfg.line1CharMin|0 || cfg.lineCharMin|0, cfg.line1CharMax|0 || cfg.lineCharMax|0);
+          await wait(cfg.staggerMs|0);
+          await typeHero(line2, TAG2, cfg.line2CharMin|0 || cfg.lineCharMin|0, cfg.line2CharMax|0 || cfg.lineCharMax|0);
+        }
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-visible'));
@@ -1756,6 +1660,73 @@
       } else {
         blurReady = true; tryStart();
       }
+    })();
+
+    // ================================
+    // Rotator moved to section below hero (#sly-4 .sly-sub)
+    // ================================
+    (function movedRotator(){
+      const root = document.querySelector('#sly-4 .sly-sub');
+      const rCfg = window.OC_HERO_ROTATOR || {};
+      const cfg = window.OC_HERO || {};
+      if (!root || !rCfg.words || !rCfg.words.length) return;
+
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const prefix = rCfg.prefix || 'Your AI. For ';
+      const words = rCfg.words.slice();
+
+      function spH(ms){
+        const f = (typeof cfg.streamSpeed === 'number' && cfg.streamSpeed > 0) ? cfg.streamSpeed : 1.0;
+        return ms * f;
+      }
+      function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+      function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+      function type(el, text, min, max){
+        return new Promise(resolve=>{
+          let i=0; el.textContent=''; const tn=document.createTextNode(''); el.appendChild(tn);
+          (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })();
+        });
+      }
+      function del(el, min, max){
+        return new Promise(resolve=>{
+          const step=()=>{ const t=el.textContent||''; if(!t.length){ resolve(); return; } el.textContent=t.slice(0,-1); setTimeout(step, spH(rand(min,max))); };
+          step();
+        });
+      }
+
+      // Build simple single-line structure
+      root.innerHTML = '<span class="rot-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
+      // caret styling reuse
+      root.style.setProperty('--caret-blink', (rCfg.caretBlinkMs||800) + 'ms');
+      root.style.setProperty('--caret-w', (rCfg.caretWidthPx||2) + 'px');
+      root.style.setProperty('--caret-color', rCfg.caretColor || 'rgba(0,0,0,.85)');
+
+      const pEl = root.querySelector('.rot-prefix');
+      const wEl = root.querySelector('.hero-word');
+
+      async function run(){
+        if (prefersReduced){
+          root.textContent = prefix + words[0];
+          return;
+        }
+        await type(pEl, prefix, cfg.lineCharMin|0 || 12, cfg.lineCharMax|0 || 18);
+        await type(wEl, words[0], rCfg.typeMin|0 || 40, rCfg.typeMax|0 || 70);
+
+        let i = 1 % words.length;
+        (async function loop(){
+          await wait(spH(rCfg.dwellMs|0 || 2000));
+          await del(wEl, rCfg.deleteMin|0 || 20, rCfg.deleteMax|0 || 30);
+          await type(wEl, words[i], rCfg.typeMin|0 || 40, rCfg.typeMax|0 || 70);
+          i = (i + 1) % words.length;
+          loop();
+        })();
+      }
+
+      // Start when section comes into view
+      const ob = new IntersectionObserver((entries)=>{
+        for (const e of entries){ if (e.isIntersecting){ run(); ob.disconnect(); } }
+      }, { threshold: .35 });
+      ob.observe(document.getElementById('sly-4'));
     })();
 
     // ================================
@@ -1823,7 +1794,7 @@
     makeSectionTyper('#sly', '.sly-title', '.sly-sub', window.OC_SLY);
     makeSectionTyper('#sly-2', '.sly-title', '.sly-sub', window.OC_SLY);
     makeSectionTyper('#sly-3', '.sly-title', '.sly-sub', window.OC_SLY);
-    makeSectionTyper('#sly-4', '.sly-title', '.sly-sub', window.OC_SLY);
+    // '#sly-4' now hosts the moved rotator; skip generic typer there
     makeSectionTyper('#tct', '.tct-title', '.tct-sub', window.OC_TCT);
 
     // ================================
