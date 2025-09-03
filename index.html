@@ -254,6 +254,8 @@
       transform: translateY(6px) scale(.985);
       animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards;
       will-change: opacity, transform, filter;
+      position: relative;
+      z-index: 1;
       vertical-align: middle;
     }
 
@@ -269,6 +271,44 @@
 
     /* Make the emphasized word in the hero line bold */
     #home .hero-line1 .seg-bold { font-weight: 800; }
+
+    /* Hero logo glow (Apple-like) */
+    .hero-logo-wrap { position: relative; display: inline-block; }
+    .hero-logo-glow {
+      --glow-c1: rgba(0,207,255,.40);
+      --glow-c2: rgba(14,111,92,.28);
+      --glow-opacity: .55;
+      --glow-blur: 30px;
+      position: absolute;
+      inset: -16%;
+      border-radius: 9999px;
+      background:
+        radial-gradient(60% 60% at 50% 40%, var(--glow-c1), rgba(0,0,0,0) 70%),
+        radial-gradient(55% 55% at 40% 60%, var(--glow-c2), rgba(0,0,0,0) 70%);
+      filter: blur(var(--glow-blur));
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .hero-logo-glow.glow-pulse {
+      animation:
+        heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards,
+        heroGlowPulse var(--glow-pulse-dur, 6s) ease-in-out infinite 1.1s;
+    }
+    @keyframes heroGlowReveal {
+      0%   { opacity: 0; filter: blur(40px); }
+      60%  { opacity: var(--glow-opacity); filter: blur(16px); }
+      100% { opacity: var(--glow-opacity); filter: blur(var(--glow-blur)); }
+    }
+    @keyframes heroGlowPulse {
+      0%, 100% { transform: scale(1); filter: blur(var(--glow-blur)); opacity: var(--glow-opacity); }
+      50%      { transform: scale(1.03); filter: blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-logo-glow { animation: none !important; opacity: var(--glow-opacity); }
+      .hero-logo-glow.glow-pulse { animation: none !important; }
+    }
 
     .grad-text{
       background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
@@ -1300,6 +1340,20 @@
     }, window.OC_HERO || {});
 
     // ================================
+    // HERO LOGO GLOW (global toggle)
+    // ================================
+    window.OC_HERO_GLOW = Object.assign({
+      enabled: true,           // set to false to disable globally
+      pulse: true,             // enable subtle breathing pulse
+      pulseDur: '6s',          // pulse duration
+      color1: 'rgba(0,207,255,.40)', // primary glow
+      color2: 'rgba(14,111,92,.28)', // secondary glow
+      opacity: 0.55,           // target opacity after reveal
+      blurPx: 30,              // blur radius in px
+      insetPct: 16             // how far glow extends beyond logo (% of size)
+    }, window.OC_HERO_GLOW || {});
+
+    // ================================
     // NEW: HERO ROTATING WORD CONFIG (easy knobs + caret controls + mobile split)
     // ================================
     window.OC_HERO_ROTATOR = Object.assign({
@@ -1558,13 +1612,32 @@
       const TAG1_BOLD   = 'Uncensored';
       const TAG1_AFTER  = ' Workspace for Outliers.';
 
-      // Prepare hero: replace title with the logo immediately
+      // Prepare hero: replace title with a wrapper containing the logo (and optional glow)
       titleEl.innerHTML = '';
+      const wrapSpan = document.createElement('span');
+      wrapSpan.className = 'hero-logo-wrap';
+      titleEl.appendChild(wrapSpan);
+
+      // Optional glow behind the logo (Apple-like), controlled by OC_HERO_GLOW
+      const glowCfg = window.OC_HERO_GLOW || {};
+      if (glowCfg.enabled) {
+        const glow = document.createElement('span');
+        glow.className = 'hero-logo-glow' + (glowCfg.pulse ? ' glow-pulse' : '');
+        glow.style.setProperty('--glow-c1', String(glowCfg.color1 || 'rgba(0,207,255,.40)'));
+        glow.style.setProperty('--glow-c2', String(glowCfg.color2 || 'rgba(14,111,92,.28)'));
+        glow.style.setProperty('--glow-opacity', String(glowCfg.opacity ?? 0.55));
+        glow.style.setProperty('--glow-blur', ((glowCfg.blurPx ?? 30)|0) + 'px');
+        glow.style.setProperty('--glow-pulse-dur', String(glowCfg.pulseDur || '6s'));
+        const inset = Math.max(0, Math.min(40, (glowCfg.insetPct ?? 16))) + '%';
+        glow.style.inset = `-${inset}`;
+        wrapSpan.appendChild(glow);
+      }
+
       const logoSpanNow = document.createElement('span');
       logoSpanNow.className = 'hero-logo-white';
       logoSpanNow.setAttribute('role','img');
       logoSpanNow.setAttribute('aria-label','OC');
-      titleEl.appendChild(logoSpanNow);
+      wrapSpan.appendChild(logoSpanNow);
 
       if (prefersReduced) {
         // Reduced motion: static line, reveal CTA (preserve bold styling)
