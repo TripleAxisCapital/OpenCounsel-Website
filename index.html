@@ -250,10 +250,25 @@
       mask-position: center;
       mask-size: contain;
       opacity: 0;
-      animation: logoIntro 800ms ease-out forwards;
-      will-change: opacity, transform;
+      filter: blur(8px);
+      transform: translateY(6px) scale(.985);
+      animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards;
+      will-change: opacity, transform, filter;
       vertical-align: middle;
     }
+
+    @keyframes heroLogoReveal {
+      0%   { opacity: 0; filter: blur(8px); transform: translateY(6px) scale(.985); }
+      60%  { opacity: 1; filter: blur(1.5px); transform: translateY(0) scale(1.000); }
+      100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-logo-white { animation: none !important; opacity: 1; filter: none; transform: none; }
+    }
+
+    /* Make the emphasized word in the hero line bold */
+    #home .hero-line1 .seg-bold { font-weight: 800; }
 
     .grad-text{
       background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
@@ -1538,8 +1553,10 @@
 
       const bTxt  = ctaTxt.textContent || '';
 
-      // Refined Apple-style tagline (single line)
-      const TAG1 = 'The Uncensored Workspace for Outliers.';
+      // Refined Apple-style tagline (single line), with bolded middle word
+      const TAG1_BEFORE = 'The ';
+      const TAG1_BOLD   = 'Uncensored';
+      const TAG1_AFTER  = ' Workspace for Outliers.';
 
       // Prepare hero: replace title with the logo immediately
       titleEl.innerHTML = '';
@@ -1550,8 +1567,10 @@
       titleEl.appendChild(logoSpanNow);
 
       if (prefersReduced) {
-        // Reduced motion: static line, reveal CTA
-        if (sub1El) { sub1El.textContent = TAG1; }
+        // Reduced motion: static line, reveal CTA (preserve bold styling)
+        if (sub1El) {
+          sub1El.innerHTML = `<span class="hero-line1">${TAG1_BEFORE}<strong class="seg-bold">${TAG1_BOLD}</strong>${TAG1_AFTER}</span>`;
+        }
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
         return;
@@ -1593,14 +1612,18 @@
       }
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
-        // Type a single refined tagline beneath the logo
+        // Type a single refined tagline beneath the logo — segmented to keep 'Uncensored' bold
         if (sub1El){
-          const line1 = document.createElement('span');
-          line1.className = 'hero-line1';
-          sub1El.innerHTML = '';
-          sub1El.appendChild(line1);
+          sub1El.innerHTML = '<span class="hero-line1"><span class="seg-before"></span><strong class="seg-bold"></strong><span class="seg-after"></span></span>';
+          const segBefore = sub1El.querySelector('.seg-before');
+          const segBold   = sub1El.querySelector('.seg-bold');
+          const segAfter  = sub1El.querySelector('.seg-after');
 
-          await typeHero(line1, TAG1, (cfg.line1CharMin ?? cfg.lineCharMin) | 0, (cfg.line1CharMax ?? cfg.lineCharMax) | 0);
+          const min = (cfg.line1CharMin ?? cfg.lineCharMin) | 0;
+          const max = (cfg.line1CharMax ?? cfg.lineCharMax) | 0;
+          await typeHero(segBefore, TAG1_BEFORE, min, max);
+          await typeHero(segBold,   TAG1_BOLD,   min, max);
+          await typeHero(segAfter,  TAG1_AFTER,  min, max);
         }
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
