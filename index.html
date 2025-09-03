@@ -785,9 +785,9 @@
       <h2
         class="sly-title text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight"
       >
-        <span class="inline-block">Accurate.</span>
-        <span class="inline-block opacity-90">Local.</span>
-        <span class="inline-block opacity-90">AI.</span>
+        <span class="inline-block">Private.</span>
+        <span class="inline-block opacity-90">Polished.</span>
+        <span class="inline-block opacity-90">Powerful.</span>
       </h2>
 
       <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
@@ -1530,7 +1530,7 @@
     }
 
     // ================================
-    // HERO: Show logo immediately, then type two lines
+    // HERO: Show logo immediately, then type refined single-line tagline
     // ================================
     (function heroTyping(){
       const cfg = window.OC_HERO || {};
@@ -1550,9 +1550,8 @@
 
       const bTxt  = ctaTxt.textContent || '';
 
-      // Two tagline lines to type under the logo
-      const TAG1 = 'The uncensored workspace for the 1%.';
-      const TAG2 = 'Private. Polished. Powerful.';
+      // Refined Apple-style tagline (single line)
+      const TAG1 = 'The Uncensored Workspace for Outliers.';
 
       // Prepare hero: replace title with the logo immediately
       titleEl.innerHTML = '';
@@ -1563,10 +1562,8 @@
       titleEl.appendChild(logoSpanNow);
 
       if (prefersReduced) {
-        // Reduced motion: static lines, reveal CTA
-        if (sub1El) {
-          sub1El.innerHTML = `<span class="hero-line1">${TAG1}</span><br><span class="hero-line2">${TAG2}</span>`;
-        }
+        // Reduced motion: static line, reveal CTA
+        if (sub1El) { sub1El.textContent = TAG1; }
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
         return;
@@ -1608,21 +1605,14 @@
       }
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
-        // Type two tagline lines beneath the logo
+        // Type a single refined tagline beneath the logo
         if (sub1El){
           const line1 = document.createElement('span');
-          const br = document.createElement('br');
-          const line2 = document.createElement('span');
           line1.className = 'hero-line1';
-          line2.className = 'hero-line2';
           sub1El.innerHTML = '';
           sub1El.appendChild(line1);
-          sub1El.appendChild(br);
-          sub1El.appendChild(line2);
 
-          await typeHero(line1, TAG1, cfg.line1CharMin|0 || cfg.lineCharMin|0, cfg.line1CharMax|0 || cfg.lineCharMax|0);
-          await wait(cfg.staggerMs|0);
-          await typeHero(line2, TAG2, cfg.line2CharMin|0 || cfg.lineCharMin|0, cfg.line2CharMax|0 || cfg.lineCharMax|0);
+          await typeHero(line1, TAG1, (cfg.line1CharMin ?? cfg.lineCharMin) | 0, (cfg.line1CharMax ?? cfg.lineCharMax) | 0);
         }
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
