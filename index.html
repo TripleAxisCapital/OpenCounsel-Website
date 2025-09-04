@@ -2827,6 +2827,266 @@
 </section>
 <!-- ───── End OC CORES ───── -->
 
+
+<!-- ▓▓▓ OC CORES — DROP-IN SECTION (Apple-style, production-grade) ▓▓▓ -->
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+  <!-- Soft ambient glows -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 top-[-5rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl"
+         style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
+    <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl"
+         style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="w-full pt-20 md:pt-28">
+    <div class="mx-auto max-w-[900px] text-center">
+      <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-700">Cores</div>
+      <h2 class="mt-4 text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">OC Cores</h2>
+      <p class="mt-4 mx-auto max-w-[720px] text-[15px] md:text-base leading-7 text-neutral-700">
+        Pick a core and the workspace rewires around the job — prompts, tools, databases, and UI presets swap in instantly.
+      </p>
+      <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
+    </div>
+  </div>
+
+  <!-- Tabs (Core selector) -->
+  <div class="mt-10 md:mt-12">
+    <div id="oc-core-tabs"
+         role="tablist"
+         aria-label="OC core selector"
+         class="relative mx-auto max-w-[900px] rounded-2xl border border-neutral-200 bg-white/70 p-1 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
+      <div class="grid grid-cols-3 relative">
+        <!-- Moving pill -->
+        <span id="oc-core-pill" class="absolute top-1 left-1 h-[44px] md:h-[48px] rounded-xl g-grad grad-anim transition-all duration-300 ease-out"
+              style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg; width:calc(33.333% - .5rem);"></span>
+
+        <button role="tab" aria-selected="true" data-core="core"
+                class="oc-core-tab relative z-10 h-[44px] md:h-[48px] rounded-xl px-3 md:px-4 text-sm md:text-[15px] font-semibold text-neutral-900 ui-selected:text-white">
+          <i class="ph ph-cpu text-[18px] align-middle mr-1.5"></i> OC-Core
+        </button>
+        <button role="tab" aria-selected="false" data-core="research"
+                class="oc-core-tab relative z-10 h-[44px] md:h-[48px] rounded-xl px-3 md:px-4 text-sm md:text-[15px] font-semibold text-neutral-900 ui-selected:text-white">
+          <i class="ph ph-magnifying-glass text-[18px] align-middle mr-1.5"></i> OC-Research-Core
+        </button>
+        <button role="tab" aria-selected="false" data-core="coach"
+                class="oc-core-tab relative z-10 h-[44px] md:h-[48px] rounded-xl px-3 md:px-4 text-sm md:text-[15px] font-semibold text-neutral-900 ui-selected:text-white">
+          <i class="ph ph-chalkboard-teacher text-[18px] align-middle mr-1.5"></i> OC-Coach-Core
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel / Details card -->
+  <article id="oc-core-panel"
+           class="scroll-fade card-glass relative mt-6 md:mt-8 overflow-hidden rounded-[28px] border border-white/15 g-grad grad-anim backdrop-blur-xl shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+    <div class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-white/10"></div>
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
+
+    <!-- Content switches via JS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-white/10">
+      <!-- Left: Summary -->
+      <section class="p-8 md:p-10">
+        <div class="flex items-start gap-4">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/20 flex items-center justify-center">
+            <i id="oc-core-icon" class="ph ph-cpu text-white text-[20px]"></i>
+          </div>
+          <div>
+            <h3 id="oc-core-title" class="font-semibold text-white tracking-tight">OC-Core</h3>
+            <p id="oc-core-desc" class="mt-2 text-sm leading-relaxed text-white/85">
+              Your everyday engine for drafting, reasoning, and decisions. Fast, local-first, and uncensored.
+            </p>
+          </div>
+        </div>
+
+        <ul id="oc-core-bullets" class="mt-5 space-y-2 text-sm text-white/85">
+          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-white/90 mt-[2px]"></i><span>On-device models with optional RAG.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-white/90 mt-[2px]"></i><span>One-tap actions: summarize, draft, outline, polish.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check-circle text-white/90 mt-[2px]"></i><span>Works offline. Private by design.</span></li>
+        </ul>
+
+        <div class="mt-6 flex flex-wrap gap-2">
+          <span class="chip text-white/90 border-white/20 bg-white/10">Offline</span>
+          <span class="chip text-white/90 border-white/20 bg-white/10">RAG</span>
+          <span class="chip text-white/90 border-white/20 bg-white/10">Citations</span>
+        </div>
+      </section>
+
+      <!-- Middle: What swaps when you switch cores -->
+      <section class="p-8 md:p-10">
+        <h4 class="font-semibold text-white tracking-tight">What a Core changes</h4>
+        <ul class="mt-3 space-y-2 text-sm text-white/85">
+          <li class="flex items-start gap-2"><i class="ph ph-sparkle mt-[2px]"></i><span><b>Prompts & guardrails</b> tuned to the task.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-plug-charging mt-[2px]"></i><span><b>Tools & plug-ins</b> (parsers, analyzers, exporters).</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-database mt-[2px]"></i><span><b>Databases</b> and search pipelines.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-layout mt-[2px]"></i><span><b>UI presets</b> and shortcuts.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-gear mt-[2px]"></i><span><b>Automations</b> & saved workflows.</span></li>
+        </ul>
+
+        <div class="mt-6 rounded-xl border border-white/15 bg-white/8 p-4 text-[13px] text-white/85">
+          <div class="mb-1 font-semibold text-white">Explore all Cores</div>
+          A dedicated gallery lists every Core with previews and release notes.
+          <div class="mt-3 flex flex-wrap gap-2">
+            <a href="cores.html"
+               class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-3 py-1.5 font-medium text-white hover:bg-white/20 focus:ring-2 focus:ring-white/40">
+              <i class="ph ph-grid-three"></i> Open Cores Gallery
+            </a>
+            <a href="download.html"
+               class="inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-3 py-1.5 font-medium hover:bg-gray-100">
+              <i class="ph ph-download-simple"></i> Get OC
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Coming soon -->
+      <section class="p-8 md:p-10">
+        <h4 class="font-semibold text-white tracking-tight">More Cores are landing</h4>
+        <p class="mt-2 text-sm text-white/85">We’re releasing new, specialized Cores and shipping updates continuously.</p>
+
+        <ul class="mt-4 grid grid-cols-2 gap-2 text-sm">
+          <li class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/90">Fin-Core <span class="ml-1 text-white/70">• Coming soon</span></li>
+          <li class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/90">Med-Core <span class="ml-1 text-white/70">• Coming soon</span></li>
+          <li class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/90">Law-Core <span class="ml-1 text-white/70">• Coming soon</span></li>
+          <li class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/90">Data-Core <span class="ml-1 text-white/70">• Coming soon</span></li>
+          <li class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/90">Design-Core <span class="ml-1 text-white/70">• Coming soon</span></li>
+          <li class="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white/90">Build-Core <span class="ml-1 text-white/70">• Coming soon</span></li>
+        </ul>
+
+        <div class="mt-5 text-xs text-white/75">
+          Release cadence: frequent. View timelines and notes in the Cores Gallery.
+        </div>
+      </section>
+    </div>
+  </article>
+</section>
+
+<!-- Minimal styles scoped to this section -->
+<style id="oc-cores-style">
+  #oc-cores .chip{font-size:12px;line-height:1;border:1px solid rgba(255,255,255,.25);
+    border-radius:999px;padding:6px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),0 6px 14px rgba(10,13,16,.08)}
+  #oc-core-tabs .oc-core-tab{text-align:center}
+  #oc-core-tabs .oc-core-tab[aria-selected="true"]{color:#fff}
+  /* Utility for the JS to toggle selected text color */
+  #oc-core-tabs .ui-selected\:text-white[aria-selected="true"]{color:#fff!important}
+  @media (prefers-reduced-motion: reduce){
+    #oc-core-pill{transition:none!important}
+  }
+</style>
+
+<!-- Tiny controller: keyboard + pill movement + content swap -->
+<script id="oc-cores-script">
+(function(){
+  if (window.__ocCoresInit) return; window.__ocCoresInit = true;
+
+  const tabs = Array.from(document.querySelectorAll('#oc-core-tabs .oc-core-tab'));
+  const pill = document.getElementById('oc-core-pill');
+  const icon = document.getElementById('oc-core-icon');
+  const title= document.getElementById('oc-core-title');
+  const desc = document.getElementById('oc-core-desc');
+  const bullets = document.getElementById('oc-core-bullets');
+
+  const DATA = {
+    core: {
+      icon: 'ph ph-cpu',
+      title: 'OC-Core',
+      desc:  'Your everyday engine for drafting, reasoning, and decisions. Fast, local-first, and uncensored.',
+      bullets: [
+        'On-device models with optional RAG.',
+        'One-tap actions: summarize, draft, outline, polish.',
+        'Works offline. Private by design.'
+      ],
+      grad: { from:'var(--grad-from)', via:'var(--grad-via)', to:'var(--grad-to)' }
+    },
+    research: {
+      icon: 'ph ph-magnifying-glass',
+      title: 'OC-Research-Core',
+      desc:  'Evidence-first analysis with linked sources, snapshots, and exportable bibliographies.',
+      bullets: [
+        'Live/reproducible queries with citations and quotes.',
+        'PDF/table extraction and quick syntheses.',
+        'BibTeX/JSON export and audit trail.'
+      ],
+      grad: { from:'#0B1B2Bcc', via:'#0E6F5Ccc', to:'#00CFFFcc' }
+    },
+    coach: {
+      icon: 'ph ph-chalkboard-teacher',
+      title: 'OC-Coach-Core',
+      desc:  'Deliberate practice, planning, and accountability — like a principled operator in your corner.',
+      bullets: [
+        'Socratic loops for clarity and strategy.',
+        'Goal → plan → weekly cadence with check-ins.',
+        'Templates for reviews, briefs, and roadmaps.'
+      ],
+      grad: { from:'#0E6F5Ccc', via:'#178D74cc', to:'#A0E4D4cc' }
+    }
+  };
+
+  function setActive(idx){
+    tabs.forEach((t,i)=>t.setAttribute('aria-selected', String(i===idx)));
+    const tab = tabs[idx];
+    if (!tab) return;
+
+    // Move pill
+    const colW = tab.offsetWidth;
+    const left = tab.offsetLeft;
+    pill.style.width = (colW - 8) + 'px';
+    pill.style.left  = (left + 4) + 'px';
+
+    // Update content
+    const key = tab.getAttribute('data-core');
+    const d = DATA[key] || DATA.core;
+
+    icon.className = d.icon + ' text-white text-[20px]';
+    title.textContent = d.title;
+    desc.textContent = d.desc;
+
+    bullets.innerHTML = '';
+    d.bullets.forEach(txt=>{
+      const li = document.createElement('li');
+      li.className = 'flex items-start gap-2';
+      li.innerHTML = '<i class="ph ph-check-circle text-white/90 mt-[2px]"></i><span>'+ txt +'</span>';
+      bullets.appendChild(li);
+    });
+
+    // Adjust gradient
+    const card = document.getElementById('oc-core-panel');
+    card.style.setProperty('--from', d.grad.from);
+    card.style.setProperty('--via',  d.grad.via);
+    card.style.setProperty('--to',   d.grad.to);
+  }
+
+  // Tab clicks
+  tabs.forEach((t,i)=>{
+    t.addEventListener('click', ()=> setActive(i));
+    t.addEventListener('keydown', (e)=>{
+      const k = e.key;
+      if (k === 'ArrowRight' || k === 'ArrowLeft'){
+        e.preventDefault();
+        const dir = (k === 'ArrowRight') ? 1 : -1;
+        const next = (i + dir + tabs.length) % tabs.length;
+        tabs[next].focus();
+        setActive(next);
+      }
+      if (k === 'Home'){ e.preventDefault(); tabs[0].focus(); setActive(0); }
+      if (k === 'End'){ e.preventDefault(); tabs[tabs.length-1].focus(); setActive(tabs.length-1); }
+    });
+  });
+
+  // Initial layout (after fonts/layout settle)
+  const init = () => setActive(tabs.findIndex(t=>t.getAttribute('aria-selected')==='true') || 0);
+  if (document.readyState === 'complete') setTimeout(init, 0);
+  else window.addEventListener('load', init, { once:true });
+  window.addEventListener('resize', ()=> {
+    const idx = tabs.findIndex(t=>t.getAttribute('aria-selected')==='true') || 0;
+    setActive(idx);
+  });
+})();
+</script>
+<!-- ▓▓▓ END OC CORES SECTION ▓▓▓ -->
+
+
+
   <!-- Built. For. Real. Work. -->
 <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
   <!-- Soft background glows (subtle, Apple-y) -->
