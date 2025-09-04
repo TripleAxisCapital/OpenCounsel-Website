@@ -315,6 +315,9 @@
       #home .hero-line1 .seg-fullshine { animation: none; -webkit-text-fill-color: #fff; color: #fff; background: none; }
     }
 
+    /* Ensure each hero line stacks when present */
+    #home .hero-line1, #home .hero-line2 { display: block; }
+
     /* Hero logo glow (Apple-like) */
     .hero-logo-wrap { position: relative; display: inline-block; }
     .hero-logo-glow {
@@ -1655,6 +1658,10 @@
       const TAG1_BOLD   = 'AI';
       const TAG1_AFTER  = ' Workspace. Without Limits.';
       const TAGLINE_FULL = TAG1_BEFORE + TAG1_BOLD + TAG1_AFTER;
+      // Mobile split lines as requested
+      const MOBILE_LINE1 = 'The AI Workspace.';
+      const MOBILE_LINE2 = 'Without Limits.';
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
 
       // Prepare hero: replace title with a wrapper containing the logo (and optional glow)
       titleEl.innerHTML = '';
@@ -1684,9 +1691,15 @@
       wrapSpan.appendChild(logoSpanNow);
 
       if (prefersReduced) {
-        // Reduced motion: static line, reveal CTA (no animation)
+        // Reduced motion: static line(s), reveal CTA (no animation)
         if (sub1El) {
-          sub1El.innerHTML = `<span class="hero-line1"><span class="seg-fullshine">${TAGLINE_FULL}</span></span>`;
+          if (isMobile) {
+            sub1El.innerHTML = `
+              <span class="hero-line1">${MOBILE_LINE1}</span>
+              <span class="hero-line2">${MOBILE_LINE2}</span>`;
+          } else {
+            sub1El.innerHTML = `<span class="hero-line1">${TAGLINE_FULL}</span>`;
+          }
         }
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
@@ -1729,13 +1742,22 @@
       }
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
-        // Type the full tagline beneath the logo as a single shimmering line
+        // Type the tagline: two-line on mobile, single shimmering line on desktop
         if (sub1El){
-          sub1El.innerHTML = '<span class="hero-line1"><span class="seg-fullshine"></span></span>';
-          const segFull = sub1El.querySelector('.seg-fullshine');
           const min = (cfg.line1CharMin ?? cfg.lineCharMin) | 0;
           const max = (cfg.line1CharMax ?? cfg.lineCharMax) | 0;
-          await typeHero(segFull, TAGLINE_FULL, min, max);
+          if (isMobile) {
+            sub1El.innerHTML = '<span class="hero-line1"><span class="seg-fullshine l1"></span></span>\
+                                <span class="hero-line2"><span class="seg-fullshine l2"></span></span>';
+            const l1 = sub1El.querySelector('.l1');
+            const l2 = sub1El.querySelector('.l2');
+            await typeHero(l1, MOBILE_LINE1, min, max);
+            await typeHero(l2, MOBILE_LINE2, min, max);
+          } else {
+            sub1El.innerHTML = '<span class="hero-line1"><span class="seg-fullshine"></span></span>';
+            const segFull = sub1El.querySelector('.seg-fullshine');
+            await typeHero(segFull, TAGLINE_FULL, min, max);
+          }
         }
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
