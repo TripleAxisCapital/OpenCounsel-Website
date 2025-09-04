@@ -282,9 +282,8 @@
       .hero-logo-white { animation: none !important; opacity: 1; filter: none; transform: none; }
     }
 
-    /* Hero shimmer sweep (bold + non-bold targets) */
-    #home .hero-line1 .seg-bold,
-    #home .hero-line1 .seg-shine {
+    /* Hero shimmer sweep — apply to full subtitle */
+    #home .hero-line1 .seg-fullshine {
       position: relative;
       /* Two-layer fill: base color + alpha highlight band (prevents residual glow) */
       background-image:
@@ -308,15 +307,12 @@
       animation-direction: var(--hero-shine-direction, normal);
       will-change: background-position;
     }
-    /* Only the bold variant sets weight */
-    #home .hero-line1 .seg-bold{ font-weight: 800; }
     @keyframes heroShine {
       0%   { background-position: -150% 0, 0 0; }
       100% { background-position:  150% 0, 0 0; }
     }
     @media (prefers-reduced-motion: reduce) {
-      #home .hero-line1 .seg-bold,
-      #home .hero-line1 .seg-shine { animation: none; -webkit-text-fill-color: #fff; color: #fff; background: none; }
+      #home .hero-line1 .seg-fullshine { animation: none; -webkit-text-fill-color: #fff; color: #fff; background: none; }
     }
 
     /* Hero logo glow (Apple-like) */
@@ -1654,14 +1650,11 @@
 
       const bTxt  = ctaTxt.textContent || '';
 
-      // Refined Apple-style tagline (single line), with bolded middle word
+      // Refined Apple-style tagline (single line)
       const TAG1_BEFORE = 'The ';
       const TAG1_BOLD   = 'AI';
       const TAG1_AFTER  = ' Workspace for Outliers.';
-      // Extra segmentation so we can shimmer just "Outliers" without bold
-      const TAG1_AFTER_PREFIX = ' Workspace for ';
-      const TAG1_AFTER_WORD   = 'Outliers';
-      const TAG1_AFTER_SUFFIX = '.';
+      const TAGLINE_FULL = TAG1_BEFORE + TAG1_BOLD + TAG1_AFTER;
 
       // Prepare hero: replace title with a wrapper containing the logo (and optional glow)
       titleEl.innerHTML = '';
@@ -1691,9 +1684,9 @@
       wrapSpan.appendChild(logoSpanNow);
 
       if (prefersReduced) {
-        // Reduced motion: static line, reveal CTA (preserve bold styling)
+        // Reduced motion: static line, reveal CTA (no animation)
         if (sub1El) {
-          sub1El.innerHTML = `<span class="hero-line1">${TAG1_BEFORE}<strong class="seg-bold">${TAG1_BOLD}</strong>${TAG1_AFTER_PREFIX}<span class="seg-shine">${TAG1_AFTER_WORD}</span>${TAG1_AFTER_SUFFIX}</span>`;
+          sub1El.innerHTML = `<span class="hero-line1"><span class="seg-fullshine">${TAGLINE_FULL}</span></span>`;
         }
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-text-done'));
@@ -1736,30 +1729,13 @@
       }
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
-        // Type a single refined tagline beneath the logo — segmented to keep 'Uncensored' bold
+        // Type the full tagline beneath the logo as a single shimmering line
         if (sub1El){
-          sub1El.innerHTML = '<span class="hero-line1">\
-            <span class="seg-before"></span>\
-            <strong class="seg-bold"></strong>\
-            <span class="seg-after">\
-              <span class="after-prefix"></span>\
-              <span class="seg-shine"></span>\
-              <span class="after-suffix"></span>\
-            </span>\
-          </span>';
-          const segBefore    = sub1El.querySelector('.seg-before');
-          const segBold      = sub1El.querySelector('.seg-bold');
-          const afterPrefix  = sub1El.querySelector('.after-prefix');
-          const segShineWord = sub1El.querySelector('.seg-shine');
-          const afterSuffix  = sub1El.querySelector('.after-suffix');
-
+          sub1El.innerHTML = '<span class="hero-line1"><span class="seg-fullshine"></span></span>';
+          const segFull = sub1El.querySelector('.seg-fullshine');
           const min = (cfg.line1CharMin ?? cfg.lineCharMin) | 0;
           const max = (cfg.line1CharMax ?? cfg.lineCharMax) | 0;
-          await typeHero(segBefore,    TAG1_BEFORE,        min, max);
-          await typeHero(segBold,      TAG1_BOLD,          min, max);
-          await typeHero(afterPrefix,  TAG1_AFTER_PREFIX,  min, max);
-          await typeHero(segShineWord, TAG1_AFTER_WORD,    min, max);
-          await typeHero(afterSuffix,  TAG1_AFTER_SUFFIX,  min, max);
+          await typeHero(segFull, TAGLINE_FULL, min, max);
         }
         await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
