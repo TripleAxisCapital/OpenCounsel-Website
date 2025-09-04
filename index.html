@@ -2521,6 +2521,311 @@
   </p>
 </section>
 
+<!-- ───── OC CORES (drop-in section) ───── -->
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+  <style>
+    /* Namespaced styles to avoid collisions */
+    #oc-cores { --r: 28px; }
+    #oc-cores .wrap {
+      position: relative;
+      border-radius: var(--r);
+      overflow: clip;
+      border: 1px solid var(--line, #E7EDF2);
+      box-shadow: 0 16px 54px rgba(0,0,0,.14);
+    }
+    #oc-cores .glass {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(255,255,255,.66), rgba(255,255,255,.50));
+      border: 1px solid rgba(10,13,16,.06);
+      box-shadow: 0 10px 30px rgba(10,13,16,.08);
+    }
+    #oc-cores .title {
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+    }
+    #oc-cores .eyebrow {
+      font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
+      display: inline-block; padding: 6px 10px; border-radius: 999px;
+      border: 1px solid rgba(10,13,16,.10); background: rgba(255,255,255,.6);
+      color: #374151;
+    }
+    #oc-cores .lede {
+      color: #4B5563;
+      font-size: 16px; line-height: 1.7;
+    }
+    #oc-cores .pill {
+      font-size: 12px; line-height: 1; padding: 6px 10px; border-radius: 999px;
+      border: 1px solid var(--line, #E7EDF2); background: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 6px 14px rgba(10,13,16,.06);
+      transition: transform .18s ease;
+      white-space: nowrap;
+    }
+    #oc-cores .pill:hover { transform: translateY(-1px); }
+
+    /* Core cards */
+    #oc-cores .core-card {
+      position: relative; border-radius: 22px; padding: 16px; overflow: hidden;
+      border: 1px solid rgba(10,13,16,.08);
+      background: #ffffff;
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    }
+    #oc-cores .core-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 40px rgba(10,13,16,.10);
+      border-color: rgba(10,13,16,.14);
+    }
+    #oc-cores .core-head { display: flex; align-items: center; gap: 10px; }
+    #oc-cores .core-name { font-weight: 700; letter-spacing: -0.01em; }
+    #oc-cores .core-tag {
+      font-size: 11px; padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(10,13,16,.08); background: rgba(0,0,0,.04);
+      color: #111827;
+    }
+    #oc-cores .core-copy { color:#4B5563; font-size: 14px; line-height: 1.6; }
+
+    /* Gradient ribbons per core (uses your existing g-grad / CSS vars) */
+    #oc-cores .ribbon {
+      position: absolute; inset: -1px -1px auto -1px; height: 56px;
+      background: linear-gradient(var(--angle,135deg), var(--from,#0B1B2Bcc), var(--via,#0E6F5Ccc), var(--to,#00CFFFcc));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      border-bottom: 1px solid rgba(255,255,255,.5);
+    }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* Core Library callout */
+    #oc-cores .library {
+      position: relative;
+      border-radius: 24px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+    #oc-cores .library::before {
+      content: ""; position: absolute; inset: 0;
+      background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.18), rgba(160,228,212,0) 70%);
+      pointer-events: none;
+    }
+
+    /* Coming soon scroller */
+    #oc-cores .marquee {
+      display: grid; grid-auto-flow: column; grid-auto-columns: max-content; gap: 10px;
+      overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    }
+    #oc-cores .marquee-track {
+      display: inline-grid; grid-auto-flow: column; grid-auto-columns: max-content; gap: 10px;
+      animation: oc-slide 22s linear infinite;
+    }
+    @keyframes oc-slide { to { transform: translateX(-50%); } }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      #oc-cores .marquee-track { animation: none !important; }
+      #oc-cores .core-card:hover { transform: none; }
+    }
+  </style>
+
+  <!-- Background glows -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 top-[-5rem] h-[20rem] w-[40rem] -translate-x-1/2 rounded-full blur-3xl"
+         style="background: radial-gradient(60% 60% at 50% 40%, rgba(231,231,255,.22), rgba(231,231,255,0) 70%);"></div>
+  </div>
+
+  <!-- Frame -->
+  <div class="wrap g-grad grad-anim">
+    <!-- Top sheen -->
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
+
+    <!-- Content -->
+    <div class="relative p-6 md:p-10 lg:p-12">
+      <!-- Header -->
+      <div class="text-center max-w-[880px] mx-auto">
+        <span class="eyebrow">OC Cores</span>
+        <h2 class="title mt-4 text-3xl md:text-5xl font-semibold text-white">Switch contexts, not apps.</h2>
+        <p class="lede mx-auto mt-3 md:mt-4 max-w-[720px] text-white/85">
+          Cores are modular workspaces tuned for specific jobs. Pick a core and your tools, prompts, and UI adapt instantly.
+        </p>
+      </div>
+
+      <!-- Grid -->
+      <div class="mt-8 md:mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        <!-- Left: Narrative + chips -->
+        <div class="glass rounded-2xl p-6 md:p-8">
+          <h3 class="text-xl md:text-2xl font-semibold tracking-tight text-neutral-900">How the Core system works</h3>
+          <p class="mt-3 text-[15px] leading-7 text-neutral-700">
+            Each Core bundles best-practice prompts, guardrails, and views for a domain. Switching is instant and local—no cloud send.
+            You can pin favorites, bring your own data, and update cores without touching your projects.
+          </p>
+
+          <ul class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <li class="flex items-start gap-3">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-cpu text-[18px]"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-neutral-900 leading-tight">Private & Local</p>
+                <p class="text-sm text-neutral-600">On-device by default; your data stays with you.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-arrows-left-right text-[18px]"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-neutral-900 leading-tight">Context-aware UI</p>
+                <p class="text-sm text-neutral-600">Panels, tools, and shortcuts swap to fit the task.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-plug-charging text-[18px]"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-neutral-900 leading-tight">Bring your sources</p>
+                <p class="text-sm text-neutral-600">Attach PDFs, cases, datasets—search instantly with citations.</p>
+              </div>
+            </li>
+            <li class="flex items-start gap-3">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-rocket-launch text-[18px]"></i>
+              </div>
+              <div>
+                <p class="font-semibold text-neutral-900 leading-tight">Always improving</p>
+                <p class="text-sm text-neutral-600">Cores update continuously with new tools & prompts.</p>
+              </div>
+            </li>
+          </ul>
+
+          <!-- Quick chips -->
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="pill">Local-first</span>
+            <span class="pill">RAG + Citations</span>
+            <span class="pill">PDF / DOCX Export</span>
+            <span class="pill">Prompt Favorites</span>
+            <span class="pill">Semantic Search</span>
+          </div>
+        </div>
+
+        <!-- Right: Core cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- OC-Core -->
+          <article class="core-card">
+            <div class="ribbon" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --angle:135deg;"></div>
+            <div class="core-head mt-[64px]">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-squares-four text-[18px]" aria-hidden="true"></i>
+              </div>
+              <div class="flex items-center gap-2">
+                <h4 class="core-name text-neutral-900">OC-Core</h4>
+                <span class="core-tag">Default</span>
+              </div>
+            </div>
+            <p class="core-copy mt-2">Your everyday workspace for writing, brainstorming, and building—fast, clean, and local.</p>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              <li class="pill">Draft & Edit</li>
+              <li class="pill">Code & Explain</li>
+              <li class="pill">Export</li>
+            </ul>
+          </article>
+
+          <!-- OC-Research-Core -->
+          <article class="core-card">
+            <div class="ribbon" style="--from:#2A2E5A; --via:#6A5AE0; --to:#B4A8FF; --angle:135deg;"></div>
+            <div class="core-head mt-[64px]">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-magnifying-glass text-[18px]" aria-hidden="true"></i>
+              </div>
+              <div class="flex items-center gap-2">
+                <h4 class="core-name text-neutral-900">OC-Research-Core</h4>
+                <span class="core-tag">Citations</span>
+              </div>
+            </div>
+            <p class="core-copy mt-2">Verifiable research with linked sources, summaries, and bibliographies—built for clarity.</p>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              <li class="pill">Source Linking</li>
+              <li class="pill">Lit Reviews</li>
+              <li class="pill">BibTeX</li>
+            </ul>
+          </article>
+
+          <!-- OC-Coach-Core -->
+          <article class="core-card sm:col-span-2">
+            <div class="ribbon" style="--from:#0E6F5C; --via:#12B886; --to:#A0E4D4; --angle:135deg;"></div>
+            <div class="core-head mt-[64px]">
+              <div class="h-9 w-9 rounded-xl bg-neutral-900/90 text-white flex items-center justify-center">
+                <i class="ph ph-chats-circle text-[18px]" aria-hidden="true"></i>
+              </div>
+              <div class="flex items-center gap-2">
+                <h4 class="core-name text-neutral-900">OC-Coach-Core</h4>
+                <span class="core-tag">Guided</span>
+              </div>
+            </div>
+            <p class="core-copy mt-2">Study plans, feedback loops, and tutoring flows—learn faster with structured coaching.</p>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              <li class="pill">Socratic Mode</li>
+              <li class="pill">Spaced Repetition</li>
+              <li class="pill">Progress Tracks</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <!-- Coming soon -->
+      <div class="mt-8 md:mt-10 glass rounded-2xl p-5 md:p-6">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <i class="ph ph-sparkle text-neutral-900"></i>
+            <p class="font-semibold text-neutral-900">More Cores are on the way</p>
+          </div>
+          <span class="text-xs text-neutral-500">Continuously updated</span>
+        </div>
+        <div class="mt-3 marquee">
+          <div class="marquee-track">
+            <!-- duplicate list twice for seamless loop -->
+            <div class="flex items-center gap-2">
+              <span class="pill">OC-Fin-Core</span>
+              <span class="pill">OC-Med-Core</span>
+              <span class="pill">OC-Legal-Core</span>
+              <span class="pill">OC-Dev-Core</span>
+              <span class="pill">OC-Design-Core</span>
+              <span class="pill">OC-Sales-Core</span>
+              <span class="pill">OC-Ops-Core</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="pill">OC-Fin-Core</span>
+              <span class="pill">OC-Med-Core</span>
+              <span class="pill">OC-Legal-Core</span>
+              <span class="pill">OC-Dev-Core</span>
+              <span class="pill">OC-Design-Core</span>
+              <span class="pill">OC-Sales-Core</span>
+              <span class="pill">OC-Ops-Core</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core Library CTA -->
+      <div class="mt-8 md:mt-10 library g-grad grad-anim">
+        <div class="px-6 md:px-8 py-8 md:py-10 text-white">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 class="text-2xl md:text-3xl font-semibold tracking-tight">Explore the Core Library</h3>
+              <p class="mt-1 text-white/85 max-w-[700px]">
+                Browse every Core in one place—compare capabilities, see what’s new, and install with one click.
+              </p>
+            </div>
+            <a href="cores.html"
+               class="inline-flex items-center gap-2 rounded-2xl px-5 py-3 font-semibold bg-white text-oc-ink shadow-xl hover:shadow-2xl transition-all hover:-translate-y-[2px]">
+              <i class="ph ph-compass text-lg"></i>
+              <span>Browse Cores</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<!-- ───── End OC CORES ───── -->
 
   <!-- Built. For. Real. Work. -->
 <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
