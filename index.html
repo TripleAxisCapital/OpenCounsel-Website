@@ -5864,6 +5864,701 @@ Paste this anywhere inside <body>. It is fully self‑contained and follows your
 </script>
 <!-- =================== /OC CORES (drop-in) =================== -->
 
+<!-- ───────────────────────────────────────────────────────────────────
+     OC CORES — Drop-in Section (OC-Core, OC-Research-Core, OC-Coach-Core)
+     - Apple-style animations (glass card, gradient, sheen, type-in, tilt)
+     - Dedicated "Explore all cores" CTA
+     - “More cores coming” chips
+     - Accessible tabs with role=tablist
+     Dependencies already in your page: Tailwind + Phosphor icons + global styles
+   ─────────────────────────────────────────────────────────────────── -->
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+  <!-- Soft background glows -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 top-[-8rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl"
+         style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.18), rgba(160,228,212,0) 70%);"></div>
+    <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl"
+         style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.12), rgba(0,207,255,0) 70%);"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="w-full pt-20 md:pt-28 pb-6 text-center">
+    <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Cores</div>
+    <h2 class="mt-4 text-3xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-oc-ink">
+      Configure your workspace with <span class="grad-text grad-move-right" style="--from:#0B1B2Bcc;--via:#0E6F5Ccc;--to:#00CFFFcc;--speed:16s">OC Cores</span>
+    </h2>
+    <p class="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-neutral-600">
+      Pick a Core and the entire experience adapts—tools, defaults, and UI tuned for the job. Switch instantly. Stay private.
+    </p>
+  </div>
+
+  <!-- Card -->
+  <article
+    class="relative overflow-hidden rounded-[28px] border border-white/15 g-grad grad-anim backdrop-blur-xl card-glass shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+    <!-- Frame + sheen -->
+    <div class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-white/10"></div>
+    <div class="oc-sheen pointer-events-none" aria-hidden="true"></div>
+
+    <!-- Tabs -->
+    <header class="px-6 md:px-10 pt-8 md:pt-10">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h3 class="text-white text-2xl md:text-3xl font-semibold tracking-tight">Choose a Core</h3>
+          <p class="text-white/80 text-sm mt-1">OC-Core • OC-Research-Core • OC-Coach-Core</p>
+        </div>
+        <nav id="coreTabs" class="flex flex-wrap gap-2" role="tablist" aria-label="OC Cores">
+          <!-- Tabs are wired by script; keep data-core ids in sync with templates below -->
+          <button class="core-pill" role="tab" aria-selected="true" aria-controls="panel-oc-core" id="tab-oc-core" data-core="oc-core">
+            <i class="ph ph-sparkle text-base"></i><span>OC-Core</span>
+          </button>
+          <button class="core-pill" role="tab" aria-selected="false" aria-controls="panel-oc-research" id="tab-oc-research" data-core="oc-research">
+            <i class="ph ph-magnifying-glass text-base"></i><span>OC-Research-Core</span>
+          </button>
+          <button class="core-pill" role="tab" aria-selected="false" aria-controls="panel-oc-coach" id="tab-oc-coach" data-core="oc-coach">
+            <i class="ph ph-target text-base"></i><span>OC-Coach-Core</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Preview Stage -->
+    <div class="px-6 md:px-10 pb-8 md:pb-10">
+      <div class="relative w-full rounded-[22px] border border-white/15 bg-white/80 shadow-[0_20px_60px_rgba(10,13,16,0.08)] backdrop-blur has-tilt">
+        <!-- Minimal window chrome -->
+        <div class="flex items-center gap-2 px-4 pt-3 pb-2">
+          <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57] border border-black/10"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-[#ffbd2e] border border-black/10"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-[#28c840] border border-black/10"></span>
+        </div>
+
+        <div class="px-4 pb-4 md:px-6 md:pb-6">
+          <div id="coreStage" class="demo-stage rounded-2xl border border-neutral-200 bg-white overflow-hidden"></div>
+        </div>
+      </div>
+
+      <!-- CTA Row -->
+      <div class="mt-6 flex flex-col md:flex-row items-center justify-between gap-3">
+        <p class="text-white/85 text-sm">
+          A dedicated space lets you explore, install, and update Cores as they ship. New Cores roll out continuously.
+        </p>
+        <div class="flex items-center gap-3">
+          <a href="cores.html"
+             class="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 g-grad grad-anim tilt"
+             style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;">
+            <i class="ph ph-squares-four text-base"></i> Explore all Cores
+          </a>
+          <a href="download.html"
+             class="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold border border-white/25 text-white/95 bg-white/10 hover:bg-white/15 transition-all duration-300 tilt">
+            <i class="ph ph-download-simple text-base"></i> Get OC
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="h-px w-full bg-white/10"></div>
+
+    <!-- “More cores coming” chips -->
+    <div class="px-6 md:px-10 py-6 md:py-8">
+      <p class="text-white/80 text-xs uppercase tracking-[.28em] mb-3">More cores arriving</p>
+      <ul class="flex flex-wrap gap-2">
+        <li class="soon-chip"><i class="ph ph-trend-up"></i> FinCore</li>
+        <li class="soon-chip"><i class="ph ph-stethoscope"></i> MedCore</li>
+        <li class="soon-chip"><i class="ph ph-cpu"></i> DevCore</li>
+        <li class="soon-chip"><i class="ph ph-compass-tool"></i> BuildCore</li>
+        <li class="soon-chip"><i class="ph ph-pen-nib-straight"></i> WriteCore</li>
+        <li class="soon-chip"><i class="ph ph-brain"></i> Research-Pro</li>
+        <li class="soon-chip"><i class="ph ph-graduation-cap"></i> StudyCore</li>
+        <li class="soon-chip"><i class="ph ph-scales"></i> LegalCore</li>
+        <li class="soon-chip"><i class="ph ph-storefront"></i> CommerceCore</li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- Accessibility panels (content is injected but panels exist for SRs) -->
+  <div class="sr-only">
+    <div id="panel-oc-core" role="tabpanel" aria-labelledby="tab-oc-core"></div>
+    <div id="panel-oc-research" role="tabpanel" aria-labelledby="tab-oc-research"></div>
+    <div id="panel-oc-coach" role="tabpanel" aria-labelledby="tab-oc-coach"></div>
+  </div>
+
+  <!-- Templates for stage content -->
+  <template id="tpl-oc-core">
+    <div class="sceneCore active">
+      <div class="chat-wrap px-4 md:px-6">
+        <div class="chat-stream">
+          <div class="msg-row msg-user">
+            <div class="bubble bubble-user font-semibold">Draft a crisp product one-pager for OC. Tone: Apple.</div>
+          </div>
+          <div class="msg-row msg-assistant">
+            <div class="bubble bubble-bot">
+              <div class="ai-final">
+                <div class="font-semibold">OC — The AI Workspace for Outliers</div>
+                <p class="mt-1">Private, polished, powerful. Build, research, and ship without limits.</p>
+                <ul class="list-disc ml-5 mt-2 text-sm">
+                  <li>Local-first. No cloud send.</li>
+                  <li>Databases with citations.</li>
+                  <li>DOCX / PDF export.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="msg-row msg-user">
+            <div class="bubble bubble-user font-semibold">Export this as PDF.</div>
+          </div>
+          <div class="msg-row msg-assistant">
+            <div class="bubble bubble-bot">
+              <div class="ai-final">Ready. <span class="chip">opencounsel_onepager.pdf</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-oc-research">
+    <div class="sceneCore active">
+      <div class="p-4 md:p-6">
+        <div class="rounded-xl border border-neutral-200 bg-white p-4 shadow-soft">
+          <div class="text-xs uppercase tracking-wide text-neutral-500">Research Snapshot</div>
+          <h4 class="mt-1 font-semibold text-neutral-900">GLP-1 oral delivery (2021–2025)</h4>
+          <p class="mt-2 text-[15px] text-neutral-700">Enteric coatings, enzyme inhibitors, permeation enhancers, and nano-carriers dominate. Adherence ↑; bioavailability modest; safety acceptable.</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="chip">Citations (6)</span>
+            <span class="chip">BibTeX</span>
+            <span class="chip">PDF Bundle</span>
+          </div>
+        </div>
+
+        <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="rounded-xl border border-neutral-200 bg-white p-4">
+            <div class="text-xs text-neutral-500">Method</div>
+            <ul class="list-disc ml-5 mt-1 text-sm text-neutral-700">
+              <li>Hybrid search (vector + keyword)</li>
+              <li>Dedup + cite-merge</li>
+              <li>Confidence scoring</li>
+            </ul>
+          </div>
+          <div class="rounded-xl border border-neutral-200 bg-white p-4">
+            <div class="text-xs text-neutral-500">Output</div>
+            <ul class="list-disc ml-5 mt-1 text-sm text-neutral-700">
+              <li>Linked sources with quotes</li>
+              <li>Summary + caveats</li>
+              <li>One-click export</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-oc-coach">
+    <div class="sceneCore active">
+      <div class="p-4 md:p-6">
+        <div class="rounded-xl border border-neutral-200 bg-white p-4 shadow-soft">
+          <div class="text-xs uppercase tracking-wide text-neutral-500">Coach Plan</div>
+          <h4 class="mt-1 font-semibold text-neutral-900">30-Day Focus Protocol</h4>
+          <ol class="list-decimal ml-5 mt-2 text-sm text-neutral-800">
+            <li>Define 1 metric that matters (e.g., deep-work hrs/day).</li>
+            <li>Daily 90-min “no-notif” block (calendar invite attached).</li>
+            <li>Weekly review: wins, blockers, next bets.</li>
+          </ol>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <label class="chip cursor-pointer"><input type="checkbox" class="mr-2">Template added</label>
+            <label class="chip cursor-pointer"><input type="checkbox" class="mr-2">Focus timer on</label>
+            <span class="chip">Nudges: 2/day</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+</section>
+
+<!-- Scoped styles for OC Cores -->
+<style>
+  #oc-cores .core-pill{
+    display:inline-flex; align-items:center; gap:.5rem;
+    padding:.55rem .9rem; border-radius:9999px; font-weight:600; font-size:14px;
+    color:#fff; background:linear-gradient(135deg, rgba(255,255,255,.16), rgba(255,255,255,.06));
+    border:1px solid rgba(255,255,255,.28);
+    transition:transform .18s ease, opacity .18s ease, background .18s ease, box-shadow .18s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 8px 16px rgba(0,0,0,.14);
+  }
+  #oc-cores .core-pill[aria-selected="true"]{
+    background: linear-gradient(135deg, var(--grad-from,#0B1B2Bcc), var(--grad-via,#0E6F5Ccc), var(--grad-to,#00CFFFcc));
+    box-shadow: 0 10px 30px rgba(16,24,40,.22);
+    transform: translateY(-1px);
+  }
+  #oc-cores .core-pill:hover{ transform: translateY(-1px); }
+
+  #oc-cores .has-tilt{ transition: transform .25s ease; }
+  @media (hover:hover){
+    #oc-cores .has-tilt:hover{ transform: translateY(-2px) scale(1.01); }
+  }
+
+  /* Card sheen (subtle Apple-like sweep) */
+  #oc-cores .oc-sheen{
+    position:absolute; inset:0; pointer-events:none;
+    background:
+      linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.28) 48%,
+        rgba(255,255,255,0) 100%);
+    mix-blend-mode: screen; opacity:.0; transform: translateX(-30%);
+  }
+  @media (prefers-reduced-motion: no-preference){
+    #oc-cores .oc-sheen{ animation: ocSheen 6.5s linear infinite; }
+    @keyframes ocSheen{
+      0%{ opacity:.0; transform: translateX(-30%); }
+      10%{ opacity:.35; }
+      50%{ opacity:.15; transform: translateX(30%); }
+      100%{ opacity:.0; transform: translateX(60%); }
+    }
+  }
+
+  /* Coming chips */
+  #oc-cores .soon-chip{
+    display:inline-flex; align-items:center; gap:.45rem;
+    padding:.5rem .75rem; font-size:12px; line-height:1; color:#fff;
+    border:1px solid rgba(255,255,255,.22); border-radius:9999px;
+    background:linear-gradient(135deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 6px 14px rgba(0,0,0,.10);
+  }
+
+  /* Stage transitions */
+  #oc-cores .sceneCore{ position:absolute; inset:0; padding: 8px 0; opacity:0; transform: scale(.985); transition: opacity .3s ease, transform .3s ease; }
+  #oc-cores .sceneCore.active{ opacity:1; transform: scale(1); position:absolute; inset:0; }
+  #oc-cores #coreStage{ position:relative; }
+</style>
+
+<!-- Section logic -->
+<script>
+(() => {
+  const stage = document.querySelector('#oc-cores #coreStage');
+  const tabs  = document.querySelectorAll('#oc-cores [role="tab"]');
+
+  const templates = {
+    'oc-core':     document.getElementById('tpl-oc-core'),
+    'oc-research': document.getElementById('tpl-oc-research'),
+    'oc-coach':    document.getElementById('tpl-oc-coach')
+  };
+
+  function swap(coreKey){
+    if (!stage || !templates[coreKey]) return;
+    // Teardown current
+    Array.from(stage.children).forEach(el => el.remove());
+
+    // Insert new
+    const node = templates[coreKey].content.cloneNode(true);
+    stage.appendChild(node);
+
+    // Update SR panels
+    const map = {
+      'oc-core': 'panel-oc-core',
+      'oc-research': 'panel-oc-research',
+      'oc-coach': 'panel-oc-coach'
+    };
+    Object.values(map).forEach(id => {
+      const p = document.getElementById(id);
+      if (p) p.textContent = '';
+    });
+    const targetPanel = document.getElementById(map[coreKey]);
+    if (targetPanel) targetPanel.textContent = coreKey.replace('-', ' ') + ' preview';
+  }
+
+  function setActive(btn){
+    tabs.forEach(t => t.setAttribute('aria-selected', String(t === btn)));
+  }
+
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      setActive(btn);
+      swap(btn.dataset.core);
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+      const idx = Array.from(tabs).indexOf(btn);
+      if (e.key === 'ArrowRight') { e.preventDefault(); tabs[(idx+1)%tabs.length].focus(); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); tabs[(idx-1+tabs.length)%tabs.length].focus(); }
+    });
+  });
+
+  // Initial render
+  const defaultTab = document.querySelector('#oc-cores [data-core="oc-core"]');
+  if (defaultTab) { setActive(defaultTab); swap('oc-core'); }
+})();
+</script>
+
+<!-- ───────────────────────────────────────────────────────────────
+     OC CORES — Drop-in Section (self-contained)
+     Works with your existing Tailwind + global helpers.
+     Paste anywhere in <body>.
+──────────────────────────────────────────────────────────────── -->
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+  <!-- Soft background glows -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 -top-20 h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl"
+         style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.16), rgba(160,228,212,0) 70%);"></div>
+    <div class="absolute right-[-8%] bottom-[-10%] h-72 w-72 rounded-full blur-3xl"
+         style="background: radial-gradient(55% 55% at 50% 50%, rgba(231,231,255,.18), rgba(231,231,255,0) 70%);"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="w-full pt-20 md:pt-28 pb-6 text-center">
+    <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">OC Core System</div>
+    <h2 class="mt-4 text-3xl md:text-5xl font-semibold tracking-tight text-neutral-900">Cores that snap into your workflow.</h2>
+    <p class="mx-auto mt-3 max-w-[760px] text-[15px] leading-6 text-neutral-700">
+      OC Cores are focused, on-device skill modules. Mix and match to research faster, draft better, and make sharper decisions—without limits.
+    </p>
+  </div>
+
+  <!-- Core Card -->
+  <article
+    class="relative overflow-hidden rounded-[28px] border border-white/15 g-grad grad-anim backdrop-blur-xl card-glass shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+    <!-- Frame + top sheen -->
+    <div class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-white/10"></div>
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
+
+    <div id="oc-core-card" class="oc-core-tilt grid grid-cols-1 lg:grid-cols-2 gap-0 relative">
+      <!-- Left: Switcher + Copy -->
+      <div class="p-7 md:p-10 lg:p-12">
+        <!-- Tabs -->
+        <div class="inline-flex items-center gap-1 rounded-2xl border border-white/15 bg-white/10 p-1 backdrop-blur">
+          <button data-core-tab="oc"       class="oc-tab is-active px-3 py-1.5 rounded-xl text-sm font-semibold text-white/90 hover:text-white transition">OC-Core</button>
+          <button data-core-tab="research" class="oc-tab px-3 py-1.5 rounded-xl text-sm font-semibold text-white/70 hover:text-white transition">OC-Research-Core</button>
+          <button data-core-tab="coach"    class="oc-tab px-3 py-1.5 rounded-xl text-sm font-semibold text-white/70 hover:text-white transition">OC-Coach-Core</button>
+        </div>
+
+        <!-- Title -->
+        <h3 id="oc-core-title" class="mt-5 text-2xl md:text-3xl font-semibold tracking-tight text-white">OC-Core</h3>
+        <p id="oc-core-blurb" class="mt-2 text-white/80 text-[15px] leading-6">
+          Your always-on foundation for drafting, summarizing, and structured reasoning. Fast, private, precise.
+        </p>
+
+        <!-- Bullets -->
+        <ul id="oc-core-bullets" class="mt-4 grid gap-3">
+          <!-- populated by script -->
+        </ul>
+
+        <!-- CTAs -->
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <a id="oc-core-cta" href="download.html"
+             class="inline-flex items-center gap-2 rounded-2xl bg-white text-oc-ink px-4 py-2 font-semibold shadow-soft hover:bg-gray-100 focus-visible:ring-4 focus-visible:ring-white/60">
+            <i class="ph ph-sparkle text-base"></i>
+            <span>Open Core</span>
+          </a>
+          <a href="cores.html"
+             class="inline-flex items-center gap-2 rounded-2xl border border-white/25 bg-white/10 text-white px-4 py-2 font-semibold hover:bg-white/15 focus-visible:ring-4 focus-visible:ring-white/40">
+            <i class="ph ph-grid-nine text-base"></i>
+            <span>Explore Core Library</span>
+          </a>
+        </div>
+
+        <!-- Meta -->
+        <div class="mt-4 flex flex-wrap items-center gap-2 text-white/70 text-xs">
+          <span class="chip !border-white/25 !bg-white/10 !text-white/80">Local-first</span>
+          <span class="chip !border-white/25 !bg-white/10 !text-white/80">Citations</span>
+          <span class="chip !border-white/25 !bg-white/10 !text-white/80">RAG</span>
+          <span class="chip !border-white/25 !bg-white/10 !text-white/80">Export</span>
+        </div>
+      </div>
+
+      <!-- Right: Live Badge + Demo -->
+      <div class="relative p-7 md:p-10 lg:p-12">
+        <!-- Device-like frame -->
+        <div class="relative rounded-2xl border border-white/20 bg-white/80 shadow-[0_20px_60px_rgba(10,13,16,0.10)] backdrop-blur p-5 md:p-6">
+          <div class="flex items-center gap-2 pb-3">
+            <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57] border border-black/10"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-[#ffbd2e] border border-black/10"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-[#28c840] border border-black/10"></span>
+          </div>
+
+          <!-- Stage -->
+          <div class="relative overflow-hidden rounded-xl border border-neutral-200 bg-white p-5 h-[300px] md:h-[360px]">
+            <!-- Orbiting core badge -->
+            <div class="absolute inset-0 grid place-items-center">
+              <div class="oc-badge-wrap">
+                <div class="oc-badge-core">
+                  <span id="oc-badge-label" class="oc-badge-label">OC-Core</span>
+                </div>
+                <div class="oc-badge-orbits" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Swap content -->
+            <div id="oc-core-demo" class="absolute inset-x-5 bottom-5">
+              <!-- populated by script -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Update stream -->
+        <div class="mt-4 text-white/80 text-sm">
+          <span class="font-semibold">Always improving.</span> New Cores and updates ship regularly for specialized tasks.
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- Upcoming cores (scrollable chips) -->
+  <div class="mt-6 md:mt-8">
+    <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Upcoming & In Research</div>
+    <div class="mt-3 flex gap-2 overflow-x-auto py-1 pr-1">
+      <span class="chip">OC-Quant-Core</span>
+      <span class="chip">OC-Build-Core</span>
+      <span class="chip">OC-Design-Core</span>
+      <span class="chip">OC-Sales-Core</span>
+      <span class="chip">OC-Legal-Core</span>
+      <span class="chip">OC-Docs-Core</span>
+      <span class="chip">OC-Media-Core</span>
+    </div>
+  </div>
+</section>
+
+<!-- Scoped styles for OC Cores -->
+<style>
+  /* Keep everything scoped to #oc-cores to avoid collisions */
+  #oc-cores .oc-tab.is-active{
+    color:#0A0D10; background:#fff;
+    box-shadow: 0 2px 10px rgba(10,13,16,.06), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  #oc-cores .oc-tab:not(.is-active){ color: rgba(255,255,255,.78); }
+
+  /* Magnetic tilt (subtle) */
+  @media (hover:hover) and (pointer:fine){
+    #oc-cores .oc-core-tilt{
+      transform-style: preserve-3d;
+      transition: transform .25s cubic-bezier(.22,.9,.22,1);
+      will-change: transform;
+    }
+    #oc-cores .oc-core-tilt[data-tilt="1"]{ transform: perspective(1400px) rotateX(var(--tx,0)) rotateY(var(--ty,0)); }
+  }
+
+  /* Orbiting badge */
+  #oc-cores .oc-badge-wrap{
+    position: relative; width: 170px; height:170px;
+    filter: drop-shadow(0 24px 40px rgba(0,0,0,.10));
+  }
+  #oc-cores .oc-badge-core{
+    position:absolute; inset:0; border-radius:50%;
+    background: conic-gradient(from 0deg, var(--grad-from,#0B1B2B), var(--grad-via,#0E6F5C), var(--grad-to,#00CFFF));
+    -webkit-mask: radial-gradient(circle at 50% 50%, #000 64%, transparent 65%);
+            mask: radial-gradient(circle at 50% 50%, #000 64%, transparent 65%);
+    animation: ocSpin 12s linear infinite;
+  }
+  @keyframes ocSpin { to { transform: rotate(360deg); } }
+
+  #oc-cores .oc-badge-label{
+    position:absolute; inset:0; display:grid; place-items:center;
+    font-weight: 800; font-size: 14px; letter-spacing:.02em;
+    color:#0A0D10; background:#fff; border-radius:50%;
+    width: 120px; height:120px; margin:auto; top:0; bottom:0;
+    border:1px solid rgba(10,13,16,.08);
+    box-shadow: 0 10px 30px rgba(10,13,16,.08), inset 0 1px 0 rgba(255,255,255,.75);
+  }
+
+  #oc-cores .oc-badge-orbits{
+    position:absolute; inset:0; pointer-events:none;
+  }
+  #oc-cores .oc-badge-orbits span{
+    position:absolute; left:50%; top:50%;
+    width:9px; height:9px; border-radius:50%;
+    background: radial-gradient(circle, #00CFFF, #0E6F5C);
+    transform-origin: -60px 0;
+    animation: ocSat 6s ease-in-out infinite;
+    opacity:.9;
+  }
+  #oc-cores .oc-badge-orbits span:nth-child(1){ transform-origin: -62px 0; animation-duration: 7.2s; filter:blur(.2px);}
+  #oc-cores .oc-badge-orbits span:nth-child(2){ transform-origin: -72px 0; animation-duration: 6.4s; filter:blur(.6px);}
+  #oc-cores .oc-badge-orbits span:nth-child(3){ transform-origin: -82px 0; animation-duration: 8.0s; filter:blur(.8px);}
+  @keyframes ocSat{
+    0%   { transform: rotate(0deg) translateX(0); }
+    50%  { transform: rotate(180deg) translateX(0); }
+    100% { transform: rotate(360deg) translateX(0); }
+  }
+
+  /* Demo text swap */
+  #oc-cores .oc-fade-enter{ opacity:0; transform: translateY(6px) scale(.99); }
+  #oc-cores .oc-fade-enter.oc-fade-enter-active{ opacity:1; transform: translateY(0) scale(1); transition: opacity .3s ease, transform .3s ease; }
+  #oc-cores .oc-fade-exit{ opacity:1; transform: translateY(0) scale(1); }
+  #oc-cores .oc-fade-exit.oc-fade-exit-active{ opacity:0; transform: translateY(-4px) scale(.995); transition: opacity .22s ease, transform .22s ease; }
+</style>
+
+<!-- Scoped logic for OC Cores -->
+<script>
+(() => {
+  const root = document.getElementById('oc-cores');
+  if (!root) return;
+
+  // Respect reduced motion
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Data model
+  const CORES = {
+    oc: {
+      name: 'OC-Core',
+      blurb: 'Your always-on foundation for drafting, summarizing, and structured reasoning. Fast, private, precise.',
+      bullets: [
+        ['ph-pencil', 'Draft + refine with citation-aware reasoning.'],
+        ['ph-quotes', 'Summarize long docs into trustworthy briefs.'],
+        ['ph-link', 'Export cleanly to PDF / DOCX with sources.']
+      ],
+      cta: 'download.html',
+      demo: `<strong>OC-Core → Structured Draft</strong>
+             <ul class="list-disc ml-5 mt-2 text-[14px]">
+              <li>Intro: two-sentence hook aligned to audience</li>
+              <li>Body: 3 evidence-backed points (linked)</li>
+              <li>Conclusion: decision & next steps</li>
+             </ul>`
+    },
+    research: {
+      name: 'OC-Research-Core',
+      blurb: 'Rapid research with verifiable outputs. Scan sources, cross-check, and produce linked summaries.',
+      bullets: [
+        ['ph-magnifying-glass', 'Semantic search across your local library.'],
+        ['ph-seal-check', 'Inline citations with previews + BibTeX.'],
+        ['ph-brain', 'Conflict-resolution to reduce hallucinations.']
+      ],
+      cta: 'download.html',
+      demo: `<strong>Research Snapshot — “GLP-1 oral delivery”</strong>
+             <ol class="list-decimal ml-5 mt-2 text-[14px]">
+              <li>Methods: enteric coatings, inhibitors, enhancers</li>
+              <li>Evidence: small–mid trials; heterogeneity high</li>
+              <li>Links: 6 key papers with one-line takeaways</li>
+             </ol>`
+    },
+    coach: {
+      name: 'OC-Coach-Core',
+      blurb: 'A focused thinking partner for strategy, study, and practice—Socratic prompts, plans, and feedback.',
+      bullets: [
+        ['ph-handshake', 'Socratic prompts to sharpen thinking.'],
+        ['ph-target', 'Clear plans with measurable milestones.'],
+        ['ph-rocket', 'Practice sets + fast feedback loops.']
+      ],
+      cta: 'download.html',
+      demo: `<strong>Coach Plan — “Pitch in 7 days”</strong>
+             <ul class="list-disc ml-5 mt-2 text-[14px]">
+              <li>D1–2: customer proof & problem clarity</li>
+              <li>D3–5: solution narrative + demo script</li>
+              <li>D6–7: rehearse; record; iterate with rubric</li>
+             </ul>`
+    }
+  };
+
+  // Elements
+  const tabs   = root.querySelectorAll('[data-core-tab]');
+  const title  = root.querySelector('#oc-core-title');
+  const blurb  = root.querySelector('#oc-core-blurb');
+  const bullets= root.querySelector('#oc-core-bullets');
+  const cta    = root.querySelector('#oc-core-cta');
+  const demo   = root.querySelector('#oc-core-demo');
+  const badgeL = root.querySelector('#oc-badge-label');
+  const card   = root.querySelector('#oc-core-card');
+
+  function setActive(key){
+    const c = CORES[key];
+    if (!c) return;
+
+    tabs.forEach(b=>{
+      b.classList.toggle('is-active', b.getAttribute('data-core-tab') === key);
+      b.setAttribute('aria-pressed', b.classList.contains('is-active') ? 'true' : 'false');
+    });
+
+    // Title + blurb
+    title.textContent = c.name;
+    blurb.textContent = c.blurb;
+    badgeL.textContent = c.name;
+
+    // Bullets
+    bullets.innerHTML = '';
+    for (const [icon,label] of c.bullets){
+      const li = document.createElement('li');
+      li.className = 'flex items-start gap-3';
+      li.innerHTML = `
+        <span class="h-9 w-9 shrink-0 rounded-xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center">
+          <i class="ph ${icon} text-white text-[18px]"></i>
+        </span>
+        <span class="text-white/85 text-[15px] leading-6">${label}</span>`;
+      bullets.appendChild(li);
+    }
+
+    // CTA
+    cta.href = c.cta;
+
+    // Demo swap (with tiny crossfade)
+    const next = document.createElement('div');
+    next.className = 'oc-fade-enter text-[14px] text-neutral-800';
+    next.innerHTML = c.demo;
+
+    const old = demo.firstElementChild;
+    if (old){
+      old.classList.add('oc-fade-exit');
+      old.classList.add('oc-fade-exit-active');
+      setTimeout(()=> old.remove(), 220);
+    }
+
+    demo.appendChild(next);
+    requestAnimationFrame(()=> next.classList.add('oc-fade-enter-active'));
+    setTimeout(()=> {
+      next.classList.remove('oc-fade-enter','oc-fade-enter-active');
+    }, 300);
+  }
+
+  // Tab events
+  tabs.forEach(btn => btn.addEventListener('click', () => {
+    setActive(btn.getAttribute('data-core-tab'));
+    stopAuto();
+  }));
+
+  // Magnetic tilt (subtle, respectful of reduced motion)
+  if (!REDUCED && matchMedia('(hover:hover)').matches){
+    card.dataset.tilt = '1';
+    card.addEventListener('pointermove', (e)=>{
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width * 2 - 1;  // -1..1
+      const y = (e.clientY - r.top)  / r.height* 2 - 1;
+      const rx = (-y * 4).toFixed(2) + 'deg';
+      const ry = ( x * 6).toFixed(2) + 'deg';
+      card.style.setProperty('--tx', rx);
+      card.style.setProperty('--ty', ry);
+    }, {passive:true});
+    card.addEventListener('pointerleave', ()=>{
+      card.style.setProperty('--tx','0deg'); card.style.setProperty('--ty','0deg');
+    });
+  }
+
+  // Auto-cycle
+  const order = ['oc','research','coach'];
+  let idx = 0, timer = null, inView = false;
+  function tick(){
+    idx = (idx + 1) % order.length;
+    setActive(order[idx]);
+  }
+  function startAuto(){
+    if (REDUCED || timer || !inView) return;
+    timer = setInterval(tick, 5500);
+  }
+  function stopAuto(){
+    if (timer){ clearInterval(timer); timer = null; }
+  }
+  root.addEventListener('pointerenter', stopAuto);
+  root.addEventListener('pointerleave', startAuto);
+
+  const io = new IntersectionObserver((entries)=>{
+    for (const e of entries){
+      if (e.isIntersecting){ inView = true; startAuto(); }
+      else { inView = false; stopAuto(); }
+    }
+  }, {threshold:.35});
+  io.observe(root);
+
+  // Init
+  setActive('oc');
+})();
+</script>
+
 
 
   <!-- Built. For. Real. Work. -->
