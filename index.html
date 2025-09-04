@@ -5178,6 +5178,693 @@ Paste this anywhere inside <body>. It is fully self‑contained and follows your
 })();
 </script>
 
+<!-- =========================
+     OC — CORES SECTION (drop-in)
+     ========================= -->
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+  <!-- Background glows (tasteful, Apple-like) -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 top-[-8rem] h-[26rem] w-[46rem] -translate-x-1/2 rounded-full blur-3xl"
+         style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
+    <div class="absolute right-[-10%] bottom-[-10%] h-[22rem] w-[22rem] rounded-full blur-3xl"
+         style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="w-full pt-20 md:pt-28 text-center">
+    <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">
+      OC Cores
+    </div>
+    <h2 class="mt-4 text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight text-neutral-900">
+      One workspace. Multiple superpowers.
+    </h2>
+    <p class="mx-auto mt-4 max-w-[780px] text-lg leading-relaxed text-neutral-700">
+      Pick a Core and your workspace adapts instantly—UI, tools, prompts, and models—all tuned for the task.
+      Start with <span class="font-semibold">OC-Core</span>, <span class="font-semibold">OC-Research-Core</span>, and <span class="font-semibold">OC-Coach-Core</span>.
+      New Cores are added continuously and existing Cores receive ongoing improvements.
+    </p>
+  </header>
+
+  <!-- 1-2-3: How Cores work -->
+  <ol class="mx-auto mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3 max-w-[980px]">
+    <li class="rounded-2xl border border-neutral-200 bg-white/80 p-5 shadow-soft backdrop-blur card-tilt">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-neutral-900 text-white text-xs font-semibold">1</span>
+        <h3 class="font-semibold text-neutral-900">Choose a Core</h3>
+      </div>
+      <p class="mt-2 text-sm text-neutral-600">Switch contexts in one click—no project juggling, no setup.</p>
+    </li>
+    <li class="rounded-2xl border border-neutral-200 bg-white/80 p-5 shadow-soft backdrop-blur card-tilt">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-neutral-900 text-white text-xs font-semibold">2</span>
+        <h3 class="font-semibold text-neutral-900">Workspace reshapes</h3>
+      </div>
+      <p class="mt-2 text-sm text-neutral-600">Tools, prompts, and models reconfigure for the mission at hand.</p>
+    </li>
+    <li class="rounded-2xl border border-neutral-200 bg-white/80 p-5 shadow-soft backdrop-blur card-tilt">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-neutral-900 text-white text-xs font-semibold">3</span>
+        <h3 class="font-semibold text-neutral-900">Ship faster</h3>
+      </div>
+      <p class="mt-2 text-sm text-neutral-600">Get task-specific flows with citations, exports, and guardrails.</p>
+    </li>
+  </ol>
+
+  <!-- Core Switcher (Apple-like device frame w/ animated scene swap) -->
+  <section class="mt-12 md:mt-14">
+    <div class="relative w-full max-w-[980px] mx-auto rounded-[22px] border border-black/10 bg-white/70 shadow-[0_20px_60px_rgba(10,13,16,0.08)] backdrop-blur">
+      <!-- Minimal window chrome -->
+      <div class="flex items-center gap-2 px-4 pt-3 pb-2">
+        <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57] border border-black/10"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-[#ffbd2e] border border-black/10"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-[#28c840] border border-black/10"></span>
+      </div>
+
+      <div class="px-4 pb-5 md:px-6 md:pb-6">
+        <!-- Tabs -->
+        <div role="tablist" aria-label="OC Core Switcher"
+             class="mx-auto mb-3 flex w-full max-w-[780px] items-center justify-center gap-2 p-1 rounded-2xl border border-neutral-200 bg-white/80 backdrop-blur">
+          <button type="button" role="tab" data-core="oc"
+                  class="oc-tab active inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium text-neutral-900 focus:outline-none">
+            <i class="ph ph-sparkle text-base"></i><span>OC-Core</span>
+          </button>
+          <button type="button" role="tab" data-core="research"
+                  class="oc-tab inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900">
+            <i class="ph ph-magnifying-glass text-base"></i><span>OC-Research-Core</span>
+          </button>
+          <button type="button" role="tab" data-core="coach"
+                  class="oc-tab inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900">
+            <i class="ph ph-target text-base"></i><span>OC-Coach-Core</span>
+          </button>
+        </div>
+
+        <!-- Stage -->
+        <div id="oc-core-stage"
+             class="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_10px_30px_rgba(10,13,16,0.06)]"
+             style="height: 420px">
+          <!-- Panels are injected by script -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature cards for each Core -->
+  <section class="mt-10 md:mt-12">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal">
+      <!-- OC-Core -->
+      <article class="card-glass scroll-fade rounded-2xl border border-neutral-200 bg-white/80 p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white ring-1 ring-black/10 flex items-center justify-center">
+            <i class="ph ph-sparkle text-[20px]"></i>
+          </div>
+          <h3 class="font-semibold text-neutral-900">OC-Core</h3>
+        </div>
+        <p class="mt-2 text-sm text-neutral-600">Generalist flow—chat, draft, plan. Fast, private, and polished.</p>
+        <ul class="mt-3 space-y-1.5 text-sm text-neutral-700">
+          <li>• Smart drafting &amp; rewriting</li>
+          <li>• Quick notes &amp; export (PDF/DOCX)</li>
+          <li>• Prompt faves &amp; notepad</li>
+        </ul>
+      </article>
+
+      <!-- Research -->
+      <article class="card-glass scroll-fade rounded-2xl border border-neutral-200 bg-white/80 p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white ring-1 ring-black/10 flex items-center justify-center">
+            <i class="ph ph-magnifying-glass text-[20px]"></i>
+          </div>
+          <h3 class="font-semibold text-neutral-900">OC-Research-Core</h3>
+        </div>
+        <p class="mt-2 text-sm text-neutral-600">Ask in plain English. Get linked sources and verifiable summaries.</p>
+        <ul class="mt-3 space-y-1.5 text-sm text-neutral-700">
+          <li>• RAG with citations</li>
+          <li>• Source inspector &amp; highlights</li>
+          <li>• BibTeX &amp; export scaffolds</li>
+        </ul>
+      </article>
+
+      <!-- Coach -->
+      <article class="card-glass scroll-fade rounded-2xl border border-neutral-200 bg-white/80 p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white ring-1 ring-black/10 flex items-center justify-center">
+            <i class="ph ph-target text-[20px]"></i>
+          </div>
+          <h3 class="font-semibold text-neutral-900">OC-Coach-Core</h3>
+        </div>
+        <p class="mt-2 text-sm text-neutral-600">Structured guidance for study, fitness, and execution.</p>
+        <ul class="mt-3 space-y-1.5 text-sm text-neutral-700">
+          <li>• Goal plans &amp; weekly schedules</li>
+          <li>• Checklists &amp; habit tracking</li>
+          <li>• Warm, direct feedback loops</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- Roadmap / More cores + Cores Hub CTA -->
+  <section class="mt-12 md:mt-14 text-center">
+    <p class="text-sm uppercase tracking-[0.28em] text-neutral-600">More Cores, Constantly</p>
+    <div class="mx-auto mt-3 flex flex-wrap items-center justify-center gap-2">
+      <span class="core-chip">Fin-Core</span>
+      <span class="core-chip">Med-Core</span>
+      <span class="core-chip">Design-Core</span>
+      <span class="core-chip">Code-Core</span>
+      <span class="core-chip">Docs-Core</span>
+      <span class="core-chip">Voice-Core</span>
+      <span class="core-chip">…and more</span>
+    </div>
+
+    <p class="mx-auto mt-4 max-w-[760px] text-neutral-700">
+      There’s a dedicated space to explore every Core—capabilities, templates, and update notes—all in one place.
+    </p>
+
+    <div class="mt-6 flex items-center justify-center gap-3">
+      <a href="cores.html"
+         class="inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white
+                shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 ease-out
+                g-grad grad-anim"
+         style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;">
+        <i class="ph ph-grid-four text-base"></i>
+        <span>Explore Cores</span>
+      </a>
+      <a href="download.html"
+         class="inline-flex items-center gap-2 rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50">
+        <i class="ph ph-download-simple text-base"></i>
+        <span>Get OC</span>
+      </a>
+    </div>
+
+    <!-- Silent updates indicator -->
+    <div class="mx-auto mt-5 flex items-center justify-center gap-2 text-sm text-neutral-600">
+      <span class="relative inline-flex">
+        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+        <span class="ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500/60"></span>
+      </span>
+      <span>Continuous updates: features, prompts, and models improve over time.</span>
+    </div>
+  </section>
+</section>
+
+<!-- ======= Scoped styles for this section only ======= -->
+<style>
+  /* Scope all custom rules to #oc-cores to avoid leakage */
+  #oc-cores .shadow-soft{box-shadow:0 2px 6px rgba(10,13,16,0.04), 0 12px 24px rgba(10,13,16,0.06)}
+  #oc-cores .rows-equal{grid-auto-rows:1fr}
+  #oc-cores .card-tilt{transition:transform .25s ease; will-change:transform}
+  @media (hover:hover) and (pointer:fine){
+    #oc-cores .card-tilt:hover{ transform: translateY(-2px) scale(1.01) }
+  }
+
+  /* Core chips (subtle animated gradient on hover) */
+  #oc-cores .core-chip{
+    font-size:12px; line-height:1;
+    border:1px solid var(--line, #E7EDF2);
+    background:#fff;
+    border-radius:999px;
+    padding:6px 10px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.6), 0 6px 14px rgba(10,13,16,.06);
+    transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease;
+  }
+  #oc-cores .core-chip:hover{
+    transform: translateY(-1px);
+    color:#0A0D10; border-color: rgba(0,0,0,.10);
+    background: linear-gradient(135deg, rgba(11,27,43,.06), rgba(14,111,92,.06), rgba(0,207,255,.06));
+    background-size: 300% 300%;
+    animation: ocCoreGrad 16s ease-in-out infinite;
+  }
+  @keyframes ocCoreGrad { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+  /* Tab states */
+  #oc-cores .oc-tab{ transition: background .18s ease, color .18s ease, transform .18s ease }
+  #oc-cores .oc-tab.active{ background:#0A0D10; color:#fff; transform: translateY(-1px) }
+  #oc-cores .oc-tab:not(.active):hover{ background:#f7f7f7 }
+
+  /* Stage panels */
+  #oc-cores .panel{
+    position:absolute; inset:0; padding:18px;
+    display:flex; flex-direction:column; gap:12px; align-items:stretch; justify-content:center;
+    opacity:0; transform: translateY(6px) scale(.985);
+    transition: opacity .32s ease, transform .32s ease, filter .32s ease;
+    will-change: opacity, transform, filter;
+  }
+  #oc-cores .panel.active{ opacity:1; transform: translateY(0) scale(1) }
+  #oc-cores .panel.exit{ opacity:0; transform: translateY(2px) scale(.992) }
+
+  /* Subtle “ping” for update badge */
+  #oc-cores .ping { animation: ocPing 1.6s cubic-bezier(0,0,.2,1) infinite; }
+  @keyframes ocPing {
+    0% { transform: scale(1); opacity: .8 }
+    75%, 100% { transform: scale(2.6); opacity: 0 }
+  }
+
+  /* Reduced motion respects system setting */
+  @media (prefers-reduced-motion: reduce){
+    #oc-cores .panel, #oc-cores .oc-tab, #oc-cores .card-tilt, #oc-cores .core-chip{ transition:none !important; animation:none !important }
+  }
+</style>
+
+<!-- ======= Section script (isolated) ======= -->
+<script>
+(function OC_CoresSection(){
+  const root  = document.getElementById('oc-cores');
+  if (!root) return;
+
+  const stage = root.querySelector('#oc-core-stage');
+  const tabs  = Array.from(root.querySelectorAll('.oc-tab'));
+
+  // Content for each core (HTML fragments kept compact, Apple-like)
+  const PANEL = {
+    oc: `
+      <div class="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div class="rounded-2xl border border-neutral-200 bg-white/85 p-5 shadow-soft">
+          <h4 class="font-semibold text-neutral-900 flex items-center gap-2">
+            <i class="ph ph-sparkle text-[18px]"></i> Everyday flow
+          </h4>
+          <p class="mt-2 text-sm text-neutral-700">Chat, draft, plan. Clean outputs with export to PDF/DOCX.</p>
+          <ul class="mt-3 space-y-1.5 text-sm text-neutral-700">
+            <li>• Tone &amp; style controls</li>
+            <li>• Prompt faves &amp; notepad</li>
+            <li>• Fast local inference</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-neutral-200 bg-white/85 p-5 shadow-soft">
+          <h4 class="font-semibold text-neutral-900 flex items-center gap-2">
+            <i class="ph ph-gear-six text-[18px]"></i> Private by design
+          </h4>
+          <p class="mt-2 text-sm text-neutral-700">Local-first. Your work stays on your device.</p>
+          <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div class="rounded-xl border border-neutral-200 p-3">Offline mode</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Low latency</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Clean export</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Snappy UI</div>
+          </div>
+        </div>
+      </div>
+    `,
+    research: `
+      <div class="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div class="rounded-2xl border border-neutral-200 bg-white/85 p-5 shadow-soft">
+          <h4 class="font-semibold text-neutral-900 flex items-center gap-2">
+            <i class="ph ph-magnifying-glass text-[18px]"></i> RAG + citations
+          </h4>
+          <p class="mt-2 text-sm text-neutral-700">Ask questions, get linked sources and quotable snippets.</p>
+          <ul class="mt-3 space-y-1.5 text-sm text-neutral-700">
+            <li>• Source inspector</li>
+            <li>• BibTeX &amp; references</li>
+            <li>• Deduped key findings</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-neutral-200 bg-white/85 p-5 shadow-soft">
+          <h4 class="font-semibold text-neutral-900 flex items-center gap-2">
+            <i class="ph ph-books text-[18px]"></i> Your library
+          </h4>
+          <p class="mt-2 text-sm text-neutral-700">Index PDFs and notes locally for fast semantic search.</p>
+          <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div class="rounded-xl border border-neutral-200 p-3">PDF highlights</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Citation export</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Topic maps</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Source compare</div>
+          </div>
+        </div>
+      </div>
+    `,
+    coach: `
+      <div class="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div class="rounded-2xl border border-neutral-200 bg-white/85 p-5 shadow-soft">
+          <h4 class="font-semibold text-neutral-900 flex items-center gap-2">
+            <i class="ph ph-target text-[18px]"></i> Plans that stick
+          </h4>
+          <p class="mt-2 text-sm text-neutral-700">Turn goals into weekly schedules and daily checklists.</p>
+          <ul class="mt-3 space-y-1.5 text-sm text-neutral-700">
+            <li>• Milestones &amp; metrics</li>
+            <li>• Habit loops</li>
+            <li>• Review prompts</li>
+          </ul>
+        </div>
+        <div class="rounded-2xl border border-neutral-200 bg-white/85 p-5 shadow-soft">
+          <h4 class="font-semibold text-neutral-900 flex items-center gap-2">
+            <i class="ph ph-chat-circle-text text-[18px]"></i> Coaching tone
+          </h4>
+          <p class="mt-2 text-sm text-neutral-700">Warm, direct feedback that moves you forward.</p>
+          <div class="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div class="rounded-xl border border-neutral-200 p-3">Study blocks</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Fitness plans</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Focus sprints</div>
+            <div class="rounded-xl border border-neutral-200 p-3">Retrospectives</div>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  // Helpers
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function setActive(tab){
+    tabs.forEach(b=>b.classList.toggle('active', b===tab));
+    const key = tab.getAttribute('data-core');
+    swapPanel(PANEL[key] || PANEL.oc);
+  }
+
+  function swapPanel(html){
+    if (!stage) return;
+    const next = document.createElement('div');
+    next.className = 'panel';
+    next.innerHTML = html;
+
+    const curr = stage.querySelector('.panel.active');
+    if (curr){
+      curr.classList.remove('active');
+      curr.classList.add('exit');
+      setTimeout(()=>curr.remove(), prefersReduced ? 0 : 280);
+    }
+    stage.appendChild(next);
+    requestAnimationFrame(()=> next.classList.add('active'));
+  }
+
+  // Init
+  swapPanel(PANEL.oc);
+  tabs.forEach(btn => btn.addEventListener('click', () => setActive(btn)));
+
+  // Optional: tiny parallax tilt for the 1-2-3 cards (desktop only)
+  const tiltCards = root.querySelectorAll('.card-tilt');
+  if (!prefersReduced && matchMedia('(hover:hover) and (pointer:fine)').matches) {
+    tiltCards.forEach(card=>{
+      let raf=0;
+      const onMove = (e)=>{
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left)/r.width - .5;
+        const y = (e.clientY - r.top)/r.height - .5;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(()=>{
+          card.style.transform = `perspective(800px) rotateX(${-y*3}deg) rotateY(${x*5}deg) translateY(-2px) scale(1.01)`;
+        });
+      };
+      const reset = ()=>{
+        cancelAnimationFrame(raf);
+        card.style.transform = '';
+      };
+      card.addEventListener('mousemove', onMove);
+      card.addEventListener('mouseleave', reset);
+    });
+  }
+})();
+</script>
+
+
+
+<!-- ======================= OC CORES (drop-in) ======================= -->
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+  <!-- Soft background glows -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl"
+         style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
+    <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl"
+         style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
+  </div>
+
+  <div class="w-full py-24 md:py-32">
+    <!-- Header -->
+    <div class="mx-auto max-w-[900px] text-center">
+      <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">
+        OC Cores
+      </div>
+      <h2 class="mt-4 text-oc-ink text-3xl md:text-5xl lg:text-6xl font-semibold tracking-tight">
+        Swap the workspace. Master the task.
+      </h2>
+      <p class="mx-auto mt-3 max-w-[720px] text-[15px] leading-6 text-neutral-600">
+        Cores are purpose-built environments that reconfigure tools, models, and UI for the job at hand—research, building, coaching, and beyond.
+      </p>
+
+      <!-- Micro marquee: advertised cores -->
+      <div class="mt-6 overflow-hidden">
+        <div class="inline-flex items-center gap-2 text-[11px] md:text-xs uppercase tracking-[0.32em] grad-text grad-move-left"
+             style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">
+          <span>OC-Core</span><span class="opacity-40">•</span>
+          <span>OC-Research-Core</span><span class="opacity-40">•</span>
+          <span>OC-Coach-Core</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orbit visual -->
+    <div class="mt-12 md:mt-16 flex items-center justify-center">
+      <div class="oc-orbit relative">
+        <div class="oc-orbit-ring"></div>
+        <div class="oc-orbit-ring oc-orbit-ring--inner"></div>
+
+        <!-- Center engine (masked logo) -->
+        <div class="oc-orbit-core">
+          <span class="oc-orbit-logo" aria-hidden="true"></span>
+        </div>
+
+        <!-- Orbiting chips -->
+        <div class="oc-orbit-chip oc-chip-a">
+          <i class="ph ph-squares-four text-[16px]"></i>
+          <span>OC-Core</span>
+        </div>
+        <div class="oc-orbit-chip oc-chip-b">
+          <i class="ph ph-magnifying-glass text-[16px]"></i>
+          <span>OC-Research-Core</span>
+        </div>
+        <div class="oc-orbit-chip oc-chip-c">
+          <i class="ph ph-compass-tool text-[16px]"></i>
+          <span>OC-Coach-Core</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <!-- OC-Core -->
+      <article class="oc-core-card tilt scroll-fade card-glass rounded-2xl border border-white/15 g-grad grad-anim p-6 md:p-7 text-white shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+        <div class="flex items-start gap-3">
+          <div class="oc-core-icon">
+            <i class="ph ph-squares-four text-[18px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold tracking-tight">OC-Core</h3>
+            <p class="mt-1 text-sm text-white/85">The everyday workspace—fast drafting, structured notes, instant export.</p>
+          </div>
+        </div>
+        <ul class="mt-4 space-y-2 text-[13px] text-white/80">
+          <li class="flex items-start gap-2"><i class="ph ph-lightning text-[14px] mt-[3px]"></i><span>Local models with low-latency chat.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-file-text text-[14px] mt-[3px]"></i><span>DOCX / PDF export built-in.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-stack text-[14px] mt-[3px]"></i><span>Pinned prompts & snippets.</span></li>
+        </ul>
+        <div class="mt-6">
+          <a href="cores/oc-core.html" class="oc-core-btn">Open OC-Core</a>
+        </div>
+      </article>
+
+      <!-- OC-Research-Core -->
+      <article class="oc-core-card tilt scroll-fade card-glass rounded-2xl border border-white/15 g-grad grad-anim p-6 md:p-7 text-white shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+        <div class="flex items-start gap-3">
+          <div class="oc-core-icon">
+            <i class="ph ph-magnifying-glass text-[18px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold tracking-tight">OC-Research-Core</h3>
+            <p class="mt-1 text-sm text-white/85">Deep search with citations—designed for papers, memos, and case law.</p>
+          </div>
+        </div>
+        <ul class="mt-4 space-y-2 text-[13px] text-white/80">
+          <li class="flex items-start gap-2"><i class="ph ph-link-simple text-[14px] mt-[3px]"></i><span>Inline sources with one-tap inspect.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-books text-[14px] mt-[3px]"></i><span>Bring PDFs & custom databases.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-brain text-[14px] mt-[3px]"></i><span>RAG pipelines tuned for accuracy.</span></li>
+        </ul>
+        <div class="mt-6">
+          <a href="cores/oc-research-core.html" class="oc-core-btn">Open Research-Core</a>
+        </div>
+      </article>
+
+      <!-- OC-Coach-Core -->
+      <article class="oc-core-card tilt scroll-fade card-glass rounded-2xl border border-white/15 g-grad grad-anim p-6 md:p-7 text-white shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+        <div class="flex items-start gap-3">
+          <div class="oc-core-icon">
+            <i class="ph ph-compass-tool text-[18px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold tracking-tight">OC-Coach-Core</h3>
+            <p class="mt-1 text-sm text-white/85">A focused coaching environment for plans, habits, and feedback loops.</p>
+          </div>
+        </div>
+        <ul class="mt-4 space-y-2 text-[13px] text-white/80">
+          <li class="flex items-start gap-2"><i class="ph ph-target text-[14px] mt-[3px]"></i><span>Goal frameworks with progress check-ins.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-clipboard-text text-[14px] mt-[3px]"></i><span>Weekly plans & review templates.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-smiley text-[14px] mt-[3px]"></i><span>Warm tone & actionable prompts.</span></li>
+        </ul>
+        <div class="mt-6">
+          <a href="cores/oc-coach-core.html" class="oc-core-btn">Open Coach-Core</a>
+        </div>
+      </article>
+
+      <!-- Explore all cores / roadmap -->
+      <article class="tilt scroll-fade card-glass relative overflow-hidden rounded-2xl border border-white/15 g-grad grad-anim p-6 md:p-7 text-white shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+        <div class="pointer-events-none absolute inset-0">
+          <div class="absolute -right-10 -top-10 h-36 w-36 rounded-full blur-2xl opacity-60"
+               style="background: radial-gradient(50% 50% at 50% 50%, rgba(255,255,255,.35), rgba(255,255,255,0));"></div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="oc-core-icon">
+            <i class="ph ph-rocket-launch text-[18px]"></i>
+          </div>
+          <div>
+            <h3 class="font-semibold tracking-tight">Explore All Cores</h3>
+            <p class="mt-1 text-sm text-white/85">A dedicated space to browse, compare, and launch every Core.</p>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div class="oc-ticker" aria-hidden="true">
+            <div class="oc-ticker-track">
+              <span>Fin-Core</span><span>•</span>
+              <span>Med-Core</span><span>•</span>
+              <span>Build-Core</span><span>•</span>
+              <span>Video-Core</span><span>•</span>
+              <span>Sales-Core</span><span>•</span>
+              <span>Legal-Core</span><span>•</span>
+              <span>Design-Core</span><span>•</span>
+              <span>Edu-Core</span><span>•</span>
+              <span>Ops-Core</span><span>•</span>
+              <span>Fin-Core</span><span>•</span>
+              <span>Med-Core</span><span>•</span>
+              <span>Build-Core</span><span>•</span>
+              <span>Video-Core</span><span>•</span>
+              <span>Sales-Core</span><span>•</span>
+              <span>Legal-Core</span><span>•</span>
+              <span>Design-Core</span><span>•</span>
+              <span>Edu-Core</span><span>•</span>
+              <span>Ops-Core</span>
+            </div>
+          </div>
+          <p class="mt-3 text-[13px] text-white/80">New Cores ship regularly and existing Cores are continuously updated.</p>
+        </div>
+        <div class="mt-6">
+          <a href="cores.html" class="oc-core-btn">Go to Cores Hub</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ================= OC CORES — scoped styles ================= */
+  #oc-cores .oc-orbit{
+    width:min(680px, 92vw);
+    aspect-ratio: 1 / 1;
+    border-radius: 9999px;
+    position: relative;
+    isolation: isolate;
+  }
+  #oc-cores .oc-orbit-ring{
+    position:absolute; inset:8%;
+    border-radius:9999px;
+    border:1px dashed rgba(0,0,0,.12);
+    backdrop-filter: blur(0.5px);
+  }
+  #oc-cores .oc-orbit-ring--inner{ inset:22%; border-style:solid; border-color: rgba(0,0,0,.06); }
+
+  /* Center core with masked OC logo (white) */
+  #oc-cores .oc-orbit-core{
+    position:absolute; inset:36%;
+    border-radius:9999px;
+    background: linear-gradient(135deg, var(--grad-from,#0B1B2B), var(--grad-via,#0E6F5C));
+    box-shadow: 0 20px 60px rgba(10,13,16,.18), inset 0 0 0 1px rgba(255,255,255,.25);
+    display:flex; align-items:center; justify-content:center;
+  }
+  #oc-cores .oc-orbit-logo{
+    width: min(38%, 180px); height: min(38%, 180px); background:#fff;
+    -webkit-mask-image: url('logo.svg'); -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain;
+    mask-image: url('logo.svg'); mask-repeat:no-repeat; mask-position:center; mask-size:contain;
+    filter: drop-shadow(0 4px 18px rgba(255,255,255,.25));
+  }
+
+  /* Orbiting chips */
+  #oc-cores .oc-orbit-chip{
+    position:absolute; display:inline-flex; align-items:center; gap:8px;
+    padding:8px 12px; border-radius:999px;
+    color:#0A0D10; background:#fff; border:1px solid rgba(0,0,0,.06);
+    box-shadow: 0 8px 24px rgba(10,13,16,.12);
+    font-size:13px; font-weight:600; white-space:nowrap;
+    transform: translate(-50%, -50%);
+  }
+  /* positions around circle + animation */
+  #oc-cores .oc-chip-a{ left: 14%; top: 48%; }
+  #oc-cores .oc-chip-b{ left: 82%; top: 30%; }
+  #oc-cores .oc-chip-c{ left: 70%; top: 84%; }
+
+  @media (prefers-reduced-motion: no-preference){
+    #oc-cores .oc-orbit{ animation: oc-spin 26s linear infinite; }
+    #oc-cores .oc-orbit-ring{ animation: oc-spin 26s linear infinite reverse; }
+    #oc-cores .oc-chip-a, #oc-cores .oc-chip-b, #oc-cores .oc-chip-c{
+      animation: oc-float 4.5s ease-in-out infinite;
+    }
+    #oc-cores .oc-chip-b{ animation-duration: 5.2s; }
+    #oc-cores .oc-chip-c{ animation-duration: 6s; }
+  }
+  @keyframes oc-spin { from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+  @keyframes oc-float {
+    0%,100% { transform: translate(-50%, -50%) translateY(0) }
+    50%     { transform: translate(-50%, -50%) translateY(-6px) }
+  }
+
+  /* Cards */
+  #oc-cores .oc-core-card{ position:relative; overflow:hidden; }
+  #oc-cores .oc-core-card::after{
+    content:""; position:absolute; inset:-20%; border-radius:24px; pointer-events:none;
+    background: radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.12), rgba(255,255,255,0));
+    opacity:0; transition: opacity .3s ease;
+  }
+  #oc-cores .oc-core-card:hover::after{ opacity:.9; }
+  #oc-cores .oc-core-icon{
+    height:44px; width:44px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(255,255,255,.14);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+
+  #oc-cores .oc-core-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    gap:8px; padding:10px 14px; border-radius:14px;
+    background:#fff; color:#0A0D10; font-weight:600; font-size:14px;
+    border:1px solid rgba(0,0,0,.06);
+    box-shadow: 0 10px 24px rgba(10,13,16,.12);
+    transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
+  }
+  #oc-cores .oc-core-btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 34px rgba(10,13,16,.16); }
+  #oc-cores .oc-core-btn:active{ transform: translateY(0); }
+
+  /* Ticker */
+  #oc-cores .oc-ticker{ position:relative; overflow:hidden; border-radius:12px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08) }
+  #oc-cores .oc-ticker-track{
+    display:inline-flex; gap:10px; padding:10px 14px; min-width: 200%;
+  }
+  #oc-cores .oc-ticker-track span{ opacity:.95 }
+  @media (prefers-reduced-motion: no-preference){
+    #oc-cores .oc-ticker-track{
+      animation: oc-ticker 18s linear infinite;
+    }
+  }
+  @keyframes oc-ticker{
+    0%{ transform: translateX(0) }
+    100%{ transform: translateX(-50%) }
+  }
+</style>
+
+<script>
+  // Optional: make the orbit pause on hover for delight (respects reduced motion)
+  (function(){
+    const root = document.querySelector('#oc-cores .oc-orbit');
+    if (!root) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    root.addEventListener('mouseenter', ()=> root.style.animationPlayState = 'paused');
+    root.addEventListener('mouseleave', ()=> root.style.animationPlayState = 'running');
+  })();
+</script>
+<!-- =================== /OC CORES (drop-in) =================== -->
+
+
 
   <!-- Built. For. Real. Work. -->
 <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
