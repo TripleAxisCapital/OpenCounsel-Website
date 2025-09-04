@@ -209,6 +209,19 @@
       --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
       --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
       --logo-width:64px; --logo-height:64px;
+
+      /* ===============================
+         GLOBAL: Hero Shine Controls
+         Tweak these to adjust the shimmer
+         =============================== */
+      --hero-shine-duration: 5.5s; /* slower, smoother sweep */
+      --hero-shine-ease: linear; /* constant, glassy motion */
+      --hero-shine-angle: 90deg; /* strictly left ➜ right */
+      --hero-shine-base: #e6e6e6; /* light white */
+      --hero-shine-peak: #ffffff; /* bright white */
+      --hero-shine-softness: 3.5%;  /* narrower band to avoid halo */
+      --hero-shine-bg-size-x: 260%; /* slightly longer travel distance */
+      --hero-shine-direction: reverse; /* normal = L➜R, reverse = R➜L */
     }
 
     #home { --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg; --hero-logo-size: clamp(250px, 75vw, 500px); }
@@ -269,8 +282,39 @@
       .hero-logo-white { animation: none !important; opacity: 1; filter: none; transform: none; }
     }
 
-    /* Make the emphasized word in the hero line bold */
-    #home .hero-line1 .seg-bold { font-weight: 800; }
+    /* Hero bold word: Apple-like white shimmer sweep */
+    #home .hero-line1 .seg-bold {
+      font-weight: 800;
+      position: relative;
+      /* Two-layer fill: base color + alpha highlight band (prevents residual glow) */
+      background-image:
+        linear-gradient(var(--hero-shine-angle, 90deg),
+          rgba(255,255,255,0) 0%,
+          rgba(255,255,255,0) calc(50% - var(--hero-shine-softness, 3.5%)),
+          rgba(255,255,255,0.98) 50%,
+          rgba(255,255,255,0) calc(50% + var(--hero-shine-softness, 3.5%)),
+          rgba(255,255,255,0) 100%
+        ),
+        linear-gradient(var(--hero-shine-base, #e6e6e6), var(--hero-shine-base, #e6e6e6));
+      background-size:
+        var(--hero-shine-bg-size-x, 240%) 100%,
+        100% 100%;
+      background-repeat: no-repeat;
+      /* Start highlight offscreen left; base stays fixed */
+      background-position: -150% 0, 0 0;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: heroShine var(--hero-shine-duration, 5.5s) var(--hero-shine-ease, linear) infinite;
+      animation-direction: var(--hero-shine-direction, normal);
+      will-change: background-position;
+    }
+    @keyframes heroShine {
+      0%   { background-position: -150% 0, 0 0; }
+      100% { background-position:  150% 0, 0 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #home .hero-line1 .seg-bold { animation: none; -webkit-text-fill-color: #fff; color: #fff; background: none; }
+    }
 
     /* Hero logo glow (Apple-like) */
     .hero-logo-wrap { position: relative; display: inline-block; }
