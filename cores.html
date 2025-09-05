@@ -117,7 +117,7 @@
     .card{ border:1px solid var(--line); background:#fff; box-shadow: 0 10px 30px rgba(10,13,16,.06); }
     .card-grad{ background: linear-gradient(135deg, #0B1B2B, #0E6F5C, #00CFFF); color:#fff; border:1px solid rgba(255,255,255,.18); box-shadow: 0 16px 54px rgba(0,0,0,.18); }
     .badge{ font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:#fff; }
-    .pill{ font-size:12px; line-height:1; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font-weight:600; }
+    .pill{ font-size:12px; line-height:1; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font-weight:600; display:inline-flex; align-items:center; white-space:nowrap; }
     .pill-pro{ color:#fff; background:#0A0D10; border-color:#0A0D10; box-shadow:0 10px 26px rgba(0,0,0,.18) }
     .pill-soon{ background:#f3f4f6; border-color:#e5e7eb; color:#0A0D10 }
     /* Showcase scenes */
@@ -144,6 +144,29 @@
     .banner-token{ position:absolute; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; box-shadow:0 8px 22px rgba(0,0,0,.12); background:#fff; border:1px solid rgba(0,0,0,.06); color:#0A0D10; }
     .banner-token.dark{ background:#0A0D10; color:#fff; border-color:#0A0D10; }
     .banner-token{ --n:5; --r: 44%; left:50%; top:50%; transform: translate(-50%,-50%) rotate(calc(360deg/var(--n)*var(--i))) translate(var(--r)) rotate(calc(-360deg/var(--n)*var(--i))); }
+
+    /* Modal demo styles */
+    .demo{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; padding:18px; }
+    .demo-card{ width:100%; height:100%; border-radius:16px; background:#fff; border:1px solid rgba(0,0,0,.06); box-shadow: 0 12px 30px rgba(10,13,16,.08); padding:16px; overflow:hidden; }
+    .demo-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .demo-bar{ height:10px; border-radius:8px; background:#eaecef; animation: barIn .6s cubic-bezier(.22,.8,.22,1) both; }
+    .demo-bar.sm{ height:8px }
+    .demo-bar.l1{ width:68% }
+    .demo-bar.l2{ width:52% }
+    .demo-bar.l3{ width:80% }
+    .demo-bar.l4{ width:36% }
+    .demo-bar.hl{ background:linear-gradient(135deg,#00CFFF,#0E6F5C,#00CFFF); background-size:200% 200%; animation: barIn .5s ease both, gradientShift 8s ease-in-out infinite; filter: saturate(1.15); }
+    @keyframes barIn{ from{ opacity:0; transform: translateY(6px) } to{ opacity:1; transform: translateY(0) } }
+    .bubble{ max-width:74%; border-radius:14px; padding:10px 12px; font-size:13px; line-height:1.45; box-shadow: 0 6px 20px rgba(0,0,0,.06); background:#f3f4f6; color:#0A0D10; animation: pop .5s cubic-bezier(.22,.8,.22,1) both }
+    .bubble.me{ margin-left:auto; background:#0A0D10; color:#fff }
+    .bubble:nth-child(1){ animation-delay:.05s }
+    .bubble:nth-child(2){ animation-delay:.16s }
+    .bubble:nth-child(3){ animation-delay:.27s }
+    @keyframes pop{ from{ opacity:0; transform: translateY(8px) scale(.98) } to{ opacity:1; transform: translateY(0) scale(1) } }
+    .quote{ background:#fff; border:1px solid rgba(0,0,0,.06); border-left:3px solid #0A0D10; border-radius:10px; padding:10px 12px; font-size:12px; line-height:1.5; box-shadow: 0 6px 18px rgba(0,0,0,.06); animation: pop .5s cubic-bezier(.22,.8,.22,1) both }
+    .quote + .quote{ margin-top:8px }
+    .soon-badge{ position:absolute; top:10px; right:10px; font-size:11px; padding:6px 10px; border-radius:9999px; background:#f3f4f6; border:1px solid #e5e7eb; color:#0A0D10 }
+    @media (prefers-reduced-motion: reduce){ .demo *, .bubble, .quote, .demo-bar{ animation:none !important } }
   </style>
 </head>
 
@@ -221,14 +244,14 @@
               <div class="row">
                 <span class="chip-lg std" data-open-core="oc">OC‑Core</span>
                 <span class="chip-lg std" data-open-core="ocresearch">OC‑Research</span>
-                <span class="chip-lg std" data-open-core="occhat">OC‑Chat</span>
+                <span class="chip-lg std soon" data-open-core="occhat">OC‑Chat</span>
               </div>
             </div>
             <div class="scene s2">
               <div class="cap">Pro</div>
               <div class="row">
                 <span class="chip-lg pro" data-open-core="ocpro">OC‑Pro</span>
-                <span class="chip-lg pro" data-open-core="occoach">OC‑Coach</span>
+                <span class="chip-lg pro soon" data-open-core="occoach">OC‑Coach</span>
               </div>
             </div>
             <div class="scene s3">
@@ -364,7 +387,7 @@
 
         <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           <div class="md:col-span-2">
-            <div id="mBanner" class="relative h-48 md:h-56 rounded-2xl overflow-hidden border border-neutral-200 bg-neutral-50">
+            <div id="mBanner" class="relative h-60 md:h-64 rounded-2xl overflow-hidden border border-neutral-200 bg-neutral-50">
               <div class="absolute inset-0 brand-gradient breathing opacity-90"></div>
               <div class="absolute inset-0 pointer-events-none sheen-sweep"></div>
             </div>
@@ -377,7 +400,6 @@
               <ul class="mt-3 space-y-2 text-sm text-neutral-800" id="mBullets"></ul>
               <div class="mt-4 flex items-center gap-2">
                 <button id="installBtn" class="inline-flex items-center gap-2 rounded-2xl bg-neutral-900 text-white px-4 py-2 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i><span id="installBtnLabel">Get Core</span></button>
-                <button id="favBtn" class="inline-flex items-center gap-2 rounded-2xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50" aria-pressed="false" aria-label="Favorite"><i class="ph ph-heart"></i></button>
               </div>
               <div id="mStatus" class="mt-3 text-xs text-neutral-600"></div>
             </div>
@@ -428,16 +450,16 @@
       { id:'oc', name:'OC‑Core', icon:'ph-cpu', tier:'standard', comingSoon:false, tags:['productivity','writing'], rating:4.9, installs:23542, version:'1.3.2', updated:'2025‑07‑22', size:'54 MB', short:'General reasoning, planning, and drafting — your default brain.', bullets:['Fast on‑device context & structured outputs','Writes briefs, emails, docs with export‑ready formatting','Private by design — no cloud send'], theme:'light' },
       { id:'ocpro', name:'OC‑Pro', icon:'ph-seal-check', tier:'pro', comingSoon:false, tags:['productivity','writing'], rating:4.9, installs:22103, version:'3.0.1', updated:'2025‑08‑12', size:'58 MB', short:'Crystal‑clear structure and language for briefs, memos, and decks.', bullets:['Structure detection & outline locks','Style harmonizer across sections','One‑click executive summary'], theme:'light' },
       { id:'ocresearch', name:'OC‑Research', icon:'ph-magnifying-glass', tier:'standard', comingSoon:false, tags:['research','education'], rating:4.8, installs:19210, version:'2.1.0', updated:'2025‑07‑01', size:'61 MB', short:'Verifiable research: crawl, rank, and synthesize with citations.', bullets:['Quote capture with line‑level references','Evidence ranking & conflict resolution','One‑tap audit trail to originals'], theme:'light' },
-      { id:'occoach', name:'OC‑Coach', icon:'ph-compass-tool', tier:'pro', comingSoon:false, tags:['productivity','education'], rating:4.7, installs:15088, version:'1.6.0', updated:'2025‑06‑18', size:'42 MB', short:'Guided planning and execution with stepwise clarity.', bullets:['Goal setting, checkpoints, milestones','Reasoned coaching on craft & performance','From brief to ship with momentum'], theme:'light' },
+      { id:'occoach', name:'OC‑Coach', icon:'ph-compass-tool', tier:'pro', comingSoon:true, tags:['productivity','education'], rating:4.7, installs:15088, version:'1.6.0', updated:'2025‑06‑18', size:'42 MB', short:'Guided planning and execution with stepwise clarity.', bullets:['Goal setting, checkpoints, milestones','Reasoned coaching on craft & performance','From brief to ship with momentum'], theme:'light' },
       { id:'oclaw', name:'OC‑Law', icon:'ph-scales', tier:'pro', comingSoon:true, tags:['legal','writing'], rating:4.8, installs:11124, version:'0.9.5', updated:'2025‑07‑28', size:'48 MB', short:'Clause‑aware drafting, redlines, and issue spotting for agreements.', bullets:['Clause libraries with rationale','Risk flags & diff explainers','Export to Word/Pages templates'], theme:'light' },
-      { id:'occhat', name:'OC‑Chat', icon:'ph-chat-circle-dots', tier:'standard', comingSoon:false, tags:['productivity','writing'], rating:4.6, installs:12044, version:'1.0.0', updated:'2025‑08‑25', size:'38 MB', short:'Fast, context‑aware chat with document memory and tone controls.', bullets:['Ambient memory per project','Inline tone + length tuning','One‑tap export to docs'], theme:'light' }
+      { id:'occhat', name:'OC‑Chat', icon:'ph-chat-circle-dots', tier:'standard', comingSoon:true, tags:['productivity','writing'], rating:4.6, installs:12044, version:'1.0.0', updated:'2025‑08‑25', size:'38 MB', short:'Fast, context‑aware chat with document memory and tone controls.', bullets:['Ambient memory per project','Inline tone + length tuning','One‑tap export to docs'], theme:'light' }
     ];
 
     // ====== State ======
     const state = {
       q:'', filter:'all', sort:'trending',
       installed: new Set(JSON.parse(localStorage.getItem('oc:installed')||'[]')),
-      favorites: new Set(JSON.parse(localStorage.getItem('oc:favorites')||'[]')),
+      
       showInstalledOnly:false
     };
 
@@ -468,7 +490,6 @@
 
     // ====== Render card ======
     function card(core){
-      const favorite = state.favorites.has(core.id);
       const dark = core.theme==='dark';
       const el = document.createElement('article');
       el.className = `tilt rounded-2xl overflow-hidden ${dark?'card-grad g-grad grad-anim':'card'} p-5 md:p-6 relative`;
@@ -488,7 +509,7 @@
               <div class="mt-1 text-xs ${dark?'text-white/80':'text-neutral-600'} flex items-center gap-2"><span class="rating" aria-label="Rating ${core.rating.toFixed(1)} of 5">${ratingHtml}</span><span class="select-none">•</span><span>${fmt.format(core.installs)} installs</span></div>
             </div>
           </div>
-          <button class="favBtn rounded-xl ${favorite?'bg-white/90 text-oc-ink':'bg-white/70 text-oc-ink/70'} px-2.5 py-2 text-sm font-medium border ${dark?'border-white/30':'border-neutral-200'} hover:bg-white" aria-pressed="${favorite}" aria-label="Favorite ${core.name}"><i class="ph ${favorite?'ph-heart-fill':'ph-heart'}"></i></button>
+          
         </div>
         <p class="mt-3 text-[13px] leading-relaxed ${dark?'text-white/90':'text-neutral-700'}">${core.short}</p>
         <div class="mt-4 flex items-center justify-between">
@@ -564,28 +585,18 @@
 
     // ====== Delegated actions (favorite/open) ======
     document.addEventListener('click', (e)=>{
-      const fav = e.target.closest('.favBtn');
       const cardEl = e.target.closest('[data-core-id]');
       const openBtn = e.target.closest('[data-open-core]');
-      if (fav){ e.stopPropagation(); const id = cardEl?.dataset.coreId; if(id) toggleFav(id, fav); return; }
       if (openBtn){ openModal(openBtn.getAttribute('data-open-core')); return; }
       if (cardEl){ openModal(cardEl.dataset.coreId); }
     });
-
-    function toggleFav(id, btn){
-  const on = state.favorites.has(id);
-  if (on) state.favorites.delete(id); else state.favorites.add(id);
-  localStorage.setItem('oc:favorites', JSON.stringify([...state.favorites]));
-  if (btn) { btn.setAttribute('aria-pressed', String(!on)); btn.innerHTML = `<i class=\"ph ${!on?'ph-heart-fill':'ph-heart'}\"></i>`; }
-  render();
-}
 
     // ====== Modal ======
     const modal = { root: document.getElementById('coreModal'), panel:null, scrim:null, active:false, core:null, lastFocus:null };
     modal.panel = modal.root.querySelector('.modal-panel');
     modal.scrim = modal.root.querySelector('.modal-scrim');
     const m = {
-      icon: document.getElementById('mIcon'), title: document.getElementById('mTitle'), tags: document.getElementById('mTags'), meta: document.getElementById('mMeta'), banner: document.getElementById('mBanner'), desc: document.getElementById('mDesc'), version: document.getElementById('mVersion'), bullets: document.getElementById('mBullets'), status: document.getElementById('mStatus'), installBtn: document.getElementById('installBtn'), installLabel: document.getElementById('installBtnLabel'), favBtn: document.getElementById('favBtn'), closeBtn: document.getElementById('closeModalBtn')
+      icon: document.getElementById('mIcon'), title: document.getElementById('mTitle'), tags: document.getElementById('mTags'), meta: document.getElementById('mMeta'), banner: document.getElementById('mBanner'), desc: document.getElementById('mDesc'), version: document.getElementById('mVersion'), bullets: document.getElementById('mBullets'), status: document.getElementById('mStatus'), installBtn: document.getElementById('installBtn'), installLabel: document.getElementById('installBtnLabel'), closeBtn: document.getElementById('closeModalBtn')
     };
 
     function openModal(id){
@@ -605,20 +616,57 @@
       ];
       const __list = (core.bullets && core.bullets.length) ? core.bullets : __fallbackBullets;
       m.bullets.innerHTML = __list.map(b=>`<li class="flex gap-2"><i class="ph ph-check-circle text-neutral-900"></i><span>${b}</span></li>`).join('');
-      // Banner visual
-      m.banner.classList.toggle('g-grad', core.theme==='dark');
-      m.banner.innerHTML = `
-        <div class="absolute inset-0 brand-gradient breathing opacity-90"></div>
-        <div class="absolute inset-0 pointer-events-none sheen-sweep"></div>
-        <div class="banner-ring" aria-hidden="true">
-          <div class="ring spin">
-            <span class="banner-token ${core.tier==='pro'?'dark':''} counter" style="--i:0"><i class="ph ${core.icon}"></i></span>
-            <span class="banner-token counter" style="--i:1"><i class="ph ph-quotes"></i></span>
-            <span class="banner-token counter" style="--i:2"><i class="ph ph-check-circle"></i></span>
-            <span class="banner-token counter" style="--i:3"><i class="ph ph-lightning"></i></span>
-            <span class="banner-token counter" style="--i:4"><i class="ph ph-files"></i></span>
-          </div>
-        </div>`;
+      // Left demo preview (Apple-like)
+      m.banner.classList.toggle('g-grad', false);
+      const demo = (()=>{
+        switch(core.id){
+          case 'occhat':
+            return `
+            <div class="demo">
+              <div class="demo-card" role="img" aria-label="Animated chat preview">
+                <div class="bubble">Can you summarize this brief for execs?</div>
+                <div class="bubble me">Sure — 5 bullets and a one‑liner?</div>
+                <div class="bubble">Perfect. Tone: clear and concise.</div>
+              </div>
+              ${core.comingSoon?'<span class="soon-badge">Coming soon</span>':''}
+            </div>`;
+          case 'ocresearch':
+            return `
+            <div class="demo">
+              <div class="demo-card" role="img" aria-label="Research highlights preview">
+                <div class="quote">“Revenue grew 12% YoY; guidance raised to 14–16%.”</div>
+                <div class="quote">“Top three drivers: pricing power, LLM adoption, and retention.”</div>
+                <div class="quote">“Key risk is margin compression on infra spend.”</div>
+              </div>
+            </div>`;
+          case 'ocpro':
+          case 'oc':
+          case 'occoach':
+            return `
+            <div class="demo">
+              <div class="demo-card" role="img" aria-label="Document structure preview">
+                <div class="demo-row"><div class="demo-bar l1 hl"></div></div>
+                <div class="demo-row"><div class="demo-bar l3"></div></div>
+                <div class="demo-row"><div class="demo-bar l2"></div></div>
+                <div class="demo-row"><div class="demo-bar l4"></div></div>
+                ${core.comingSoon?'<span class="soon-badge">Coming soon</span>':''}
+              </div>
+            </div>`;
+          case 'oclaw':
+            return `
+            <div class="demo">
+              <div class="demo-card" role="img" aria-label="Legal drafting preview">
+                <div class="demo-row"><div class="demo-bar l2 hl"></div></div>
+                <div class="demo-row"><div class="demo-bar l3"></div></div>
+                <div class="demo-row"><div class="demo-bar l4"></div></div>
+                <span class="soon-badge">Coming soon</span>
+              </div>
+            </div>`;
+          default:
+            return '<div class="demo"><div class="demo-card"></div></div>';
+        }
+      })();
+      m.banner.innerHTML = demo;
 
       // Coming soon handling
       if (core.comingSoon){
@@ -636,20 +684,18 @@
         m.status.textContent = on ? 'Ready to use offline.' : 'Installs locally. No cloud required.';
       }
 
-      updateFavUI();
       modal.root.classList.remove('hidden');
       modal.root.setAttribute('aria-hidden','false');
       requestAnimationFrame(()=>{ modal.root.classList.add('active'); modal.active = true; m.closeBtn.focus(); });
     }
 
     function closeModal(){ modal.root.classList.remove('active'); modal.active=false; setTimeout(()=>{ modal.root.classList.add('hidden'); modal.root.setAttribute('aria-hidden','true'); modal.core=null; if (modal.lastFocus) modal.lastFocus.focus(); }, 250); }
-    function updateFavUI(){ const on = state.favorites.has(modal.core.id); m.favBtn.setAttribute('aria-pressed', String(on)); m.favBtn.innerHTML = `<i class="ph ${on?'ph-heart-fill':'ph-heart'}"></i>`; }
     function updateInstallUI(){ const on = state.installed.has(modal.core.id); m.installLabel.textContent = on?'Installed':'Get Core'; m.installBtn.firstElementChild.className = `ph ${on?'ph-check':'ph-download-simple'}`; m.status.textContent = on ? 'Ready to use offline.' : 'Installs locally. No cloud required.'; }
 
     m.closeBtn.addEventListener('click', closeModal);
     modal.scrim.addEventListener('click', closeModal);
     document.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && modal.active) closeModal(); });
-    m.favBtn.addEventListener('click', ()=>{ toggleFav(modal.core.id, m.favBtn); updateFavUI(); });
+    
     m.installBtn.addEventListener('click', ()=>{
       if (modal.core?.comingSoon) return;
       const btn=m.installBtn; btn.disabled=true; btn.classList.add('opacity-70'); btn.innerHTML='<i class="ph ph-hourglass"></i><span>Installing…</span>';
