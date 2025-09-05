@@ -120,6 +120,30 @@
     .pill{ font-size:12px; line-height:1; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font-weight:600; }
     .pill-pro{ color:#fff; background:#0A0D10; border-color:#0A0D10; box-shadow:0 10px 26px rgba(0,0,0,.18) }
     .pill-soon{ background:#f3f4f6; border-color:#e5e7eb; color:#0A0D10 }
+    /* Showcase scenes */
+    .showcase{ position:absolute; inset:0; border-radius:22px; overflow:hidden; }
+    .scene{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; opacity:0; transform: translateY(12px) scale(.985); }
+    .scene .cap{ font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#fff; opacity:.85 }
+    .scene .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center; }
+    .chip-lg{ display:inline-flex; align-items:center; gap:8px; font-weight:600; padding:10px 14px; border-radius:9999px; background:#fff; color:#0A0D10; border:1px solid rgba(0,0,0,.08); box-shadow:0 10px 26px rgba(10,13,16,.12); transform: translateY(8px); opacity:0 }
+    .chip-lg.pro{ background:#0A0D10; color:#fff; border-color:#0A0D10 }
+    .chip-lg.soon{ background:#f3f4f6; color:#0A0D10; border-color:#e5e7eb }
+    .scene.active{ opacity:1; transform: translateY(0) scale(1); transition: opacity .8s cubic-bezier(.22,.8,.22,1), transform .8s cubic-bezier(.22,.8,.22,1) }
+    .scene.active .chip-lg{ animation: chipIn .7s cubic-bezier(.22,.8,.22,1) forwards; }
+    .scene.active .chip-lg:nth-child(1){ animation-delay: .06s }
+    .scene.active .chip-lg:nth-child(2){ animation-delay: .14s }
+    .scene.active .chip-lg:nth-child(3){ animation-delay: .22s }
+    @keyframes chipIn{ from{ transform: translateY(8px); opacity:0 } to{ transform: translateY(0); opacity:1 } }
+    @media (prefers-reduced-motion: reduce){ .scene, .chip-lg{ transition:none !important; animation:none !important; opacity:1 !important; transform:none !important } }
+
+    /* Modal banner ring */
+    .banner-ring{ position:absolute; inset:0; display:grid; place-items:center; }
+    .banner-ring .ring{ position:absolute; inset:12% 12%; border-radius:9999px; display:grid; place-items:center; }
+    .banner-ring .spin{ animation: spin 18s linear infinite; }
+    .banner-ring .counter{ animation: counterSpin 18s linear infinite; }
+    .banner-token{ position:absolute; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; box-shadow:0 8px 22px rgba(0,0,0,.12); background:#fff; border:1px solid rgba(0,0,0,.06); color:#0A0D10; }
+    .banner-token.dark{ background:#0A0D10; color:#fff; border-color:#0A0D10; }
+    .banner-token{ --n:5; --r: 44%; left:50%; top:50%; transform: translate(-50%,-50%) rotate(calc(360deg/var(--n)*var(--i))) translate(var(--r)) rotate(calc(-360deg/var(--n)*var(--i))); }
   </style>
 </head>
 
@@ -189,6 +213,33 @@
         <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed max-w-2xl">Focused, updatable building blocks for every workflow — private, fast, and local‑first.</p>
         <p class="hero-sub2 mt-2 text-base md:text-lg text-white/80 leading-relaxed">Browse, explore, and manage your OC Cores.</p>
 
+        <!-- Showcase scenes (Apple-like, seamless) -->
+        <div class="mt-8 relative w-[min(860px,92vw)] h-[280px] md:h-[320px]">
+          <div class="showcase">
+            <div class="scene s1">
+              <div class="cap">Standard</div>
+              <div class="row">
+                <span class="chip-lg std" data-open-core="oc">OC‑Core</span>
+                <span class="chip-lg std" data-open-core="ocresearch">OC‑Research</span>
+                <span class="chip-lg std" data-open-core="occhat">OC‑Chat</span>
+              </div>
+            </div>
+            <div class="scene s2">
+              <div class="cap">Pro</div>
+              <div class="row">
+                <span class="chip-lg pro" data-open-core="ocpro">OC‑Pro</span>
+                <span class="chip-lg pro" data-open-core="occoach">OC‑Coach</span>
+              </div>
+            </div>
+            <div class="scene s3">
+              <div class="cap">Coming soon</div>
+              <div class="row">
+                <span class="chip-lg pro soon" data-open-core="oclaw">OC‑Law</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Hero CTAs -->
         <div class="mt-6 flex items-center gap-3">
           <a href="#marketplace" class="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white g-grad grad-anim hover:-translate-y-[1px] transition will-change-transform">
@@ -198,7 +249,7 @@
           </a>
           <button class="inline-flex items-center gap-2 rounded-2xl border border-white/40 bg-white/10 text-white px-5 py-3 text-sm font-semibold hover:bg-white/20" data-open-core="ocpro">
             <i class="ph ph-seal-check"></i>
-            <span>Learn about OCPro</span>
+            <span>Learn about OC‑Pro</span>
           </button>
         </div>
 
@@ -243,7 +294,22 @@
       <div id="resultsMeta" class="hidden md:flex items-center gap-3 text-sm text-neutral-600"></div>
     </div>
 
-    <div id="gridWrap" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+    <!-- Grouped by tier -->
+    <div id="proWrap" class="mt-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg md:text-xl font-semibold text-neutral-900">Pro</h3>
+        <div id="proCount" class="text-sm text-neutral-600"></div>
+      </div>
+      <div id="proGrid" class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+    </div>
+
+    <div id="stdWrap" class="mt-10">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg md:text-xl font-semibold text-neutral-900">Standard</h3>
+        <div id="stdCount" class="text-sm text-neutral-600"></div>
+      </div>
+      <div id="stdGrid" class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+    </div>
 
     <div id="emptyState" class="hidden mt-10 rounded-3xl border border-neutral-200 bg-white p-8 text-center">
       <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-700">No results</div>
@@ -257,11 +323,11 @@
     <div class="mt-10 md:mt-14 scroll-fade card-glass g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
       <div class="p-6 md:p-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h3 class="text-xl md:text-2xl font-semibold text-white">Featured: OCPro</h3>
+          <h3 class="text-xl md:text-2xl font-semibold text-white">Featured: OC‑Pro</h3>
           <p class="mt-1 text-white/85 max-w-xl">Crystal‑clear structure and language for briefs, memos, and decks.</p>
         </div>
         <div class="flex items-center gap-3">
-          <button class="inline-flex items-center gap-2 rounded-2xl bg-white text-oc-ink px-4 py-2 text-sm font-semibold hover:bg-gray-100" data-open-core="ocpro"><i class="ph ph-seal-check"></i> Learn more</button>
+          <button class="inline-flex items-center gap-2 rounded-2xl bg-white text-oc-ink px-4 py-2 text-sm font-semibold hover:bg-gray-100" data-open-core="ocpro"><i class="ph ph-seal-check"></i> Learn about OC‑Pro</button>
           <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/10 text-white px-4 py-2 text-sm font-semibold hover:bg-white/20"><i class="ph ph-download-simple"></i> Get OC</a>
         </div>
       </div>
@@ -359,11 +425,12 @@
 
     // ====== Marketplace data (five cores only) ======
     const CORES = [
-      { id:'oc', name:'OC', icon:'ph-cpu', tier:'standard', comingSoon:false, tags:['productivity','writing'], rating:4.9, installs:23542, version:'1.3.2', updated:'2025‑07‑22', size:'54 MB', short:'General reasoning, planning, and drafting — your default brain.', bullets:['Fast on‑device context & structured outputs','Writes briefs, emails, docs with export‑ready formatting','Private by design — no cloud send'], theme:'light' },
-      { id:'ocpro', name:'OCPro', icon:'ph-seal-check', tier:'pro', comingSoon:false, tags:['productivity','writing'], rating:4.9, installs:22103, version:'3.0.1', updated:'2025‑08‑12', size:'58 MB', short:'Crystal‑clear structure and language for briefs, memos, and decks.', bullets:['Structure detection & outline locks','Style harmonizer across sections','One‑click executive summary'], theme:'light' },
-      { id:'ocresearch', name:'OCResearch', icon:'ph-magnifying-glass', tier:'standard', comingSoon:false, tags:['research','education'], rating:4.8, installs:19210, version:'2.1.0', updated:'2025‑07‑01', size:'61 MB', short:'Verifiable research: crawl, rank, and synthesize with citations.', bullets:['Quote capture with line‑level references','Evidence ranking & conflict resolution','One‑tap audit trail to originals'], theme:'light' },
-      { id:'occoach', name:'OCCoach', icon:'ph-compass-tool', tier:'standard', comingSoon:false, tags:['productivity','education'], rating:4.7, installs:15088, version:'1.6.0', updated:'2025‑06‑18', size:'42 MB', short:'Guided planning and execution with stepwise clarity.', bullets:['Goal setting, checkpoints, milestones','Reasoned coaching on craft & performance','From brief to ship with momentum'], theme:'light' },
-      { id:'oclaw', name:'OCLaw', icon:'ph-scales', tier:'pro', comingSoon:true, tags:['legal','writing'], rating:4.8, installs:11124, version:'0.9.5', updated:'2025‑07‑28', size:'48 MB', short:'Clause‑aware drafting, redlines, and issue spotting for agreements.', bullets:['Clause libraries with rationale','Risk flags & diff explainers','Export to Word/Pages templates'], theme:'light' }
+      { id:'oc', name:'OC‑Core', icon:'ph-cpu', tier:'standard', comingSoon:false, tags:['productivity','writing'], rating:4.9, installs:23542, version:'1.3.2', updated:'2025‑07‑22', size:'54 MB', short:'General reasoning, planning, and drafting — your default brain.', bullets:['Fast on‑device context & structured outputs','Writes briefs, emails, docs with export‑ready formatting','Private by design — no cloud send'], theme:'light' },
+      { id:'ocpro', name:'OC‑Pro', icon:'ph-seal-check', tier:'pro', comingSoon:false, tags:['productivity','writing'], rating:4.9, installs:22103, version:'3.0.1', updated:'2025‑08‑12', size:'58 MB', short:'Crystal‑clear structure and language for briefs, memos, and decks.', bullets:['Structure detection & outline locks','Style harmonizer across sections','One‑click executive summary'], theme:'light' },
+      { id:'ocresearch', name:'OC‑Research', icon:'ph-magnifying-glass', tier:'standard', comingSoon:false, tags:['research','education'], rating:4.8, installs:19210, version:'2.1.0', updated:'2025‑07‑01', size:'61 MB', short:'Verifiable research: crawl, rank, and synthesize with citations.', bullets:['Quote capture with line‑level references','Evidence ranking & conflict resolution','One‑tap audit trail to originals'], theme:'light' },
+      { id:'occoach', name:'OC‑Coach', icon:'ph-compass-tool', tier:'pro', comingSoon:false, tags:['productivity','education'], rating:4.7, installs:15088, version:'1.6.0', updated:'2025‑06‑18', size:'42 MB', short:'Guided planning and execution with stepwise clarity.', bullets:['Goal setting, checkpoints, milestones','Reasoned coaching on craft & performance','From brief to ship with momentum'], theme:'light' },
+      { id:'oclaw', name:'OC‑Law', icon:'ph-scales', tier:'pro', comingSoon:true, tags:['legal','writing'], rating:4.8, installs:11124, version:'0.9.5', updated:'2025‑07‑28', size:'48 MB', short:'Clause‑aware drafting, redlines, and issue spotting for agreements.', bullets:['Clause libraries with rationale','Risk flags & diff explainers','Export to Word/Pages templates'], theme:'light' },
+      { id:'occhat', name:'OC‑Chat', icon:'ph-chat-circle-dots', tier:'standard', comingSoon:false, tags:['productivity','writing'], rating:4.6, installs:12044, version:'1.0.0', updated:'2025‑08‑25', size:'38 MB', short:'Fast, context‑aware chat with document memory and tone controls.', bullets:['Ambient memory per project','Inline tone + length tuning','One‑tap export to docs'], theme:'light' }
     ];
 
     // ====== State ======
@@ -375,7 +442,12 @@
     };
 
     // ====== DOM ======
-    const grid = document.getElementById('gridWrap');
+    const proWrap = document.getElementById('proWrap');
+    const stdWrap = document.getElementById('stdWrap');
+    const proGrid = document.getElementById('proGrid');
+    const stdGrid = document.getElementById('stdGrid');
+    const proCount = document.getElementById('proCount');
+    const stdCount = document.getElementById('stdCount');
     const myGrid = document.getElementById('myCoresGrid');
     const myEmpty = document.getElementById('myCoresEmpty');
     const resultsMeta = document.getElementById('resultsMeta');
@@ -429,17 +501,33 @@
 
     // ====== Render grids ======
     function render(){
-      const list = CORES.filter(matches).sort(bySort);
-      grid.innerHTML = '';
-      list.forEach(c=> grid.appendChild(card(c)));
-      resultsMeta.textContent = `${fmt.format(list.length)} result${list.length===1?'':'s'}`;
-      resultsMeta.classList.toggle('hidden', list.length===0);
-      emptyState.classList.toggle('hidden', list.length>0);
-      // My cores
+      const list = CORES.filter(matches);
+      const pros = list.filter(c=> c.tier==='pro').sort(bySort);
+      const stds = list.filter(c=> c.tier!=='pro').sort(bySort);
+
+      // Pro group
+      proGrid.innerHTML = '';
+      pros.forEach(c=> proGrid.appendChild(card(c)));
+      proWrap.classList.toggle('hidden', pros.length===0);
+      proCount.textContent = pros.length ? `${fmt.format(pros.length)} ${pros.length===1?'core':'cores'}` : '';
+
+      // Standard group
+      stdGrid.innerHTML = '';
+      stds.forEach(c=> stdGrid.appendChild(card(c)));
+      stdWrap.classList.toggle('hidden', stds.length===0);
+      stdCount.textContent = stds.length ? `${fmt.format(stds.length)} ${stds.length===1?'core':'cores'}` : '';
+
+      const total = pros.length + stds.length;
+      resultsMeta.textContent = `${fmt.format(total)} result${total===1?'':'s'}`;
+      resultsMeta.classList.toggle('hidden', total===0);
+      emptyState.classList.toggle('hidden', total>0);
+
+      // My cores (installed)
       const my = CORES.filter(c=> state.installed.has(c.id));
       myGrid.innerHTML = '';
       my.forEach(c=> myGrid.appendChild(card(c)));
       myEmpty.classList.toggle('hidden', my.length>0);
+
       document.dispatchEvent(new Event('oc:market-render'));
     }
 
@@ -508,10 +596,29 @@
       const tierPill = `<span class="pill ${core.tier==='pro'?'pill-pro':''}">${core.tier==='pro'?'Pro':'Standard'}</span>`;
       m.tags.innerHTML = tierPill + ' ' + core.tags.map(t=>`<span class="badge">${cap(t)}</span>`).join(' ');
       m.meta.textContent = `${core.rating.toFixed(1)} • ${fmt.format(core.installs)} installs`;
-      m.desc.textContent = core.short;
+      m.desc.textContent = core.short || `A ${core.tier==='pro'?'Pro‑grade':'standard'} core built for ${core.tags.join(', ')}.`;
       m.version.textContent = `Version ${core.version} • Updated ${core.updated} • ${core.size}`;
-      m.bullets.innerHTML = core.bullets.map(b=>`<li class="flex gap-2"><i class="ph ph-check-circle text-neutral-900"></i><span>${b}</span></li>`).join('');
+      const __fallbackBullets = [
+        'Fast, private, and local‑first by design',
+        'Works offline; syncs when you want',
+        'Seamless with your OC workspace'
+      ];
+      const __list = (core.bullets && core.bullets.length) ? core.bullets : __fallbackBullets;
+      m.bullets.innerHTML = __list.map(b=>`<li class="flex gap-2"><i class="ph ph-check-circle text-neutral-900"></i><span>${b}</span></li>`).join('');
+      // Banner visual
       m.banner.classList.toggle('g-grad', core.theme==='dark');
+      m.banner.innerHTML = `
+        <div class="absolute inset-0 brand-gradient breathing opacity-90"></div>
+        <div class="absolute inset-0 pointer-events-none sheen-sweep"></div>
+        <div class="banner-ring" aria-hidden="true">
+          <div class="ring spin">
+            <span class="banner-token ${core.tier==='pro'?'dark':''} counter" style="--i:0"><i class="ph ${core.icon}"></i></span>
+            <span class="banner-token counter" style="--i:1"><i class="ph ph-quotes"></i></span>
+            <span class="banner-token counter" style="--i:2"><i class="ph ph-check-circle"></i></span>
+            <span class="banner-token counter" style="--i:3"><i class="ph ph-lightning"></i></span>
+            <span class="banner-token counter" style="--i:4"><i class="ph ph-files"></i></span>
+          </div>
+        </div>`;
 
       // Coming soon handling
       if (core.comingSoon){
@@ -567,6 +674,22 @@
 
     // Initial render
     render();
+
+    // Showcase scene cycle (hero)
+    (function cycleScenes(){
+      const root = document.querySelector('.showcase');
+      if (!root) return;
+      const scenes = Array.from(root.querySelectorAll('.scene'));
+      if (!scenes.length) return;
+      let i = 0; const dur = 4200; const fadeGap = 150;
+      const setActive = (idx)=> scenes.forEach((s,j)=> s.classList.toggle('active', j===idx));
+      setActive(0);
+      const tick = ()=>{ i = (i+1) % scenes.length; setActive(i); timer = setTimeout(tick, dur); };
+      let timer = setTimeout(tick, dur);
+      // Pause on hover for desktop
+      root.addEventListener('mouseenter', ()=>{ clearTimeout(timer); });
+      root.addEventListener('mouseleave', ()=>{ clearTimeout(timer); timer = setTimeout(tick, fadeGap); });
+    })();
   </script>
 </body>
 </html>
