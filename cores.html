@@ -208,11 +208,36 @@
     @keyframes orbitCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(360deg) } }
     @keyframes orbitCCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(-360deg) } }
     /* Keep cards upright: counter-rotate the card to cancel parent orbit */
-    .orbit-a .ad-card{ animation: uprightCW 30s linear infinite }
-    .orbit-b .ad-card{ animation: uprightCCW 36s linear infinite }
-    .orbit-c .ad-card{ animation: uprightCW 42s linear infinite }
-    @keyframes uprightCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(-360deg) } }
-    @keyframes uprightCCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(360deg) } }
+    .orbit-a .ad-card, .orbit-b .ad-card, .orbit-c .ad-card{ animation: none }
+
+    /* Smooth path-based motion (override orbits) */
+    .orbit-a, .orbit-b, .orbit-c{ animation: none !important }
+    .ad-orbit .ad-card{ animation: none !important; transform: translate3d(-50%, -50%, 0); backface-visibility:hidden; }
+    .node-a .ad-card{ animation: pathA 26s linear infinite }
+    .node-b .ad-card{ animation: pathB 30s linear infinite }
+    .node-c .ad-card{ animation: pathC 34s linear infinite }
+
+    @keyframes pathA{
+      0%   { transform: translate3d(-50%, -50%, 0) translate3d(-160px, -20px, 0); }
+      25%  { transform: translate3d(-50%, -50%, 0) translate3d(-120px,  30px, 0); }
+      50%  { transform: translate3d(-50%, -50%, 0) translate3d( -40px,  10px, 0); }
+      75%  { transform: translate3d(-50%, -50%, 0) translate3d( -90px, -30px, 0); }
+      100% { transform: translate3d(-50%, -50%, 0) translate3d(-160px, -20px, 0); }
+    }
+    @keyframes pathB{
+      0%   { transform: translate3d(-50%, -50%, 0) translate3d( 140px,  10px, 0); }
+      25%  { transform: translate3d(-50%, -50%, 0) translate3d( 100px, -25px, 0); }
+      50%  { transform: translate3d(-50%, -50%, 0) translate3d(  60px,  20px, 0); }
+      75%  { transform: translate3d(-50%, -50%, 0) translate3d( 120px,  40px, 0); }
+      100% { transform: translate3d(-50%, -50%, 0) translate3d( 140px,  10px, 0); }
+    }
+    @keyframes pathC{
+      0%   { transform: translate3d(-50%, -50%, 0) translate3d(   0px,  90px, 0); }
+      25%  { transform: translate3d(-50%, -50%, 0) translate3d( -60px,  50px, 0); }
+      50%  { transform: translate3d(-50%, -50%, 0) translate3d(   0px,  35px, 0); }
+      75%  { transform: translate3d(-50%, -50%, 0) translate3d(  60px,  60px, 0); }
+      100% { transform: translate3d(-50%, -50%, 0) translate3d(   0px,  90px, 0); }
+    }
     @media (max-width: 640px){ .orbit-a{ --r: 110px } .orbit-b{ --r: 135px } .orbit-c{ --r: 160px } }
   </style>
 </head>
