@@ -62,8 +62,23 @@
     @media (prefers-reduced-motion: reduce){ .reveal, .scroll-fade > * { transition: none !important; filter:none !important; opacity:1 !important; transform:none !important; } }
 
     /* Apple-like hero text shimmer */
-    .hero-shine{ position:relative; background-image: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.98), rgba(255,255,255,0)); background-size: 240% 100%; background-repeat:no-repeat; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; animation: heroShine var(--hero-shine-duration) linear infinite; }
-    @keyframes heroShine{ 0%{ background-position:-150% 0 } 100%{ background-position:150% 0 } }
+    .hero-shine{
+      position:relative;
+      /* Two layers: moving highlight + steady base fill */
+      background-image:
+        linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.98), rgba(255,255,255,0)),
+        linear-gradient(#ffffff, #ffffff);
+      background-size: 240% 100%, 100% 100%;
+      background-position: -150% 0, 0 0;
+      background-repeat:no-repeat;
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
+      animation: heroShine var(--hero-shine-duration) linear infinite;
+      animation-fill-mode: both;
+    }
+    @keyframes heroShine{
+      0%{   background-position: -150% 0, 0 0 }
+      100%{ background-position:  150% 0, 0 0 }
+    }
     @media (prefers-reduced-motion: reduce){ .hero-shine{ animation:none; -webkit-text-fill-color:#fff; color:#fff; background:none; } }
 
     /* Hero animated orbs (Apple-like, subtle) */
@@ -169,7 +184,7 @@
     @media (prefers-reduced-motion: reduce){ .demo *, .bubble, .quote, .demo-bar{ animation:none !important } }
 
     /* New Apple‑like hero stage */
-    .ad-stage{ position:absolute; inset:0; isolation:isolate; overflow:hidden; pointer-events:none; z-index:0; }
+    .ad-stage{ position:absolute; inset:0; isolation:isolate; overflow:hidden; pointer-events:auto; z-index:0; }
     @media (min-width:768px){ .ad-stage{ inset:0 } }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
@@ -756,8 +771,21 @@
       let minX = 0;
       function measure(){
         const sr = stage.getBoundingClientRect();
-        // No inner box. Allow full width; keep minimal 0px left bound.
-        minX = 0;
+        // Compute left guard so cards never overlap the left copy/buttons on desktop
+        let guard = 0;
+        try{
+          const copy = document.querySelector('#home .text-left');
+          if (copy) {
+            const cr = copy.getBoundingClientRect();
+            // Guard is the right edge of the copy relative to the stage, plus a small padding
+            guard = Math.round((cr.right - sr.left) + 10);
+            // Clamp guard to stage width bounds
+            guard = Math.max(0, Math.min(sr.width - 20, guard));
+            // On mobile (single column), allow free roam
+            if (window.matchMedia('(max-width: 767px)').matches) guard = 0;
+          }
+        }catch(_){ guard = 0; }
+        minX = guard;
         for (const n of nodes){
           const r = n.el.getBoundingClientRect();
           n.w = r.width; n.h = r.height;
