@@ -185,7 +185,7 @@
 
     /* New Apple‑like hero stage */
     .ad-stage{ position:absolute; inset:0; isolation:isolate; overflow:hidden; pointer-events:auto; z-index:0; }
-    @media (min-width:768px){ .ad-stage{ inset:0 } }
+    @media (max-width:767px){ .ad-stage{ pointer-events:none } }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
       radial-gradient(50% 50% at 40% 60%, rgba(14,111,92,.45), rgba(0,0,0,0) 70%);
@@ -235,6 +235,7 @@
         <a href="index.html" aria-label="OpenCounsel home"><span class="logo-anim" role="img" aria-label="OpenCounsel"></span></a>
       </div>
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link font-semibold text-black" href="pro.html">PRO</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="contact.html">Contact</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="cores.html">Cores</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="download.html">Download</a>
@@ -257,6 +258,7 @@
           </button>
         </div>
         <nav class="drawer-nav mt-2">
+          <a href="pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">PRO</a>
           <a href="contact.html">Contact</a>
           <a href="cores.html">Cores</a>
           <a href="download.html">Download</a>
@@ -756,7 +758,9 @@
     (function heroScreenSaver(){
       const stage = document.querySelector('.ad-stage'); if (!stage) return;
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) return;
+      const isMobile = matchMedia('(max-width: 767px)').matches;
+      // On mobile, keep lightweight CSS bounce and skip JS physics
+      if (reduce || isMobile) return;
 
       // Disable CSS wrapper animations for full JS control
       stage.classList.add('js-physics');
