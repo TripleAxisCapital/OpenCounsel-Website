@@ -23,7 +23,19 @@
     .grad-anim{ background:linear-gradient(var(--angle), var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift var(--speed) ease-in-out infinite; }
     .g-grad{ background:linear-gradient(var(--angle), var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; }
     .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
-  </style>
+  
+    #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
+    #mobileMenu .menu-scrim{ position:absolute; inset:0; background: rgba(255,255,255,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); opacity:0; transition: opacity 2s ease, backdrop-filter 2s ease, -webkit-backdrop-filter 2s ease; }
+    #mobileMenu .menu-panel{ position:absolute; top:0; left:0; height:100%; width:min(88vw, 420px); background:#fff; border-right: 1px solid rgba(0,0,0,.06); box-shadow: 0 24px 60px rgba(0,0,0,.12); transform: translateX(-100%); opacity:.98; filter: blur(12px); transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px; }
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px); }
+    #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
+    .drawer-title{ font-weight:700; letter-spacing:-.01em; background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; }
+    .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); }
+    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; text-align:center; color:#fff!important; -webkit-text-fill-color:#fff!important; }
+    .drawer-nav a:not(.drawer-cta){ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+
+</style>
 </head>
 <body class="bg-black text-white font-sans antialiased">
   <header class="sticky top-0 z-50 bg-white text-oc-ink">
@@ -54,6 +66,26 @@
       </div>
     </div>
   </header>
+
+  <!-- MOBILE MENU -->
+  <div id="mobileMenu" aria-hidden="true">
+    <div class="menu-scrim"></div>
+    <aside class="menu-panel">
+      <div class="drawer-head flex items-center justify-between pb-1">
+        <a href="index.html" class="drawer-title">OC</a>
+        <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <nav class="drawer-nav mt-2">
+        <a href="pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">PRO</a>
+        <a href="cores.html">Cores</a>
+        <div class="h-px my-2 bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
+        <a href="download.html" class="drawer-cta grad-anim rounded-2xl px-6 py-3 font-semibold text-white inline-flex items-center justify-center"><i class="ph ph-download text-xl mr-2"></i><span>Get OpenCounsel</span></a>
+      </nav>
+    </aside>
+  </div>
+
 
   <!-- HERO -->
   <section class="hero-grad">
@@ -106,6 +138,17 @@
 
   <script>
     const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
+  </script>
+
+  <script>
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    function openMenu(){ if (window.matchMedia('(min-width:768px)').matches) return; mobileMenu.style.display='block'; void mobileMenu.offsetWidth; mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active'); hamburgerBtn.setAttribute('aria-expanded','true'); mobileMenu.setAttribute('aria-hidden','false'); document.body.classList.add('overflow-hidden'); }
+    function closeMenu(){ mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active'); hamburgerBtn.setAttribute('aria-expanded','false'); mobileMenu.setAttribute('aria-hidden','true'); document.body.classList.remove('overflow-hidden'); setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display='none'; }, 550); }
+    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+    closeMenuBtn?.addEventListener('click', closeMenu);
+    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
   </script>
 </body>
 </html>
