@@ -1439,19 +1439,15 @@
 
 
 
-
-
-
 <!-- ───────────────────────────────────────────────────────────────
      OC CORES — Apple-style section (drop-in)
      - Promotes: OC-Core, OC-Research-Core, OC-Coach-Core
      - Explains Core system + ongoing releases
-     - Includes “Cores Library” modal to explore all cores
-     - No external deps beyond your existing Tailwind + Phosphor
-     - Honors prefers-reduced-motion, traps focus in modal, locks scroll
+     - Full-screen modal “Cores Library” (unsquished; proper scroll)
+     - No extra deps beyond your Tailwind + Phosphor
+     - Honors prefers-reduced-motion; traps focus; locks body scroll
    ─────────────────────────────────────────────────────────────── -->
-<section id="oc-cores"
-  class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+<section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
   <!-- Soft background glows -->
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute left-[-8%] top-[-6%] h-[22rem] w-[22rem] rounded-full blur-3xl"
@@ -1590,8 +1586,8 @@
       <span class="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900">
         <i class="ph ph-rocket-launch"></i> New Cores rolling out:
       </span>
-      <div class="relative flex-1">
-        <ul class="oc-cores-marquee flex gap-3 text-sm whitespace-nowrap text-neutral-700">
+      <div class="relative flex-1 oc-marquee-mask">
+        <ul class="oc-cores-marquee flex gap-3 text-sm whitespace-nowrap text-neutral-700 will-change-transform">
           <li class="chip">Build-Core (apps)</li>
           <li class="chip">Vision-Core</li>
           <li class="chip">Video-Core</li>
@@ -1622,18 +1618,19 @@
 
 <!-- ───────────────────────────────────────────────────────────────
      CORES LIBRARY — full-screen modal (invoked by Explore / Learn)
+     (Now uses flex column and min-h-0 to avoid “squish”.)
    ─────────────────────────────────────────────────────────────── -->
 <div id="ocCoresModal"
      class="fixed inset-0 z-[70] hidden items-center justify-center"
      role="dialog" aria-modal="true" aria-labelledby="ocCoresTitle">
   <div class="oc-cores-scrim absolute inset-0 bg-white/85 backdrop-blur-md opacity-0 transition-opacity duration-300"></div>
 
-  <div class="oc-cores-panel relative mx-4 md:mx-6 w-[min(980px,96vw)] max-h-[86vh] overflow-hidden
+  <div class="oc-cores-panel relative mx-4 md:mx-6 w-[min(980px,96vw)]
               rounded-3xl border border-black/10 bg-white shadow-[0_24px_80px_rgba(10,13,16,0.20)]
-              opacity-0 translate-y-4 transition-all duration-300"
-       role="document">
+              opacity-0 translate-y-4 transition-all duration-300
+              flex flex-col max-h-[92svh] md:max-h-[88svh]">
     <!-- Header -->
-    <div class="flex items-center justify-between gap-3 px-5 md:px-7 pt-5 md:pt-6 pb-4 border-b border-neutral-200">
+    <div class="flex items-center justify-between gap-3 px-5 md:px-7 pt-5 md:pt-6 pb-4 border-b border-neutral-200 shrink-0">
       <div>
         <h3 id="ocCoresTitle" class="text-xl md:text-2xl font-semibold tracking-tight text-neutral-900">
           Cores Library
@@ -1649,10 +1646,9 @@
     </div>
 
     <!-- Body -->
-    <div class="p-5 md:p-7 overflow-y-auto" style="max-height: calc(86vh - 74px);">
+    <div class="oc-cores-body p-5 md:p-7 overflow-y-auto grow min-h-0" style="-webkit-overflow-scrolling:touch">
       <!-- Selected core detail (filled by JS) -->
-      <div id="ocCoreDetail"
-           class="hidden mb-5 rounded-2xl border border-neutral-200 bg-white p-4 md:p-5">
+      <div id="ocCoreDetail" class="hidden mb-5 rounded-2xl border border-neutral-200 bg-white p-4 md:p-5">
         <div class="flex items-start justify-between gap-4">
           <div>
             <div class="flex items-center gap-2">
@@ -1677,67 +1673,64 @@
 </div>
 
 <!-- ───────────────────────────────────────────────────────────────
-     Section-scoped styles
+     Section-scoped styles (chips, marquee, gradient, tilt)
    ─────────────────────────────────────────────────────────────── -->
 <style>
-  /* Card micro-elevation */
+  :root{ --oc-accent:#0E6F5C; } .focus\:ring-oc-accent:focus{ box-shadow:0 0 0 2px var(--oc-accent) }
+
+  /* Soft elevation */
   .shadow-soft{box-shadow:0 2px 6px rgba(10,13,16,0.05), 0 14px 28px rgba(10,13,16,0.08)}
-  /* Marquee (halts for reduced motion) */
-  @keyframes oc-marquee{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
-  .oc-cores-marquee{ will-change: transform; animation: oc-marquee 28s linear infinite; }
-  @media (prefers-reduced-motion: reduce){
-    .oc-cores-marquee{ animation: none !important; }
+
+  /* Chips */
+  .chip{
+    display:inline-flex; align-items:center; gap:.375rem;
+    padding:.25rem .6rem; border-radius:9999px;
+    background:rgba(243,244,246,.8); border:1px solid rgba(0,0,0,.08);
+    font-size:.75rem; font-weight:600; color:#0a0d10; white-space:nowrap;
   }
-  /* Modal transitions are handled via classes; base hidden state above */
+
+  /* Gradient button (Apple-y) */
+  .g-grad{
+    background: linear-gradient(var(--angle,135deg), var(--from,#0B1B2B) 0%, var(--via,#0E6F5C) 50%, var(--to,#00CFFF) 100%);
+    border:1px solid rgba(255,255,255,.25);
+  }
+  .grad-anim{ background-size:200% 200%; animation:oc-pan var(--speed,14s) ease-in-out infinite; }
+  @keyframes oc-pan{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  /* Marquee + edge fade */
+  @keyframes oc-marquee{ from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .oc-marquee-mask{ -webkit-mask-image:linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+                     mask-image:linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%); }
+  .oc-cores-marquee{ animation: oc-marquee 28s linear infinite; }
+  @media (prefers-reduced-motion: reduce){
+    .oc-cores-marquee{ animation:none !important }
+    .grad-anim{ animation:none !important }
+  }
+
+  /* Tilt (only when pointer is precise; disabled for accessibility) */
+  @media (pointer: fine){
+    .tilt{ transform-style:preserve-3d; transition: transform .12s ease-out }
+    .tilt .chip, .tilt h3, .tilt p{ transform: translateZ(16px) }
+  }
 </style>
 
 <!-- ───────────────────────────────────────────────────────────────
-     Minimal JS to wire up interactions (no external libs)
+     Minimal JS: interactions, modal, marquee clone, tilt
    ─────────────────────────────────────────────────────────────── -->
 <script>
 (() => {
   const byId = (id)=> document.getElementById(id);
   const qsa  = (sel,root=document)=> Array.from(root.querySelectorAll(sel));
 
-  // Dataset (extend freely)
+  // Dataset
   const CORES = [
-    {
-      id: 'oc-core',
-      name: 'OC-Core',
-      tag: 'Orchestration • Local-first • Routing',
-      status: 'Included',
-      bullets: [
-        'Model autodiscovery & smart routing',
-        'Local-first execution & sandboxing',
-        'Prompt/Tool graphs with guardrails',
-        'Profiles, memory, and audit-friendly logs'
-      ]
-    },
-    {
-      id: 'oc-research-core',
-      name: 'OC-Research-Core',
-      tag: 'RAG • Citations • Source control',
-      status: 'Included',
-      bullets: [
-        'Cite-as-you-go answers with links',
-        'PDF ingestion & semantic search',
-        'Cross-source consensus checks',
-        'Filters for jurisdictions & recency'
-      ]
-    },
-    {
-      id: 'oc-coach-core',
-      name: 'OC-Coach-Core',
-      tag: 'Plans • Feedback • Habits',
-      status: 'Included',
-      bullets: [
-        'Action plans & feedback loops',
-        'Memory-aware tutoring & review',
-        'Voice-ready session flow',
-        'Structured rubrics for progress'
-      ]
-    },
-    // Coming soon (examples)
+    { id:'oc-core', name:'OC-Core', tag:'Orchestration • Local-first • Routing', status:'Included',
+      bullets:['Model autodiscovery & smart routing','Local-first execution & sandboxing','Prompt/Tool graphs with guardrails','Profiles, memory, and audit-friendly logs'] },
+    { id:'oc-research-core', name:'OC-Research-Core', tag:'RAG • Citations • Source control', status:'Included',
+      bullets:['Cite-as-you-go answers with links','PDF ingestion & semantic search','Cross-source consensus checks','Filters for jurisdictions & recency'] },
+    { id:'oc-coach-core', name:'OC-Coach-Core', tag:'Plans • Feedback • Habits', status:'Included',
+      bullets:['Action plans & feedback loops','Memory-aware tutoring & review','Voice-ready session flow','Structured rubrics for progress'] },
+    // Coming soon
     { id:'build-core',   name:'Build-Core',   tag:'Apps • Prototyping • Scaffolds', status:'Coming soon', bullets:['Full-stack scaffolds','UI kits & exports','Deploy recipes'] },
     { id:'vision-core',  name:'Vision-Core',  tag:'Images • OCR • Diagrams',        status:'Coming soon', bullets:['Figure extraction','Layout understanding','Diagram QA'] },
     { id:'video-core',   name:'Video-Core',   tag:'Cuts • Captions • Scripts',      status:'Coming soon', bullets:['Auto cuts & reels','Smart captions','Beat-synced scripts'] },
@@ -1750,10 +1743,11 @@
     { id:'audio-core',   name:'Audio-Core',   tag:'Transcribe • TTS • Clean',       status:'Coming soon', bullets:['Whisper-grade STT','Noise clean','Speaker labels'] },
   ];
 
-  // Library UI
+  // Modal elements
   const modal   = byId('ocCoresModal');
   const scrim   = modal?.querySelector('.oc-cores-scrim');
   const panel   = modal?.querySelector('.oc-cores-panel');
+  const body    = modal?.querySelector('.oc-cores-body');
   const grid    = byId('ocCoresGrid');
   const detail  = byId('ocCoreDetail');
   const dBadge  = byId('ocCoreBadge');
@@ -1762,6 +1756,11 @@
   const dTag    = byId('ocCoreTag');
   const dList   = byId('ocCoreBullets');
 
+  const openBtn  = byId('openCoresLibrary');
+  const closeBtn = byId('closeCoresLibrary');
+  const learnBtns= qsa('.oc-core-learn');
+
+  // Render grid
   function renderGrid(){
     if (!grid) return;
     grid.innerHTML = '';
@@ -1803,13 +1802,11 @@
       dList.appendChild(li);
     });
     detail.classList.remove('hidden');
+    // Ensure the detail is visible top in small view when opened
+    body?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // Modal open/close + a11y
-  const openBtn  = byId('openCoresLibrary');
-  const closeBtn = byId('closeCoresLibrary');
-  const learnBtns= qsa('.oc-core-learn');
-
+  let trapHandler = null, escHandler = null;
   function openModal(initialId){
     if (!modal || !scrim || !panel) return;
     modal.classList.remove('hidden');
@@ -1819,25 +1816,28 @@
       panel.style.opacity = '1';
       panel.style.transform = 'translateY(0)';
     });
+    document.documentElement.classList.add('overflow-hidden');
     document.body.classList.add('overflow-hidden');
-    // Focus management
-    const focusables = qsa('a,button,[tabindex]:not([tabindex="-1"])', modal);
+
+    // Focus trap
+    const focusables = qsa('a,button,[tabindex]:not([tabindex="-1"])', modal).filter(el => !el.hasAttribute('disabled'));
     const first = focusables[0], last = focusables[focusables.length - 1];
-    function trap(e){
+    trapHandler = (e)=>{
       if (e.key !== 'Tab') return;
       if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
-    }
-    modal.addEventListener('keydown', trap);
+    };
+    modal.addEventListener('keydown', trapHandler);
+
+    escHandler = (e)=>{ if (e.key === 'Escape') closeModal(); };
+    document.addEventListener('keydown', escHandler);
+
     closeBtn?.focus();
     renderGrid();
-    if (initialId) showDetail(initialId);
-    else showDetail('oc-core');
-    // Click outside to close
+    showDetail(initialId || 'oc-core');
+
+    // Close on scrim
     scrim.addEventListener('click', closeModal, { once:true });
-    // ESC to close
-    const esc = (e)=>{ if (e.key === 'Escape') closeModal(); };
-    document.addEventListener('keydown', esc, { once:true });
   }
 
   function closeModal(){
@@ -1846,7 +1846,11 @@
     panel.style.opacity = '0';
     panel.style.transform = 'translateY(16px)';
     setTimeout(()=> modal.classList.add('hidden'), 280);
+    document.documentElement.classList.remove('overflow-hidden');
     document.body.classList.remove('overflow-hidden');
+    // Remove handlers
+    if (trapHandler) modal.removeEventListener('keydown', trapHandler), trapHandler=null;
+    if (escHandler) document.removeEventListener('keydown', escHandler), escHandler=null;
     openBtn?.focus();
   }
 
@@ -1859,17 +1863,44 @@
     });
   });
 
-  // Duplicate marquee content once so loop looks continuous
+  // Marquee: duplicate content for seamless loop
   const mq = document.querySelector('.oc-cores-marquee');
   if (mq && mq.children.length){
     const clone = mq.cloneNode(true);
+    clone.setAttribute('aria-hidden','true');
     clone.style.paddingLeft = '1rem';
     mq.parentNode.appendChild(clone);
   }
+
+  // Subtle tilt (pointer devices only, no RM)
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReduced && window.matchMedia('(pointer: fine)').matches){
+    const cards = qsa('.tilt');
+    const clamp = (n, min, max)=> Math.max(min, Math.min(max, n));
+    cards.forEach(card=>{
+      let raf = null;
+      const bcr = ()=> card.getBoundingClientRect();
+      function onMove(e){
+        if (raf) return;
+        raf = requestAnimationFrame(()=>{
+          const r = bcr();
+          const x = (e.clientX - r.left) / r.width;
+          const y = (e.clientY - r.top)  / r.height;
+          const rx = clamp((0.5 - y) * 6, -6, 6);
+          const ry = clamp((x - 0.5) * 6, -6, 6);
+          card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+          raf = null;
+        });
+      }
+      function onLeave(){
+        card.style.transform = 'perspective(900px) rotateX(0) rotateY(0)';
+      }
+      card.addEventListener('mousemove', onMove, { passive:true });
+      card.addEventListener('mouseleave', onLeave);
+    });
+  }
 })();
 </script>
-
-
 
 
 
