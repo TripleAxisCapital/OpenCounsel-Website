@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <!-- Pretty URL (client-side mask) -->
+  <script>
+    window.OC = { base:"", slug:"Cores", file:"/cores.html" };
+
+    (function(L,C){try{
+      var B=C.base||"", S="/"+(C.slug||"home"), F=C.file||"/index.html";
+      var p=L.pathname.replace(/\/+$/,"");
+      if(B && p.startsWith(B)) p=p.slice(B.length)||"/";
+      if(p===F || p==="/") history.replaceState(null,"",B+S+L.search+L.hash);
+    }catch(_){}})(location, window.OC);
+  </script>
+  <link rel="canonical" href="/home">
+
+  <title>OpenCounsel — Cores</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0B1B2B">
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
+          colors: { oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' } },
+          boxShadow: { card:'0 6px 30px rgba(16,24,40,0.08)', glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)' }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root{
+      --pad-mobile-x:24px; --pad-desktop-x:32px; --line:#E7EDF2;
+      --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
+      --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
+      --logo-width:64px; --logo-height:64px;
+      --hamburger-inset:13px;
+    }
+    html, body { max-width:100%; overflow-x:clip!important; }
+    .oc-container { padding-left:var(--pad-mobile-x); padding-right:var(--pad-mobile-x); }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .grad-anim{ background:linear-gradient(var(--angle),var(--from),var(--via),var(--to)); background-size:300% 300%; animation:gradientShift var(--speed) ease-in-out infinite; }
+    .g-grad{ background:linear-gradient(var(--angle),var(--from),var(--via),var(--to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; }
+    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
+    .nav-link { font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
+    .nav-link:hover { font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
+
+    /* Page blur */
+    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition:backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
+    .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
+
+    /* Hamburger */
+    #hamburgerBtn .hamburger { --from:#00CFFFcc; --via:#0E6F5Ccc; --to:#0B1B2Bcc; --angle:135deg; --speed:16s; }
+    .hamburger { width:32px; height:28px; display:inline-flex; flex-direction:column; justify-content:center; gap:6px; }
+    .hamburger span{
+      height:3px; width:100%; border-radius:9999px;
+      background:linear-gradient(var(--angle,135deg), var(--from,#0a1f44), var(--via,#0b3d3d), var(--to,#064420));
+      background-size:300% 300%; animation:gradientShift var(--speed,16s) ease-in-out infinite;
+      transition: transform .4s ease, opacity .2s ease;
+    }
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity:0; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
+    #hamburgerBtn { display:flex; align-items:center; justify-content:center; height:56px; padding:0; margin-right: var(--hamburger-inset); }
+    @media (min-width:768px){ #hamburgerBtn{ display:none!important; } #mobileMenu{ display:none!important; } }
+
+    /* Mobile drawer */
+    #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
+    #mobileMenu .menu-scrim{
+      position:absolute; inset:0; background: rgba(255,255,255,0.92);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      opacity:0; transition: opacity .5s ease; pointer-events: auto;
+    }
+    #mobileMenu .menu-panel{
+      position:absolute; top:0; right:0; width:min(88%, 440px); height:100%; background:#fff; border-left:1px solid rgba(0,0,0,.04);
+      box-shadow: 0 14px 34px rgba(10,13,16,.16); transform:translateX(8px); filter: blur(8px);
+      transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px;
+    }
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px); }
+    #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
+
+    .drawer-title{
+      font-weight:700; letter-spacing:-.01em;
+      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px;
+    }
+    .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); }
+    .drawer-nav a:not(.drawer-cta){ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+    .drawer-sep{ height:1px; background:linear-gradient(90deg, transparent, rgba(0,0,0,.08), transparent); margin:8px 0 6px; }
+    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; text-align:center; position:relative; color:#fff!important; -webkit-text-fill-color:#fff!important; background-clip:border-box!important; -webkit-background-clip:border-box!important; overflow:hidden; }
+  </style>
+</head>
+
+<body class="bg-white text-oc-ink font-sans antialiased">
+  <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
+
+  <!-- HEADER -->
+  <header class="sticky top-0 z-50 bg-white">
+    <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" aria-label="OpenCounsel home"><span class="logo-anim" role="img" aria-label="OpenCounsel"></span></a>
+      </div>
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="contact.html">Contact</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="cores.html">Cores</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="download.html">Download</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <button id="hamburgerBtn"
+          class="md:hidden rounded-xl bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MOBILE MENU -->
+    <div id="mobileMenu" aria-hidden="true">
+      <div class="menu-scrim"></div>
+      <aside class="menu-panel">
+        <div class="drawer-head flex items-center justify-between pb-1">
+          <a href="index.html" class="drawer-title">OpenCounsel</a>
+          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        <nav class="drawer-nav mt-2">
+          <a href="contact.html">Contact</a>
+          <a href="cores.html">Cores</a>
+          <a href="download.html">Download</a>
+          <div class="drawer-sep"></div>
+          <a href="download.html" class="drawer-cta grad-anim rounded-2xl px-6 py-3 font-semibold text-white inline-flex items-center justify-center"
+             style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;">
+            <i class="ph ph-download text-xl mr-2"></i><span>Get OpenCounsel</span>
+          </a>
+        </nav>
+      </aside>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section id="home" class="mx-auto max-w-[1200px] oc-container">
+    <div class="hero-card relative g-grad rounded-2xl overflow-hidden border border-oc-line flex items-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)] py-16">
+      <div class="w-full max-w-3xl mx-auto flex flex-col items-center">
+        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">Cores</span>
+        <p class="hero-sub1 mt-4 text-lg md:text-xl text-white/90 leading-relaxed">Focused, updatable building blocks that power OC.</p>
+        <p class="hero-sub2 mt-2 text-lg md:text-xl text-white/80 leading-relaxed">Meet OC‑Core, Research‑Core, and Coach‑Core.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CORES GRID -->
+  <section class="mx-auto max-w-[1200px] oc-container my-12">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- OC-Core -->
+      <article class="relative overflow-hidden rounded-2xl g-grad text-white border border-white/15 shadow-[0_16px_54px_rgba(0,0,0,.18)] p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center">
+            <i class="ph ph-cpu text-white text-[20px]" aria-hidden="true"></i>
+          </div>
+          <h3 class="text-xl font-semibold tracking-tight">OC‑Core</h3>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-white/85">General reasoning, planning, and drafting — your default brain.</p>
+        <ul class="mt-4 space-y-2 text-sm text-white/85">
+          <li class="flex items-start gap-2"><i class="ph ph-lightning text-[18px] mt-[2px]"></i><span>Fast on‑device context & structured outputs.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-files text-[18px] mt-[2px]"></i><span>Writes briefs, emails, and docs with export‑ready formatting.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-shield-check text-[18px] mt-[2px]"></i><span>Private by design — no cloud send.</span></li>
+        </ul>
+      </article>
+
+      <!-- Research-Core -->
+      <article class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,.06)]">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+            <i class="ph ph-magnifying-glass text-[20px]" aria-hidden="true"></i>
+          </div>
+          <h3 class="text-xl font-semibold tracking-tight text-neutral-900">OC‑Research‑Core</h3>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-neutral-700">Verifiable research with linked, deduped summaries.</p>
+        <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+          <li class="flex items-start gap-2"><i class="ph ph-quotes text-[18px] mt-[2px]"></i><span>Quote capture with line‑level references.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-list-checks text-[18px] mt-[2px]"></i><span>Evidence ranking & conflict resolution.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-link text-[18px] mt-[2px]"></i><span>One‑tap audit trail to originals.</span></li>
+        </ul>
+      </article>
+
+      <!-- Coach-Core -->
+      <article class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,.06)]">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+            <i class="ph ph-compass-tool text-[20px]" aria-hidden="true"></i>
+          </div>
+          <h3 class="text-xl font-semibold tracking-tight text-neutral-900">OC‑Coach‑Core</h3>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-neutral-700">Guides decisions, planning, and execution with stepwise clarity.</p>
+        <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+          <li class="flex items-start gap-2"><i class="ph ph-flag text-[18px] mt-[2px]"></i><span>Goal setting, checkpoints, and milestones.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-brain text-[18px] mt-[2px]"></i><span>Reasoned coaching on craft and performance.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-rocket-launch text-[18px] mt-[2px]"></i><span>From brief to ship with momentum.</span></li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="mt-8 flex items-center justify-center gap-3">
+      <a href="download.html" class="inline-flex items-center rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90"><i class="ph ph-download-simple mr-2"></i>Get OC</a>
+      <a href="contact.html" class="inline-flex items-center rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-50"><i class="ph ph-chat-circle-dots mr-2"></i>Contact</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-oc-line">
+    <div class="mx-auto max-w-[1200px] oc-container py-10 flex items-center flex-col gap-6 text-oc-ink/60 text-sm">
+      <div class="text-center">
+        <span class="font-semibold text-black">OpenCounsel</span> © <span id="yr"></span> OpenCounsel
+      </div>
+      <div class="flex items-center gap-4">
+        <a class="hover:text-oc-ink" href="#">Privacy</a>
+        <a class="hover:text-oc-ink" href="#">Terms</a>
+        <a class="hover:text-oc-ink" href="download.html">Download</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Year + page blur
+    const yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
+    window.addEventListener('load', () => {
+      const pageBlur = document.getElementById('pageBlur');
+      if (!pageBlur) return;
+      pageBlur.classList.add('hide');
+      setTimeout(() => pageBlur.remove(), 1300);
+    });
+
+    // Mobile menu
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    function openMenu() {
+      if (window.matchMedia('(min-width: 768px)').matches) return;
+      mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
+      mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'true'); mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+    function closeMenu() {
+      mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded', 'false'); mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display = 'none'; }, 550);
+    }
+    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+    closeMenuBtn?.addEventListener('click', closeMenu);
+    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
+    const mq = window.matchMedia('(min-width: 768px)');
+    function handleMQ(e){ if (e.matches) closeMenu(); }
+    if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+  </script>
+</body>
+</html>
+
