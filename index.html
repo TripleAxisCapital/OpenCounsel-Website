@@ -122,8 +122,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Material Symbols (Google Fonts) for hamburger menu icon -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
   <!-- Icons + Tailwind -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -211,8 +209,8 @@
       --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
       --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
       --logo-width:64px; --logo-height:64px;
-      /* Global hamburger icon color (matches footer text-oc-ink/60) */
-      --hamburger-color: rgba(10,13,16,0.60);
+      /* Global hamburger icon color */
+      --hamburger-color: #afafaf;
 
       /* ===============================
          GLOBAL: Hero Shine Controls
@@ -375,8 +373,12 @@
     .mobile-menu { backdrop-filter: blur(8px); }
 
     .hamburger { width: 32px; height: 28px; display: inline-flex; flex-direction: column; justify-content: center; gap: 6px; }
-    .hamburger span { display: none; }
-    .oc-hamburger-icon.material-symbols-outlined { font-size: 28px; line-height: 1; color: var(--hamburger-color); }
+    .hamburger span {
+      height: 3px; width: 100%; border-radius: 9999px;
+      background: var(--hamburger-color, #000); /* solid color from global var */
+      animation: none; background-size: initial;
+      transition: transform .4s ease, opacity .2s ease, background-color .2s ease;
+    }
     #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
     #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity: 0; }
     #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
@@ -652,7 +654,9 @@
         <button id="hamburgerBtn"
           class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
           aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="material-symbols-outlined oc-hamburger-icon" aria-hidden="true">menu</span>
+          <span class="hamburger" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </span>
         </button>
       </div>
     </div>
