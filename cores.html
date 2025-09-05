@@ -176,7 +176,7 @@
       radial-gradient(50% 50% at 40% 60%, rgba(14,111,92,.45), rgba(0,0,0,0) 70%);
     }
     .ad-card{ position:absolute; left:0; top:0; transform: none;
-      width:min(270px, 72vw); padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,.4);
+      width: clamp(168px, 36%, 240px); padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,.4);
       background:rgba(255,255,255,.9); backdrop-filter: blur(8px); box-shadow:0 18px 50px rgba(10,13,16,.25);
       display:flex; align-items:center; gap:12px; cursor:pointer; transition: box-shadow .4s ease; will-change: transform; transform-origin:center;
     }
@@ -757,13 +757,16 @@
 
       const rand = (a,b)=> Math.random()*(b-a)+a;
 
+      let minX = 0;
       function measure(){
         const sr = stage.getBoundingClientRect();
+        // Reserve a small margin on the left so cards don't collide with the copy
+        minX = Math.max(12, Math.round(sr.width * 0.04));
         for (const n of nodes){
           const r = n.el.getBoundingClientRect();
           n.w = r.width; n.h = r.height;
           if (!n._init){
-            n.x = rand(0, Math.max(1, sr.width - n.w));
+            n.x = rand(minX, Math.max(minX + 1, sr.width - n.w));
             n.y = rand(0, Math.max(1, sr.height - n.h));
             n.vx = rand(10, 24) * (Math.random()<.5? -1: 1); // px/s — slower
             n.vy = rand(10, 24) * (Math.random()<.5? -1: 1);
@@ -789,7 +792,7 @@
           n.y += n.vy * dt;
 
           // Bounce on walls with a tiny spin impulse
-          if (n.x <= 0){ n.x = 0; n.vx = Math.abs(n.vx); n.vang += rand(-15, 15); }
+          if (n.x <= minX){ n.x = minX; n.vx = Math.abs(n.vx); n.vang += rand(-15, 15); }
           else if (n.x + n.w >= maxX){ n.x = maxX - n.w; n.vx = -Math.abs(n.vx); n.vang += rand(-15, 15); }
 
           if (n.y <= 0){ n.y = 0; n.vy = Math.abs(n.vy); n.vang += rand(-15, 15); }
