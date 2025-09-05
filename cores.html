@@ -169,8 +169,8 @@
     @media (prefers-reduced-motion: reduce){ .demo *, .bubble, .quote, .demo-bar{ animation:none !important } }
 
     /* New Apple‑like hero stage */
-    .ad-stage{ position:relative; height:300px; border-radius:20px; isolation:isolate; overflow:hidden; pointer-events:none; }
-    @media (min-width:768px){ .ad-stage{ height:340px } }
+    .ad-stage{ position:absolute; inset:0; isolation:isolate; overflow:hidden; pointer-events:none; z-index:0; }
+    @media (min-width:768px){ .ad-stage{ inset:0 } }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
       radial-gradient(50% 50% at 40% 60%, rgba(14,111,92,.45), rgba(0,0,0,0) 70%);
@@ -263,7 +263,37 @@
         <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
       </div>
 
-      <div class="w-full max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10">
+      <!-- Full-hero floating stage behind content -->
+      <div class="ad-stage" aria-hidden="true">
+        <div class="ad-halo"></div>
+        <!-- Bouncing nodes (smooth, upright) -->
+        <div class="ad-float fx" style="--start-x:8%; --dx:84%; --dur-x:22s">
+          <div class="fy" style="--start-y:6%; --dy:82%; --dur-y:24s">
+            <div class="ad-card std" data-open-core="oc">
+              <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
+              <div class="ad-meta"><div class="ad-name">OC‑Core</div><div class="ad-pill">Standard</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="ad-float fx" style="--start-x:52%; --dx:46%; --dur-x:26s">
+          <div class="fy" style="--start-y:12%; --dy:78%; --dur-y:28s">
+            <div class="ad-card pro" data-open-core="ocpro">
+              <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
+              <div class="ad-meta"><div class="ad-name">OC‑Pro</div><div class="ad-pill ad-pill-pro">Pro</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="ad-float fx" style="--start-x:18%; --dx:70%; --dur-x:24s">
+          <div class="fy" style="--start-y:48%; --dy:46%; --dur-y:22s">
+            <div class="ad-card soon" data-open-core="oclaw">
+              <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
+              <div class="ad-meta"><div class="ad-name">OC‑Law</div><div class="ad-pill ad-pill-soon">Coming soon</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="w-full max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10 relative z-[1]">
         <!-- Copy -->
         <div class="text-left flex flex-col items-start">
           <h1 class="font-semibold text-white text-4xl md:text-6xl leading-tight">
@@ -285,37 +315,7 @@
           </div>
         </div>
 
-        <!-- Visual stage -->
-        <div class="relative">
-          <div class="ad-stage" aria-hidden="true">
-            <div class="ad-halo"></div>
-            <!-- Bouncing nodes (smooth, upright) -->
-            <div class="ad-float fx" style="--start-x:8%; --dx:70%; --dur-x:17s">
-              <div class="fy" style="--start-y:10%; --dy:60%; --dur-y:21s">
-                <div class="ad-card std" data-open-core="oc">
-                  <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
-                  <div class="ad-meta"><div class="ad-name">OC‑Core</div><div class="ad-pill">Standard</div></div>
-                </div>
-              </div>
-            </div>
-            <div class="ad-float fx" style="--start-x:58%; --dx:36%; --dur-x:19s">
-              <div class="fy" style="--start-y:18%; --dy:54%; --dur-y:23s">
-                <div class="ad-card pro" data-open-core="ocpro">
-                  <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
-                  <div class="ad-meta"><div class="ad-name">OC‑Pro</div><div class="ad-pill ad-pill-pro">Pro</div></div>
-                </div>
-              </div>
-            </div>
-            <div class="ad-float fx" style="--start-x:22%; --dx:56%; --dur-x:22s">
-              <div class="fy" style="--start-y:52%; --dy:36%; --dur-y:18s">
-                <div class="ad-card soon" data-open-core="oclaw">
-                  <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
-                  <div class="ad-meta"><div class="ad-name">OC‑Law</div><div class="ad-pill ad-pill-soon">Coming soon</div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
   </section>
 
@@ -756,8 +756,8 @@
       let minX = 0;
       function measure(){
         const sr = stage.getBoundingClientRect();
-        // Reserve a small margin on the left so cards don't collide with the copy
-        minX = Math.max(12, Math.round(sr.width * 0.04));
+        // No inner box. Allow full width; keep minimal 0px left bound.
+        minX = 0;
         for (const n of nodes){
           const r = n.el.getBoundingClientRect();
           n.w = r.width; n.h = r.height;
