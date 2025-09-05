@@ -169,16 +169,16 @@
     @media (prefers-reduced-motion: reduce){ .demo *, .bubble, .quote, .demo-bar{ animation:none !important } }
 
     /* New Apple‑like hero stage */
-    .ad-stage{ position:relative; height:300px; border-radius:20px; isolate:isolate; }
+    .ad-stage{ position:relative; height:300px; border-radius:20px; isolate:isolate; overflow:hidden; }
     @media (min-width:768px){ .ad-stage{ height:340px } }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
       radial-gradient(50% 50% at 40% 60%, rgba(14,111,92,.45), rgba(0,0,0,0) 70%);
     }
-    .ad-card{ position:absolute; left:50%; top:50%; transform: translate3d(-50%, -50%, 0);
+    .ad-card{ position:absolute; left:0; top:0; transform: none;
       width:min(270px, 72vw); padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,.4);
       background:rgba(255,255,255,.9); backdrop-filter: blur(8px); box-shadow:0 18px 50px rgba(10,13,16,.25);
-      display:flex; align-items:center; gap:12px; cursor:pointer; transition: box-shadow .4s ease; will-change: transform;
+      display:flex; align-items:center; gap:12px; cursor:pointer; transition: box-shadow .4s ease; will-change: transform; transform-origin:center;
     }
     .ad-card:hover{ box-shadow:0 24px 60px rgba(10,13,16,.3) }
     .ad-card.pro{ background: rgba(10,13,16,.92); color:#fff; border-color: rgba(255,255,255,.25) }
@@ -192,53 +192,20 @@
     .ad-pill-soon{ background:#f3f4f6; color:#0A0D10; border-color:#e5e7eb }
     @media (prefers-reduced-motion: reduce){ .ad-card{ animation:none !important } }
 
-    /* Orbits for carousel */
-    .ad-orbit{ position:absolute; left:50%; top:50%; transform-origin:center; transform: translate3d(-50%, -50%, 0); will-change: transform; }
-    .ad-node{ position:absolute; left:0; top:0; transform: translate3d(var(--r, 150px), 0, 0); will-change: transform; }
-    .orbit-a{ --r: 140px; animation: orbitCW 30s linear infinite }
-    .orbit-b{ --r: 175px; animation: orbitCCW 36s linear infinite }
-    .orbit-c{ --r: 210px; animation: orbitCW 42s linear infinite }
-    /* Bobbing (applied on node, so it doesn't fight orbit) */
-    .node-a{ animation: bobA 7.5s ease-in-out infinite }
-    .node-b{ animation: bobB 8.2s ease-in-out infinite }
-    .node-c{ animation: bobC 6.9s ease-in-out infinite }
-    @keyframes bobA{ 0%,100%{ transform: translate3d(var(--r),0,0) } 50%{ transform: translate3d(var(--r), -6px, 0) } }
-    @keyframes bobB{ 0%,100%{ transform: translate3d(var(--r),0,0) } 50%{ transform: translate3d(var(--r), 5px, 0) } }
-    @keyframes bobC{ 0%,100%{ transform: translate3d(var(--r),0,0) } 50%{ transform: translate3d(var(--r), -4px, 0) } }
-    @keyframes orbitCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(360deg) } }
-    @keyframes orbitCCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(-360deg) } }
-    /* Keep cards upright: counter-rotate the card to cancel parent orbit */
-    .orbit-a .ad-card, .orbit-b .ad-card, .orbit-c .ad-card{ animation: none }
-
-    /* Smooth path-based motion (override orbits) */
-    .orbit-a, .orbit-b, .orbit-c{ animation: none !important }
-    .ad-orbit .ad-card{ animation: none !important; transform: translate3d(-50%, -50%, 0); backface-visibility:hidden; }
-    .node-a .ad-card{ animation: pathA 26s linear infinite }
-    .node-b .ad-card{ animation: pathB 30s linear infinite }
-    .node-c .ad-card{ animation: pathC 34s linear infinite }
-
-    @keyframes pathA{
-      0%   { transform: translate3d(-50%, -50%, 0) translate3d(-160px, -20px, 0); }
-      25%  { transform: translate3d(-50%, -50%, 0) translate3d(-120px,  30px, 0); }
-      50%  { transform: translate3d(-50%, -50%, 0) translate3d( -40px,  10px, 0); }
-      75%  { transform: translate3d(-50%, -50%, 0) translate3d( -90px, -30px, 0); }
-      100% { transform: translate3d(-50%, -50%, 0) translate3d(-160px, -20px, 0); }
-    }
-    @keyframes pathB{
-      0%   { transform: translate3d(-50%, -50%, 0) translate3d( 140px,  10px, 0); }
-      25%  { transform: translate3d(-50%, -50%, 0) translate3d( 100px, -25px, 0); }
-      50%  { transform: translate3d(-50%, -50%, 0) translate3d(  60px,  20px, 0); }
-      75%  { transform: translate3d(-50%, -50%, 0) translate3d( 120px,  40px, 0); }
-      100% { transform: translate3d(-50%, -50%, 0) translate3d( 140px,  10px, 0); }
-    }
-    @keyframes pathC{
-      0%   { transform: translate3d(-50%, -50%, 0) translate3d(   0px,  90px, 0); }
-      25%  { transform: translate3d(-50%, -50%, 0) translate3d( -60px,  50px, 0); }
-      50%  { transform: translate3d(-50%, -50%, 0) translate3d(   0px,  35px, 0); }
-      75%  { transform: translate3d(-50%, -50%, 0) translate3d(  60px,  60px, 0); }
-      100% { transform: translate3d(-50%, -50%, 0) translate3d(   0px,  90px, 0); }
-    }
+    /* Bouncing within container (alternate direction) */
+    .ad-float{ position:absolute; left:var(--start-x,10%); top:var(--start-y,10%); will-change: transform; }
+    .fx{ animation: fxMove var(--dur-x,16s) cubic-bezier(.22,.8,.22,1) infinite alternate }
+    .fy{ animation: fyMove var(--dur-y,18s) cubic-bezier(.22,.8,.22,1) infinite alternate }
+    @keyframes fxMove{ from{ transform: translateX(0) } to{ transform: translateX(var(--dx,60%)) } }
+    @keyframes fyMove{ from{ transform: translateY(0) } to{ transform: translateY(var(--dy,40%)) } }
     @media (max-width: 640px){ .orbit-a{ --r: 110px } .orbit-b{ --r: 135px } .orbit-c{ --r: 160px } }
+
+    /* When JS physics is active, disable CSS motion on wrappers */
+    .ad-stage.js-physics .fx, .ad-stage.js-physics .fy{ animation:none !important; transform:none !important }
+
+    /* Spin sequence */
+    .ad-card.spin{ animation: spin360 4.6s cubic-bezier(.22,.8,.22,1) }
+    @keyframes spin360{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
   </style>
 </head>
 
@@ -321,36 +288,28 @@
         <div class="relative">
           <div class="ad-stage" aria-hidden="true">
             <div class="ad-halo"></div>
-            <div class="ad-orbit orbit-a">
-              <div class="ad-node node-a">
+            <!-- Bouncing nodes (smooth, upright) -->
+            <div class="ad-float fx" style="--start-x:8%; --dx:70%; --dur-x:17s">
+              <div class="fy" style="--start-y:10%; --dy:60%; --dur-y:21s">
                 <div class="ad-card std" data-open-core="oc">
                   <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
-                  <div class="ad-meta">
-                    <div class="ad-name">OC‑Core</div>
-                    <div class="ad-pill">Standard</div>
-                  </div>
+                  <div class="ad-meta"><div class="ad-name">OC‑Core</div><div class="ad-pill">Standard</div></div>
                 </div>
               </div>
             </div>
-            <div class="ad-orbit orbit-b">
-              <div class="ad-node node-b">
+            <div class="ad-float fx" style="--start-x:58%; --dx:36%; --dur-x:19s">
+              <div class="fy" style="--start-y:18%; --dy:54%; --dur-y:23s">
                 <div class="ad-card pro" data-open-core="ocpro">
                   <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
-                  <div class="ad-meta">
-                    <div class="ad-name">OC‑Pro</div>
-                    <div class="ad-pill ad-pill-pro">Pro</div>
-                  </div>
+                  <div class="ad-meta"><div class="ad-name">OC‑Pro</div><div class="ad-pill ad-pill-pro">Pro</div></div>
                 </div>
               </div>
             </div>
-            <div class="ad-orbit orbit-c">
-              <div class="ad-node node-c">
+            <div class="ad-float fx" style="--start-x:22%; --dx:56%; --dur-x:22s">
+              <div class="fy" style="--start-y:52%; --dy:36%; --dur-y:18s">
                 <div class="ad-card soon" data-open-core="oclaw">
                   <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
-                  <div class="ad-meta">
-                    <div class="ad-name">OC‑Law</div>
-                    <div class="ad-pill ad-pill-soon">Coming soon</div>
-                  </div>
+                  <div class="ad-meta"><div class="ad-name">OC‑Law</div><div class="ad-pill ad-pill-soon">Coming soon</div></div>
                 </div>
               </div>
             </div>
@@ -414,16 +373,7 @@
   </section>
 
   <!-- MY CORES -->
-  <section id="myCores" class="mx-auto max-w-[1200px] oc-container my-12">
-    <div class="flex items-center justify-between">
-      <h2 class="text-2xl md:text-3xl font-semibold text-neutral-900">My Cores</h2>
-      <button id="showInstalledToggle" class="inline-flex items-center gap-2 rounded-2xl border border-neutral-300 bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 hover:bg-neutral-50" aria-pressed="false">
-        <i class="ph ph-check-circle"></i> Show installed only
-      </button>
-    </div>
-    <div id="myCoresGrid" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
-    <p id="myCoresEmpty" class="hidden mt-6 text-sm text-neutral-600">No cores installed yet.</p>
-  </section>
+  
 
   <!-- DETAILS MODAL -->
   <div id="coreModal" class="fixed inset-0 z-[60] hidden" aria-hidden="true">
@@ -526,14 +476,14 @@
     const stdGrid = document.getElementById('stdGrid');
     const proCount = document.getElementById('proCount');
     const stdCount = document.getElementById('stdCount');
-    const myGrid = document.getElementById('myCoresGrid');
-    const myEmpty = document.getElementById('myCoresEmpty');
     const resultsMeta = document.getElementById('resultsMeta');
     const emptyState = document.getElementById('emptyState');
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
     const searchEl = document.getElementById('marketSearch');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
     const sortSelect = document.getElementById('sortSelect');
+    const myGrid = document.getElementById('myCoresGrid');
+    const myEmpty = document.getElementById('myCoresEmpty');
     const showInstalledToggle = document.getElementById('showInstalledToggle');
 
     // ====== Utils ======
@@ -552,25 +502,20 @@
       el.setAttribute('tabindex','0');
       el.setAttribute('role','button');
       el.dataset.coreId = core.id;
-      const tagsHtml = core.tags.slice(0,3).map(t=>`<span class="badge">${cap(t)}</span>`).join('');
-      const pillTier = `<span class="pill ${core.tier==='pro'?'pill-pro':''}">${core.tier==='pro'?'Pro':'Standard'}</span>`;
-      const pillSoon = core.comingSoon ? `<span class="pill pill-soon">Coming soon</span>` : '';
-      const ratingHtml = stars(core.rating);
+      const pillTier = `<span class=\"pill ${core.tier==='pro'?'pill-pro':''}\">${core.tier==='pro'?'Pro':'Standard'}</span>`;
+      const pillSoon = core.comingSoon ? `<span class=\"pill pill-soon\">Coming soon</span>` : '';
       el.innerHTML = `
-        <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3">
           <div class="flex items-center gap-3">
             <div class="h-10 w-10 shrink-0 rounded-2xl ${dark?'bg-white/12 ring-1 ring-white/25 text-white':'bg-neutral-900/90 text-white'} flex items-center justify-center"><i class="ph ${core.icon} text-[18px]"></i></div>
             <div>
               <h3 class="text-[16px] md:text-[17px] font-semibold ${dark?'text-white':'text-neutral-900'}">${core.name}</h3>
-              <div class="mt-1 text-xs ${dark?'text-white/80':'text-neutral-600'} flex items-center gap-2"><span class="rating" aria-label="Rating ${core.rating.toFixed(1)} of 5">${ratingHtml}</span><span class="select-none">•</span><span>${fmt.format(core.installs)} installs</span></div>
             </div>
           </div>
-          
         </div>
-        <p class="mt-3 text-[13px] leading-relaxed ${dark?'text-white/90':'text-neutral-700'}">${core.short}</p>
-        <div class="mt-4 flex items-center justify-between">
-          <div class="flex items-center gap-2">${tagsHtml}</div>
-          <div class="flex items-center gap-2">${pillTier}${pillSoon}</div>
+        <p class="mt-3 text-[14px] leading-relaxed ${dark?'text-white/90':'text-neutral-700'}">${core.short}</p>
+        <div class="mt-4 flex items-center gap-2">
+          ${pillTier}${pillSoon}
         </div>
         <div class="absolute inset-0 pointer-events-none sheen-sweep" style="animation-delay:${Math.random()*6}s"></div>`;
       return el;
@@ -599,11 +544,13 @@
       resultsMeta.classList.toggle('hidden', total===0);
       emptyState.classList.toggle('hidden', total>0);
 
-      // My cores (installed)
-      const my = CORES.filter(c=> state.installed.has(c.id));
-      myGrid.innerHTML = '';
-      my.forEach(c=> myGrid.appendChild(card(c)));
-      myEmpty.classList.toggle('hidden', my.length>0);
+      // My cores removed; keep compatibility if nodes exist
+      if (myGrid) {
+        const my = CORES.filter(c=> state.installed.has(c.id));
+        myGrid.innerHTML = '';
+        my.forEach(c=> myGrid.appendChild(card(c)));
+        if (myEmpty) myEmpty.classList.toggle('hidden', my.length>0);
+      }
 
       document.dispatchEvent(new Event('oc:market-render'));
     }
@@ -630,12 +577,12 @@
       });
       render();
     });
-    showInstalledToggle.addEventListener('click', ()=>{
+    showInstalledToggle?.addEventListener('click', ()=>{
       state.showInstalledOnly = !state.showInstalledOnly;
       const on = state.showInstalledOnly;
-      showInstalledToggle.classList.toggle('bg-neutral-900', on);
-      showInstalledToggle.classList.toggle('text-white', on);
-      showInstalledToggle.setAttribute('aria-pressed', on?'true':'false');
+      showInstalledToggle?.classList.toggle('bg-neutral-900', on);
+      showInstalledToggle?.classList.toggle('text-white', on);
+      showInstalledToggle?.setAttribute('aria-pressed', on?'true':'false');
       render();
     });
 
@@ -791,6 +738,83 @@
       // Pause on hover for desktop
       root.addEventListener('mouseenter', ()=>{ clearTimeout(timer); });
       root.addEventListener('mouseleave', ()=>{ clearTimeout(timer); timer = setTimeout(tick, fadeGap); });
+    })();
+
+    // ====== Hero spin cycle (one-by-one) ======
+    (function heroScreenSaver(){
+      const stage = document.querySelector('.ad-stage'); if (!stage) return;
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce) return;
+
+      // Disable CSS wrapper animations for full JS control
+      stage.classList.add('js-physics');
+
+      const cards = Array.from(stage.querySelectorAll('.ad-card'));
+      if (!cards.length) return;
+
+      const nodes = cards.map(el => ({ el, x: 0, y: 0, w: 0, h: 0, vx: 0, vy: 0, ang: 0, vang: 0 }));
+
+      const rand = (a,b)=> Math.random()*(b-a)+a;
+
+      function measure(){
+        const sr = stage.getBoundingClientRect();
+        for (const n of nodes){
+          const r = n.el.getBoundingClientRect();
+          n.w = r.width; n.h = r.height;
+          if (!n._init){
+            n.x = rand(0, Math.max(1, sr.width - n.w));
+            n.y = rand(0, Math.max(1, sr.height - n.h));
+            n.vx = rand(10, 24) * (Math.random()<.5? -1: 1); // px/s — slower
+            n.vy = rand(10, 24) * (Math.random()<.5? -1: 1);
+            n.ang = rand(-3, 3);
+            n.vang = rand(-6, 6); // deg/s — gentler
+            n._init = true;
+          }
+        }
+        return { w: sr.width, h: sr.height };
+      }
+
+      let stageSize = measure();
+      let last = performance.now();
+
+      function tick(now){
+        const dt = Math.min(0.035, (now - last)/1000); // clamp step to keep motion smooth
+        last = now;
+        const maxX = stageSize.w, maxY = stageSize.h;
+
+        for (const n of nodes){
+          // Update position
+          n.x += n.vx * dt;
+          n.y += n.vy * dt;
+
+          // Bounce on walls with a tiny spin impulse
+          if (n.x <= 0){ n.x = 0; n.vx = Math.abs(n.vx); n.vang += rand(-15, 15); }
+          else if (n.x + n.w >= maxX){ n.x = maxX - n.w; n.vx = -Math.abs(n.vx); n.vang += rand(-15, 15); }
+
+          if (n.y <= 0){ n.y = 0; n.vy = Math.abs(n.vy); n.vang += rand(-15, 15); }
+          else if (n.y + n.h >= maxY){ n.y = maxY - n.h; n.vy = -Math.abs(n.vy); n.vang += rand(-15, 15); }
+
+          // Angle update with gentle damping so it doesn't spin forever
+          n.ang += n.vang * dt;
+          n.vang *= 0.995; // stronger damping for slower spin
+          // Occasional micro drift in angle and velocity (organic)
+          if (Math.random() < 0.004) n.vang += rand(-3, 3);
+          if (Math.random() < 0.006) {
+            n.vx += rand(-2, 2); n.vy += rand(-2, 2);
+            // clamp speeds to a soft range
+            const clamp = (v)=> Math.max(-28, Math.min(28, (Math.abs(v)<8? (v<0?-8:8): v)));
+            n.vx = clamp(n.vx); n.vy = clamp(n.vy);
+          }
+
+          n.el.style.transform = `translate3d(${n.x}px, ${n.y}px, 0) rotate(${n.ang}deg)`;
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      const ro = new ResizeObserver(()=>{ stageSize = measure(); });
+      ro.observe(stage);
+      requestAnimationFrame(tick);
     })();
   </script>
 </body>
