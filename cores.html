@@ -175,12 +175,12 @@
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
       radial-gradient(50% 50% at 40% 60%, rgba(14,111,92,.45), rgba(0,0,0,0) 70%);
     }
-    .ad-card{ position:absolute; left:50%; top:50%; transform: translate(calc(-50% + var(--x,0)), calc(-50% + var(--y,0))) rotate(var(--r,0));
+    .ad-card{ position:absolute; left:50%; top:50%; transform: translate3d(-50%, -50%, 0);
       width:min(270px, 72vw); padding:14px; border-radius:18px; border:1px solid rgba(255,255,255,.4);
       background:rgba(255,255,255,.9); backdrop-filter: blur(8px); box-shadow:0 18px 50px rgba(10,13,16,.25);
-      display:flex; align-items:center; gap:12px; cursor:pointer; transition: transform .4s cubic-bezier(.22,.8,.22,1), box-shadow .4s ease;
+      display:flex; align-items:center; gap:12px; cursor:pointer; transition: box-shadow .4s ease; will-change: transform;
     }
-    .ad-card:hover{ transform: translate(calc(-50% + var(--x,0)), calc(-50% + var(--y,0))) rotate(var(--r,0)) translateY(-2px); box-shadow:0 24px 60px rgba(10,13,16,.3) }
+    .ad-card:hover{ box-shadow:0 24px 60px rgba(10,13,16,.3) }
     .ad-card.pro{ background: rgba(10,13,16,.92); color:#fff; border-color: rgba(255,255,255,.25) }
     .ad-icon{ display:grid; place-items:center; width:44px; height:44px; border-radius:14px; }
     .ad-icon.std{ background:#0A0D10; color:#fff }
@@ -190,22 +190,29 @@
     .ad-pill{ font-size:11px; line-height:1; padding:5px 8px; border-radius:9999px; background:#fff; color:#0A0D10; border:1px solid rgba(0,0,0,.08); width:fit-content }
     .ad-pill-pro{ background:#0A0D10; color:#fff; border-color:#0A0D10 }
     .ad-pill-soon{ background:#f3f4f6; color:#0A0D10; border-color:#e5e7eb }
-    .float-a{ animation: floatA 8s ease-in-out infinite }
-    .float-b{ animation: floatB 9s ease-in-out infinite }
-    .float-c{ animation: floatC 7.5s ease-in-out infinite }
-    @keyframes floatA{ 0%,100%{ transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) } 50%{ transform: translate(calc(-50% + var(--x) + 6px), calc(-50% + var(--y) - 6px)) rotate(calc(var(--r) + .5deg)) } }
-    @keyframes floatB{ 0%,100%{ transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) } 50%{ transform: translate(calc(-50% + var(--x) - 6px), calc(-50% + var(--y) + 4px)) rotate(calc(var(--r) - .4deg)) } }
-    @keyframes floatC{ 0%,100%{ transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) } 50%{ transform: translate(calc(-50% + var(--x) + 3px), calc(-50% + var(--y) + 6px)) rotate(calc(var(--r) + .3deg)) } }
-    @media (prefers-reduced-motion: reduce){ .ad-card, .float-a, .float-b, .float-c{ animation:none !important } }
+    @media (prefers-reduced-motion: reduce){ .ad-card{ animation:none !important } }
 
     /* Orbits for carousel */
-    .ad-orbit{ position:absolute; left:50%; top:50%; transform-origin:center; transform: translate(-50%, -50%); }
-    .ad-orbit .ad-card{ position:absolute; left:0; top:0; transform: translateX(var(--r, 150px)); }
+    .ad-orbit{ position:absolute; left:50%; top:50%; transform-origin:center; transform: translate3d(-50%, -50%, 0); will-change: transform; }
+    .ad-node{ position:absolute; left:0; top:0; transform: translate3d(var(--r, 150px), 0, 0); will-change: transform; }
     .orbit-a{ --r: 140px; animation: orbitCW 30s linear infinite }
     .orbit-b{ --r: 175px; animation: orbitCCW 36s linear infinite }
     .orbit-c{ --r: 210px; animation: orbitCW 42s linear infinite }
-    @keyframes orbitCW{ from{ transform: translate(-50%,-50%) rotate(0) } to{ transform: translate(-50%,-50%) rotate(360deg) } }
-    @keyframes orbitCCW{ from{ transform: translate(-50%,-50%) rotate(0) } to{ transform: translate(-50%,-50%) rotate(-360deg) } }
+    /* Bobbing (applied on node, so it doesn't fight orbit) */
+    .node-a{ animation: bobA 7.5s ease-in-out infinite }
+    .node-b{ animation: bobB 8.2s ease-in-out infinite }
+    .node-c{ animation: bobC 6.9s ease-in-out infinite }
+    @keyframes bobA{ 0%,100%{ transform: translate3d(var(--r),0,0) } 50%{ transform: translate3d(var(--r), -6px, 0) } }
+    @keyframes bobB{ 0%,100%{ transform: translate3d(var(--r),0,0) } 50%{ transform: translate3d(var(--r), 5px, 0) } }
+    @keyframes bobC{ 0%,100%{ transform: translate3d(var(--r),0,0) } 50%{ transform: translate3d(var(--r), -4px, 0) } }
+    @keyframes orbitCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(360deg) } }
+    @keyframes orbitCCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(-360deg) } }
+    /* Keep cards upright: counter-rotate the card to cancel parent orbit */
+    .orbit-a .ad-card{ animation: uprightCW 30s linear infinite }
+    .orbit-b .ad-card{ animation: uprightCCW 36s linear infinite }
+    .orbit-c .ad-card{ animation: uprightCW 42s linear infinite }
+    @keyframes uprightCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(-360deg) } }
+    @keyframes uprightCCW{ from{ transform: translate3d(-50%,-50%,0) rotate(0) } to{ transform: translate3d(-50%,-50%,0) rotate(360deg) } }
     @media (max-width: 640px){ .orbit-a{ --r: 110px } .orbit-b{ --r: 135px } .orbit-c{ --r: 160px } }
   </style>
 </head>
@@ -290,29 +297,35 @@
           <div class="ad-stage" aria-hidden="true">
             <div class="ad-halo"></div>
             <div class="ad-orbit orbit-a">
-              <div class="ad-card std float-a" data-open-core="oc">
-                <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
-                <div class="ad-meta">
-                  <div class="ad-name">OC‑Core</div>
-                  <div class="ad-pill">Standard</div>
+              <div class="ad-node node-a">
+                <div class="ad-card std" data-open-core="oc">
+                  <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
+                  <div class="ad-meta">
+                    <div class="ad-name">OC‑Core</div>
+                    <div class="ad-pill">Standard</div>
+                  </div>
                 </div>
               </div>
             </div>
             <div class="ad-orbit orbit-b">
-              <div class="ad-card pro float-b" data-open-core="ocpro">
-                <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
-                <div class="ad-meta">
-                  <div class="ad-name">OC‑Pro</div>
-                  <div class="ad-pill ad-pill-pro">Pro</div>
+              <div class="ad-node node-b">
+                <div class="ad-card pro" data-open-core="ocpro">
+                  <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
+                  <div class="ad-meta">
+                    <div class="ad-name">OC‑Pro</div>
+                    <div class="ad-pill ad-pill-pro">Pro</div>
+                  </div>
                 </div>
               </div>
             </div>
             <div class="ad-orbit orbit-c">
-              <div class="ad-card soon float-c" data-open-core="oclaw">
-                <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
-                <div class="ad-meta">
-                  <div class="ad-name">OC‑Law</div>
-                  <div class="ad-pill ad-pill-soon">Coming soon</div>
+              <div class="ad-node node-c">
+                <div class="ad-card soon" data-open-core="oclaw">
+                  <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
+                  <div class="ad-meta">
+                    <div class="ad-name">OC‑Law</div>
+                    <div class="ad-pill ad-pill-soon">Coming soon</div>
+                  </div>
                 </div>
               </div>
             </div>
