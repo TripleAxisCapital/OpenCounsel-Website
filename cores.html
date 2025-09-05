@@ -197,6 +197,16 @@
     @keyframes floatB{ 0%,100%{ transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) } 50%{ transform: translate(calc(-50% + var(--x) - 6px), calc(-50% + var(--y) + 4px)) rotate(calc(var(--r) - .4deg)) } }
     @keyframes floatC{ 0%,100%{ transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) } 50%{ transform: translate(calc(-50% + var(--x) + 3px), calc(-50% + var(--y) + 6px)) rotate(calc(var(--r) + .3deg)) } }
     @media (prefers-reduced-motion: reduce){ .ad-card, .float-a, .float-b, .float-c{ animation:none !important } }
+
+    /* Orbits for carousel */
+    .ad-orbit{ position:absolute; left:50%; top:50%; transform-origin:center; transform: translate(-50%, -50%); }
+    .ad-orbit .ad-card{ position:absolute; left:0; top:0; transform: translateX(var(--r, 150px)); }
+    .orbit-a{ --r: 140px; animation: orbitCW 30s linear infinite }
+    .orbit-b{ --r: 175px; animation: orbitCCW 36s linear infinite }
+    .orbit-c{ --r: 210px; animation: orbitCW 42s linear infinite }
+    @keyframes orbitCW{ from{ transform: translate(-50%,-50%) rotate(0) } to{ transform: translate(-50%,-50%) rotate(360deg) } }
+    @keyframes orbitCCW{ from{ transform: translate(-50%,-50%) rotate(0) } to{ transform: translate(-50%,-50%) rotate(-360deg) } }
+    @media (max-width: 640px){ .orbit-a{ --r: 110px } .orbit-b{ --r: 135px } .orbit-c{ --r: 160px } }
   </style>
 </head>
 
@@ -279,58 +289,38 @@
         <div class="relative">
           <div class="ad-stage" aria-hidden="true">
             <div class="ad-halo"></div>
-            <div class="ad-card std float-a" style="--x:-14px; --y:-6px; --r:-2deg" data-open-core="oc">
-              <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
-              <div class="ad-meta">
-                <div class="ad-name">OC‑Core</div>
-                <div class="ad-pill">Standard</div>
+            <div class="ad-orbit orbit-a">
+              <div class="ad-card std float-a" data-open-core="oc">
+                <div class="ad-icon std"><i class="ph ph-cpu"></i></div>
+                <div class="ad-meta">
+                  <div class="ad-name">OC‑Core</div>
+                  <div class="ad-pill">Standard</div>
+                </div>
               </div>
             </div>
-            <div class="ad-card pro float-b" style="--x:16px; --y:10px; --r:2deg" data-open-core="ocpro">
-              <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
-              <div class="ad-meta">
-                <div class="ad-name">OC‑Pro</div>
-                <div class="ad-pill ad-pill-pro">Pro</div>
+            <div class="ad-orbit orbit-b">
+              <div class="ad-card pro float-b" data-open-core="ocpro">
+                <div class="ad-icon pro"><i class="ph ph-seal-check"></i></div>
+                <div class="ad-meta">
+                  <div class="ad-name">OC‑Pro</div>
+                  <div class="ad-pill ad-pill-pro">Pro</div>
+                </div>
               </div>
             </div>
-            <div class="ad-card soon float-c" style="--x:-4px; --y:18px; --r:0deg" data-open-core="oclaw">
-              <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
-              <div class="ad-meta">
-                <div class="ad-name">OC‑Law</div>
-                <div class="ad-pill ad-pill-soon">Coming soon</div>
+            <div class="ad-orbit orbit-c">
+              <div class="ad-card soon float-c" data-open-core="oclaw">
+                <div class="ad-icon pro"><i class="ph ph-scales"></i></div>
+                <div class="ad-meta">
+                  <div class="ad-name">OC‑Law</div>
+                  <div class="ad-pill ad-pill-soon">Coming soon</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-        <!-- Search + filters -->
-        <div class="mt-8 w-full max-w-2xl">
-          <div class="relative rounded-2xl bg-white/95 border border-white/70 shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden">
-            <div class="flex items-center px-4 py-3 gap-3">
-              <i class="ph ph-magnifying-glass text-neutral-500"></i>
-              <input id="marketSearch" type="text" inputmode="search" placeholder="Search cores (e.g., research, drafting)" class="w-full placeholder-neutral-500/70 outline-none text-[15px]" autocomplete="off" />
-              <button id="clearSearchBtn" class="hidden rounded-xl px-2 py-1 text-xs font-medium bg-neutral-100 hover:bg-neutral-200">Clear</button>
-            </div>
-            <div class="h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent"></div>
-            <div class="flex flex-wrap items-center gap-2 p-3 md:p-4">
-              <button class="chip chip-on" data-filter="all" aria-pressed="true">All</button>
-              <button class="chip" data-filter="writing" aria-pressed="false">Writing</button>
-              <button class="chip" data-filter="research" aria-pressed="false">Research</button>
-              <button class="chip" data-filter="productivity" aria-pressed="false">Productivity</button>
-              <button class="chip" data-filter="legal" aria-pressed="false">Legal</button>
-              <div class="ml-auto flex items-center gap-2 text-sm pr-3">
-                <label class="text-neutral-600">Sort</label>
-                <select id="sortSelect" class="rounded-xl border border-neutral-200 bg-white px-2.5 py-1.5 text-sm">
-                  <option value="trending">Trending</option>
-                  <option value="rating">Rating</option>
-                  <option value="newest">Newest</option>
-                  <option value="installs">Installs</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </div>
   </section>
@@ -590,11 +580,11 @@
         render();
       });
     });
-    searchEl.addEventListener('input', ()=>{ state.q = searchEl.value.trim(); clearSearchBtn.classList.toggle('hidden', !state.q); render(); });
-    clearSearchBtn.addEventListener('click', ()=>{ searchEl.value=''; state.q=''; clearSearchBtn.classList.add('hidden'); render(); });
-    sortSelect.addEventListener('change', ()=>{ state.sort = sortSelect.value; render(); });
+    searchEl?.addEventListener('input', ()=>{ state.q = searchEl.value.trim(); clearSearchBtn?.classList.toggle('hidden', !state.q); render(); });
+    clearSearchBtn?.addEventListener('click', ()=>{ if (searchEl) searchEl.value=''; state.q=''; clearSearchBtn?.classList.add('hidden'); render(); });
+    sortSelect?.addEventListener('change', ()=>{ state.sort = sortSelect.value; render(); });
     resetFiltersBtn?.addEventListener('click', ()=>{
-      state.q=''; searchEl.value=''; clearSearchBtn.classList.add('hidden'); state.filter='all';
+      state.q=''; if (searchEl) searchEl.value=''; clearSearchBtn?.classList.add('hidden'); state.filter='all';
       document.querySelectorAll('[data-filter]').forEach(b=>{
         const on = b.getAttribute('data-filter')==='all';
         b.classList.toggle('chip-on', on);
