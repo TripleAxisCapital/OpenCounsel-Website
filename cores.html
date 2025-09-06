@@ -214,7 +214,7 @@
     @media (prefers-reduced-motion: reduce){ .demo *, .bubble, .quote, .demo-bar{ animation:none !important } }
 
     /* New Apple‑like hero stage */
-    .ad-stage{ position:absolute; inset:0; isolation:isolate; overflow:hidden; pointer-events:auto; z-index:0; }
+    .ad-stage{ position:absolute; inset:0; isolation:isolate; overflow:hidden; pointer-events:auto; z-index:0; contain: paint; transform: translateZ(0); will-change: transform; }
     @media (max-width:767px){
       .ad-stage{ pointer-events:none }
       /* Mobile layout: move animation below content */
@@ -227,6 +227,10 @@
       .ad-halo{ filter: blur(20px); opacity:.55 }
       .ad-card{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(255,255,255,.92); box-shadow:0 10px 26px rgba(10,13,16,.18); transform: translateZ(0); }
       .ad-card.pro{ background: rgba(10,13,16,.94); }
+      /* Step heavy gradients instead of 60fps to cut paints */
+      .hero-card.grad-anim, .hero-card.g-grad{ animation-duration: 40s !important; animation-timing-function: steps(20, end) !important; }
+      /* Make hero text shimmer update in steps as well */
+      .hero-shine{ animation-duration: 12s !important; animation-timing-function: steps(24, end) !important; }
     }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
@@ -898,14 +902,19 @@
           // Angle update with gentle damping so it doesn't spin forever
           n.ang += n.vang * dt;
           n.vang *= 0.995; // stronger damping for slower spin
-          // Occasional micro drift in angle and velocity (organic)
-          if (Math.random() < 0.004) n.vang += rand(-3, 3);
-          if (Math.random() < 0.006) {
+          // Occasional micro drift (desktop only to reduce mobile CPU/GPU churn)
+          if (!isMobile && Math.random() < 0.004) n.vang += rand(-3, 3);
+          if (!isMobile && Math.random() < 0.006) {
             n.vx += rand(-2, 2); n.vy += rand(-2, 2);
-            // clamp speeds to a soft range
-            const clamp = (v)=> Math.max(-28, Math.min(28, (Math.abs(v)<8? (v<0?-8:8): v)));
-            n.vx = clamp(n.vx); n.vy = clamp(n.vy);
           }
+          // Clamp speeds to a soft range; slightly lower caps on mobile
+          const clampSpeed = (v)=> {
+            const cap = isMobile ? 22 : 28;
+            const min = 8;
+            const base = (Math.abs(v) < min ? (v < 0 ? -min : min) : v);
+            return Math.max(-cap, Math.min(cap, base));
+          };
+          n.vx = clampSpeed(n.vx); n.vy = clampSpeed(n.vy);
 
           n.el.style.transform = `translate3d(${n.x}px, ${n.y}px, 0) rotate(${n.ang}deg)`;
         }
