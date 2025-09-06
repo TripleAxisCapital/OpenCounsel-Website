@@ -259,8 +259,9 @@
     // Chat bubble hero intro (spawns bouncing bubbles, then fades)
     (function(){
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const stage = document.getElementById('chatIntro'); if (!stage || reduce) return;
+      const stage = document.getElementById('chatIntro'); if (!stage) return;
       const hero  = document.getElementById('proHero');
+      if (reduce){ hero?.classList.remove('intro-active'); stage.remove(); return; }
 
       const QUERIES = [
         'Summarize this paper with effect size + CI.',
@@ -396,16 +397,24 @@
           const p = randomPointIn(tEl, bw, bh);
           tx = p.x; ty = p.y; merge = true;
         }
-        state.push({ el, x, y, vx, vy, w: bw, h: bh, depth, f1, f2, a1, a2, p1, p2, merge, tx, ty, alpha: 1 });
+        state.push({ el, x, y, vx, vy, w: bw, h: bh, depth, f1, f2, a1, a2, p1, p2, merge, tx, ty, alpha: 1, sx: null, sy: null });
       }
 
-      const FADE_MS = 600; // seamless ease‑out
-      const INTRO_MS = 2200; // shorter
-      const MERGE_MS = 800;  // time reserved for merge motion
-      const mergeStart = Math.max(400, INTRO_MS - MERGE_MS);
+      const FADE_MS = 650; // seamless ease‑out
+      const INTRO_MS = 2300; // crisp but long enough for merge
+      const MERGE_MS = 900;  // time reserved for merge motion
+      const mergeStart = Math.max(420, INTRO_MS - MERGE_MS);
       const t0 = performance.now();
-      // reveal hero content slightly after merge starts
-      setTimeout(()=> hero?.classList.remove('intro-active'), mergeStart + 150);
+      // reveal hero content slightly after merge starts and retrigger title reveal
+      setTimeout(()=>{
+        hero?.classList.remove('intro-active');
+        const title = document.getElementById('heroTitle');
+        if (title){
+          const words = title.querySelectorAll('.word');
+          words.forEach(w => { w.style.animation = 'none'; });
+          requestAnimationFrame(()=> requestAnimationFrame(()=> words.forEach(w => { w.style.animation = ''; })));
+        }
+      }, mergeStart + 120);
 
       function step(ts){
         if (!last) last = ts; const dt = Math.min(40, ts - last) / 1000; last = ts;
@@ -414,25 +423,35 @@
         const fadeStart = INTRO_MS - FADE_MS;
         let slow = 1;
         if (elapsed > fadeStart) slow = Math.max(0, 1 - (elapsed - fadeStart)/FADE_MS);
+        const MARGIN = 28; // offscreen margin for invisible wrap
+
+        function easeInOutCubic(u){ return u < .5 ? 4*u*u*u : 1 - Math.pow(-2*u+2,3)/2; }
+
         for (const b of state){
           const dx = Math.sin(t * (2*Math.PI*b.f1) + b.p1) * b.a1 * dt;
           const dy = Math.cos(t * (2*Math.PI*b.f2) + b.p2) * b.a2 * dt;
           if (elapsed >= mergeStart && b.merge){
+            if (b.sx === null){ b.sx = b.x; b.sy = b.y; }
             const u = Math.min(1, (elapsed - mergeStart) / MERGE_MS);
-            // ease-in toward text targets
-            const k = 0.06 + 0.24 * u;
-            b.x += (b.tx - b.x) * k + dx * 0.2 * (1-u);
-            b.y += (b.ty - b.y) * k + dy * 0.2 * (1-u);
-            b.alpha = 1 - u; // fade bubble as text appears
+            const e = easeInOutCubic(u);
+            // curved path toward target
+            const vx = b.tx - b.sx, vy = b.ty - b.sy;
+            const len = Math.max(1e-3, Math.hypot(vx, vy));
+            const nx = -vy/len, ny = vx/len; // perpendicular normal
+            const curve = Math.sin(Math.PI * e) * 18 * (2 - b.depth); // arc amplitude
+            b.x = b.sx + vx * e + nx * curve;
+            b.y = b.sy + vy * e + ny * curve;
+            b.alpha = 1 - e; // fade as it merges
           } else {
             b.x += (b.vx * dt * slow) + dx * slow;
             b.y += (b.vy * dt * slow) + dy * slow;
           }
-          // wrap edges for smoothness (no hard bounces)
-          if (b.x > w) b.x = -b.w + (b.x - w);
-          if (b.x < -b.w) b.x = w + (b.x + b.w);
-          if (b.y > h) b.y = -b.h + (b.y - h);
-          if (b.y < -b.h) b.y = h + (b.y + b.h);
+          // soft wrap edges using overscan margin
+          if (b.x > w + MARGIN) b.x = -b.w - MARGIN + (b.x - (w + MARGIN));
+          if (b.x < -b.w - MARGIN) b.x = w + MARGIN + (b.x + b.w + MARGIN);
+          if (b.y > h + MARGIN) b.y = -b.h - MARGIN + (b.y - (h + MARGIN));
+          if (b.y < -b.h - MARGIN) b.y = h + MARGIN + (b.y + b.h + MARGIN);
+
           const s = 0.96 + 0.10*b.depth + Math.sin(t*1.2 + b.p1)*0.012 * slow; // gentle scale
           b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) scale(${s})`;
           if (elapsed >= mergeStart && b.merge){ b.el.style.opacity = String(Math.max(0, Math.min(1, b.alpha))); }
@@ -443,7 +462,7 @@
 
       // Seamless fade and cleanup
       setTimeout(()=> stage.classList.add('out'), INTRO_MS-FADE_MS);
-      setTimeout(()=>{ cancelAnimationFrame(raf); stage.remove(); }, INTRO_MS+160);
+      setTimeout(()=>{ cancelAnimationFrame(raf); stage.remove(); }, INTRO_MS+200);
     })();
 
     const hamburgerBtn = document.getElementById('hamburgerBtn');
