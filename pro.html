@@ -58,13 +58,26 @@
     @keyframes spin{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
     @keyframes counterSpin{ from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
 
+    /* Intro hero flare */
+    .intro-veil{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+    .intro-veil .intro-flare{ position:absolute; top:-20%; left:-15%; width:140%; height:160%; background:linear-gradient(120deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.16) 50%, rgba(255,255,255,0) 65%); transform: translateX(-120%); animation: flareSweep 1.6s cubic-bezier(.22,.9,.22,1) .25s forwards; mix-blend-mode:screen; }
+    .intro-veil .intro-ring{ position:absolute; left:50%; top:50%; width:44vmin; height:44vmin; border-radius:9999px; border:1px solid rgba(255,255,255,.18); transform: translate(-50%,-50%) scale(.6); opacity:.0; animation: ringPulse 1.6s ease-out .15s forwards; box-shadow:0 0 120px rgba(255,255,255,.25) inset; }
+    @keyframes flareSweep{ to{ transform: translateX(120%);} }
+    @keyframes ringPulse{ 0%{ opacity:.0; transform: translate(-50%,-50%) scale(.6)} 40%{ opacity:.55 } 100%{ opacity:0; transform: translate(-50%,-50%) scale(2.6)} }
+
     /* Tilt + magnetic feel */
     .tilt{ transform-style: preserve-3d; transition: transform .3s cubic-bezier(.22,.8,.22,1), box-shadow .3s ease; will-change: transform; }
     .tilt:hover{ transform: translateY(-3px) scale(1.01); }
     .magnet{ transition: transform .25s cubic-bezier(.22,.8,.22,1), box-shadow .25s ease; will-change: transform; }
 
+    /* Stats animations */
+    .bar-col{ height:8%; transition: height 1.4s cubic-bezier(.22,.9,.22,1); }
+    .ticker{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px 12px; box-shadow:0 10px 26px rgba(0,0,0,.35) }
+    .ticker .caret{ display:inline-block; width:8px; height:1.2em; background:linear-gradient(#fff,#fff); -webkit-background-clip:text; background-clip:text; color:transparent; position:relative; top:.14em; margin-left:4px; border-left:2px solid #fff; animation: blink 1s steps(1,end) infinite; }
+    @keyframes blink{ 0%,49%{ opacity:1 } 50%,100%{ opacity:0 } }
+
     @media (prefers-reduced-motion: reduce){
-      .hero-orbits, #heroFx, .tilt, .magnet, .shine{ animation:none !important; transition:none !important; transform:none !important; }
+      .hero-orbits, #heroFx, .tilt, .magnet, .shine, .intro-veil *, .intro-veil{ animation:none !important; transition:none !important; transform:none !important; }
     }
 
     /* Apple-like polish */
@@ -159,6 +172,7 @@
         <div class="ring r2"></div>
         <div class="ring r3"></div>
       </div>
+      <div class="intro-veil" id="introVeil"><div class="intro-flare"></div><div class="intro-ring"></div></div>
     </div>
     <div class="mx-auto max-w-[1200px] oc-container py-20 md:py-28">
       <div class="max-w-3xl">
@@ -215,7 +229,7 @@
     <div class="mx-auto max-w-[1200px] oc-container">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div class="order-2 md:order-1 reveal">
-          <div class="glass demo-card p-6 tilt">
+          <div id="statsCard" class="glass demo-card p-6 tilt">
             <div class="flex items-center justify-between">
               <div class="text-sm fine">Stat suite</div>
               <div class="chip"><i class="ph ph-chart-line-up"></i><span>Pro tools</span></div>
@@ -226,22 +240,23 @@
                 <div class="fine text-xs mt-1">significance</div>
               </div>
               <div class="rounded-xl glass p-4 text-center">
-                <div class="text-2xl font-semibold">R² .93</div>
+                <div class="text-2xl font-semibold">R² <span id="statR2" data-target="0.93">0.00</span></div>
                 <div class="fine text-xs mt-1">fit</div>
               </div>
               <div class="rounded-xl glass p-4 text-center">
-                <div class="text-2xl font-semibold">5.2×</div>
+                <div class="text-2xl font-semibold"><span id="statLift" data-target="5.2">1.0</span>×</div>
                 <div class="fine text-xs mt-1">lift</div>
               </div>
             </div>
             <div class="mt-4 divider"></div>
-            <div class="mt-4 grid grid-cols-5 gap-2 items-end h-24">
-              <div class="bg-white/20 rounded-md" style="height:36%"></div>
-              <div class="bg-white/20 rounded-md" style="height:68%"></div>
-              <div class="bg-white/20 rounded-md" style="height:52%"></div>
-              <div class="bg-white/20 rounded-md" style="height:88%"></div>
-              <div class="bg-white/20 rounded-md" style="height:40%"></div>
+            <div id="statsBars" class="mt-4 grid grid-cols-5 gap-2 items-end h-24" role="img" aria-label="Animated bar chart">
+              <div class="bg-white/20 rounded-md bar-col" data-h="36"></div>
+              <div class="bg-white/20 rounded-md bar-col" data-h="68"></div>
+              <div class="bg-white/20 rounded-md bar-col" data-h="52"></div>
+              <div class="bg-white/20 rounded-md bar-col" data-h="88"></div>
+              <div class="bg-white/20 rounded-md bar-col" data-h="40"></div>
             </div>
+            <div id="statTicker" class="mt-4 ticker font-mono text-xs text-white/85">fit = OLS(y ~ x, α=.05)<span class="caret"></span></div>
           </div>
         </div>
         <div class="order-1 md:order-2 reveal">
@@ -488,6 +503,62 @@
         if (!reduce) requestAnimationFrame(step);
       }
       if (!reduce) requestAnimationFrame(step); else { ctx.globalAlpha=.5; for(const s of stars){ ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill(); } }
+      // Clean up intro veil
+      const veil = document.getElementById('introVeil');
+      if (veil && !reduce){ setTimeout(()=>{ veil.remove(); }, 1800); }
+    })();
+
+    // Stats: number counters, bar growth, and ticker
+    (function(){
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const card = document.getElementById('statsCard'); if (!card) return;
+      let ran = false;
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if (e.isIntersecting && !ran){ ran=true; run(); io.disconnect(); }
+        });
+      }, { threshold:.4 });
+      io.observe(card);
+
+      function run(){
+        // Counters
+        const r2 = document.getElementById('statR2');
+        const lift = document.getElementById('statLift');
+        if (!reduce){
+          countTo(r2, parseFloat(r2.dataset.target), 900, 2);
+          countTo(lift, parseFloat(lift.dataset.target), 1100, 1);
+        } else {
+          if (r2) r2.textContent = r2.dataset.target;
+          if (lift) lift.textContent = lift.dataset.target;
+        }
+        // Bars
+        const bars = Array.from(document.querySelectorAll('#statsBars .bar-col'));
+        if (!reduce){ setTimeout(()=> bars.forEach((b,i)=> b.style.height = (b.dataset.h||'20')+'%'), 150); }
+        else { bars.forEach(b=> b.style.height = (b.dataset.h||'20')+'%'); }
+        // Ticker
+        const ticker = document.getElementById('statTicker');
+        if (ticker){
+          const lines = [
+            'y = β₀ + β₁x + ε',
+            'β₁ = 0.62  •  p < .001',
+            'R² = 0.93  |  AIC = 112.4',
+            'Forecast Δ = +5.2× (95% CI)'
+          ];
+          let i=0;
+          const next = ()=>{ ticker.firstChild.nodeValue = lines[i = (i+1)%lines.length] + ' '; };
+          if (!reduce){ setInterval(next, 1800); }
+        }
+      }
+
+      function countTo(el, target, ms, decimals){
+        if (!el) return; const start = 0; const t0 = performance.now();
+        function tick(t){
+          const p = Math.min(1, (t - t0)/ms); const ease = p<.5 ? 2*p*p : -1+(4-2*p)*p; const val = start + (target-start)*ease;
+          el.textContent = val.toFixed(decimals);
+          if (p<1) requestAnimationFrame(tick); else el.textContent = target.toFixed(decimals);
+        }
+        requestAnimationFrame(tick);
+      }
     })();
 
     const hamburgerBtn = document.getElementById('hamburgerBtn');
