@@ -54,9 +54,9 @@
     /* Hero intro stage */
     .intro-stage{ position:absolute; inset:0; pointer-events:none; z-index:0; }
     /* Chat bubble intro overlay */
-    .chat-intro{ position:absolute; inset:0; overflow:hidden; opacity:1; transition: opacity .8s ease; }
+    .chat-intro{ position:absolute; inset:0; overflow:hidden; opacity:1; transition: opacity .6s ease; }
     .chat-intro.out{ opacity:0; }
-    .chat-bubble{ position:absolute; background:#fff; color:#0A0D10; border-radius:16px; padding:10px 14px; max-width:min(48vw, 380px); box-shadow:0 8px 24px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.6); will-change: transform; opacity:.95; }
+    .chat-bubble{ position:absolute; background:#fff; color:#0A0D10; border-radius:16px; padding:10px 14px; max-width:min(48vw, 380px); box-shadow:0 8px 24px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.65); will-change: transform; opacity:.95; }
     .chat-bubble .inner{ display:block; transform: scale(.85); opacity:0; animation: bubblePop .6s cubic-bezier(.2,.8,.2,1) forwards; }
     .chat-bubble strong{ font-weight:700 }
     .chat-bubble.tail-left::after, .chat-bubble.tail-right::after{ content:""; position:absolute; width:0; height:0; border-style:solid; filter: drop-shadow(0 2px 2px rgba(0,0,0,.12)); }
@@ -261,45 +261,41 @@
       const stage = document.getElementById('chatIntro'); if (!stage || reduce) return;
 
       const QUERIES = [
-        'Summarize this 80‑page legal brief by risk area.',
-        'Draft a board update in 5 bullet points.',
-        'Turn these raw notes into a clean client memo.',
-        'Find the 3 fastest GTM paths for this product.',
-        'Stress‑test this strategy with first‑principles objections.',
-        'Convert this SQL to a pandas pipeline.',
-        'Write a hiring scorecard for a Staff PM.',
-        'What would Buffett question about this deal?',
-        'Translate to plain English for non‑technical execs.',
-        'Create a 7‑slide outline for the pitch.',
-        'Extract action items with owners and deadlines.',
-        'Compare the top 5 vendors with pros/cons.',
-        'Refactor this function for readability and speed.',
-        'Run a sensitivity analysis on CAC/LTV.',
-        'Turn this customer call into Jira tickets.',
-        'What are the hidden assumptions in this plan?',
-        'Draft a crisp, direct PRD from this doc.',
-        'Outline the regulatory risks by region.',
-        'Rewrite as a concise executive summary.',
-        'Generate 10 headlines with different angles.',
-        'Make a migration plan with rollback steps.',
-        'Design a 30‑day onboarding for this role.',
-        'Translate this contract into obligations table.',
-        'Find anomalies in this time‑series dataset.',
-        'Propose experiments to increase activation.',
-        'Turn this API spec into client code.',
-        'Estimate impact size with back‑of‑napkin math.',
-        'Build a risks/mitigations matrix for launch.',
-        'Rewrite in the voice of a Fortune 500 CEO.',
-        'What would a regulator flag here?',
-        'Draft the investor FAQ for this round.',
-        'Prioritize backlog by effort vs. impact.',
-        'Write a crisp post‑mortem with next actions.',
-        'Map stakeholders and likely objections.',
-        'Create a budget with scenario toggles.',
-        'Explain like I’m a new analyst.',
-        'Compress to a one‑pager with TL;DR.',
-        'Suggest 3 naming directions with rationale.',
-        'Make a dependency diagram from this plan.'
+        'Summarize this paper with effect size + CI.',
+        'Run OLS; report coefficients, p‑values, R².',
+        'ARIMA forecast with 95% bands.',
+        'Cohort table: signup → activation → retain.',
+        'Normalize CSVs into Postgres tables.',
+        'SQL for weekly metrics by segment.',
+        'Build a clean data dictionary.',
+        'CAC, LTV, payback; sensitivity.',
+        'Answer only with citations + links.',
+        'Extract entities → map to schema.',
+        'Fix messy dates and currencies.',
+        'Funnel chart from this event log.',
+        'Compare vendors: features + pricing.',
+        'Design indexes for these queries.',
+        'Parameterized pandas pipeline.',
+        'Find outliers in time‑series.',
+        'Literature review summary.',
+        'Methods section checklist.',
+        'Risks and mitigations table.',
+        'Turn PDF tables into tidy data.',
+        'Results section with visuals.',
+        'CAGR with confidence intervals.',
+        'Monte Carlo scenario model.',
+        'GDPR/CCPA obligations by field.',
+        'Executive brief (bulleted).',
+        'Glossary for these terms.',
+        'Join datasets and dedupe.',
+        'Check statistical assumptions.',
+        'Hypothesis matrix by metric.',
+        'Impute missing values.',
+        'Label units for all columns.',
+        'ERD from this schema.',
+        'Replication notebook.',
+        'Compare studies + sample sizes.',
+        'Provenance and source checks.'
       ];
 
       const state = [];
@@ -313,9 +309,9 @@
       measure();
       addEventListener('resize', measure, { passive:true });
 
-      // Decide how many bubbles based on area (dense, but performant)
+      // Decide how many bubbles (simple & balanced)
       const area = w * h;
-      const target = Math.max(48, Math.min(160, Math.round(area / 12000)));
+      const target = Math.max(40, Math.min(120, Math.round(area / 13000)));
 
       function rnd(min, max){ return Math.random() * (max - min) + min; }
       function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -361,46 +357,51 @@
         const r = el.getBoundingClientRect();
         const bw = r.width, bh = r.height;
         const {x,y} = placeNonOverlapping(bw, bh);
-        const speed = rnd(18, 56) * depth; // px/sec, depth-weighted
+        const speed = rnd(14, 38) * depth; // smoother, slower
         const ang = rnd(0, Math.PI*2);
         const vx = Math.cos(ang) * speed;
         const vy = Math.sin(ang) * speed;
-        // organic drift (low-frequency noise)
-        const f1 = rnd(0.2, 0.5), f2 = rnd(0.15, 0.4); // Hz
-        const a1 = rnd(6, 24) * (2 - depth); // px amplitude (smaller for near)
-        const a2 = rnd(6, 24) * (2 - depth);
+        // gentle drift (very low‑freq)
+        const f1 = rnd(0.08, 0.18), f2 = rnd(0.06, 0.16);
+        const a1 = rnd(4, 14) * (2 - depth);
+        const a2 = rnd(4, 14) * (2 - depth);
         const p1 = rnd(0, Math.PI*2), p2 = rnd(0, Math.PI*2);
         // position
         el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
         state.push({ el, x, y, vx, vy, w: bw, h: bh, depth, f1, f2, a1, a2, p1, p2 });
       }
 
+      const FADE_MS = 600; // seamless ease‑out
+      const INTRO_MS = 2200; // shorter
+      const t0 = performance.now();
+
       function step(ts){
         if (!last) last = ts; const dt = Math.min(40, ts - last) / 1000; last = ts;
         const t = ts / 1000;
+        const elapsed = ts - t0;
+        const fadeStart = INTRO_MS - FADE_MS;
+        let slow = 1;
+        if (elapsed > fadeStart) slow = Math.max(0, 1 - (elapsed - fadeStart)/FADE_MS);
         for (const b of state){
           const dx = Math.sin(t * (2*Math.PI*b.f1) + b.p1) * b.a1 * dt;
           const dy = Math.cos(t * (2*Math.PI*b.f2) + b.p2) * b.a2 * dt;
-          b.x += (b.vx * dt) + dx;
-          b.y += (b.vy * dt) + dy;
-          if (b.x <= 0){ b.x = 0; b.vx = Math.abs(b.vx) * 0.98; }
-          if (b.x + b.w >= w){ b.x = w - b.w; b.vx = -Math.abs(b.vx) * 0.98; }
-          if (b.y <= 0){ b.y = 0; b.vy = Math.abs(b.vy) * 0.98; }
-          if (b.y + b.h >= h){ b.y = h - b.h; b.vy = -Math.abs(b.vy) * 0.98; }
-          const s = 0.92 + 0.12*b.depth + Math.sin(t*1.5 + b.p1)*0.02; // subtle breathing
+          b.x += (b.vx * dt * slow) + dx * slow;
+          b.y += (b.vy * dt * slow) + dy * slow;
+          // wrap edges for smoothness (no hard bounces)
+          if (b.x > w) b.x = -b.w + (b.x - w);
+          if (b.x < -b.w) b.x = w + (b.x + b.w);
+          if (b.y > h) b.y = -b.h + (b.y - h);
+          if (b.y < -b.h) b.y = h + (b.y + b.h);
+          const s = 0.96 + 0.10*b.depth + Math.sin(t*1.2 + b.p1)*0.012 * slow; // gentle scale
           b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) scale(${s})`;
         }
         raf = requestAnimationFrame(step);
       }
       raf = requestAnimationFrame(step);
 
-      // Fade out after intro, then clean up
-      const INTRO_MS = 2600;
-      setTimeout(()=>{
-        stage.classList.add('out');
-        cancelAnimationFrame(raf);
-        setTimeout(()=> stage.remove(), 900);
-      }, INTRO_MS);
+      // Seamless fade and cleanup
+      setTimeout(()=> stage.classList.add('out'), INTRO_MS-FADE_MS);
+      setTimeout(()=>{ cancelAnimationFrame(raf); stage.remove(); }, INTRO_MS+160);
     })();
 
     const hamburgerBtn = document.getElementById('hamburgerBtn');
