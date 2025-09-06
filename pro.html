@@ -64,7 +64,8 @@
     .chat-bubble.tail-right::after{ right:-6px; bottom:14px; border-width:8px 0 8px 8px; border-color: transparent transparent transparent #fff; }
     @keyframes bubblePop{ from{ opacity:0; transform: translate3d(0,8px,0) scale(.85) } to{ opacity:1; transform: translate3d(0,0,0) scale(1) } }
     /* Keep hero content above bubbles */
-    .hero-content{ position:relative; z-index:1; }
+    .hero-content{ position:relative; z-index:1; transition: opacity .6s ease, transform .6s ease; }
+    .hero-grad.intro-active .hero-content{ opacity:0; transform: translateY(8px); pointer-events:none; }
 
     @media (prefers-reduced-motion: reduce){ .title-reveal .word, .shine{ animation:none !important; opacity:1 !important; transform:none !important; filter:none !important } }
 
@@ -150,13 +151,13 @@
 
 
   <!-- HERO -->
-  <section class="hero-grad">
+  <section id="proHero" class="hero-grad intro-active">
     <div class="intro-stage" aria-hidden="true"><div id="chatIntro" class="chat-intro"></div></div>
     <div class="mx-auto max-w-[1200px] oc-container py-20 md:py-28 hero-content">
       <div class="max-w-3xl">
         <h1 class="text-[44px] md:text-[84px] leading-[1.02] font-semibold headline title-reveal"><span id="heroTitle" class="title-wrap">The Uncensored AI for the 1%</span></h1>
-        <p class="mt-4 text-lg md:text-[22px] text-white/85 max-w-2xl">OC‑Pro is the black‑label AI workstation. Private knowledge that stays yours. Industry‑grade analysis on your desk. And a chat that doesn’t flinch.</p>
-        <p class="mt-3 text-white/80 max-w-2xl">Backed by proprietary, curated databases — verified and legally sound — to reduce hallucinations and keep answers accurate.</p>
+        <p id="heroLead" class="mt-4 text-lg md:text-[22px] text-white/85 max-w-2xl">OC‑Pro is the black‑label AI workstation. Private knowledge that stays yours. Industry‑grade analysis on your desk. And a chat that doesn’t flinch.</p>
+        <p id="heroSub" class="mt-3 text-white/80 max-w-2xl">Backed by proprietary, curated databases — verified and legally sound — to reduce hallucinations and keep answers accurate.</p>
         <div class="mt-8 flex items-center gap-3">
           <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
           <a href="contact.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-chat-circle"></i> Talk to us</a>
@@ -259,6 +260,7 @@
     (function(){
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const stage = document.getElementById('chatIntro'); if (!stage || reduce) return;
+      const hero  = document.getElementById('proHero');
 
       const QUERIES = [
         'Summarize this paper with effect size + CI.',
@@ -336,6 +338,25 @@
         return { x: rnd(0, Math.max(1, w - bw)), y: rnd(0, Math.max(1, h - bh)) };
       }
 
+      // Target rects for "merge into text" effect
+      const sr = stage.getBoundingClientRect();
+      const titleEl = document.getElementById('heroTitle');
+      const leadEl  = document.getElementById('heroLead');
+      const subEl   = document.getElementById('heroSub');
+      const targetEls = [titleEl, leadEl, subEl].filter(Boolean);
+
+      function randomPointIn(el, bw, bh){
+        const tr = el.getBoundingClientRect();
+        const minX = Math.max(0, tr.left - sr.left);
+        const minY = Math.max(0, tr.top  - sr.top);
+        const maxX = Math.max(0, tr.width  - bw);
+        const maxY = Math.max(0, tr.height - bh);
+        return {
+          x: minX + rnd(0, Math.max(1, maxX)),
+          y: minY + rnd(0, Math.max(1, maxY))
+        };
+      }
+
       // Create bubbles
       for (let i=0; i<target; i++){
         const el = document.createElement('div');
@@ -368,12 +389,23 @@
         const p1 = rnd(0, Math.PI*2), p2 = rnd(0, Math.PI*2);
         // position
         el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        state.push({ el, x, y, vx, vy, w: bw, h: bh, depth, f1, f2, a1, a2, p1, p2 });
+        // choose whether this bubble will "merge" into text
+        let tx = 0, ty = 0, merge = false;
+        if (targetEls.length && Math.random() < 0.6){
+          const tEl = pick(targetEls);
+          const p = randomPointIn(tEl, bw, bh);
+          tx = p.x; ty = p.y; merge = true;
+        }
+        state.push({ el, x, y, vx, vy, w: bw, h: bh, depth, f1, f2, a1, a2, p1, p2, merge, tx, ty, alpha: 1 });
       }
 
       const FADE_MS = 600; // seamless ease‑out
       const INTRO_MS = 2200; // shorter
+      const MERGE_MS = 800;  // time reserved for merge motion
+      const mergeStart = Math.max(400, INTRO_MS - MERGE_MS);
       const t0 = performance.now();
+      // reveal hero content slightly after merge starts
+      setTimeout(()=> hero?.classList.remove('intro-active'), mergeStart + 150);
 
       function step(ts){
         if (!last) last = ts; const dt = Math.min(40, ts - last) / 1000; last = ts;
@@ -385,8 +417,17 @@
         for (const b of state){
           const dx = Math.sin(t * (2*Math.PI*b.f1) + b.p1) * b.a1 * dt;
           const dy = Math.cos(t * (2*Math.PI*b.f2) + b.p2) * b.a2 * dt;
-          b.x += (b.vx * dt * slow) + dx * slow;
-          b.y += (b.vy * dt * slow) + dy * slow;
+          if (elapsed >= mergeStart && b.merge){
+            const u = Math.min(1, (elapsed - mergeStart) / MERGE_MS);
+            // ease-in toward text targets
+            const k = 0.06 + 0.24 * u;
+            b.x += (b.tx - b.x) * k + dx * 0.2 * (1-u);
+            b.y += (b.ty - b.y) * k + dy * 0.2 * (1-u);
+            b.alpha = 1 - u; // fade bubble as text appears
+          } else {
+            b.x += (b.vx * dt * slow) + dx * slow;
+            b.y += (b.vy * dt * slow) + dy * slow;
+          }
           // wrap edges for smoothness (no hard bounces)
           if (b.x > w) b.x = -b.w + (b.x - w);
           if (b.x < -b.w) b.x = w + (b.x + b.w);
@@ -394,6 +435,7 @@
           if (b.y < -b.h) b.y = h + (b.y + b.h);
           const s = 0.96 + 0.10*b.depth + Math.sin(t*1.2 + b.p1)*0.012 * slow; // gentle scale
           b.el.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) scale(${s})`;
+          if (elapsed >= mergeStart && b.merge){ b.el.style.opacity = String(Math.max(0, Math.min(1, b.alpha))); }
         }
         raf = requestAnimationFrame(step);
       }
