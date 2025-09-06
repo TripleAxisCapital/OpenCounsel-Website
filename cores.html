@@ -213,7 +213,7 @@
       /* Mobile layout: move animation below content */
       .hero-card{ flex-direction: column; align-items: stretch; text-align: left; }
       .hero-card .hero-content{ order: 1; }
-      .hero-card .ad-stage{ position: static; inset: auto; order: 2; height: 320px; margin-top: 14px; border-radius: 16px; }
+      .hero-card .ad-stage{ position: relative; inset: auto; order: 2; height: clamp(300px, 60vw, 420px); margin-top: 16px; border-radius: 16px; }
     }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
@@ -318,7 +318,34 @@
         <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
       </div>
 
-      <!-- Full-hero floating stage behind content -->
+      
+
+      <div class="hero-content w-full max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10 relative z-[1]">
+        <!-- Copy -->
+        <div class="text-left flex flex-col items-start">
+          <h1 class="font-semibold text-white text-4xl md:text-6xl leading-tight">
+            <span class="hero-shine">Meet the Cores</span>
+          </h1>
+          <p class="mt-3 md:mt-4 text-white/90 text-lg md:text-xl max-w-xl">Pro‑grade building blocks for real work — private, fast, and local‑first.</p>
+          <p class="mt-1 text-white/80 text-base md:text-lg max-w-xl">Install, switch, and upgrade without changing how you think.</p>
+
+          <div class="mt-6 flex items-center gap-3">
+            <a href="#marketplace" class="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white g-grad grad-anim hover:-translate-y-[1px] transition will-change-transform">
+              <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70" style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
+              <i class="ph ph-grid-four text-base"></i>
+              <span>Explore Cores</span>
+            </a>
+            <button class="inline-flex items-center gap-2 rounded-2xl border border-white/40 bg-white/10 text-white px-5 py-3 text-sm font-semibold hover:bg-white/20" data-open-core="ocpro">
+              <i class="ph ph-seal-check"></i>
+              <span>Learn about OC‑Pro</span>
+            </button>
+          </div>
+        </div>
+
+        
+      </div>
+
+      <!-- Full-hero floating stage (below copy on mobile, behind on desktop) -->
       <div class="ad-stage" aria-hidden="true">
         <div class="ad-halo"></div>
         <!-- Bouncing nodes (smooth, upright) -->
@@ -346,31 +373,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="hero-content w-full max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 items-center gap-10 relative z-[1]">
-        <!-- Copy -->
-        <div class="text-left flex flex-col items-start">
-          <h1 class="font-semibold text-white text-4xl md:text-6xl leading-tight">
-            <span class="hero-shine">Meet the Cores</span>
-          </h1>
-          <p class="mt-3 md:mt-4 text-white/90 text-lg md:text-xl max-w-xl">Pro‑grade building blocks for real work — private, fast, and local‑first.</p>
-          <p class="mt-1 text-white/80 text-base md:text-lg max-w-xl">Install, switch, and upgrade without changing how you think.</p>
-
-          <div class="mt-6 flex items-center gap-3">
-            <a href="#marketplace" class="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white g-grad grad-anim hover:-translate-y-[1px] transition will-change-transform">
-              <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70" style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
-              <i class="ph ph-grid-four text-base"></i>
-              <span>Explore Cores</span>
-            </a>
-            <button class="inline-flex items-center gap-2 rounded-2xl border border-white/40 bg-white/10 text-white px-5 py-3 text-sm font-semibold hover:bg-white/20" data-open-core="ocpro">
-              <i class="ph ph-seal-check"></i>
-              <span>Learn about OC‑Pro</span>
-            </button>
-          </div>
-        </div>
-
-        
       </div>
   </section>
 
@@ -796,9 +798,7 @@
     (function heroScreenSaver(){
       const stage = document.querySelector('.ad-stage'); if (!stage) return;
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const isMobile = matchMedia('(max-width: 767px)').matches;
-      // On mobile, keep lightweight CSS bounce and skip JS physics
-      if (reduce || isMobile) return;
+      if (reduce) return;
 
       // Disable CSS wrapper animations for full JS control
       stage.classList.add('js-physics');
