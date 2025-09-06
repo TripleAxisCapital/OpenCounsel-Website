@@ -16,7 +16,7 @@
   <style>
     :root{ --pad-mobile-x:24px; --pad-desktop-x:32px; --angle:135deg; --speed:16s; --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc; --logo-width:64px; --logo-height:64px; }
     .oc-container{ padding-left:var(--pad-mobile-x); padding-right:var(--pad-mobile-x); }
-    .hero-grad{ background: radial-gradient(80% 100% at 50% 0%, #0b0b0c 0%, #000 60%); }
+    .hero-grad{ position:relative; overflow:hidden; background: radial-gradient(80% 100% at 50% 0%, #0b0b0c 0%, #000 60%); }
     .shine{ position:relative; background-image:linear-gradient(90deg, rgba(255,255,255,0), #fff, rgba(255,255,255,0)), linear-gradient(#fff,#fff); background-size:240% 100%, 100% 100%; background-position:-150% 0, 0 0; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; animation:shine 6s linear infinite; }
     @keyframes shine{ 0%{background-position:-150% 0, 0 0} 100%{background-position:150% 0, 0 0} }
     @keyframes gradientShift{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
@@ -46,6 +46,26 @@
     #siteHeader.scrolled{ background: rgba(0,0,0,.82); border-bottom-color: rgba(255,255,255,.14); }
     #siteHeader .nav-link{ color:rgba(255,255,255,.88); transition: color .2s ease }
     #siteHeader .nav-link:hover{ color:#fff }
+
+    /* WOW animations */
+    .hero-stage{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+    #heroFx{ position:absolute; inset:0; width:100%; height:100%; display:block; filter: saturate(1.2) brightness(1); opacity:.85 }
+    .hero-orbits{ position:absolute; inset:-20% -10% -10% -10%; display:grid; place-items:center; opacity:.35; filter: blur(1px); }
+    .hero-orbits .ring{ position:absolute; border-radius:9999px; border:1px solid rgba(255,255,255,.12); }
+    .hero-orbits .r1{ width:72vmin; height:72vmin; animation: spin 48s linear infinite; }
+    .hero-orbits .r2{ width:92vmin; height:92vmin; animation: counterSpin 62s linear infinite; }
+    .hero-orbits .r3{ width:120vmin; height:120vmin; animation: spin 76s linear infinite; }
+    @keyframes spin{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+    @keyframes counterSpin{ from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+
+    /* Tilt + magnetic feel */
+    .tilt{ transform-style: preserve-3d; transition: transform .3s cubic-bezier(.22,.8,.22,1), box-shadow .3s ease; will-change: transform; }
+    .tilt:hover{ transform: translateY(-3px) scale(1.01); }
+    .magnet{ transition: transform .25s cubic-bezier(.22,.8,.22,1), box-shadow .25s ease; will-change: transform; }
+
+    @media (prefers-reduced-motion: reduce){
+      .hero-orbits, #heroFx, .tilt, .magnet, .shine{ animation:none !important; transition:none !important; transform:none !important; }
+    }
 
     /* Apple-like polish */
     .glass{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); }
@@ -93,12 +113,12 @@
       <div class="flex items-center gap-2">
         <a
           href="download.html"
-          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
-                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
+          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black magnet"
+          focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+          shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
+          transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
           aria-label="Download" title="Download"
-        >
+          data-magnet>
           <i class="ph ph-download text-base" aria-hidden="true"></i>
           <span>Download</span>
         </a>
@@ -131,6 +151,15 @@
 
   <!-- HERO -->
   <section class="hero-grad">
+    <!-- Hero FX: canvas particles + orbital rings -->
+    <div class="hero-stage" aria-hidden="true">
+      <canvas id="heroFx"></canvas>
+      <div class="hero-orbits">
+        <div class="ring r1"></div>
+        <div class="ring r2"></div>
+        <div class="ring r3"></div>
+      </div>
+    </div>
     <div class="mx-auto max-w-[1200px] oc-container py-20 md:py-28">
       <div class="max-w-3xl">
         <h1 class="text-[44px] md:text-[84px] leading-[1.02] font-semibold headline">
@@ -140,8 +169,8 @@
           OC‑Pro is the black‑label AI workstation. Private knowledge that stays yours. Industry‑grade analysis on your desk. And a chat that doesn’t flinch.
         </p>
         <div class="mt-8 flex items-center gap-3">
-          <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
-          <a href="contact.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-chat-circle"></i> Talk to us</a>
+          <a href="download.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
+          <a href="contact.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-chat-circle"></i> Talk to us</a>
         </div>
       </div>
     </div>
@@ -162,7 +191,7 @@
           </ul>
         </div>
         <div class="reveal">
-          <div class="glass demo-card demo-kb p-6">
+          <div class="glass demo-card demo-kb p-6 tilt">
             <div class="kb-flow">
               <div class="kb-chip"><i class="ph ph-file-text"></i><span>Briefs & PDFs</span></div>
               <div class="kb-chip"><i class="ph ph-notebook"></i><span>Notes</span></div>
@@ -186,7 +215,7 @@
     <div class="mx-auto max-w-[1200px] oc-container">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div class="order-2 md:order-1 reveal">
-          <div class="glass demo-card p-6">
+          <div class="glass demo-card p-6 tilt">
             <div class="flex items-center justify-between">
               <div class="text-sm fine">Stat suite</div>
               <div class="chip"><i class="ph ph-chart-line-up"></i><span>Pro tools</span></div>
@@ -244,7 +273,7 @@
           </ul>
         </div>
         <div class="reveal">
-          <div class="glass demo-card p-6">
+          <div class="glass demo-card p-6 tilt">
             <div class="chat">
               <div class="bubble">Draft a pricing sensitivity table with confidence bands.</div>
               <div class="bubble me">Done. CSV + chart ready for deck.</div>
@@ -263,12 +292,24 @@
     <div class="mx-auto max-w-[1200px] oc-container">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
         <div class="reveal order-2 md:order-1">
-          <div class="glass demo-card p-6">
+          <div class="glass demo-card p-6 tilt">
             <div class="flex items-center justify-between">
               <div class="text-sm fine">Catalog</div>
               <div class="chip"><i class="ph ph-shield-check"></i><span>Provided by OC</span></div>
             </div>
             <div class="mt-4 space-y-3" role="list">
+              <div class="rounded-xl glass p-4" role="listitem">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <i class="ph ph-globe text-xl" aria-hidden="true"></i>
+                    <div>
+                      <div class="font-semibold">OC Web Atlas</div>
+                      <div class="fine text-xs">the entire internet — curated, vetted, and fact‑checked</div>
+                    </div>
+                  </div>
+                  <div class="inline-flex items-center gap-2 fine text-xs"><i class="ph ph-check-circle"></i><span>Trusted</span><span class="mx-1">•</span><span>Accurate</span></div>
+                </div>
+              </div>
               <div class="rounded-xl glass p-4" role="listitem">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
@@ -330,8 +371,8 @@
       <h2 class="text-3xl md:text-5xl font-semibold headline">Own your AI. Level up your work.</h2>
       <p class="mt-3 text-lg muted max-w-2xl mx-auto">OC‑Pro pairs private knowledge with industry‑grade analysis and an uncensored chat — all on your machine. It’s how the top 1% ship faster.</p>
       <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
-        <a href="cores.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
+        <a href="download.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
+        <a href="cores.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
       </div>
     </div>
   </section>
@@ -369,6 +410,84 @@
       const apply = ()=>{ if (window.scrollY > 8) h.classList.add('scrolled'); else h.classList.remove('scrolled'); };
       apply();
       window.addEventListener('scroll', apply, { passive:true });
+    })();
+
+    // WOW FX: hero particles + orbit parallax + magnetic buttons + tilt
+    (function(){
+      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Magnetic buttons
+      const magnets = Array.from(document.querySelectorAll('[data-magnet]'));
+      magnets.forEach(btn=>{
+        if (reduce) return;
+        const strength = 18; const reset = ()=> btn.style.transform='';
+        btn.addEventListener('mousemove', (e)=>{
+          const r = btn.getBoundingClientRect(); const cx = r.left + r.width/2; const cy = r.top + r.height/2;
+          const dx = (e.clientX - cx) / (r.width/2); const dy = (e.clientY - cy) / (r.height/2);
+          btn.style.transform = `translate(${dx*strength}px, ${dy*strength}px)`;
+        });
+        btn.addEventListener('mouseleave', reset);
+      });
+
+      // Tilt effect on demo cards
+      const tilts = Array.from(document.querySelectorAll('.tilt'));
+      tilts.forEach(card=>{
+        if (reduce) return;
+        const max = 6; const reset = ()=>{ card.style.transform=''; card.style.boxShadow=''; };
+        card.addEventListener('mousemove', (e)=>{
+          const r = card.getBoundingClientRect(); const x = e.clientX - r.left; const y = e.clientY - r.top;
+          const rx = ((y / r.height) - 0.5) * -max; const ry = ((x / r.width) - 0.5) * max;
+          card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
+          card.style.boxShadow = `0 24px 60px rgba(0,0,0,.45)`;
+        });
+        card.addEventListener('mouseleave', reset);
+      });
+
+      // Hero particles + orbit parallax
+      const canvas = document.getElementById('heroFx');
+      const orbits = document.querySelector('.hero-orbits');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d', { alpha:true });
+      let w=0,h=0, dpr = Math.min(2, window.devicePixelRatio||1);
+      function resize(){ const r = canvas.getBoundingClientRect(); w = Math.floor(r.width); h = Math.floor(r.height); canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const N = Math.min(110, Math.max(60, Math.floor(Math.sqrt(w*h)/18)));
+      const rand=(a,b)=> a + Math.random()*(b-a);
+      const stars = Array.from({length:N}).map(()=>({
+        x: Math.random()*w, y: Math.random()*h, vx: rand(-.15,.15), vy: rand(-.15,.15), r: rand(0.6,1.8), a: rand(0.35,0.9)
+      }));
+      let mouse = { x: w/2, y: h*.35, on:false };
+      if (!reduce){
+        window.addEventListener('mousemove', (e)=>{ mouse = { x:e.clientX, y:e.clientY, on:true }; parallax(e); });
+      }
+      function parallax(e){
+        if (!orbits) return; const r = canvas.getBoundingClientRect(); const dx=(e.clientX-(r.left+r.width/2))/r.width; const dy=(e.clientY-(r.top+r.height/2))/r.height;
+        orbits.style.transform = `translate(${dx*-16}px, ${dy*-12}px)`;
+      }
+
+      function step(){
+        if (!ctx) return;
+        ctx.clearRect(0,0,w,h);
+        // twinkle + drift
+        for (const s of stars){
+          s.x += s.vx; s.y += s.vy;
+          if (s.x< -10 || s.x> w+10) s.vx*=-1;
+          if (s.y< -10 || s.y> h+10) s.vy*=-1;
+        }
+        // connections
+        for (let i=0;i<stars.length;i++){
+          const a = stars[i];
+          // draw point
+          ctx.beginPath(); ctx.arc(a.x,a.y,a.r,0,Math.PI*2); ctx.fillStyle = `rgba(255,255,255,${a.a})`; ctx.fill();
+          for (let j=i+1;j<i+12 && j<stars.length;j++){
+            const b = stars[j]; const dx=a.x-b.x, dy=a.y-b.y; const dist = Math.hypot(dx,dy);
+            if (dist < 120){ const alpha = (1 - dist/120) * .25; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.strokeStyle = `rgba(255,255,255,${alpha})`; ctx.lineWidth = 1; ctx.stroke(); }
+          }
+        }
+        if (!reduce) requestAnimationFrame(step);
+      }
+      if (!reduce) requestAnimationFrame(step); else { ctx.globalAlpha=.5; for(const s of stars){ ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill(); } }
     })();
 
     const hamburgerBtn = document.getElementById('hamburgerBtn');
