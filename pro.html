@@ -16,7 +16,7 @@
   <style>
     :root{ --pad-mobile-x:24px; --pad-desktop-x:32px; --angle:135deg; --speed:16s; --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc; --logo-width:64px; --logo-height:64px; }
     .oc-container{ padding-left:var(--pad-mobile-x); padding-right:var(--pad-mobile-x); }
-    .hero-grad{ position:relative; overflow:hidden; background: radial-gradient(80% 100% at 50% 0%, #0b0b0c 0%, #000 60%); }
+    .hero-grad{ position:relative; background:#000; }
     .shine{ position:relative; background-image:linear-gradient(90deg, rgba(255,255,255,0), #fff, rgba(255,255,255,0)), linear-gradient(#fff,#fff); background-size:240% 100%, 100% 100%; background-position:-150% 0, 0 0; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; animation:shine 6s linear infinite; }
     @keyframes shine{ 0%{background-position:-150% 0, 0 0} 100%{background-position:150% 0, 0 0} }
     @keyframes gradientShift{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
@@ -47,38 +47,15 @@
     #siteHeader .nav-link{ color:rgba(255,255,255,.88); transition: color .2s ease }
     #siteHeader .nav-link:hover{ color:#fff }
 
-    /* WOW animations */
-    .hero-stage{ position:absolute; inset:0; z-index:0; pointer-events:none; }
-    #heroFx{ position:absolute; inset:0; width:100%; height:100%; display:block; filter: saturate(1.2) brightness(1); opacity:.85 }
-    .hero-orbits{ position:absolute; inset:-20% -10% -10% -10%; display:grid; place-items:center; opacity:.35; filter: blur(1px); }
-    .hero-orbits .ring{ position:absolute; border-radius:9999px; border:1px solid rgba(255,255,255,.12); }
-    .hero-orbits .r1{ width:72vmin; height:72vmin; animation: spin 48s linear infinite; }
-    .hero-orbits .r2{ width:92vmin; height:92vmin; animation: counterSpin 62s linear infinite; }
-    .hero-orbits .r3{ width:120vmin; height:120vmin; animation: spin 76s linear infinite; }
-    @keyframes spin{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
-    @keyframes counterSpin{ from{ transform: rotate(360deg) } to{ transform: rotate(0deg) } }
+    /* Title reveal */
+    .title-wrap{ display:inline-block; overflow:hidden; }
+    .title-reveal .word{ display:inline-block; opacity:0; transform: translateY(22px) scale(.98); filter: blur(2px); animation: wordIn .7s cubic-bezier(.22,.8,.22,1) forwards; animation-delay: calc(var(--i) * 60ms); }
+    @keyframes wordIn{ to{ opacity:1; transform: translateY(0) scale(1); filter: blur(0) } }
+    /* Hero intro canvas */
+    .intro-stage{ position:absolute; inset:0; pointer-events:none; z-index:0; }
+    #introFx{ position:absolute; inset:0; width:100%; height:100%; display:block; opacity:0; transition: opacity .5s ease; }
 
-    /* Intro hero flare */
-    .intro-veil{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
-    .intro-veil .intro-flare{ position:absolute; top:-20%; left:-15%; width:140%; height:160%; background:linear-gradient(120deg, rgba(255,255,255,0) 35%, rgba(255,255,255,.16) 50%, rgba(255,255,255,0) 65%); transform: translateX(-120%); animation: flareSweep 1.6s cubic-bezier(.22,.9,.22,1) .25s forwards; mix-blend-mode:screen; }
-    .intro-veil .intro-ring{ position:absolute; left:50%; top:50%; width:44vmin; height:44vmin; border-radius:9999px; border:1px solid rgba(255,255,255,.18); transform: translate(-50%,-50%) scale(.6); opacity:.0; animation: ringPulse 1.6s ease-out .15s forwards; box-shadow:0 0 120px rgba(255,255,255,.25) inset; }
-    @keyframes flareSweep{ to{ transform: translateX(120%);} }
-    @keyframes ringPulse{ 0%{ opacity:.0; transform: translate(-50%,-50%) scale(.6)} 40%{ opacity:.55 } 100%{ opacity:0; transform: translate(-50%,-50%) scale(2.6)} }
-
-    /* Tilt + magnetic feel */
-    .tilt{ transform-style: preserve-3d; transition: transform .3s cubic-bezier(.22,.8,.22,1), box-shadow .3s ease; will-change: transform; }
-    .tilt:hover{ transform: translateY(-3px) scale(1.01); }
-    .magnet{ transition: transform .25s cubic-bezier(.22,.8,.22,1), box-shadow .25s ease; will-change: transform; }
-
-    /* Stats animations */
-    .bar-col{ height:8%; transition: height 1.4s cubic-bezier(.22,.9,.22,1); }
-    .ticker{ background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px 12px; box-shadow:0 10px 26px rgba(0,0,0,.35) }
-    .ticker .caret{ display:inline-block; width:8px; height:1.2em; background:linear-gradient(#fff,#fff); -webkit-background-clip:text; background-clip:text; color:transparent; position:relative; top:.14em; margin-left:4px; border-left:2px solid #fff; animation: blink 1s steps(1,end) infinite; }
-    @keyframes blink{ 0%,49%{ opacity:1 } 50%,100%{ opacity:0 } }
-
-    @media (prefers-reduced-motion: reduce){
-      .hero-orbits, #heroFx, .tilt, .magnet, .shine, .intro-veil *, .intro-veil{ animation:none !important; transition:none !important; transform:none !important; }
-    }
+    @media (prefers-reduced-motion: reduce){ .title-reveal .word, .shine{ animation:none !important; opacity:1 !important; transform:none !important; filter:none !important } }
 
     /* Apple-like polish */
     .glass{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); }
@@ -126,12 +103,11 @@
       <div class="flex items-center gap-2">
         <a
           href="download.html"
-          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black magnet"
+          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black"
           focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
           shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
           transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
-          aria-label="Download" title="Download"
-          data-magnet>
+          aria-label="Download" title="Download">
           <i class="ph ph-download text-base" aria-hidden="true"></i>
           <span>Download</span>
         </a>
@@ -164,218 +140,44 @@
 
   <!-- HERO -->
   <section class="hero-grad">
-    <!-- Hero FX: canvas particles + orbital rings -->
-    <div class="hero-stage" aria-hidden="true">
-      <canvas id="heroFx"></canvas>
-      <div class="hero-orbits">
-        <div class="ring r1"></div>
-        <div class="ring r2"></div>
-        <div class="ring r3"></div>
-      </div>
-      <div class="intro-veil" id="introVeil"><div class="intro-flare"></div><div class="intro-ring"></div></div>
-    </div>
+    <div class="intro-stage" aria-hidden="true"><canvas id="introFx"></canvas></div>
     <div class="mx-auto max-w-[1200px] oc-container py-20 md:py-28">
       <div class="max-w-3xl">
-        <h1 class="text-[44px] md:text-[84px] leading-[1.02] font-semibold headline">
-          <span class="shine">The Uncensored AI for the 1%</span>
-        </h1>
-        <p class="mt-4 text-lg md:text-[22px] text-white/85 max-w-2xl">
-          OC‑Pro is the black‑label AI workstation. Private knowledge that stays yours. Industry‑grade analysis on your desk. And a chat that doesn’t flinch.
-        </p>
+        <h1 class="text-[44px] md:text-[84px] leading-[1.02] font-semibold headline title-reveal"><span id="heroTitle" class="title-wrap">The Uncensored AI for the 1%</span></h1>
+        <p class="mt-4 text-lg md:text-[22px] text-white/85 max-w-2xl">OC‑Pro is the black‑label AI workstation. Private knowledge that stays yours. Industry‑grade analysis on your desk. And a chat that doesn’t flinch.</p>
+        <p class="mt-3 text-white/80 max-w-2xl">Backed by proprietary, curated databases — verified and legally sound — to reduce hallucinations and keep answers accurate.</p>
         <div class="mt-8 flex items-center gap-3">
-          <a href="download.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
-          <a href="contact.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-chat-circle"></i> Talk to us</a>
+          <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
+          <a href="contact.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-chat-circle"></i> Talk to us</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Private Knowledge Bases -->
+  <!-- Essentials -->
   <section class="section">
     <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-        <div class="reveal">
-          <div class="inline-flex items-center gap-2 chip mb-3"><i class="ph ph-shield-check"></i><span>Private by design</span></div>
-          <h2 class="text-3xl md:text-5xl font-semibold headline">Your knowledge — precise and private</h2>
-          <p class="mt-3 text-lg muted max-w-xl">OC‑Pro builds accurate, local knowledge bases from your sources — files, notes, and data — and keeps them on your machine. No mirrors. No leaks.</p>
-          <ul class="mt-5 space-y-2 fine">
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>On‑device indexing and retrieval</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Deterministic citations and traceable answers</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Granular scopes per project and Core</span></li>
-          </ul>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Private Knowledge</h3>
+          <p class="mt-2 text-white/70">Accurate, local, and yours. Sources stay on your machine with citations you can trust.</p>
         </div>
-        <div class="reveal">
-          <div class="glass demo-card demo-kb p-6 tilt">
-            <div class="kb-flow">
-              <div class="kb-chip"><i class="ph ph-file-text"></i><span>Briefs & PDFs</span></div>
-              <div class="kb-chip"><i class="ph ph-notebook"></i><span>Notes</span></div>
-              <div class="kb-chip"><i class="ph ph-table"></i><span>Spreadsheets</span></div>
-              <div class="kb-chip"><i class="ph ph-globe"></i><span>Web captures</span></div>
-              <div class="kb-chip"><i class="ph ph-database"></i><span>Data dumps</span></div>
-            </div>
-            <div class="mt-5 divider"></div>
-            <div class="mt-5 flex items-center justify-between">
-              <div class="text-sm fine">Precision index</div>
-              <div class="spark" aria-hidden="true"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-            </div>
-          </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Curated Expert Databases</h3>
+          <p class="mt-2 text-white/70">Proprietary, expert‑curated collections with verified sources — legally sound and designed to reduce hallucinations.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Industry‑grade Analysis</h3>
+          <p class="mt-2 text-white/70">Regressions, forecasts, and defensible outputs — built for briefs and decks.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Uncensored Chat</h3>
+          <p class="mt-2 text-white/70">No throttles. Ask what you need and move the work forward.</p>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Industry‑grade Analysis -->
-  <section class="section">
-    <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-        <div class="order-2 md:order-1 reveal">
-          <div id="statsCard" class="glass demo-card p-6 tilt">
-            <div class="flex items-center justify-between">
-              <div class="text-sm fine">Stat suite</div>
-              <div class="chip"><i class="ph ph-chart-line-up"></i><span>Pro tools</span></div>
-            </div>
-            <div class="mt-4 grid grid-cols-3 gap-3">
-              <div class="rounded-xl glass p-4 text-center">
-                <div class="text-2xl font-semibold">p&lt;.001</div>
-                <div class="fine text-xs mt-1">significance</div>
-              </div>
-              <div class="rounded-xl glass p-4 text-center">
-                <div class="text-2xl font-semibold">R² <span id="statR2" data-target="0.93">0.00</span></div>
-                <div class="fine text-xs mt-1">fit</div>
-              </div>
-              <div class="rounded-xl glass p-4 text-center">
-                <div class="text-2xl font-semibold"><span id="statLift" data-target="5.2">1.0</span>×</div>
-                <div class="fine text-xs mt-1">lift</div>
-              </div>
-            </div>
-            <div class="mt-4 divider"></div>
-            <div id="statsBars" class="mt-4 grid grid-cols-5 gap-2 items-end h-24" role="img" aria-label="Animated bar chart">
-              <div class="bg-white/20 rounded-md bar-col" data-h="36"></div>
-              <div class="bg-white/20 rounded-md bar-col" data-h="68"></div>
-              <div class="bg-white/20 rounded-md bar-col" data-h="52"></div>
-              <div class="bg-white/20 rounded-md bar-col" data-h="88"></div>
-              <div class="bg-white/20 rounded-md bar-col" data-h="40"></div>
-            </div>
-            <div id="statTicker" class="mt-4 ticker font-mono text-xs text-white/85">fit = OLS(y ~ x, α=.05)<span class="caret"></span></div>
-          </div>
-        </div>
-        <div class="order-1 md:order-2 reveal">
-          <div class="inline-flex items-center gap-2 chip mb-3"><i class="ph ph-chart-line-up"></i><span>Industry‑grade</span></div>
-          <h2 class="text-3xl md:text-5xl font-semibold headline">Statistical analysis, built in</h2>
-          <p class="mt-3 text-lg muted max-w-xl">From regressions to A/B power, OC‑Pro brings professional‑grade methods to your workflow — with readable outputs and citations you can defend.</p>
-          <ul class="mt-5 space-y-2 fine">
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Regression, forecasting, and hypothesis testing</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Annotated results with assumptions and caveats</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Exports for decks and briefs</span></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Uncensored Chat -->
-  <section class="section">
-    <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-        <div class="reveal">
-          <div class="inline-flex items-center gap-2 chip mb-3"><i class="ph ph-chat-circle-dots"></i><span>Direct</span></div>
-          <h2 class="text-3xl md:text-5xl font-semibold headline">Uncensored. Uncompromising.</h2>
-          <p class="mt-3 text-lg muted max-w-xl">No nanny filters. No throttles. Push the work forward with a chat that lets you ask what you need — and get the output you expect.</p>
-          <ul class="mt-5 space-y-2 fine">
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Custom safety and style controls per project</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Fast local inference; no rate limits</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Works offline; syncs only when you choose</span></li>
-          </ul>
-        </div>
-        <div class="reveal">
-          <div class="glass demo-card p-6 tilt">
-            <div class="chat">
-              <div class="bubble">Draft a pricing sensitivity table with confidence bands.</div>
-              <div class="bubble me">Done. CSV + chart ready for deck.</div>
-              <div class="bubble">Summarize the sources behind rows 3–5.</div>
-            </div>
-            <div class="mt-5 divider"></div>
-            <div class="mt-5 flex items-center gap-2 fine"><i class="ph ph-lightning-bold"></i><span>Local context applied</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- External Databases (Provided by OC) -->
-  <section class="section">
-    <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-        <div class="reveal order-2 md:order-1">
-          <div class="glass demo-card p-6 tilt">
-            <div class="flex items-center justify-between">
-              <div class="text-sm fine">Catalog</div>
-              <div class="chip"><i class="ph ph-shield-check"></i><span>Provided by OC</span></div>
-            </div>
-            <div class="mt-4 space-y-3" role="list">
-              <div class="rounded-xl glass p-4" role="listitem">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <i class="ph ph-globe text-xl" aria-hidden="true"></i>
-                    <div>
-                      <div class="font-semibold">OC Web Atlas</div>
-                      <div class="fine text-xs">the entire internet — curated, vetted, and fact‑checked</div>
-                    </div>
-                  </div>
-                  <div class="inline-flex items-center gap-2 fine text-xs"><i class="ph ph-check-circle"></i><span>Trusted</span><span class="mx-1">•</span><span>Accurate</span></div>
-                </div>
-              </div>
-              <div class="rounded-xl glass p-4" role="listitem">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <i class="ph ph-book-open text-xl" aria-hidden="true"></i>
-                    <div>
-                      <div class="font-semibold">OC Legal Corpus</div>
-                      <div class="fine text-xs">case law, clauses, commentary</div>
-                    </div>
-                  </div>
-                  <div class="inline-flex items-center gap-2 fine text-xs"><i class="ph ph-check-circle"></i><span>Vetted</span><span class="mx-1">•</span><span>Citations</span></div>
-                </div>
-              </div>
-              <div class="rounded-xl glass p-4" role="listitem">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <i class="ph ph-bank text-xl" aria-hidden="true"></i>
-                    <div>
-                      <div class="font-semibold">OC Financials</div>
-                      <div class="fine text-xs">filings, earnings, key ratios</div>
-                    </div>
-                  </div>
-                  <div class="inline-flex items-center gap-2 fine text-xs"><i class="ph ph-check-circle"></i><span>Audited</span><span class="mx-1">•</span><span>Updated</span></div>
-                </div>
-              </div>
-              <div class="rounded-xl glass p-4" role="listitem">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <i class="ph ph-stethoscope text-xl" aria-hidden="true"></i>
-                    <div>
-                      <div class="font-semibold">OC Med Research</div>
-                      <div class="fine text-xs">trials, guidelines, meta‑analyses</div>
-                    </div>
-                  </div>
-                  <div class="inline-flex items-center gap-2 fine text-xs"><i class="ph ph-check-circle"></i><span>Peer‑linked</span><span class="mx-1">•</span><span>Provenance</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="mt-5 divider"></div>
-            <div class="mt-5 flex items-center gap-2 fine"><i class="ph ph-seal-check"></i><span>Versioned releases with change logs</span></div>
-          </div>
-        </div>
-        <div class="reveal order-1 md:order-2">
-          <div class="inline-flex items-center gap-2 chip mb-3"><i class="ph ph-seal-check"></i><span>Provided by OC</span></div>
-          <h2 class="text-3xl md:text-5xl font-semibold headline">External databases, curated for work</h2>
-          <p class="mt-3 text-lg muted max-w-xl">OC databases are custom‑vetted collections maintained by our team — trusted, legally sound, and tuned for accuracy. Every entry carries provenance you can cite, with updates shipped on a clear schedule.</p>
-          <ul class="mt-5 space-y-2 fine">
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Counsel‑reviewed licensing and usage</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Traceable sources and deterministic citations</span></li>
-            <li class="flex gap-2"><i class="ph ph-check-circle text-white"></i><span>Scoped per project and Core; works offline</span></li>
-          </ul>
-        </div>
+      <div class="mt-6 text-sm text-white/70 reveal">
+        <span class="inline-flex items-center gap-2 chip"><i class="ph ph-seal-check"></i><span>OC Databases</span></span>
+        <span class="ml-2">Curated, vetted, and legally sound — provided by OC.</span>
       </div>
     </div>
   </section>
@@ -386,8 +188,8 @@
       <h2 class="text-3xl md:text-5xl font-semibold headline">Own your AI. Level up your work.</h2>
       <p class="mt-3 text-lg muted max-w-2xl mx-auto">OC‑Pro pairs private knowledge with industry‑grade analysis and an uncensored chat — all on your machine. It’s how the top 1% ship faster.</p>
       <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
-        <a href="cores.html" data-magnet class="magnet inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
+        <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
+        <a href="cores.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
       </div>
     </div>
   </section>
@@ -427,138 +229,101 @@
       window.addEventListener('scroll', apply, { passive:true });
     })();
 
-    // WOW FX: hero particles + orbit parallax + magnetic buttons + tilt
+    // Title word-by-word reveal (with true spacing)
     (function(){
-      const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      // Magnetic buttons
-      const magnets = Array.from(document.querySelectorAll('[data-magnet]'));
-      magnets.forEach(btn=>{
-        if (reduce) return;
-        const strength = 18; const reset = ()=> btn.style.transform='';
-        btn.addEventListener('mousemove', (e)=>{
-          const r = btn.getBoundingClientRect(); const cx = r.left + r.width/2; const cy = r.top + r.height/2;
-          const dx = (e.clientX - cx) / (r.width/2); const dy = (e.clientY - cy) / (r.height/2);
-          btn.style.transform = `translate(${dx*strength}px, ${dy*strength}px)`;
-        });
-        btn.addEventListener('mouseleave', reset);
+      const root = document.getElementById('heroTitle'); if (!root) return;
+      const text = root.textContent.trim();
+      const words = text.split(/\s+/);
+      root.textContent = '';
+      words.forEach((w,i)=>{
+        const span = document.createElement('span');
+        span.className = 'word'; span.style.setProperty('--i', i);
+        span.textContent = w;
+        root.appendChild(span);
+        if (i < words.length - 1) root.appendChild(document.createTextNode(' '));
       });
-
-      // Tilt effect on demo cards
-      const tilts = Array.from(document.querySelectorAll('.tilt'));
-      tilts.forEach(card=>{
-        if (reduce) return;
-        const max = 6; const reset = ()=>{ card.style.transform=''; card.style.boxShadow=''; };
-        card.addEventListener('mousemove', (e)=>{
-          const r = card.getBoundingClientRect(); const x = e.clientX - r.left; const y = e.clientY - r.top;
-          const rx = ((y / r.height) - 0.5) * -max; const ry = ((x / r.width) - 0.5) * max;
-          card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-2px)`;
-          card.style.boxShadow = `0 24px 60px rgba(0,0,0,.45)`;
-        });
-        card.addEventListener('mouseleave', reset);
-      });
-
-      // Hero particles + orbit parallax
-      const canvas = document.getElementById('heroFx');
-      const orbits = document.querySelector('.hero-orbits');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d', { alpha:true });
-      let w=0,h=0, dpr = Math.min(2, window.devicePixelRatio||1);
-      function resize(){ const r = canvas.getBoundingClientRect(); w = Math.floor(r.width); h = Math.floor(r.height); canvas.width = Math.floor(w*dpr); canvas.height = Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
-      resize();
-      window.addEventListener('resize', resize);
-
-      const N = Math.min(110, Math.max(60, Math.floor(Math.sqrt(w*h)/18)));
-      const rand=(a,b)=> a + Math.random()*(b-a);
-      const stars = Array.from({length:N}).map(()=>({
-        x: Math.random()*w, y: Math.random()*h, vx: rand(-.15,.15), vy: rand(-.15,.15), r: rand(0.6,1.8), a: rand(0.35,0.9)
-      }));
-      let mouse = { x: w/2, y: h*.35, on:false };
-      if (!reduce){
-        window.addEventListener('mousemove', (e)=>{ mouse = { x:e.clientX, y:e.clientY, on:true }; parallax(e); });
-      }
-      function parallax(e){
-        if (!orbits) return; const r = canvas.getBoundingClientRect(); const dx=(e.clientX-(r.left+r.width/2))/r.width; const dy=(e.clientY-(r.top+r.height/2))/r.height;
-        orbits.style.transform = `translate(${dx*-16}px, ${dy*-12}px)`;
-      }
-
-      function step(){
-        if (!ctx) return;
-        ctx.clearRect(0,0,w,h);
-        // twinkle + drift
-        for (const s of stars){
-          s.x += s.vx; s.y += s.vy;
-          if (s.x< -10 || s.x> w+10) s.vx*=-1;
-          if (s.y< -10 || s.y> h+10) s.vy*=-1;
-        }
-        // connections
-        for (let i=0;i<stars.length;i++){
-          const a = stars[i];
-          // draw point
-          ctx.beginPath(); ctx.arc(a.x,a.y,a.r,0,Math.PI*2); ctx.fillStyle = `rgba(255,255,255,${a.a})`; ctx.fill();
-          for (let j=i+1;j<i+12 && j<stars.length;j++){
-            const b = stars[j]; const dx=a.x-b.x, dy=a.y-b.y; const dist = Math.hypot(dx,dy);
-            if (dist < 120){ const alpha = (1 - dist/120) * .25; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.strokeStyle = `rgba(255,255,255,${alpha})`; ctx.lineWidth = 1; ctx.stroke(); }
-          }
-        }
-        if (!reduce) requestAnimationFrame(step);
-      }
-      if (!reduce) requestAnimationFrame(step); else { ctx.globalAlpha=.5; for(const s of stars){ ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fill(); } }
-      // Clean up intro veil
-      const veil = document.getElementById('introVeil');
-      if (veil && !reduce){ setTimeout(()=>{ veil.remove(); }, 1800); }
     })();
 
-    // Stats: number counters, bar growth, and ticker
+    // Exceptional hero intro animation (canvas rays + particles)
     (function(){
       const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const card = document.getElementById('statsCard'); if (!card) return;
-      let ran = false;
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{
-          if (e.isIntersecting && !ran){ ran=true; run(); io.disconnect(); }
-        });
-      }, { threshold:.4 });
-      io.observe(card);
+      const cvs = document.getElementById('introFx'); if (!cvs || reduce) return;
+      const ctx = cvs.getContext('2d', { alpha:true });
+      let w=0,h=0, dpr = Math.min(2, window.devicePixelRatio||1);
+      function resize(){ const r=cvs.getBoundingClientRect(); w=Math.max(640, Math.floor(r.width)); h=Math.max(360, Math.floor(r.height)); cvs.width=Math.floor(w*dpr); cvs.height=Math.floor(h*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);} resize();
+      window.addEventListener('resize', resize);
 
-      function run(){
-        // Counters
-        const r2 = document.getElementById('statR2');
-        const lift = document.getElementById('statLift');
-        if (!reduce){
-          countTo(r2, parseFloat(r2.dataset.target), 900, 2);
-          countTo(lift, parseFloat(lift.dataset.target), 1100, 1);
-        } else {
-          if (r2) r2.textContent = r2.dataset.target;
-          if (lift) lift.textContent = lift.dataset.target;
-        }
-        // Bars
-        const bars = Array.from(document.querySelectorAll('#statsBars .bar-col'));
-        if (!reduce){ setTimeout(()=> bars.forEach((b,i)=> b.style.height = (b.dataset.h||'20')+'%'), 150); }
-        else { bars.forEach(b=> b.style.height = (b.dataset.h||'20')+'%'); }
-        // Ticker
-        const ticker = document.getElementById('statTicker');
-        if (ticker){
-          const lines = [
-            'y = β₀ + β₁x + ε',
-            'β₁ = 0.62  •  p < .001',
-            'R² = 0.93  |  AIC = 112.4',
-            'Forecast Δ = +5.2× (95% CI)'
-          ];
-          let i=0;
-          const next = ()=>{ ticker.firstChild.nodeValue = lines[i = (i+1)%lines.length] + ' '; };
-          if (!reduce){ setInterval(next, 1800); }
-        }
+      // Reveal timeline ~2.4s
+      const T = 2400; const t0 = performance.now();
+      const center = ()=>({ x: w*0.2 + (w*0.6)*0.5, y: h*0.42 });
+      const sparks = Array.from({length:120}).map(()=>({ a: Math.random()*Math.PI*2, r: Math.random()*8+2, v: Math.random()*1.8+0.6 }));
+
+      cvs.style.opacity = .9;
+
+      function gradBeam(angle, t){
+        const c = center();
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(angle);
+        const g = ctx.createLinearGradient(0,0, w*0.6, 0);
+        const k = Math.min(1, t/600);
+        g.addColorStop(0, `rgba(255,255,255,${0.14*k})`);
+        g.addColorStop(0.35, `rgba(0,207,255,${0.16*k})`);
+        g.addColorStop(0.7, `rgba(14,111,92,${0.14*k})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+        ctx.globalCompositeOperation = 'screen';
+        ctx.beginPath();
+        ctx.rect(0,-h*0.12, w*0.7, h*0.24);
+        ctx.fill();
+        ctx.restore();
       }
 
-      function countTo(el, target, ms, decimals){
-        if (!el) return; const start = 0; const t0 = performance.now();
-        function tick(t){
-          const p = Math.min(1, (t - t0)/ms); const ease = p<.5 ? 2*p*p : -1+(4-2*p)*p; const val = start + (target-start)*ease;
-          el.textContent = val.toFixed(decimals);
-          if (p<1) requestAnimationFrame(tick); else el.textContent = target.toFixed(decimals);
-        }
-        requestAnimationFrame(tick);
+      function ringPulse(t){
+        const c = center();
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        const p = Math.min(1, t/1200);
+        const R = (0.2 + 1.8*p) * Math.min(w,h)*0.22;
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `rgba(255,255,255,${0.18*(1-p)})`;
+        ctx.beginPath(); ctx.arc(0,0,R,0,Math.PI*2); ctx.stroke();
+        ctx.restore();
       }
+
+      function drawSparks(t){
+        const c = center();
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        for (const s of sparks){
+          const life = (t/T);
+          const dist = (30 + 280*life) * s.v;
+          const x = c.x + Math.cos(s.a)*dist;
+          const y = c.y + Math.sin(s.a)*dist*0.6;
+          const r = s.r * (1 - life*0.85);
+          if (r <= 0) continue;
+          const g = ctx.createRadialGradient(x,y,0, x,y, Math.max(6,r*4));
+          g.addColorStop(0, 'rgba(255,255,255,.45)');
+          g.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(x,y, r, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function step(t){
+        const dt = t - t0; if (dt > T+500){ cvs.style.opacity = 0; setTimeout(()=> cvs.remove(), 600); return; }
+        ctx.clearRect(0,0,w,h);
+        // layered beams
+        gradBeam(0.12 + dt/1600, dt);
+        gradBeam(-0.28 - dt/1400, dt*0.9);
+        gradBeam(0.62 + dt/2200, dt*0.8);
+        // pulse ring + sparks
+        ringPulse(dt);
+        drawSparks(dt);
+        requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
     })();
 
     const hamburgerBtn = document.getElementById('hamburgerBtn');
