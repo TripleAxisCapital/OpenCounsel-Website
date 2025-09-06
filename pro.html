@@ -23,6 +23,7 @@
     .grad-anim{ background:linear-gradient(var(--angle), var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift var(--speed) ease-in-out infinite; }
     .g-grad{ background:linear-gradient(var(--angle), var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; }
     .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
+    .logo-white{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:#fff; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
     .hamburger { width: 32px; height: 28px; display: inline-flex; flex-direction: column; justify-content: center; gap: 6px; }
     .hamburger span { height: 3px; width: 100%; border-radius: 9999px; background: var(--hamburger-color, #000); animation: none; background-size: initial; transition: transform .4s ease, opacity .2s ease, background-color .2s ease; }
     #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
@@ -39,6 +40,12 @@
     .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); }
     .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; text-align:center; color:#fff!important; -webkit-text-fill-color:#fff!important; }
     .drawer-nav a:not(.drawer-cta){ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+
+    /* Dark, glassy header */
+    #siteHeader{ background: rgba(0,0,0,.55); -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px); border-bottom:1px solid rgba(255,255,255,.08); --hamburger-color:#fff; }
+    #siteHeader.scrolled{ background: rgba(0,0,0,.82); border-bottom-color: rgba(255,255,255,.14); }
+    #siteHeader .nav-link{ color:rgba(255,255,255,.88); transition: color .2s ease }
+    #siteHeader .nav-link:hover{ color:#fff }
 
     /* Apple-like polish */
     .glass{ background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); }
@@ -74,23 +81,22 @@
   </style>
 </head>
 <body class="bg-black text-white font-sans antialiased">
-  <header class="sticky top-0 z-50 bg-white text-oc-ink">
+  <header id="siteHeader" class="sticky top-0 z-50 text-white transition-colors">
     <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <a href="index.html" class="inline-flex items-center" aria-label="OC home"><span class="logo-anim" role="img" aria-label="OC" style="--logo-width:40px;--logo-height:40px"></span></a>
+        <a href="index.html" class="inline-flex items-center" aria-label="OC home"><span class="logo-white" role="img" aria-label="OC" style="--logo-width:40px;--logo-height:40px"></span></a>
       </div>
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link font-semibold text-black" href="pro.html">PRO</a>
+        <a class="nav-link font-semibold" href="pro.html" aria-current="page">PRO</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="cores.html">Cores</a>
       </nav>
       <div class="flex items-center gap-2">
         <a
           href="download.html"
-          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black
                  focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
-                 g-grad grad-anim"
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
+                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
           aria-label="Download" title="Download"
         >
           <i class="ph ph-download text-base" aria-hidden="true"></i>
@@ -288,6 +294,15 @@
         entries.forEach(e=>{ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
       }, { threshold:.18 });
       els.forEach(el=> io.observe(el));
+    })();
+
+    // Header glass intensifies on scroll
+    (function(){
+      const h = document.getElementById('siteHeader');
+      if (!h) return;
+      const apply = ()=>{ if (window.scrollY > 8) h.classList.add('scrolled'); else h.classList.remove('scrolled'); };
+      apply();
+      window.addEventListener('scroll', apply, { passive:true });
     })();
 
     const hamburgerBtn = document.getElementById('hamburgerBtn');
