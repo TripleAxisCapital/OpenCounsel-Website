@@ -222,6 +222,11 @@
       .hero-card{ flex-direction: column !important; align-items: stretch !important; text-align: left !important; }
       .hero-card .hero-content{ order: 1; width:100%; }
       .hero-card .ad-stage{ position: relative; inset: auto; order: 2; width:100%; height: clamp(300px, 60vw, 420px); margin-top: 16px; border-radius: 16px; }
+      /* Lighter animation cost on mobile while preserving look */
+      :root{ --speed: 22s; }
+      .ad-halo{ filter: blur(20px); opacity:.55 }
+      .ad-card{ -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(255,255,255,.92); box-shadow:0 10px 26px rgba(10,13,16,.18); transform: translateZ(0); }
+      .ad-card.pro{ background: rgba(10,13,16,.94); }
     }
     .ad-halo{ position:absolute; inset:-10% -20%; filter: blur(28px); opacity:.6; pointer-events:none; background:
       radial-gradient(60% 60% at 60% 40%, rgba(0,207,255,.55), rgba(0,0,0,0) 70%),
@@ -857,7 +862,23 @@
       let stageSize = measure();
       let last = performance.now();
 
+      // Mobile hint for lighter frame pacing
+      const mqMobile = window.matchMedia('(max-width: 767px)');
+      let isMobile = mqMobile.matches;
+      try { mqMobile.addEventListener('change', (e)=>{ isMobile = e.matches; }); } catch(_){}
+
+      // Pause updates when hero not on screen
+      let isVisible = true;
+      try {
+        const io = new IntersectionObserver((entries)=>{ if (entries && entries[0]) isVisible = entries[0].isIntersecting; }, { threshold: 0.01 });
+        io.observe(stage);
+      } catch(_){}
+
       function tick(now){
+        // If hero is off-screen, skip heavy work
+        if (!isVisible) { requestAnimationFrame(tick); return; }
+        // On mobile, update at ~30fps by skipping frames
+        if (isMobile && (now - last) < 33) { requestAnimationFrame(tick); return; }
         const dt = Math.min(0.035, (now - last)/1000); // clamp step to keep motion smooth
         last = now;
         const maxX = stageSize.w, maxY = stageSize.h;
