@@ -204,6 +204,9 @@
   <style>
     /* Layer container sits above gradient background, below text */
     .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+    /* Light blur layer between bubbles and foreground content */
+    :root { --hero-mid-blur: 4px; }
+    .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none; backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
     /* Single bubble */
     .hero-bubble {
       position:absolute; border-radius:14px; border:1px solid rgba(255,255,255,.10);
@@ -211,6 +214,7 @@
       box-shadow: 0 6px 16px rgba(0,0,0,.30);
       will-change: transform, opacity, filter; transform: translateZ(0);
       isolation:isolate;
+      overflow:hidden; /* ensure inner content never spills out visually */
       animation: bubbleFloat var(--dur,18s) linear var(--delay,0s) infinite,
                  bubbleBreathe calc(var(--dur,18s) / 2) ease-in-out var(--delay,0s) infinite;
     }
@@ -222,13 +226,23 @@
     .hero-bubble.flip::after { left:auto; right:18px; border-radius:0 0 0 6px; }
     /* Bubble content */
     .hero-bubble .content { position:absolute; inset:12px 14px 14px 14px; display:flex; align-items:flex-start; gap:10px; }
+    /* Tighter padding for smaller bubbles for visual balance */
+    .hero-bubble[data-size="sm"] .content { inset:8px 10px 10px 10px; }
+    .hero-bubble[data-size="md"] .content { inset:12px 14px 12px 14px; }
+    .hero-bubble[data-size="lg"] .content { inset:14px 16px 14px 16px; }
     .hero-bubble .bubble-text {
       color: #e8e8e8; font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
       display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; text-wrap:pretty;
+      /* Robust wrapping so long words never overflow */
+      overflow-wrap:anywhere; word-break:break-word; hyphens:auto; -webkit-hyphens:auto; -ms-hyphens:auto;
     }
     .hero-bubble[data-size="sm"] .bubble-text { font-size:12px; -webkit-line-clamp:2; }
     .hero-bubble[data-size="md"] .bubble-text { font-size:13px; -webkit-line-clamp:3; }
     .hero-bubble[data-size="lg"] .bubble-text { font-size:14px; -webkit-line-clamp:4; }
+    /* Minimum heights that match clamped line counts to avoid cramped text */
+    .hero-bubble[data-size="sm"] { min-height:56px; }
+    .hero-bubble[data-size="md"] { min-height:78px; }
+    .hero-bubble[data-size="lg"] { min-height:102px; }
     /* Motion */
     @keyframes bubbleFloat {
       0%   { transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 }
@@ -308,8 +322,10 @@
          style="border-color: rgba(255,255,255,.12)">
       <!-- Floating bubbles layer (behind content) -->
       <div class="hero-bubbles" aria-hidden="true"></div>
-      <div class="flex flex-col items-center max-w-2xl relative" style="z-index:2">
-        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OC</span>
+      <!-- Very light blur between bubbles and foreground (tunable via --hero-mid-blur) -->
+      <div class="hero-mid-blur" aria-hidden="true"></div>
+      <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
+        <span class="hero-title font-extrabold text-white text-5xl md:text-7xl leading-tight">Unsensored AI</span>
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html"
@@ -325,7 +341,7 @@
           </a>
         </div>
       </div>
-      <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s" style="z-index:2"></oc-down-arrow>
+      <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s" style="z-index:3"></oc-down-arrow>
     </div>
   </section>
 
@@ -411,8 +427,16 @@
       if (r < .35)      w = rand(64, 110);
       else if (r < .78) w = rand(96, 160);
       else              w = rand(160, 240);
-      const h = Math.round(w * (0.58 + Math.random()*0.18));
       const size = (w <= 110) ? 'sm' : (w <= 160 ? 'md' : 'lg');
+
+      // Height tuned to line clamps so text fits perfectly
+      const hRand = Math.round(w * (0.58 + Math.random()*0.18));
+      const lines = (size === 'sm') ? 2 : (size === 'md' ? 3 : 4);
+      const fontPx = (size === 'sm') ? 12 : (size === 'md' ? 13 : 14);
+      const lh = 1.35; // must match CSS
+      const padY = (size === 'sm') ? (8+10) : (size === 'md' ? (12+12) : (14+14));
+      const minH = Math.round(padY + (lines * fontPx * lh));
+      const h = Math.max(minH, Math.min(hRand, minH + rand(2, 14)));
       b.setAttribute('data-size', size);
 
       // Horizontal start in % of width; vertically start just below container
@@ -630,6 +654,12 @@
     // Hero typing (reusing config style from index)
     window.OC_HERO = Object.assign({ enabled:true, waitForBlur:true, startOnView:true, startDelayMs:0, streamSpeed:1.0, line1CharMin:18, line1CharMax:22, lineCharMin:18, lineCharMax:22, buttonCharMin:5, buttonCharMax:10 }, window.OC_HERO || {});
     window.OC_HERO_GLOW = Object.assign({ enabled: !!window.OC_ENABLE_HERO_LOGO_GLOW, pulse:true, pulseDur:'6s', color1:'rgba(255,255,255,.25)', color2:'rgba(255,255,255,.12)', opacity:.45, blurPx:30, insetPct:16 }, window.OC_HERO_GLOW || {});
+    // Mid-layer blur config (global): set window.OC_HERO_MID_BLUR = { enabled: true|false, blur: '4px' }
+    ;(function(){
+      const cfg = window.OC_HERO_MID_BLUR || {};
+      const val = (cfg.enabled === false) ? '0px' : (cfg.blur || '1px');
+      document.documentElement.style.setProperty('--hero-mid-blur', val);
+    })();
 
     // Typewriter helpers
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
@@ -643,9 +673,10 @@
       const MOBILE_LINE1 = 'Uncensored AI -';
       const MOBILE_LINE2 = 'for the 1%';
       const isMobile=window.matchMedia('(max-width: 767px)').matches;
-      titleEl.innerHTML=''; const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
-      if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
-      const logoSpanNow=document.createElement('span'); logoSpanNow.className='hero-logo-white'; logoSpanNow.setAttribute('role','img'); logoSpanNow.setAttribute('aria-label','OC'); wrapSpan.appendChild(logoSpanNow);
+      // Title: Bold text instead of logo
+      titleEl.classList.remove('font-semibold');
+      titleEl.classList.add('font-extrabold');
+      titleEl.textContent = 'Unsensored AI';
       if(prefersReduced){ if(sub1El){ sub1El.innerHTML = isMobile ? `<span class="hero-line1">${MOBILE_LINE1}</span><span class="hero-line2">${MOBILE_LINE2}</span>` : `<span class="hero-line1">${TAGLINE_FULL}</span>`; } ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-text-done')); return; }
       if(sub1El) sub1El.textContent=''; ctaTxt.textContent=''; ctaBtn.classList.remove('cta-visible');
       function spH(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
