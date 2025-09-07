@@ -94,6 +94,19 @@
       --hero-shine-base:#e6e6e6; --hero-shine-peak:#ffffff; --hero-shine-softness: 3.5%;
       --hero-shine-bg-size-x: 260%; --hero-shine-direction: reverse;
       --logo-width:64px; --logo-height:64px;
+
+      /* Global controls for hero chat bubbles brightness/dimness */
+      /* Master brightness and opacity for the entire bubbles layer */
+      --hero-bubbles-brightness: 1; /* 1 = neutral, <1 darker, >1 brighter */
+      --hero-bubbles-opacity: 1;    /* 1 = fully opaque layer, 0 = hidden */
+      /* Alpha tuning for bubble backgrounds and borders (scaled below) */
+      --hero-bubble-alpha-scale: 1;             /* global multiplier */
+      --hero-bubble-base-alpha: .08;            /* default bg alpha */
+      --hero-bubble-user-alpha: .10;            /* user bubble bg */
+      --hero-bubble-user-border-alpha: .14;     /* user border */
+      --hero-bubble-assist-alpha: .06;          /* assistant bubble bg */
+      --hero-bubble-assist-border-alpha: .10;   /* assistant border */
+      --hero-bubble-text-alpha: .92;            /* text opacity inside bubbles */
     }
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
@@ -258,14 +271,20 @@
   <!-- HERO bubbles: glass chat bubbles floating subtly behind content -->
   <style>
     /* Layer container sits above gradient background, below text */
-    .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+    .hero-bubbles {
+      position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden;
+      /* Global dim/bright controls */
+      opacity: var(--hero-bubbles-opacity, 1);
+      filter: brightness(var(--hero-bubbles-brightness, 1));
+    }
     /* Light blur layer between bubbles and foreground content */
     :root { --hero-mid-blur: 4px; }
     .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none; backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
     /* Single bubble */
     .hero-bubble {
-      position:absolute; border-radius:14px; border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.08);
+      position:absolute; border-radius:14px;
+      border:1px solid rgba(255,255,255, calc(var(--hero-bubble-user-border-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
+      background: rgba(255,255,255, calc(var(--hero-bubble-base-alpha, .08) * var(--hero-bubble-alpha-scale, 1)));
       box-shadow: 0 6px 16px rgba(0,0,0,.30);
       will-change: transform, opacity, filter; transform: translateZ(0);
       isolation:isolate;
@@ -274,8 +293,14 @@
                  bubbleBreathe calc(var(--dur,18s) / 2) ease-in-out var(--delay,0s) infinite;
     }
     /* ChatGPT-like variants */
-    .hero-bubble.user { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.14); }
-    .hero-bubble.assistant { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.10); }
+    .hero-bubble.user {
+      background: rgba(255,255,255, calc(var(--hero-bubble-user-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
+      border-color: rgba(255,255,255, calc(var(--hero-bubble-user-border-alpha, .14) * var(--hero-bubble-alpha-scale, 1)));
+    }
+    .hero-bubble.assistant {
+      background: rgba(255,255,255, calc(var(--hero-bubble-assist-alpha, .06) * var(--hero-bubble-alpha-scale, 1)));
+      border-color: rgba(255,255,255, calc(var(--hero-bubble-assist-border-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
+    }
     /* No tails for minimal blocks */
     .hero-bubble::after { content:none !important; display:none !important; }
     .hero-bubble.flip::after { left:auto; right:18px; border-radius:0 0 0 6px; }
@@ -286,7 +311,7 @@
     .hero-bubble[data-size="md"] .content { padding:12px 14px; }
     .hero-bubble[data-size="lg"] .content { padding:14px 16px; }
     .hero-bubble .bubble-text {
-      color: #e8e8e8; font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
+      color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92)); font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
       display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; text-wrap:pretty;
       /* Robust wrapping so long words never overflow */
       overflow-wrap:anywhere; word-break:break-word; hyphens:auto; -webkit-hyphens:auto; -ms-hyphens:auto;
