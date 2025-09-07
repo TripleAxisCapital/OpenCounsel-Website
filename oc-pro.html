@@ -1,0 +1,576 @@
+<!-- OC-Pro: Dark Mode Page -->
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <title>OC‑Pro — The AI Workspace. Without Limits.</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="OC‑Pro — the black‑label AI workspace. Private, polished, and powerful.">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Canonical + i18n (optional; adjust if deploying under different slug) -->
+  <link rel="canonical" href="https://www.opencounsel.ca/oc-pro/">
+  <link rel="alternate" href="https://www.opencounsel.ca/oc-pro/" hreflang="x-default">
+  <link rel="alternate" href="https://www.opencounsel.ca/en/oc-pro/" hreflang="en">
+
+  <!-- Preloads/Assets (keeping consistent with site) -->
+  <link rel="preconnect" href="https://cdn.opencounsel.ca" crossorigin>
+  <link rel="dns-prefetch" href="//cdn.opencounsel.ca">
+  <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
+  <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
+  <link rel="preload" as="image" href="logo.svg">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="https://www.opencounsel.ca/icons/logo1.svg">
+  <link rel="alternate icon" href="https://www.opencounsel.ca/icons/logo.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://www.opencounsel.ca/icons/apple-touch-icon-180.png">
+  <link rel="mask-icon" href="https://www.opencounsel.ca/logo.svg" color="#000000">
+
+  <!-- Open Graph / X -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OC">
+  <meta property="og:title" content="OC‑Pro — The AI Workspace. Without Limits.">
+  <meta property="og:description" content="Black‑label AI workspace. Private, polished, and powerful.">
+  <meta property="og:url" content="https://www.opencounsel.ca/oc-pro/">
+  <meta property="og:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@OpenCounselAI">
+  <meta name="twitter:title" content="OC‑Pro — The AI Workspace. Without Limits.">
+  <meta name="twitter:description" content="Black‑label AI workspace. Private, polished, and powerful.">
+  <meta name="twitter:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
+
+  <!-- Pretty URL (client-side mask) -->
+  <script>
+    window.OC = { base:"", slug:"OC-Pro", file:"/oc-pro.html" };
+    (function(L,C){try{
+      var B=C.base||"", S="/"+(C.slug||"oc-pro"), F=C.file||"/oc-pro.html";
+      var p=L.pathname.replace(/\/+$/,"");
+      if(B && p.startsWith(B)) p=p.slice(B.length)||"/";
+      if(p===F || p==="/") history.replaceState(null,"",B+S+L.search+L.hash);
+    }catch(_){}})(location, window.OC);
+  </script>
+
+  <!-- Feature flags -->
+  <script>
+    window.OC_ENABLE_HERO_LOGO_GLOW = false;
+    (function(d){ try{ if(!window.OC_ENABLE_HERO_LOGO_GLOW) d.documentElement.classList.add('no-hero-glow'); }catch(_){}})(document);
+  </script>
+
+  <!-- Fonts + Icons + Tailwind -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
+          colors: {
+            oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' }
+          },
+          boxShadow: {
+            card:'0 6px 30px rgba(16,24,40,0.08)',
+            glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Base styles from index (trimmed/compatible) -->
+  <style>
+    :root {
+      --pad-mobile-x: 24px; --pad-desktop-x: 32px; --hamburger-inset: 13px;
+      /* Brand/line defaults (overridden for dark below) */
+      --line:#E7EDF2; --brand-angle:135deg; --brand-1:#0B1B2B; --brand-2:#0E6F5C; --brand-3:#00CFFF; --lilac:#E7E7FF;
+      --demo-stage-h-sm: 360px; --demo-stage-h-lg: 440px;
+      --hero-shine-duration: 5.5s; --hero-shine-ease: linear; --hero-shine-angle: 90deg;
+      --hero-shine-base:#e6e6e6; --hero-shine-peak:#ffffff; --hero-shine-softness: 3.5%;
+      --hero-shine-bg-size-x: 260%; --hero-shine-direction: reverse;
+      --logo-width:64px; --logo-height:64px;
+    }
+    html, body { max-width:100%; overflow-x: clip !important; }
+    .section-clip { position: relative; overflow-x: clip; }
+    .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
+    ::selection{background:#5B8CFF;color:#fff}
+
+    /* Gradients */
+    .g-grad, .grad-anim{
+      background: linear-gradient(var(--angle, 135deg), var(--from, #000000), var(--via, #0a0a0a), var(--to, #1a1a1a));
+      background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
+    }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* Logo masks (kept) */
+    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
+    .hero-logo-white{ display:inline-block; width: var(--hero-logo-size, clamp(140px, 45vw, 400px)); height: var(--hero-logo-size, clamp(140px, 45vw, 400px)); background: #ffffff; -webkit-mask-image: url('logo.svg'); -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; mask-image: url('logo.svg'); mask-repeat: no-repeat; mask-position: center; mask-size: contain; opacity: 0; filter: blur(8px); transform: translateY(6px) scale(.985); animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle; }
+    .no-hero-glow .hero-logo-white{ animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
+    @keyframes heroLogoReveal { 0% { opacity: 0; filter: blur(8px); transform: translateY(6px) scale(.985);} 60% { opacity: 1; filter: blur(1.5px); transform: translateY(0) scale(1.000);} 100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1);} }
+
+    /* Caret + hero lines */
+    .hero-caret{ display:inline-block; height:1em; vertical-align:-0.12em; margin-left:.05em; border-right: var(--caret-w, 2px) solid var(--caret-color, rgba(255,255,255,.9)); animation: heroBlink var(--caret-blink, 900ms) steps(1) infinite; pointer-events:none; }
+    #home .hero-sub1{ margin-top: 1px !important; }
+    @media (min-width: 768px){ #home .hero-sub1{ margin-top: 3px !important; } }
+    @keyframes heroBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    #home .hero-line1, #home .hero-line2 { display:block; }
+
+    /* Page blur + mobile menu (dark overrides later) */
+    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background: rgba(0,0,0,.28); z-index:9999; pointer-events:none; transition: backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
+    .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
+
+    /* Scroll fade primitives */
+    .scroll-fade { isolation:isolate; }
+    .scroll-fade > * { filter: blur(16px); opacity:.65; transform: translateY(8px); transition: filter 1100ms cubic-bezier(.16,1,.3,1), opacity 1100ms cubic-bezier(.16,1,.3,1), transform 1100ms cubic-bezier(.16,1,.3,1); will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0); }
+    .scroll-fade.in-view > * { filter: blur(0); opacity:1; transform: translateY(0); }
+
+    /* Dark mode overrides */
+    :root{
+      --from:#000000cc; --via:#0a0a0acc; --to:#1a1a1acc; --speed:16s; --angle:135deg;
+      --grad-from:#000000cc; --grad-via:#0a0a0acc; --grad-to:#1a1a1acc;
+      --line: rgba(255,255,255,.12);
+    }
+    body { background:#000; color:#eaeaea; }
+    header.sticky { background:#000; border-bottom:1px solid rgba(255,255,255,.08); }
+    .nav-link { color:#fff; }
+    .nav-link.grad { -webkit-text-fill-color:#fff !important; color:#fff !important; background:none !important; }
+    #mobileMenu .menu-scrim{ background: rgba(0,0,0,.8); }
+    #mobileMenu .menu-panel{ background:#0a0a0a; border-right:1px solid rgba(255,255,255,.08); box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+    .drawer-close{ border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.08); }
+    .drawer-title{ -webkit-text-fill-color:#fff; color:#fff; background:none; }
+    .drawer-nav a{ -webkit-text-fill-color:#fff!important; color:#fff!important; }
+
+    /* ===== OC‑Pro sections (from old pro.html) ===== */
+    .section{ padding:72px 0; }
+    .headline{ letter-spacing:-.01em }
+    .muted{ color: rgba(255,255,255,.72) }
+    .fine{ color: rgba(255,255,255,.60) }
+    .divider{ height:1px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent); }
+    .hero-compact{ margin-bottom:-72px; }
+
+    /* Pro Stack visuals */
+    .pro-stack{ position:relative; overflow:hidden; }
+    .stack-aura{ position:absolute; inset:-10%; pointer-events:none; background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(0,207,255,.16), rgba(255,255,255,0) 60%),
+      radial-gradient(900px 500px at 20% 110%, rgba(14,111,92,.18), rgba(255,255,255,0) 60%),
+      radial-gradient(700px 420px at 80% 110%, rgba(255,255,255,.08), rgba(255,255,255,0) 60%);
+      filter: blur(18px) saturate(120%);
+      opacity:.6;
+    }
+    .stack-kicker{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:9999px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#fff; font-weight:600; font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+    .stack-card{ border-radius:18px; border:1px solid rgba(255,255,255,.12); background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)); box-shadow: 0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08); padding:22px; }
+    .stack-chip{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:9999px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); font-size:13px; color:#fff; }
+    .stack-card h3{ font-weight:700; font-size:18px }
+    .stack-card p{ color: rgba(255,255,255,.72) }
+    .kb-chip{ display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); box-shadow:0 8px 24px rgba(0,0,0,.35); }
+    .kb-chip i{ color:#fff }
+
+    /* Simple reveal animation */
+    .reveal{ opacity:0; transform: translateY(10px); transition: opacity .7s cubic-bezier(.22,.8,.22,1), transform .7s cubic-bezier(.22,.8,.22,1); }
+    .reveal.in{ opacity:1; transform: translateY(0); }
+
+    /* ===== Header + Mobile menu (copied from PRO) ===== */
+    .hamburger { width: 32px; height: 28px; display: inline-flex; flex-direction: column; justify-content: center; gap: 6px; }
+    .hamburger span { height: 3px; width: 100%; border-radius: 9999px; background: var(--hamburger-color, #000); animation: none; background-size: initial; transition: transform .4s ease, opacity .2s ease, background-color .2s ease; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity: 0; }
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
+
+    .logo-white{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background:#fff; -webkit-mask:url('logo.svg') no-repeat center/contain; mask:url('logo.svg') no-repeat center/contain; }
+
+    #mobileMenu { position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
+    #mobileMenu .menu-scrim{ position:absolute; inset:0; background: rgba(255,255,255,0.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); opacity:0; transition: opacity 2s ease, backdrop-filter 2s ease, -webkit-backdrop-filter 2s ease; }
+    #mobileMenu .menu-panel{ position:absolute; top:0; left:0; height:100%; width:min(88vw, 420px); background:#fff; border-right: 1px solid rgba(0,0,0,.06); box-shadow: 0 24px 60px rgba(0,0,0,.12); transform: translateX(-100%); opacity:.98; filter: blur(12px); transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px; }
+    #mobileMenu.active { display:block; pointer-events:auto; }
+    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0px); backdrop-filter:blur(0px); }
+    #mobileMenu.active .menu-panel{ transform:translateX(0); filter:blur(0); }
+    .drawer-title{ font-weight:700; letter-spacing:-.01em; background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; }
+    .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); }
+    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; text-align:center; color:#fff!important; -webkit-text-fill-color:#fff!important; }
+    .drawer-nav a:not(.drawer-cta){ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2; background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+
+    /* Dark, glassy header */
+    #siteHeader{ background: rgba(0,0,0,.55); -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px); border-bottom:1px solid rgba(255,255,255,.08); --hamburger-color:#fff; }
+    #siteHeader.scrolled{ background: rgba(0,0,0,.82); border-bottom-color: rgba(255,255,255,.14); }
+    #siteHeader .nav-link{ color:rgba(255,255,255,.88); transition: color .2s ease }
+    #siteHeader .nav-link:hover{ color:#fff }
+  </style>
+
+  <style id="oc-hero-bold-rotator"> .hero-sub1 .hero-word { font-weight: 800; } </style>
+</head>
+
+<body class="bg-black text-white font-sans antialiased">
+  <!-- FULL-PAGE BLUR OVERLAY -->
+  <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
+
+  <!-- HEADER (match old PRO header exactly) -->
+  <header id="siteHeader" class="sticky top-0 z-50 text-white transition-colors">
+    <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="inline-flex items-center" aria-label="OC home"><span class="logo-white" role="img" aria-label="OC" style="--logo-width:40px;--logo-height:40px"></span></a>
+      </div>
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link font-semibold" href="oc-pro.html">OC-Pro</a>
+        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="cores.html">Cores</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <a
+          href="download.html"
+          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black"
+          focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+          shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
+          transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
+          aria-label="Download" title="Download">
+          <i class="ph ph-download text-base" aria-hidden="true"></i>
+          <span>Download</span>
+        </a>
+        <button id="hamburgerBtn" class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MOBILE MENU (match old PRO) -->
+  <div id="mobileMenu" aria-hidden="true">
+    <div class="menu-scrim"></div>
+    <aside class="menu-panel">
+      <div class="drawer-head flex items-center justify-between pb-1">
+        <a href="index.html" class="drawer-title">OC</a>
+        <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+        <nav class="drawer-nav mt-2">
+          <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">OC-Pro</a>
+          <a href="cores.html">Cores</a>
+        <div class="h-px my-2 bg-gradient-to-r from-transparent via-black/10 to-transparent"></div>
+        <a href="download.html" class="drawer-cta grad-anim rounded-2xl px-6 py-3 font-semibold text-white inline-flex items-center justify-center"><i class="ph ph-download text-xl mr-2"></i><span>Get OpenCounsel</span></a>
+      </nav>
+    </aside>
+  </div>
+
+  <!-- HERO -->
+  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
+    <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
+                h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
+                lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
+                flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
+         style="border-color: rgba(255,255,255,.12)">
+      <div class="flex flex-col items-center max-w-2xl">
+        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OC</span>
+        <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
+        <div class="mt-8 flex justify-center">
+          <a id="heroCtaBtn" href="download.html"
+             class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                    focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                    shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-black/60
+                    transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 g-grad grad-anim"
+             style="--from:#0e0e0ecc; --via:#141414cc; --to:#1f1f1fcc; --speed:16s; --angle:135deg;"
+             aria-label="Download">
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-50" style="background: radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.18), rgba(0,0,0,0));"></span>
+            <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
+            <span class="hero-cta-text">Download</span>
+          </a>
+        </div>
+      </div>
+      <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s"></oc-down-arrow>
+    </div>
+  </section>
+
+  <!-- OC‑Pro Stack (from PRO page) -->
+  <section class="section pro-stack">
+    <div class="stack-aura" aria-hidden="true"></div>
+    <div class="mx-auto max-w-[1200px] oc-container">
+      <div class="text-center reveal">
+        <span class="stack-kicker"><i class="ph ph-seal-check"></i>OC‑Pro Stack</span>
+        <h2 class="mt-4 text-[30px] md:text-[46px] leading-tight font-semibold">Pro Cores. Pro Databases. Pro Tools.</h2>
+        <p class="mt-3 text-white/75 max-w-2xl mx-auto">Everything you need to reason, research, and ship with confidence — built on curated knowledge and purpose‑built tools.</p>
+      </div>
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="stack-card reveal">
+          <div class="flex items-center gap-3">
+            <div class="kb-chip"><i class="ph ph-grid-four"></i><span>Pro Cores</span></div>
+          </div>
+          <h3 class="mt-3">Specialized reasoning engines</h3>
+          <p class="mt-1">Expert cores tuned for briefs, analysis, and technical work — switching context without losing precision.</p>
+        </div>
+        <div class="stack-card reveal">
+          <div class="flex items-center gap-3">
+            <div class="kb-chip"><i class="ph ph-database"></i><span>Pro Databases</span></div>
+          </div>
+          <h3 class="mt-3">Curated, vetted knowledge</h3>
+          <p class="mt-1">Private, expert‑maintained collections with citations — legal, financial, scientific, and industry datasets.</p>
+        </div>
+        <div class="stack-card reveal">
+          <div class="flex items-center gap-3">
+            <div class="kb-chip"><i class="ph ph-squares-four"></i><span>Pro Tools</span></div>
+          </div>
+          <h3 class="mt-3">Tools that move work forward</h3>
+          <p class="mt-2">
+            <span class="stack-chip mr-2"><i class="ph ph-globe"></i>Web Browser</span>
+            <span class="stack-chip mr-2"><i class="ph ph-chart-line-up"></i>Financial Advisor</span>
+            <span class="stack-chip"><i class="ph ph-sigma"></i>Statistical Analyst</span>
+          </p>
+          <p class="mt-2">On‑tap capabilities — search the live web, model scenarios, and run analyses in place.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Essentials (from PRO page) -->
+  <section class="section">
+    <div class="mx-auto max-w-[1200px] oc-container">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Private Knowledge</h3>
+          <p class="mt-2 text-white/70">Accurate, local, and yours. Sources stay on your machine with citations you can trust.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Curated Expert Databases</h3>
+          <p class="mt-2 text-white/70">Proprietary, expert‑curated collections with verified sources — legally sound and designed to reduce hallucinations.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Industry‑grade Analysis</h3>
+          <p class="mt-2 text-white/70">Regressions, forecasts, and defensible outputs — built for briefs and decks.</p>
+        </div>
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
+          <h3 class="font-semibold text-xl">Uncensored Chat</h3>
+          <p class="mt-2 text-white/70">No throttles. Ask what you need and move the work forward.</p>
+        </div>
+      </div>
+      <div class="mt-6 text-sm text-white/70 reveal">
+        <span class="inline-flex items-center gap-2 chip"><i class="ph ph-seal-check"></i><span>OC Databases</span></span>
+        <span class="ml-2">Curated, vetted, and legally sound — provided by OC.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing CTA (from PRO page) -->
+  <section class="section">
+    <div class="mx-auto max-w-[1200px] oc-container text-center">
+      <h2 class="text-3xl md:text-5xl font-semibold headline">Own your AI. Level up your work.</h2>
+      <p class="mt-3 text-lg muted max-w-2xl mx-auto">OC‑Pro pairs private knowledge with industry‑grade analysis and an uncensored chat — all on your machine. It’s how the top 1% ship faster.</p>
+      <div class="mt-7 flex items-center justify-center gap-3">
+        <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
+        <a href="cores.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reveal on scroll for .reveal blocks (from PRO page) -->
+  <script>
+    (function(){
+      const els = Array.from(document.querySelectorAll('.reveal'));
+      if (!els.length) return;
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold:.18 });
+      els.forEach(el=> io.observe(el));
+    })();
+  </script>
+
+  <!-- Measure header height for hero spacing -->
+  <script>
+    (function setHeaderVar(){
+      const pick=()=>document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+      const set=()=>{ const el=pick(); const h=el? el.getBoundingClientRect().height : 56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px'); };
+      set(); window.addEventListener('resize', set, {passive:true}); window.addEventListener('orientationchange', set, {passive:true});
+      const el=pick(); if(el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+    })();
+  </script>
+
+  <!-- Arrow reveal timing (reuse) -->
+  <script>
+  (()=>{
+    const ARROW_AFTER_CTA_MS = 40;
+    const arrow=document.getElementById('heroArrow'); const ctaBtn=document.getElementById('heroCtaBtn'); const ctaTxt=document.querySelector('#home .hero-cta-text');
+    if(!arrow||!ctaBtn) return; const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reveal = ()=>{ arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
+    document.addEventListener('oc:cta-text-done', ()=>{ if(prefersReduced){reveal();return;} setTimeout(reveal, ARROW_AFTER_CTA_MS); }, {once:true});
+    const onCtaInView=()=>{ if(prefersReduced){reveal();return;} if(!ctaTxt){ setTimeout(reveal,10); return; }
+      let lastChange=Date.now(); const mo=new MutationObserver(()=>{ lastChange=Date.now(); }); mo.observe(ctaTxt,{childList:true,characterData:true,subtree:true});
+      const checkStable=()=>{ const idleMs=Date.now()-lastChange; if((ctaTxt.textContent||'').trim() && idleMs>10){ mo.disconnect(); reveal(); return true; } return false; };
+      const tick=()=>{ if(!checkStable()) requestAnimationFrame(tick); }; requestAnimationFrame(tick);
+      setTimeout(()=>{ try{mo.disconnect();}catch(e){} if(arrow.classList.contains('opacity-0')) reveal(); },6000);
+    };
+    const io=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ onCtaInView(); io.disconnect(); break; } } }, { threshold:.35 });
+    io.observe(ctaBtn);
+  })();
+  </script>
+
+  <!-- FIRST SECTION (from Home: "Built. For. Real. Work.") -->
+  <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%);"></div>
+      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%);"></div>
+    </div>
+    <div class="w-full py-24 md:py-32">
+      <div class="mx-auto max-w-[900px] text-center">
+        <h2 class="sly-title text-white text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">
+          <span class="inline-block">Built.</span>
+          <span class="inline-block opacity-90">For.</span>
+          <span class="inline-block opacity-90">Real.</span>
+          <span class="inline-block opacity-90">Work.</span>
+        </h2>
+        <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] text-white/70">Without Limits</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="mx-auto max-w-[1200px] oc-container py-12 flex items-center flex-col gap-6 text-white/60 text-sm">
+      <div class="text-center">
+        <span class="font-semibold text-white">OC</span> © <span id="yr"></span> OC
+      </div>
+      <div class="flex items-center gap-4">
+        <a class="hover:text-white" href="contact.html">Contact</a>
+        <a class="hover:text-white" href="#">Privacy</a>
+        <a class="hover:text-white" href="#">Terms</a>
+        <a class="hover:text-white" href="download.html">Download</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JS: Menu, scroll, hero typing (subset from index) -->
+  <script>
+  (()=>{
+    const hamburgerBtn=document.getElementById('hamburgerBtn');
+    const mobileMenu   = document.getElementById('mobileMenu');
+    const closeMenuBtn = document.getElementById('closeMenuBtn');
+    function openMenu(){
+      if (window.matchMedia('(min-width:768px)').matches) return;
+      mobileMenu.style.display='block';
+      void mobileMenu.offsetWidth; // force reflow for transition
+      mobileMenu.classList.add('active');
+      hamburgerBtn.classList.add('is-active');
+      hamburgerBtn.setAttribute('aria-expanded','true');
+      mobileMenu.setAttribute('aria-hidden','false');
+      document.body.classList.add('overflow-hidden');
+    }
+    function closeMenu(){
+      mobileMenu.classList.remove('active');
+      hamburgerBtn.classList.remove('is-active');
+      hamburgerBtn.setAttribute('aria-expanded','false');
+      mobileMenu.setAttribute('aria-hidden','true');
+      document.body.classList.remove('overflow-hidden');
+      setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display='none'; }, 550);
+    }
+    hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
+    closeMenuBtn?.addEventListener('click', closeMenu);
+    mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
+    const mq=window.matchMedia('(min-width:768px)'); function handleMQ(e){ if(e.matches) closeMenu(); } if(mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
+    document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+    window.addEventListener('load', ()=>{ const pageBlur=document.getElementById('pageBlur'); if(!pageBlur) return; pageBlur.classList.add('hide'); document.dispatchEvent(new Event('oc:page-blur-fade')); setTimeout(()=>pageBlur.remove(), 1300); });
+
+    // Header glass intensifies on scroll (match PRO)
+    (function(){
+      const h = document.getElementById('siteHeader');
+      if (!h) return;
+      const apply = ()=>{ if (window.scrollY > 8) h.classList.add('scrolled'); else h.classList.remove('scrolled'); };
+      apply();
+      window.addEventListener('scroll', apply, { passive:true });
+    })();
+
+    // Hero typing (reusing config style from index)
+    window.OC_HERO = Object.assign({ enabled:true, waitForBlur:true, startOnView:true, startDelayMs:0, streamSpeed:1.0, line1CharMin:18, line1CharMax:22, lineCharMin:18, lineCharMax:22, buttonCharMin:5, buttonCharMax:10 }, window.OC_HERO || {});
+    window.OC_HERO_GLOW = Object.assign({ enabled: !!window.OC_ENABLE_HERO_LOGO_GLOW, pulse:true, pulseDur:'6s', color1:'rgba(255,255,255,.25)', color2:'rgba(255,255,255,.12)', opacity:.45, blurPx:30, insetPct:16 }, window.OC_HERO_GLOW || {});
+
+    // Typewriter helpers
+    function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    (function heroTyping(){
+      const cfg = window.OC_HERO || {}; if(!cfg.enabled) return;
+      const hero=document.getElementById('home'); if(!hero) return;
+      const titleEl=hero.querySelector('.hero-title'); const sub1El=hero.querySelector('.hero-sub1'); const ctaTxt=hero.querySelector('.hero-cta-text'); const ctaBtn=hero.querySelector('#heroCtaBtn');
+      if(!titleEl||!ctaTxt||!ctaBtn) return; const prefersReduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const bTxt=ctaTxt.textContent||'';
+      const TAGLINE_FULL = 'Uncensored AI - for the 1%';
+      const MOBILE_LINE1 = 'Uncensored AI -';
+      const MOBILE_LINE2 = 'for the 1%';
+      const isMobile=window.matchMedia('(max-width: 767px)').matches;
+      titleEl.innerHTML=''; const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
+      if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
+      const logoSpanNow=document.createElement('span'); logoSpanNow.className='hero-logo-white'; logoSpanNow.setAttribute('role','img'); logoSpanNow.setAttribute('aria-label','OC'); wrapSpan.appendChild(logoSpanNow);
+      if(prefersReduced){ if(sub1El){ sub1El.innerHTML = isMobile ? `<span class="hero-line1">${MOBILE_LINE1}</span><span class="hero-line2">${MOBILE_LINE2}</span>` : `<span class="hero-line1">${TAGLINE_FULL}</span>`; } ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-text-done')); return; }
+      if(sub1El) sub1El.textContent=''; ctaTxt.textContent=''; ctaBtn.classList.remove('cta-visible');
+      function spH(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
+      function typeHero(el, text, min, max){ return new Promise(resolve=>{ let i=0; const tn=document.createTextNode(''); el.textContent=''; el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })(); }); }
+      const wait=(ms)=>new Promise(r=>setTimeout(r, ms));
+      async function run(){ await wait(Math.max(0, cfg.startDelayMs|0)); if(sub1El){ const min=(cfg.line1CharMin ?? cfg.lineCharMin)|0; const max=(cfg.line1CharMax ?? cfg.lineCharMax)|0; if(isMobile){ sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine l1"></span></span><span class="hero-line2"><span class="seg-fullshine l2"></span></span>'; const l1=sub1El.querySelector('.l1'); const l2=sub1El.querySelector('.l2'); await typeHero(l1, MOBILE_LINE1, min, max); await typeHero(l2, MOBILE_LINE2, min, max); } else { sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine"></span></span>'; const seg=sub1El.querySelector('.seg-fullshine'); await typeHero(seg, TAGLINE_FULL, min, max); } }
+        await wait(cfg.staggerMs|0); ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-visible')); await wait(60); document.dispatchEvent(new Event('oc:cta-text-start')); await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0); document.dispatchEvent(new Event('oc:cta-text-done')); }
+      let started=false; let inView=!cfg.startOnView; let blurReady=!cfg.waitForBlur;
+      function tryStart(){ if(!started && inView && blurReady){ started=true; run(); } }
+      if(cfg.startOnView){ const ob=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ inView=true; tryStart(); ob.disconnect(); break; } } }, {threshold:.35}); ob.observe(hero); }
+      if(cfg.waitForBlur){ document.addEventListener('oc:page-blur-fade', ()=>{ blurReady=true; tryStart(); }, {once:true}); } else { blurReady=true; tryStart(); }
+    })();
+  })();
+  </script>
+
+  <script>
+    // Set current year in footer
+    (function(){ var y=document.getElementById('yr'); if(y) y.textContent=new Date().getFullYear(); })();
+  </script>
+
+  <!-- Define <oc-down-arrow> web component (copied from home) -->
+  <script>
+  (() => {
+    class OCDownArrow extends HTMLElement {
+      static get observedAttributes() {
+        return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to'];
+      }
+      constructor(){ super(); this.attachShadow({mode:'open'}); }
+      connectedCallback(){ this.render(); }
+      attributeChangedCallback(){ this.render(); }
+      render(){
+        const dir = (this.getAttribute('dir') || 'down').toLowerCase();
+        const size = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
+        const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
+        const alpha = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
+        const amp = (this.getAttribute('amp') || '14%').trim();
+        const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();
+        const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();
+        const from = this.getAttribute('from') || '#ffffff';
+        const via  = this.getAttribute('via')  || from;
+        const to   = this.getAttribute('to')   || from;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
+        const gid = 'grad_' + Math.random().toString(36).slice(2);
+        const animateTag = reduce ? '' : `
+          <animateTransform attributeName="gradientTransform" type="translate" from="0 -1" to="0 1" dur="8s" repeatCount="indefinite" />`;
+        this.shadowRoot.innerHTML = `
+          <style>
+            :host { display:inline-block; line-height:0; }
+            .wrap { --amp: ${amp}; opacity: ${alpha}; will-change: transform, filter, opacity; ${reduce ? '' : `animation: oc-bounce ${bounceDur} ease-in-out infinite, oc-breathe ${breatheDur} ease-in-out infinite;`} backface-visibility: hidden; transform: translateZ(0); }
+            @keyframes oc-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(var(--amp))} }
+            @keyframes oc-breathe { 0%,100%{ filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 10px 26px rgba(255,255,255,.15)) } 50%{ filter: drop-shadow(0 6px 18px rgba(255,255,255,.40)) drop-shadow(0 16px 40px rgba(255,255,255,.22)) } }
+            svg { width:${size}px; height:${size}px; overflow:visible; }
+            .stroke { stroke: url(#${gid}); stroke-width:${thickness}; stroke-linecap:round; stroke-linejoin:round; fill:none; }
+          </style>
+          <div class="wrap" part="wrap" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="img" aria-label="Down arrow" style="transform: rotate(${rotation}deg);">
+              <defs>
+                <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+                  <stop offset="0%"   stop-color="${from}" />
+                  <stop offset="50%"  stop-color="${via}" />
+                  <stop offset="100%" stop-color="${to}" />
+                  ${animateTag}
+                </linearGradient>
+              </defs>
+              <path class="stroke" d="M12 32 H44" />
+              <path class="stroke" d="M44 20 L56 32 L44 44" />
+            </svg>
+          </div>`;
+      }
+    }
+    if (!customElements.get('oc-down-arrow')) customElements.define('oc-down-arrow', OCDownArrow);
+  })();
+  </script>
+
+</body>
+</html>
