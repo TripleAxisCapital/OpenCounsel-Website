@@ -282,6 +282,57 @@
     </div>
   </section>
 
+  <!-- Measure header height for hero spacing -->
+  <script>
+    (function setHeaderVar(){
+      const pick=()=>document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+      const set=()=>{ const el=pick(); const h=el? el.getBoundingClientRect().height : 56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px'); };
+      set();
+      window.addEventListener('resize', set, {passive:true});
+      window.addEventListener('orientationchange', set, {passive:true});
+      const el=pick(); if(el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+    })();
+  </script>
+
+  <!-- Arrow reveal timing (reuse) -->
+  <script>
+  (()=>{
+    const ARROW_AFTER_CTA_MS = 40;
+    const arrow=document.getElementById('heroArrow'); const ctaBtn=document.getElementById('heroCtaBtn'); const ctaTxt=document.querySelector('#home .hero-cta-text');
+    if(!arrow||!ctaBtn) return; const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reveal = ()=>{ arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
+    document.addEventListener('oc:cta-text-done', ()=>{ if(prefersReduced){reveal();return;} setTimeout(reveal, ARROW_AFTER_CTA_MS); }, {once:true});
+    const onCtaInView=()=>{ if(prefersReduced){reveal();return;} if(!ctaTxt){ setTimeout(reveal,10); return; }
+      let lastChange=Date.now(); const mo=new MutationObserver(()=>{ lastChange=Date.now(); }); mo.observe(ctaTxt,{childList:true,characterData:true,subtree:true});
+      const checkStable=()=>{ const idleMs=Date.now()-lastChange; if((ctaTxt.textContent||'').trim() && idleMs>10){ mo.disconnect(); reveal(); return true; } return false; };
+      const tick=()=>{ if(!checkStable()) requestAnimationFrame(tick); }; requestAnimationFrame(tick);
+      setTimeout(()=>{ try{mo.disconnect();}catch(e){} if(arrow.classList.contains('opacity-0')) reveal(); },6000);
+    };
+    const io=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ onCtaInView(); io.disconnect(); break; } } }, { threshold:.35 });
+    io.observe(ctaBtn);
+  })();
+  </script>
+
+  <!-- FIRST SECTION (from Home: "Built. For. Real. Work.") -->
+  <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%);"></div>
+      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%);"></div>
+    </div>
+    <div class="w-full py-24 md:py-32">
+      <div class="mx-auto max-w-[900px] text-center">
+        <h2 class="sly-title text-white text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">
+          <span class="inline-block">Built.</span>
+          <span class="inline-block opacity-90">For.</span>
+          <span class="inline-block opacity-90">Real.</span>
+          <span class="inline-block opacity-90">Work.</span>
+        </h2>
+        <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+        <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] text-white/70">Without Limits</p>
+      </div>
+    </div>
+  </section>
+
   <!-- OC‑Pro Stack (from PRO page) -->
   <section class="section pro-stack">
     <div class="stack-aura" aria-hidden="true"></div>
@@ -374,54 +425,7 @@
     })();
   </script>
 
-  <!-- Measure header height for hero spacing -->
-  <script>
-    (function setHeaderVar(){
-      const pick=()=>document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-      const set=()=>{ const el=pick(); const h=el? el.getBoundingClientRect().height : 56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px'); };
-      set(); window.addEventListener('resize', set, {passive:true}); window.addEventListener('orientationchange', set, {passive:true});
-      const el=pick(); if(el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-    })();
-  </script>
-
-  <!-- Arrow reveal timing (reuse) -->
-  <script>
-  (()=>{
-    const ARROW_AFTER_CTA_MS = 40;
-    const arrow=document.getElementById('heroArrow'); const ctaBtn=document.getElementById('heroCtaBtn'); const ctaTxt=document.querySelector('#home .hero-cta-text');
-    if(!arrow||!ctaBtn) return; const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const reveal = ()=>{ arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
-    document.addEventListener('oc:cta-text-done', ()=>{ if(prefersReduced){reveal();return;} setTimeout(reveal, ARROW_AFTER_CTA_MS); }, {once:true});
-    const onCtaInView=()=>{ if(prefersReduced){reveal();return;} if(!ctaTxt){ setTimeout(reveal,10); return; }
-      let lastChange=Date.now(); const mo=new MutationObserver(()=>{ lastChange=Date.now(); }); mo.observe(ctaTxt,{childList:true,characterData:true,subtree:true});
-      const checkStable=()=>{ const idleMs=Date.now()-lastChange; if((ctaTxt.textContent||'').trim() && idleMs>10){ mo.disconnect(); reveal(); return true; } return false; };
-      const tick=()=>{ if(!checkStable()) requestAnimationFrame(tick); }; requestAnimationFrame(tick);
-      setTimeout(()=>{ try{mo.disconnect();}catch(e){} if(arrow.classList.contains('opacity-0')) reveal(); },6000);
-    };
-    const io=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ onCtaInView(); io.disconnect(); break; } } }, { threshold:.35 });
-    io.observe(ctaBtn);
-  })();
-  </script>
-
-  <!-- FIRST SECTION (from Home: "Built. For. Real. Work.") -->
-  <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
-    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%);"></div>
-      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%);"></div>
-    </div>
-    <div class="w-full py-24 md:py-32">
-      <div class="mx-auto max-w-[900px] text-center">
-        <h2 class="sly-title text-white text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">
-          <span class="inline-block">Built.</span>
-          <span class="inline-block opacity-90">For.</span>
-          <span class="inline-block opacity-90">Real.</span>
-          <span class="inline-block opacity-90">Work.</span>
-        </h2>
-        <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-        <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] text-white/70">Without Limits</p>
-      </div>
-    </div>
-  </section>
+  
 
   <!-- FOOTER -->
   <footer>
