@@ -279,6 +279,15 @@
     /* Spin sequence */
     .ad-card.spin{ animation: spin360 4.6s cubic-bezier(.22,.8,.22,1) }
     @keyframes spin360{ from{ transform: rotate(0deg) } to{ transform: rotate(360deg) } }
+
+    /* Marketplace FX */
+    #marketFxWrap{ position:relative; }
+    #marketFx{ position:absolute; inset:-10% -5% 0 -5%; z-index:-1; filter: blur(0.3px) saturate(1.1); opacity:.7; }
+    .market-orb{ position:absolute; width:220px; height:220px; border-radius:50%; filter: blur(40px); opacity:.35; }
+    .market-orb.c1{ background: radial-gradient(closest-side, rgba(0,207,255,.20), transparent 70%); left: -60px; top: -40px; }
+    .market-orb.c2{ background: radial-gradient(closest-side, rgba(14,111,92,.20), transparent 70%); right: -40px; top: 120px; }
+    .market-orb.c3{ background: radial-gradient(closest-side, rgba(160,228,212,.18), transparent 70%); left: 20%; bottom: -30px; width:260px; height:260px; }
+    @media (prefers-reduced-motion: reduce){ #marketFx{ display:none !important } }
   </style>
 </head>
 
@@ -403,6 +412,48 @@
         </div>
       </div>
       </div>
+  </section>
+
+  <!-- POST-HERO DEMO CHAT (animation slot below hero) -->
+  <section id="core-demo" class="mx-auto max-w-[1200px] oc-container mt-6 md:mt-10">
+    <div id="coreDemoSlot" class="relative mx-auto w-full max-w-[620px]">
+      <!-- Segmented control -->
+      <div id="coreSwitcher" role="radiogroup" aria-label="Select a Core" class="mx-auto w-fit rounded-full border border-oc-line bg-white/80 backdrop-blur-sm px-1 py-1 flex gap-1 dark:bg-neutral-900/70" tabindex="0">
+        <button type="button" role="radio" aria-checked="true" data-core="oc" aria-controls="coreDemoPanel" class="seg-pill inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-semibold text-neutral-800 dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-white/70 dark:focus-visible:ring-offset-neutral-900">
+          <i class="ph ph-cpu text-base"></i>
+          <span>OC‑Core</span>
+        </button>
+        <button type="button" role="radio" aria-checked="false" data-core="research" aria-controls="coreDemoPanel" class="seg-pill inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium text-neutral-700 dark:text-neutral-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-white/70 dark:focus-visible:ring-offset-neutral-900">
+          <i class="ph ph-flask text-base"></i>
+          <span>OC‑Research‑Core</span>
+        </button>
+        <button type="button" role="radio" aria-checked="false" data-core="coach" aria-controls="coreDemoPanel" class="seg-pill inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium text-neutral-700 dark:text-neutral-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-white/70 dark:focus-visible:ring-offset-neutral-900">
+          <i class="ph ph-compass-tool text-base"></i>
+          <span>OC‑Coach‑Core</span>
+        </button>
+      </div>
+
+      <!-- Chat Card -->
+      <div id="coreDemoPanel" role="region" aria-labelledby="coreTitle" aria-live="polite" aria-atomic="true" class="mt-4 rounded-2xl border border-oc-line bg-white/75 dark:bg-neutral-900/70 backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,.12)]">
+        <div id="coreDemoHeader" class="flex items-center justify-between px-4 py-3">
+          <div class="flex items-center gap-2">
+            <div id="coreIcon" class="h-7 w-7 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center">
+              <i class="ph ph-cpu"></i>
+            </div>
+            <div>
+              <div id="coreTitle" class="text-sm font-semibold text-neutral-900 dark:text-white">OC‑Core</div>
+              <div id="coreSub" class="text-[11px] text-neutral-600 dark:text-neutral-300">General</div>
+            </div>
+          </div>
+          <div id="coreHeaderChip" class="hidden text-[11px] px-2 py-1 rounded-full border font-medium"></div>
+        </div>
+        <div class="px-4 pb-4">
+          <div id="chatWrap" class="relative">
+            <!-- Bubbles injected by script -->
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- MARKETPLACE -->
@@ -534,6 +585,182 @@
     function handleMQ(e){ if (e.matches) closeMenu(); }
     if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+
+    // ====== DemoCoreChat (post-hero) ======
+    (function DemoCoreChat(){
+      const slot = document.getElementById('coreDemoSlot'); if (!slot) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const switcher = document.getElementById('coreSwitcher');
+      const header = {
+        icon: document.getElementById('coreIcon'),
+        title: document.getElementById('coreTitle'),
+        sub: document.getElementById('coreSub'),
+        chip: document.getElementById('coreHeaderChip')
+      };
+      const chatWrap = document.getElementById('chatWrap');
+
+      const CORES = ['oc','research','coach'];
+      let i = 0; let timer = null; let paused = false;
+      const dur = 7200; // ~7s
+
+      const bubbleBase = 'w-fit max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-[0_6px_18px_rgba(0,0,0,.08)]';
+
+      const makeBubbles = (key)=>{
+        switch(key){
+          case 'research': return [
+            { role:'user', text:'Compare studies on GLP‑1 and weight loss.' },
+            { role:'ai', text:'Key findings across 4 peer‑reviewed papers. (1) … (2) …', cite:true }
+          ];
+          case 'coach': return [
+            { role:'user', text:'Hold me to 90 minutes deep work.' },
+            { role:'ai', text:'Timer set. I’ll check in at 30/60/90—stay locked in.' }
+          ];
+          case 'oc':
+          default: return [
+            { role:'user', text:'Summarize my meeting notes.' },
+            { role:'ai', text:'Here’s a crisp 5‑bullet summary and next steps.' }
+          ];
+        }
+      };
+
+      function setHeader(key){
+        header.chip.className = 'hidden text-[11px] px-2 py-1 rounded-full border font-medium';
+        switch(key){
+          case 'research':
+            header.icon.innerHTML = '<i class="ph ph-flask"></i>';
+            header.icon.className = 'h-7 w-7 rounded-xl bg-cyan-600 text-white flex items-center justify-center';
+            header.title.textContent = 'OC‑Research‑Core';
+            header.sub.textContent = 'Research';
+            break;
+          case 'coach':
+            header.icon.innerHTML = '<i class="ph ph-compass-tool"></i>';
+            header.icon.className = 'h-7 w-7 rounded-xl bg-amber-600 text-white flex items-center justify-center';
+            header.title.textContent = 'OC‑Coach‑Core';
+            header.sub.textContent = 'Coaching';
+            header.chip.textContent = 'Check‑in';
+            header.chip.className = 'text-[11px] px-2 py-1 rounded-full border font-medium border-amber-300/60 text-amber-800 bg-amber-50/70 dark:text-amber-200 dark:border-amber-400/30 dark:bg-amber-900/30';
+            break;
+          default:
+            header.icon.innerHTML = '<i class="ph ph-cpu"></i>';
+            header.icon.className = 'h-7 w-7 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center';
+            header.title.textContent = 'OC‑Core';
+            header.sub.textContent = 'General';
+        }
+      }
+
+      function bubbleEl(item, idx, theme){
+        const isUser = item.role === 'user';
+        const wrap = document.createElement('div');
+        wrap.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mt-2`;
+        const bubble = document.createElement('div');
+        bubble.className = `${bubbleBase} ${isUser ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : theme.aiBg}`;
+        bubble.setAttribute('data-bubble','');
+        bubble.textContent = item.text;
+        if (!reduce) bubble.style.opacity = '0';
+        // Optional micro adornments
+        if (!isUser && item.cite){
+          const dot = document.createElement('span'); dot.setAttribute('aria-hidden','true');
+          dot.className = 'inline-flex items-center justify-center ml-1 -mr-1 align-middle';
+          dot.innerHTML = '<i class="ph ph-dot text-cyan-600"></i>';
+          bubble.appendChild(dot);
+        }
+        // OC-Core micro badge on assistant bubble
+        if (!isUser && theme.k === 'oc'){
+          const badge = document.createElement('span'); badge.setAttribute('aria-hidden','true');
+          badge.className = 'inline-flex items-center justify-center ml-1 -mr-1 align-middle text-neutral-500';
+          badge.innerHTML = '<i class="ph ph-circle-wavy-check"></i>';
+          bubble.appendChild(badge);
+        }
+        wrap.appendChild(bubble);
+        return wrap;
+      }
+
+      function themeFor(key){
+        switch(key){
+          case 'research': return { k:'research', aiBg: 'bg-cyan-50 text-neutral-900 border border-cyan-200/70 dark:bg-cyan-900/20 dark:text-white dark:border-cyan-400/20' };
+          case 'coach': return { k:'coach', aiBg: 'bg-amber-50 text-neutral-900 border border-amber-200/70 dark:bg-amber-900/20 dark:text-white dark:border-amber-400/20' };
+          default: return { k:'oc', aiBg: 'bg-neutral-100 text-neutral-900 border border-neutral-200/70 dark:bg-neutral-800/60 dark:text-white dark:border-neutral-600/40' };
+        }
+      }
+
+      function animateIn(container){
+        if (reduce) return;
+        // Card in
+        container.animate([
+          { opacity: 0, transform: 'translateY(10px) scale(0.97)' },
+          { opacity: 1, transform: 'translateY(0) scale(1)' }
+        ], { duration: 230, easing: 'cubic-bezier(.22,.8,.22,1)' });
+        // Bubble stagger
+        const bubbles = container.querySelectorAll('[data-bubble]');
+        bubbles.forEach((b, idx)=>{
+          b.animate([
+            { opacity: 0, transform: 'translateY(6px)' },
+            { opacity: 1, transform: 'translateY(0)' }
+          ], { duration: 200, delay: 50 + idx*60, easing: 'cubic-bezier(.22,.8,.22,1)', fill: 'both' });
+        });
+      }
+
+      function render(key){
+        setHeader(key);
+        // Replace bubbles
+        chatWrap.innerHTML = '';
+        const t = themeFor(key);
+        const items = makeBubbles(key);
+        for (let idx=0; idx<items.length; idx++){
+          chatWrap.appendChild(bubbleEl(items[idx], idx, t));
+        }
+        if (!reduce) animateIn(chatWrap);
+      }
+
+      function setActive(core){
+        const pills = Array.from(switcher.querySelectorAll('[role="radio"]'));
+        pills.forEach(btn=>{
+          const active = btn.getAttribute('data-core')===core;
+          btn.setAttribute('aria-checked', String(active));
+          btn.classList.toggle('font-semibold', active);
+          btn.classList.toggle('font-medium', !active);
+          btn.classList.toggle('bg-neutral-900', active && btn.dataset.core==='oc');
+          btn.classList.toggle('text-white', active && btn.dataset.core==='oc');
+          btn.classList.toggle('bg-white', active && btn.dataset.core!=='oc');
+          btn.classList.toggle('text-neutral-900', active && btn.dataset.core!=='oc');
+          btn.classList.toggle('ring-1', active);
+          btn.classList.toggle('ring-black/70', active);
+          btn.classList.toggle('dark:ring-white/70', active);
+        });
+        render(core);
+      }
+
+      function next(){ i = (i+1)%CORES.length; setActive(CORES[i]); }
+      function prev(){ i = (i-1+CORES.length)%CORES.length; setActive(CORES[i]); }
+
+      // Events
+      switcher.addEventListener('click', (e)=>{
+        const btn = e.target.closest('[role="radio"]'); if (!btn) return;
+        i = CORES.indexOf(btn.dataset.core); if (i<0) i=0;
+        setActive(CORES[i]);
+      });
+      switcher.addEventListener('keydown', (e)=>{
+        if (e.key==='ArrowRight') { next(); e.preventDefault(); }
+        else if (e.key==='ArrowLeft') { prev(); e.preventDefault(); }
+        else if (e.key==='Home') { i=0; setActive(CORES[i]); e.preventDefault(); }
+        else if (e.key==='End') { i=CORES.length-1; setActive(CORES[i]); e.preventDefault(); }
+      });
+
+      function start(){ if (timer) clearInterval(timer); if (!reduce) timer = setInterval(()=>{ if (!paused) next(); }, dur); }
+      function stop(){ if (timer) { clearInterval(timer); timer=null; } }
+      const hoverables = [switcher, chatWrap];
+      hoverables.forEach(el=>{
+        el.addEventListener('mouseenter', ()=>{ paused = true; });
+        el.addEventListener('mouseleave', ()=>{ paused = false; });
+        el.addEventListener('focusin', ()=>{ paused = true; });
+        el.addEventListener('focusout', ()=>{ paused = false; });
+      });
+
+      // Initial
+      setActive(CORES[i]);
+      start();
+      document.addEventListener('visibilitychange', ()=>{ if (document.hidden) stop(); else start(); });
+    })();
 
     // ====== Marketplace data (five cores only) ======
     const CORES = [
@@ -970,11 +1197,3 @@
   </script>
 </body>
 </html>
-    /* Marketplace FX */
-    #marketFxWrap{ position:relative; }
-    #marketFx{ position:absolute; inset:-10% -5% 0 -5%; z-index:-1; filter: blur(0.3px) saturate(1.1); opacity:.7; }
-    .market-orb{ position:absolute; width:220px; height:220px; border-radius:50%; filter: blur(40px); opacity:.35; }
-    .market-orb.c1{ background: radial-gradient(closest-side, rgba(0,207,255,.20), transparent 70%); left: -60px; top: -40px; }
-    .market-orb.c2{ background: radial-gradient(closest-side, rgba(14,111,92,.20), transparent 70%); right: -40px; top: 120px; }
-    .market-orb.c3{ background: radial-gradient(closest-side, rgba(160,228,212,.18), transparent 70%); left: 20%; bottom: -30px; width:260px; height:260px; }
-    @media (prefers-reduced-motion: reduce){ #marketFx{ display:none !important } }
