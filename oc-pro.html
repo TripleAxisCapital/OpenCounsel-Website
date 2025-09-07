@@ -224,12 +224,12 @@
     /* No tails for minimal blocks */
     .hero-bubble::after { content:none !important; display:none !important; }
     .hero-bubble.flip::after { left:auto; right:18px; border-radius:0 0 0 6px; }
-    /* Bubble content */
-    .hero-bubble .content { position:absolute; inset:12px 14px 14px 14px; display:flex; align-items:flex-start; gap:10px; }
-    /* Tighter padding for smaller bubbles for visual balance */
-    .hero-bubble[data-size="sm"] .content { inset:8px 10px 10px 10px; }
-    .hero-bubble[data-size="md"] .content { inset:12px 14px 12px 14px; }
-    .hero-bubble[data-size="lg"] .content { inset:14px 16px 14px 16px; }
+    /* Bubble content: use padding so container height auto-sizes to text */
+    .hero-bubble .content { position:relative; padding:12px 14px; display:flex; align-items:flex-start; gap:10px; }
+    /* Size-based padding for tight fit */
+    .hero-bubble[data-size="sm"] .content { padding:8px 10px; }
+    .hero-bubble[data-size="md"] .content { padding:12px 14px; }
+    .hero-bubble[data-size="lg"] .content { padding:14px 16px; }
     .hero-bubble .bubble-text {
       color: #e8e8e8; font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
       display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; text-wrap:pretty;
@@ -239,10 +239,7 @@
     .hero-bubble[data-size="sm"] .bubble-text { font-size:12px; -webkit-line-clamp:2; }
     .hero-bubble[data-size="md"] .bubble-text { font-size:13px; -webkit-line-clamp:3; }
     .hero-bubble[data-size="lg"] .bubble-text { font-size:14px; -webkit-line-clamp:4; }
-    /* Minimum heights that match clamped line counts to avoid cramped text */
-    .hero-bubble[data-size="sm"] { min-height:56px; }
-    .hero-bubble[data-size="md"] { min-height:78px; }
-    .hero-bubble[data-size="lg"] { min-height:102px; }
+    /* Remove enforced min-heights so bubbles hug text exactly */
     /* Motion */
     @keyframes bubbleFloat {
       0%   { transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 }
@@ -429,14 +426,6 @@
       else              w = rand(160, 240);
       const size = (w <= 110) ? 'sm' : (w <= 160 ? 'md' : 'lg');
 
-      // Height tuned to line clamps so text fits perfectly
-      const hRand = Math.round(w * (0.58 + Math.random()*0.18));
-      const lines = (size === 'sm') ? 2 : (size === 'md' ? 3 : 4);
-      const fontPx = (size === 'sm') ? 12 : (size === 'md' ? 13 : 14);
-      const lh = 1.35; // must match CSS
-      const padY = (size === 'sm') ? (8+10) : (size === 'md' ? (12+12) : (14+14));
-      const minH = Math.round(padY + (lines * fontPx * lh));
-      const h = Math.max(minH, Math.min(hRand, minH + rand(2, 14)));
       b.setAttribute('data-size', size);
 
       // Horizontal start in % of width; vertically start just below container
@@ -444,7 +433,6 @@
       b.style.left = `calc(${leftPct}% - ${Math.round(w/2)}px)`;
       b.style.top = `calc(100% + ${rand(4,24)}vh)`;
       b.style.width = w+'px';
-      b.style.height = h+'px';
 
       // Motion variables
       const drift = rand(-60, 60);
