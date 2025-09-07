@@ -282,13 +282,15 @@
     .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none; backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
     /* Single bubble */
     .hero-bubble {
-      position:absolute; border-radius:14px;
+      position:absolute; border-radius:9999px; /* pill shape matching screenshot */
       border:1px solid rgba(255,255,255, calc(var(--hero-bubble-user-border-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
       background: rgba(255,255,255, calc(var(--hero-bubble-base-alpha, .08) * var(--hero-bubble-alpha-scale, 1)));
       box-shadow: 0 6px 16px rgba(0,0,0,.30);
       will-change: transform, opacity, filter; transform: translateZ(0);
       isolation:isolate;
       overflow:hidden; /* ensure inner content never spills out visually */
+      /* Let width be driven by content so bubbles adapt to text length */
+      width:auto !important; max-width:min(80vw, 560px);
       animation: bubbleFloat var(--dur,18s) linear var(--delay,0s) infinite,
                  bubbleBreathe calc(var(--dur,18s) / 2) ease-in-out var(--delay,0s) infinite;
     }
@@ -304,21 +306,22 @@
     /* No tails for minimal blocks */
     .hero-bubble::after { content:none !important; display:none !important; }
     .hero-bubble.flip::after { left:auto; right:18px; border-radius:0 0 0 6px; }
-    /* Bubble content: use padding so container height auto-sizes to text */
-    .hero-bubble .content { position:relative; padding:12px 14px; display:flex; align-items:flex-start; gap:10px; }
-    /* Size-based padding for tight fit */
-    .hero-bubble[data-size="sm"] .content { padding:8px 10px; }
-    .hero-bubble[data-size="md"] .content { padding:12px 14px; }
-    .hero-bubble[data-size="lg"] .content { padding:14px 16px; }
+    /* Bubble content: padding defines pill shape and auto-sizes container */
+    .hero-bubble .content { position:relative; padding:12px 18px; display:block; }
+    /* Gentle variance by size while keeping the same look */
+    .hero-bubble[data-size="sm"] .content { padding:10px 16px; }
+    .hero-bubble[data-size="md"] .content { padding:12px 18px; }
+    .hero-bubble[data-size="lg"] .content { padding:14px 22px; }
     .hero-bubble .bubble-text {
       color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92)); font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
-      display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; text-wrap:pretty;
+      display:block; /* no clamping; let text wrap naturally */
+      overflow:visible; text-overflow:clip; text-wrap:pretty;
       /* Robust wrapping so long words never overflow */
       overflow-wrap:anywhere; word-break:break-word; hyphens:auto; -webkit-hyphens:auto; -ms-hyphens:auto;
     }
-    .hero-bubble[data-size="sm"] .bubble-text { font-size:12px; -webkit-line-clamp:2; }
-    .hero-bubble[data-size="md"] .bubble-text { font-size:13px; -webkit-line-clamp:3; }
-    .hero-bubble[data-size="lg"] .bubble-text { font-size:14px; -webkit-line-clamp:4; }
+    .hero-bubble[data-size="sm"] .bubble-text { font-size:13px; }
+    .hero-bubble[data-size="md"] .bubble-text { font-size:14px; }
+    .hero-bubble[data-size="lg"] .bubble-text { font-size:15px; }
     /* Remove enforced min-heights so bubbles hug text exactly */
     /* Motion */
     @keyframes bubbleFloat {
@@ -499,20 +502,16 @@
       const b = document.createElement('div');
       b.className = 'hero-bubble ' + (i % 2 ? 'assistant' : 'user');
 
-      // Size tiers (sm, md, lg) for depth variety
-      let w; const r = Math.random();
-      if (r < .35)      w = rand(64, 110);
-      else if (r < .78) w = rand(96, 160);
-      else              w = rand(160, 240);
-      const size = (w <= 110) ? 'sm' : (w <= 160 ? 'md' : 'lg');
+      // Size tiers (sm, md, lg) for subtle font/padding variance
+      const r = Math.random();
+      const size = (r < .35) ? 'sm' : (r < .78 ? 'md' : 'lg');
 
       b.setAttribute('data-size', size);
 
       // Horizontal start in % of width; vertically start just below container
       const leftPct = rand(6, 94);
-      b.style.left = `calc(${leftPct}% - ${Math.round(w/2)}px)`;
+      b.style.left = `${leftPct}%`; // width is auto; let content dictate
       b.style.top = `calc(100% + ${rand(4,24)}vh)`;
-      b.style.width = w+'px';
 
       // Motion variables
       const drift = rand(-60, 60);
