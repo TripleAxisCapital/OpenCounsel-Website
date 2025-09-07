@@ -1,0 +1,447 @@
+<!--
+  OC-News — The AI Workspace. Without Limits.
+  Single-file, drop-in page. No build, no keys.
+  It fetches RSS through permissive CORS proxies (AllOrigins + Jina Reader) and gracefully degrades.
+  Edit config in the CONFIG block below.
+-->
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>OC-News — The AI Workspace. Without Limits.</title>
+  <meta name="description" content="OC-News surfaces the most breaking headlines with a live Apple-style hero." />
+  <meta name="theme-color" content="#000000" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2730%27 fill=%27%23000%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2722%27 fill=%27%23fff%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2710%27 fill=%2700%27/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind config: allow arbitrary opacities and custom font
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'SF Pro Text', 'Segoe UI', 'Roboto', 'Apple Color Emoji', 'Helvetica Neue', 'Arial', 'Noto Color Emoji', 'sans-serif'] },
+          colors: {
+            oc: {
+              bg: '#0b0b0c',     // Page background
+              card: '#101113',   // Card/glass base
+              text: '#f5f7fb',   // Primary text
+              sub: '#a6acb8',    // Secondary text
+              accent: '#7aa2ff', // Brand accent
+              live: '#ff3b30',   // Live red
+              ring: '#1f2b4a'    // Subtle ring/glow
+            }
+          },
+          boxShadow: {
+            'oc-glow': '0 10px 30px -10px rgba(122,162,255,0.35), 0 1px 0 0 rgba(255,255,255,0.04) inset'
+          },
+          keyframes: {
+            'shine': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(200%)' } },
+            'float': { '0%,100%': { transform: 'translateY(0px)' }, '50%': { transform: 'translateY(-4px)' } },
+            'pulse-soft': { '0%,100%': { opacity: .65 }, '50%': { opacity: 1 } },
+            'bg-pan': { '0%': { transform: 'translateX(-10%)' }, '100%': { transform: 'translateX(10%)' } }
+          },
+          animation: {
+            'shine': 'shine 1.75s linear infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-soft': 'pulse-soft 3.6s ease-in-out infinite',
+            'bg-pan': 'bg-pan 18s ease-in-out infinite alternate'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      /* Simple brand knobs if you want to harmonize with your OC site */
+      --radius: 16px;
+      --glass: rgba(255,255,255,0.04);
+      --glass-border: rgba(255,255,255,0.08);
+      --glass-strong: rgba(255,255,255,0.06);
+    }
+    .glass {
+      background: linear-gradient(180deg, var(--glass), rgba(255,255,255,0.02));
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+    }
+    .text-balance { text-wrap: balance; }
+    .gradient-hero {
+      background:
+        radial-gradient(1200px 500px at 50% -10%, rgba(122,162,255,0.25), transparent 55%),
+        radial-gradient(800px 400px at 70% 10%, rgba(0,195,255,0.18), transparent 60%),
+        radial-gradient(600px 400px at 20% 0%, rgba(255,110,199,0.15), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .animate-shine, .animate-float, .animate-bg-pan, .animate-pulse-soft { animation: none !important; }
+    }
+  </style>
+</head>
+
+<body class="bg-oc-bg text-oc-text antialiased selection:bg-oc-accent/20 selection:text-oc-text">
+  <!-- Header -->
+  <header class="sticky top-0 z-40">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="size-8 rounded-xl bg-oc.card/50 glass grid place-items-center ring-1 ring-white/10">
+            <span class="text-sm font-bold tracking-widest">OC</span>
+          </div>
+          <div class="text-sm text-oc-sub">The AI Workspace. Without Limits.</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="hidden sm:inline text-sm text-oc-sub" id="editionLabel">Edition:</span>
+          <select id="editionSelect" class="glass text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 ring-oc-accent/40 hover:bg-white/5">
+            <option value="CA">Canada</option>
+            <option value="US">United States</option>
+            <option value="GLOBAL">Global Mix</option>
+          </select>
+          <button id="refreshBtn" class="glass rounded-lg px-3 py-1.5 text-sm hover:bg-white/10 focus:ring-2 ring-oc-accent/40">Refresh</button>
+        </div>
+      </div>
+    </div>
+    <div class="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+  </header>
+
+  <!-- HERO -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 gradient-hero animate-bg-pan"></div>
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
+      <div class="glass rounded-[calc(var(--radius)*1.25)] shadow-oc-glow p-5 sm:p-7 lg:p-9">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold bg-oc-live/10 text-oc-text ring-1 ring-oc-live/30">
+            <span class="relative inline-block size-2 rounded-full bg-oc-live">
+              <span class="absolute inset-0 rounded-full bg-oc-live/60 animate-pulse-soft"></span>
+            </span>
+            LIVE
+          </span>
+          <span class="text-xs text-oc-sub" id="heroMeta">Loading top story…</span>
+        </div>
+
+        <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">
+          OC-News is waking up…
+        </h1>
+
+        <p id="heroDesc" class="mt-3 text-sm sm:text-base lg:text-lg text-oc-sub max-w-3xl">
+          Surfacing the #1 breaking headline across trusted sources. Crisp. Fast. Private.
+        </p>
+
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <a id="heroLink" href="#" target="_blank" rel="noopener" class="glass rounded-lg px-4 py-2 text-sm font-medium hover:bg-white/10 focus:ring-2 ring-oc-accent/40">Open Story</a>
+          <button id="nextTopBtn" class="hidden glass rounded-lg px-3 py-2 text-sm hover:bg-white/10 focus:ring-2 ring-oc-accent/40">Next Top</button>
+          <span id="updatedAt" class="text-xs text-oc-sub">—</span>
+        </div>
+
+        <!-- Subtle shine -->
+        <div class="pointer-events-none absolute inset-x-0 -top-1/3 h-[200%] skew-x-[20deg] opacity-20">
+          <div class="h-full w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shine"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIST -->
+  <main class="relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Breaking Headlines</h2>
+        <div class="text-xs text-oc-sub" id="countLabel">0 stories</div>
+      </div>
+
+      <ul id="newsList" class="grid gap-3 sm:gap-4">
+        <!-- Populated by JS -->
+      </ul>
+
+      <!-- Footer -->
+      <div class="mt-12 text-center text-xs text-oc-sub">
+        Sources auto-selected from Google News, BBC, Reuters (via CORS-friendly proxies). Times are local.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /* =========================
+       CONFIG — tweak freely
+       ========================= */
+    const DEFAULT_EDITION = 'CA'; // 'CA' | 'US' | 'GLOBAL'
+    const MAX_ITEMS = 36;         // How many headlines to render
+    const CYCLE_TOPS = false;     // If true, cycles hero every ~12s
+
+    // Feed sets by edition. Add/remove sources here.
+    const FEEDS = {
+      CA: [
+        'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
+        'https://feeds.bbci.co.uk/news/rss.xml',
+        'https://feeds.reuters.com/reuters/topNews'
+      ],
+      US: [
+        'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
+        'https://feeds.bbci.co.uk/news/rss.xml',
+        'https://feeds.reuters.com/reuters/topNews'
+      ],
+      GLOBAL: [
+        'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
+        'https://feeds.bbci.co.uk/news/rss.xml',
+        'https://feeds.reuters.com/reuters/topNews'
+      ]
+    };
+
+    // Public, no-key proxies that usually allow CORS.
+    const proxyCandidates = (url) => ([
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      `https://r.jina.ai/http://${url.replace(/^https?:\/\//,'')}`
+    ]);
+
+    /* =========================
+       UTILITIES
+       ========================= */
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    const timeAgo = (d) => {
+      const now = new Date();
+      const diff = Math.max(0, now - d);
+      const sec = Math.floor(diff/1000);
+      if (sec < 45) return `${sec}s ago`;
+      const min = Math.floor(sec/60);
+      if (min < 60) return `${min}m ago`;
+      const hr = Math.floor(min/60);
+      if (hr < 24) return `${hr}h ago`;
+      const day = Math.floor(hr/24);
+      return `${day}d ago`;
+    };
+
+    const cleanLink = (url) => {
+      try {
+        // Google News sometimes wraps ?url=actual
+        const u = new URL(url);
+        const wrapped = u.searchParams.get('url') || u.searchParams.get('u');
+        return wrapped ? decodeURIComponent(wrapped) : url;
+      } catch { return url; }
+    };
+
+    const hostname = (url) => {
+      try { return new URL(url).hostname.replace(/^www\./,''); }
+      catch { return ''; }
+    };
+
+    const normalizeTitle = (t) => t.toLowerCase().replace(/[\W_]+/g,' ').trim();
+
+    const parseRSS = (text) => {
+      // Try XML first
+      const dom = new DOMParser().parseFromString(text, 'text/xml');
+      if (dom.querySelector('parsererror')) {
+        // If the proxy returned "readable" text, try a crude fallback parse
+        const items = [];
+        const itemBlocks = text.split(/<\/item>/i);
+        for (const block of itemBlocks) {
+          const titleMatch = block.match(/<title>([^<]+)<\/title>/i);
+          const linkMatch = block.match(/<link>([^<]+)<\/link>/i);
+          const dateMatch = block.match(/<pubDate>([^<]+)<\/pubDate>/i);
+          const srcMatch  = block.match(/<source[^>]*>([^<]+)<\/source>/i);
+          if (titleMatch && linkMatch) {
+            items.push({
+              title: titleMatch[1],
+              link: cleanLink(linkMatch[1]),
+              pubDate: dateMatch ? new Date(dateMatch[1]) : new Date(),
+              source: srcMatch ? srcMatch[1] : hostname(cleanLink(linkMatch[1]))
+            });
+          }
+        }
+        return items;
+      } else {
+        const items = [];
+        dom.querySelectorAll('item').forEach(it => {
+          const title = it.querySelector('title')?.textContent?.trim() || '';
+          let link = it.querySelector('link')?.textContent?.trim() || '';
+          link = cleanLink(link);
+          const pub = it.querySelector('pubDate')?.textContent?.trim() || '';
+          const src = it.querySelector('source')?.textContent?.trim() || '';
+          items.push({
+            title,
+            link,
+            pubDate: pub ? new Date(pub) : new Date(),
+            source: src || hostname(link)
+          });
+        });
+        return items;
+      }
+    };
+
+    const fetchWithProxies = async (url) => {
+      const candidates = proxyCandidates(url);
+      for (const prox of candidates) {
+        try {
+          const res = await fetch(prox, { cache: 'no-store' });
+          if (!res.ok) continue;
+          const text = await res.text();
+          if (text && text.length > 40) return text;
+        } catch (_) { /* try next */ }
+      }
+      throw new Error('All proxies failed for ' + url);
+    };
+
+    const loadFeeds = async (editionKey) => {
+      const feeds = FEEDS[editionKey] || FEEDS['GLOBAL'];
+      const all = [];
+      await Promise.allSettled(
+        feeds.map(async (f) => {
+          try {
+            const text = await fetchWithProxies(f);
+            const items = parseRSS(text);
+            all.push(...items);
+          } catch (_) { /* ignore feed error */ }
+        })
+      );
+      // Dedup by normalized title, keep newest
+      const byKey = new Map();
+      for (const it of all) {
+        const key = normalizeTitle(it.title);
+        const prev = byKey.get(key);
+        if (!prev || (it.pubDate && prev.pubDate && it.pubDate > prev.pubDate)) byKey.set(key, it);
+      }
+      const uniq = Array.from(byKey.values())
+        .filter(x => x.title && x.link)
+        .sort((a,b) => (b.pubDate || 0) - (a.pubDate || 0));
+      return uniq.slice(0, MAX_ITEMS);
+    };
+
+    /* =========================
+       RENDER
+       ========================= */
+    const heroTitle = $('#heroTitle');
+    const heroDesc  = $('#heroDesc');
+    const heroMeta  = $('#heroMeta');
+    const heroLink  = $('#heroLink');
+    const updatedAt = $('#updatedAt');
+    const newsList  = $('#newsList');
+    const countLabel= $('#countLabel');
+
+    const render = (items) => {
+      if (!items || !items.length) {
+        heroTitle.textContent = 'No headlines available right now.';
+        heroDesc.textContent  = 'Please try Refresh — or check your connection.';
+        heroMeta.textContent  = '—';
+        heroLink.classList.add('pointer-events-none','opacity-60');
+        countLabel.textContent = '0 stories';
+        newsList.innerHTML = '';
+        return;
+      }
+
+      // Top story
+      const top = items[0];
+      heroTitle.textContent = top.title;
+      heroDesc.textContent  = top.source ? `From ${top.source}` : hostname(top.link);
+      heroMeta.textContent  = `${timeAgo(top.pubDate)} • #1 breaking now`;
+      heroLink.href         = top.link;
+      heroLink.classList.remove('pointer-events-none','opacity-60');
+
+      // Update time
+      const now = new Date();
+      updatedAt.textContent = `Updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+      // List
+      const others = items.slice(1);
+      countLabel.textContent = `${items.length} stor${items.length === 1 ? 'y' : 'ies'}`;
+
+      newsList.innerHTML = others.map(it => {
+        const src = it.source || hostname(it.link) || 'Source';
+        const when = timeAgo(it.pubDate);
+        const host = hostname(it.link);
+        return `
+          <li class="glass rounded-[var(--radius)] p-4 sm:p-5 hover:bg-white/5 transition-colors">
+            <a href="${it.link}" target="_blank" rel="noopener" class="group block">
+              <div class="flex items-center justify-between gap-3">
+                <div class="text-xs font-medium text-oc-sub">
+                  ${src} • ${when}
+                </div>
+                <div class="text-[10px] text-oc-sub bg-white/5 rounded px-2 py-1 ring-1 ring-white/10">${host}</div>
+              </div>
+              <h3 class="mt-2 text-sm sm:text-base font-semibold leading-snug group-hover:underline decoration-oc-accent/60 underline-offset-4">
+                ${it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+              </h3>
+            </a>
+          </li>
+        `;
+      }).join('');
+    };
+
+    /* =========================
+       BOOTSTRAP
+       ========================= */
+    const editionSelect = $('#editionSelect');
+    const refreshBtn = $('#refreshBtn');
+    const nextTopBtn = $('#nextTopBtn');
+
+    let currentEdition = DEFAULT_EDITION;
+    let cacheItems = [];
+    let cycleIdx = 0;
+    let cycleTimer = null;
+
+    const hydrate = async () => {
+      try {
+        $('body').classList.add('cursor-progress');
+        updatedAt.textContent = 'Updating…';
+        const items = await loadFeeds(currentEdition);
+        // If all feeds blocked, ensure a soft fallback
+        cacheItems = items.length ? items : [
+          {
+            title: 'OC-News is live — your Apple-grade breaking news surface.',
+            link: '#',
+            pubDate: new Date(),
+            source: 'OC'
+          }
+        ];
+        render(cacheItems);
+        if (CYCLE_TOPS && cacheItems.length > 3) {
+          nextTopBtn.classList.remove('hidden');
+          startCycle();
+        } else {
+          stopCycle();
+          nextTopBtn.classList.add('hidden');
+        }
+      } catch (e) {
+        console.error(e);
+        cacheItems = [];
+        render(cacheItems);
+      } finally {
+        $('body').classList.remove('cursor-progress');
+      }
+    };
+
+    const startCycle = () => {
+      stopCycle();
+      cycleIdx = 0;
+      cycleTimer = setInterval(() => {
+        if (!cacheItems.length) return;
+        cycleIdx = (cycleIdx + 1) % Math.min(cacheItems.length, 8);
+        const rotated = [cacheItems[cycleIdx], ...cacheItems.slice(0, cycleIdx), ...cacheItems.slice(cycleIdx+1)];
+        render(rotated);
+      }, 12000);
+    };
+    const stopCycle = () => { if (cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
+
+    // Events
+    editionSelect.value = DEFAULT_EDITION;
+    editionSelect.addEventListener('change', () => {
+      currentEdition = editionSelect.value;
+      hydrate();
+    });
+    refreshBtn.addEventListener('click', hydrate);
+    nextTopBtn.addEventListener('click', () => {
+      if (!cacheItems.length) return;
+      cycleIdx = (cycleIdx + 1) % Math.min(cacheItems.length, 8);
+      const rotated = [cacheItems[cycleIdx], ...cacheItems.slice(0, cycleIdx), ...cacheItems.slice(cycleIdx+1)];
+      render(rotated);
+    });
+
+    // First load
+    hydrate();
+  </script>
+</body>
+</html>

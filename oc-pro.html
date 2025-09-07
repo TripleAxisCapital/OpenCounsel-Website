@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
-  <title>OC‑Pro — The AI Workspace. Without Limits.</title>
+  <title>OC-Pro — The AI Workspace. Without Limits.</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="OC‑Pro — the black‑label AI workspace. Private, polished, and powerful.">
+  <meta name="description" content="OC-Pro — the black-label AI workspace. Private, polished, and powerful.">
   <meta name="theme-color" content="#000000">
 
   <!-- Canonical + i18n (optional; adjust if deploying under different slug) -->
@@ -30,8 +30,8 @@
   <!-- Open Graph / X -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="OC">
-  <meta property="og:title" content="OC‑Pro — The AI Workspace. Without Limits.">
-  <meta property="og:description" content="Black‑label AI workspace. Private, polished, and powerful.">
+  <meta property="og:title" content="OC-Pro — The AI Workspace. Without Limits.">
+  <meta property="og:description" content="Black-label AI workspace. Private, polished, and powerful.">
   <meta property="og:url" content="https://www.opencounsel.ca/oc-pro/">
   <meta property="og:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
   <meta property="og:image:width" content="1200">
@@ -39,8 +39,8 @@
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@OpenCounselAI">
-  <meta name="twitter:title" content="OC‑Pro — The AI Workspace. Without Limits.">
-  <meta name="twitter:description" content="Black‑label AI workspace. Private, polished, and powerful.">
+  <meta name="twitter:title" content="OC-Pro — The AI Workspace. Without Limits.">
+  <meta name="twitter:description" content="Black-label AI workspace. Private, polished, and powerful.">
   <meta name="twitter:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
 
   <!-- Pretty URL (client-side mask) -->
@@ -96,10 +96,8 @@
       --logo-width:64px; --logo-height:64px;
 
       /* Global controls for hero chat bubbles brightness/dimness */
-      /* Master brightness and opacity for the entire bubbles layer */
       --hero-bubbles-brightness: 1; /* 1 = neutral, <1 darker, >1 brighter */
       --hero-bubbles-opacity: 1;    /* 1 = fully opaque layer, 0 = hidden */
-      /* Alpha tuning for bubble backgrounds and borders (scaled below) */
       --hero-bubble-alpha-scale: 1;             /* global multiplier */
       --hero-bubble-base-alpha: .08;            /* default bg alpha */
       --hero-bubble-user-alpha: .10;            /* user bubble bg */
@@ -212,7 +210,7 @@
     .drawer-title{ -webkit-text-fill-color:#fff; color:#fff; background:none; }
     .drawer-nav a{ -webkit-text-fill-color:#fff!important; color:#fff!important; }
 
-    /* ===== OC‑Pro sections (from old pro.html) ===== */
+    /* ===== OC-Pro sections (from old pro.html) ===== */
     .section{ padding:72px 0; }
     .headline{ letter-spacing:-.01em }
     .muted{ color: rgba(255,255,255,.72) }
@@ -268,72 +266,109 @@
     #siteHeader .nav-link:hover{ color:#fff }
   </style>
 
-  <!-- HERO bubbles: glass chat bubbles floating subtly behind content -->
+  <!-- HERO bubbles: ChatGPT-style message blocks floating subtly behind content -->
   <style>
+    /* Localized design tokens for hero chat bubbles (tight, ChatGPT-like) */
+    :root {
+      --hero-mid-blur: 4px;
+      --chat-b-radius: 12px;                 /* square-ish corners, no pills */
+      --chat-b-font: 14px;
+      --chat-b-lh: 1.4;
+      --chat-b-pad-y: 9px;                   /* tight interior spacing */
+      --chat-b-pad-x: 12px;
+      --chat-b-pad-y-sm: 8px;
+      --chat-b-pad-x-sm: 10px;
+      --chat-b-pad-y-lg: 10px;
+      --chat-b-pad-x-lg: 14px;
+      --chat-b-border: rgba(255,255,255,.14);
+      --chat-b-border-assistant: rgba(255,255,255,.10);
+      --chat-b-bg: rgba(255,255,255,.06);    /* assistant */
+      --chat-b-bg-user: rgba(255,255,255,.08);
+      --chat-b-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px rgba(0,0,0,.32);
+      --chat-b-maxw: min(72ch, 560px);       /* ChatGPT-like readable width */
+    }
+
     /* Layer container sits above gradient background, below text */
     .hero-bubbles {
       position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden;
-      /* Global dim/bright controls */
       opacity: var(--hero-bubbles-opacity, 1);
       filter: brightness(var(--hero-bubbles-brightness, 1));
     }
-    /* Light blur layer between bubbles and foreground content */
-    :root { --hero-mid-blur: 4px; }
-    .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none; backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
-    /* Single bubble */
-    .hero-bubble {
-      position:absolute; border-radius:9999px; /* pill shape matching screenshot */
-      border:1px solid rgba(255,255,255, calc(var(--hero-bubble-user-border-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
-      background: rgba(255,255,255, calc(var(--hero-bubble-base-alpha, .08) * var(--hero-bubble-alpha-scale, 1)));
-      box-shadow: 0 6px 16px rgba(0,0,0,.30);
-      will-change: transform, opacity, filter; transform: translateZ(0);
-      isolation:isolate;
-      overflow:hidden; /* ensure inner content never spills out visually */
-      /* Let width be driven by content so bubbles adapt to text length */
-      width:auto !important; max-width:min(80vw, 560px);
-      animation: bubbleFloat var(--dur,18s) linear var(--delay,0s) infinite,
-                 bubbleBreathe calc(var(--dur,18s) / 2) ease-in-out var(--delay,0s) infinite;
+
+    /* Light blur layer between bubbles and foreground */
+    .hero-mid-blur {
+      position:absolute; inset:0; z-index:2; pointer-events:none;
+      backdrop-filter: blur(var(--hero-mid-blur, 0px));
+      -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px));
     }
-    /* ChatGPT-like variants */
+
+    /* Single bubble: square-ish, subtle border + shadow like ChatGPT
+       IMPORTANT: width:max-content disables "shrink-to-fit" so bubbles
+       can overflow the container edge and be cleanly clipped. */
+    .hero-bubble {
+      position:absolute;
+      border-radius: var(--chat-b-radius);
+      border: 1px solid var(--chat-b-border);
+      background: var(--chat-b-bg);
+      box-shadow: var(--chat-b-shadow);
+      will-change: transform, opacity, filter;
+      transform: translateZ(0);
+      isolation:isolate;
+      overflow:hidden;
+
+      /* Prevent shrink-to-fit: let content define width (up to max) */
+      width: max-content;
+      max-width: var(--chat-b-maxw);
+
+      /* Motion */
+      animation: bubbleFloat var(--dur,20s) linear var(--delay,0s) infinite,
+                 bubbleBreathe calc(var(--dur,20s) / 2.2) ease-in-out var(--delay,0s) infinite;
+    }
+
+    /* Variants (user/assistant) */
     .hero-bubble.user {
-      background: rgba(255,255,255, calc(var(--hero-bubble-user-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
-      border-color: rgba(255,255,255, calc(var(--hero-bubble-user-border-alpha, .14) * var(--hero-bubble-alpha-scale, 1)));
+      background: var(--chat-b-bg-user);
+      border-color: var(--chat-b-border);
     }
     .hero-bubble.assistant {
-      background: rgba(255,255,255, calc(var(--hero-bubble-assist-alpha, .06) * var(--hero-bubble-alpha-scale, 1)));
-      border-color: rgba(255,255,255, calc(var(--hero-bubble-assist-border-alpha, .10) * var(--hero-bubble-alpha-scale, 1)));
+      background: var(--chat-b-bg);
+      border-color: var(--chat-b-border-assistant);
     }
+
     /* No tails for minimal blocks */
-    .hero-bubble::after { content:none !important; display:none !important; }
-    .hero-bubble.flip::after { left:auto; right:18px; border-radius:0 0 0 6px; }
-    /* Bubble content: padding defines pill shape and auto-sizes container */
-    .hero-bubble .content { position:relative; padding:12px 18px; display:block; }
-    /* Gentle variance by size while keeping the same look */
-    .hero-bubble[data-size="sm"] .content { padding:10px 16px; }
-    .hero-bubble[data-size="md"] .content { padding:12px 18px; }
-    .hero-bubble[data-size="lg"] .content { padding:14px 22px; }
-    .hero-bubble .bubble-text {
-      color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92)); font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
-      display:block; /* no clamping; let text wrap naturally */
-      overflow:visible; text-overflow:clip; text-wrap:pretty;
-      /* Robust wrapping so long words never overflow */
-      overflow-wrap:anywhere; word-break:break-word; hyphens:auto; -webkit-hyphens:auto; -ms-hyphens:auto;
+    .hero-bubble::after{ content:none !important; display:none !important; }
+
+    /* Bubble content + typography (tight) */
+    .hero-bubble .content {
+      position:relative; display:block;
+      padding: var(--chat-b-pad-y) var(--chat-b-pad-x);
     }
-    .hero-bubble[data-size="sm"] .bubble-text { font-size:13px; }
-    .hero-bubble[data-size="md"] .bubble-text { font-size:14px; }
-    .hero-bubble[data-size="lg"] .bubble-text { font-size:15px; }
-    /* Remove enforced min-heights so bubbles hug text exactly */
-    /* Motion */
+    .hero-bubble[data-size="sm"] .content { padding: var(--chat-b-pad-y-sm) var(--chat-b-pad-x-sm); }
+    .hero-bubble[data-size="md"] .content { padding: var(--chat-b-pad-y) var(--chat-b-pad-x); }
+    .hero-bubble[data-size="lg"] .content { padding: var(--chat-b-pad-y-lg) var(--chat-b-pad-x-lg); }
+
+    .hero-bubble .bubble-text{
+      color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92));
+      font-weight:500; letter-spacing:0;
+      font-size: var(--chat-b-font);
+      line-height: var(--chat-b-lh);
+      white-space:normal; text-align:left; display:block;
+      overflow-wrap:anywhere; word-break:break-word; hyphens:auto; -webkit-hyphens:auto; -ms-hyphens:auto;
+      margin: 0;
+    }
+
+    /* Motion tuned to feel premium and non-distracting */
     @keyframes bubbleFloat {
       0%   { transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 }
-      10%  { opacity:.75 }
-      90%  { opacity:.80 }
+      10%  { opacity:.80 }
+      90%  { opacity:.85 }
       100% { transform: translateY(calc(var(--y-start, 16vh) + var(--y-travel, -120vh))) translateX(var(--x-drift, 0px)) scale(var(--scale,1)); opacity:0 }
     }
     @keyframes bubbleBreathe {
-      0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.18)) drop-shadow(0 10px 22px rgba(0,0,0,.35)); }
-      50%     { filter: drop-shadow(0 2px 8px rgba(255,255,255,.28)) drop-shadow(0 14px 34px rgba(0,0,0,.42)); }
+      0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.14)) drop-shadow(0 10px 22px rgba(0,0,0,.32)); }
+      50%     { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 14px 34px rgba(0,0,0,.40)); }
     }
+
     /* Respect accessibility */
     @media (prefers-reduced-motion: reduce){
       .hero-bubble{ animation: none !important; }
@@ -456,7 +491,7 @@
   })();
   </script>
 
-  <!-- HERO bubbles JS: generate and animate floating chat bubbles -->
+  <!-- HERO bubbles JS: generate and animate floating ChatGPT-style chat bubbles -->
   <script>
   (()=>{
     const hero = document.querySelector('#home .hero-card');
@@ -482,13 +517,13 @@
       "What’s our fastest path to profit?",
       "What single change 10×’s activation?",
       "What’s the real bottleneck right now?",
-      "What’s a non‑consensus bet we should make?",
+      "What’s a non-consensus bet we should make?",
       "Who’s our most dangerous competitor—and why?",
       "What small experiment has outsized upside?",
       "What ugly metric are we ignoring?",
       "What are customers silently telling us?",
       "If we had to ship Friday, what cuts?",
-      "What would a world‑class team do now?",
+      "What would a world-class team do now?",
       "If money wasn’t a limit, what’s the move?",
       "What’s the headline if we fail?",
       "What decision unlocks the most value?",
@@ -505,20 +540,19 @@
       // Size tiers (sm, md, lg) for subtle font/padding variance
       const r = Math.random();
       const size = (r < .35) ? 'sm' : (r < .78 ? 'md' : 'lg');
-
       b.setAttribute('data-size', size);
 
-      // Horizontal start in % of width; vertically start just below container
+      // Start positions
       const leftPct = rand(6, 94);
-      b.style.left = `${leftPct}%`; // width is auto; let content dictate
+      b.style.left = `${leftPct}%`;
       b.style.top = `calc(100% + ${rand(4,24)}vh)`;
 
-      // Motion variables
-      const drift = rand(-60, 60);
+      // Motion variables (subtle & premium)
+      const drift = rand(-50, 50);
       const travel = -rand(90, 140); // in vh
-      const dur = (rand(14, 24) + (r < .35 ? 3 : 0)) + 's';
+      const dur = (rand(16, 24) + (r < .35 ? 2 : 0)) + 's';
       const delay = (-rand(0, 2200)/100) + 's'; // negative to desync start
-      const scale = (r > .82) ? 1.05 : 1.0;
+      const scale = (r > .82) ? 1.02 : 1.0;
 
       b.style.setProperty('--x-drift', drift+'px');
       b.style.setProperty('--y-travel', travel+'vh');
@@ -526,7 +560,7 @@
       b.style.setProperty('--delay', delay);
       b.style.setProperty('--scale', scale);
 
-      // Text content: bold, short, viral questions
+      // Text content (kept the same)
       const content = document.createElement('div');
       content.className = 'content';
       const span = document.createElement('span');
@@ -569,14 +603,14 @@
     </div>
   </section>
 
-  <!-- OC‑Pro Stack (from PRO page) -->
+  <!-- OC-Pro Stack (from PRO page) -->
   <section class="section pro-stack">
     <div class="stack-aura" aria-hidden="true"></div>
     <div class="mx-auto max-w-[1200px] oc-container">
       <div class="text-center reveal">
-        <span class="stack-kicker"><i class="ph ph-seal-check"></i>OC‑Pro Stack</span>
+        <span class="stack-kicker"><i class="ph ph-seal-check"></i>OC-Pro Stack</span>
         <h2 class="mt-4 text-[30px] md:text-[46px] leading-tight font-semibold">Pro Cores. Pro Databases. Pro Tools.</h2>
-        <p class="mt-3 text-white/75 max-w-2xl mx-auto">Everything you need to reason, research, and ship with confidence — built on curated knowledge and purpose‑built tools.</p>
+        <p class="mt-3 text-white/75 max-w-2xl mx-auto">Everything you need to reason, research, and ship with confidence — built on curated knowledge and purpose-built tools.</p>
       </div>
       <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
         <div class="stack-card reveal">
@@ -591,7 +625,7 @@
             <div class="kb-chip"><i class="ph ph-database"></i><span>Pro Databases</span></div>
           </div>
           <h3 class="mt-3">Curated, vetted knowledge</h3>
-          <p class="mt-1">Private, expert‑maintained collections with citations — legal, financial, scientific, and industry datasets.</p>
+          <p class="mt-1">Private, expert-maintained collections with citations — legal, financial, scientific, and industry datasets.</p>
         </div>
         <div class="stack-card reveal">
           <div class="flex items-center gap-3">
@@ -603,7 +637,7 @@
             <span class="stack-chip mr-2"><i class="ph ph-chart-line-up"></i>Financial Advisor</span>
             <span class="stack-chip"><i class="ph ph-sigma"></i>Statistical Analyst</span>
           </p>
-          <p class="mt-2">On‑tap capabilities — search the live web, model scenarios, and run analyses in place.</p>
+          <p class="mt-2">On-tap capabilities — search the live web, model scenarios, and run analyses in place.</p>
         </div>
       </div>
     </div>
@@ -619,10 +653,10 @@
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
           <h3 class="font-semibold text-xl">Curated Expert Databases</h3>
-          <p class="mt-2 text-white/70">Proprietary, expert‑curated collections with verified sources — legally sound and designed to reduce hallucinations.</p>
+          <p class="mt-2 text-white/70">Proprietary, expert-curated collections with verified sources — legally sound and designed to reduce hallucinations.</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
-          <h3 class="font-semibold text-xl">Industry‑grade Analysis</h3>
+          <h3 class="font-semibold text-xl">Industry-grade Analysis</h3>
           <p class="mt-2 text-white/70">Regressions, forecasts, and defensible outputs — built for briefs and decks.</p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
@@ -641,9 +675,9 @@
   <section class="section">
     <div class="mx-auto max-w-[1200px] oc-container text-center">
       <h2 class="text-3xl md:text-5xl font-semibold headline">Own your AI. Level up your work.</h2>
-      <p class="mt-3 text-lg muted max-w-2xl mx-auto">OC‑Pro pairs private knowledge with industry‑grade analysis and an uncensored chat — all on your machine. It’s how the top 1% ship faster.</p>
+      <p class="mt-3 text-lg muted max-w-2xl mx-auto">OC-Pro pairs private knowledge with industry-grade analysis and an uncensored chat — all on your machine. It’s how the top 1% ship faster.</p>
       <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC‑Pro</a>
+        <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get OC-Pro</a>
         <a href="cores.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
       </div>
     </div>
@@ -790,7 +824,7 @@
 
   <script>
     // Set current year in footer
-    (function(){ var y=document.getElementById('yr'); if(y) y.textContent=new Date().getFullYear(); })();
+    (function(){ var y=document.getElementById('yr'); if(y) ytextContent=new Date().getFullYear(); })();
   </script>
 
   <!-- Define <oc-down-arrow> web component (copied from home) -->
