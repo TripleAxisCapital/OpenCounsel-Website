@@ -200,6 +200,51 @@
     #siteHeader .nav-link:hover{ color:#fff }
   </style>
 
+  <!-- HERO bubbles: glass chat bubbles floating subtly behind content -->
+  <style>
+    /* Layer container sits above gradient background, below text */
+    .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+    /* Single bubble */
+    .hero-bubble {
+      position:absolute; border-radius:14px; border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.08);
+      box-shadow: 0 6px 16px rgba(0,0,0,.30);
+      will-change: transform, opacity, filter; transform: translateZ(0);
+      isolation:isolate;
+      animation: bubbleFloat var(--dur,18s) linear var(--delay,0s) infinite,
+                 bubbleBreathe calc(var(--dur,18s) / 2) ease-in-out var(--delay,0s) infinite;
+    }
+    /* ChatGPT-like variants */
+    .hero-bubble.user { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.14); }
+    .hero-bubble.assistant { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.10); }
+    /* No tails for minimal blocks */
+    .hero-bubble::after { content:none !important; display:none !important; }
+    .hero-bubble.flip::after { left:auto; right:18px; border-radius:0 0 0 6px; }
+    /* Bubble content */
+    .hero-bubble .content { position:absolute; inset:12px 14px 14px 14px; display:flex; align-items:flex-start; gap:10px; }
+    .hero-bubble .bubble-text {
+      color: #e8e8e8; font-weight:500; letter-spacing:0; line-height:1.35; white-space:normal; text-align:left;
+      display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipsis; text-wrap:pretty;
+    }
+    .hero-bubble[data-size="sm"] .bubble-text { font-size:12px; -webkit-line-clamp:2; }
+    .hero-bubble[data-size="md"] .bubble-text { font-size:13px; -webkit-line-clamp:3; }
+    .hero-bubble[data-size="lg"] .bubble-text { font-size:14px; -webkit-line-clamp:4; }
+    /* Motion */
+    @keyframes bubbleFloat {
+      0%   { transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 }
+      10%  { opacity:.75 }
+      90%  { opacity:.80 }
+      100% { transform: translateY(calc(var(--y-start, 16vh) + var(--y-travel, -120vh))) translateX(var(--x-drift, 0px)) scale(var(--scale,1)); opacity:0 }
+    }
+    @keyframes bubbleBreathe {
+      0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.18)) drop-shadow(0 10px 22px rgba(0,0,0,.35)); }
+      50%     { filter: drop-shadow(0 2px 8px rgba(255,255,255,.28)) drop-shadow(0 14px 34px rgba(0,0,0,.42)); }
+    }
+    /* Respect accessibility */
+    @media (prefers-reduced-motion: reduce){
+      .hero-bubble{ animation: none !important; }
+    }
+  </style>
   <style id="oc-hero-bold-rotator"> .hero-sub1 .hero-word { font-weight: 800; } </style>
 </head>
 
@@ -261,7 +306,9 @@
                 lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
                 flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
          style="border-color: rgba(255,255,255,.12)">
-      <div class="flex flex-col items-center max-w-2xl">
+      <!-- Floating bubbles layer (behind content) -->
+      <div class="hero-bubbles" aria-hidden="true"></div>
+      <div class="flex flex-col items-center max-w-2xl relative" style="z-index:2">
         <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OC</span>
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
@@ -278,7 +325,7 @@
           </a>
         </div>
       </div>
-      <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s"></oc-down-arrow>
+      <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s" style="z-index:2"></oc-down-arrow>
     </div>
   </section>
 
@@ -310,6 +357,104 @@
     };
     const io=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ onCtaInView(); io.disconnect(); break; } } }, { threshold:.35 });
     io.observe(ctaBtn);
+  })();
+  </script>
+
+  <!-- HERO bubbles JS: generate and animate floating chat bubbles -->
+  <script>
+  (()=>{
+    const hero = document.querySelector('#home .hero-card');
+    const layer = hero?.querySelector('.hero-bubbles');
+    if (!hero || !layer) return;
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (prefersReduced.matches) return;
+
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const COUNT = isMobile ? 9 : 16;
+    const QUESTIONS = [
+      "What are we wrong about?",
+      "Which metric is lying to us?",
+      "Where are we wasting the most money?",
+      "What’s the hard truth no one says?",
+      "What would a ruthless competitor do next?",
+      "What breaks first at 10× scale?",
+      "What would we build if starting over?",
+      "Which feature should we kill today?",
+      "What can we automate this week?",
+      "What would make our best users leave?",
+      "What regulation could kill this?",
+      "What’s our fastest path to profit?",
+      "What single change 10×’s activation?",
+      "What’s the real bottleneck right now?",
+      "What’s a non‑consensus bet we should make?",
+      "Who’s our most dangerous competitor—and why?",
+      "What small experiment has outsized upside?",
+      "What ugly metric are we ignoring?",
+      "What are customers silently telling us?",
+      "If we had to ship Friday, what cuts?",
+      "What would a world‑class team do now?",
+      "If money wasn’t a limit, what’s the move?",
+      "What’s the headline if we fail?",
+      "What decision unlocks the most value?",
+      "How do I outsmart my competitor?",
+      "How do I dominate the industry?",
+      "How do I make our product the best?"
+    ];
+    const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
+
+    function makeBubble(i){
+      const b = document.createElement('div');
+      b.className = 'hero-bubble ' + (i % 2 ? 'assistant' : 'user');
+
+      // Size tiers (sm, md, lg) for depth variety
+      let w; const r = Math.random();
+      if (r < .35)      w = rand(64, 110);
+      else if (r < .78) w = rand(96, 160);
+      else              w = rand(160, 240);
+      const h = Math.round(w * (0.58 + Math.random()*0.18));
+      const size = (w <= 110) ? 'sm' : (w <= 160 ? 'md' : 'lg');
+      b.setAttribute('data-size', size);
+
+      // Horizontal start in % of width; vertically start just below container
+      const leftPct = rand(6, 94);
+      b.style.left = `calc(${leftPct}% - ${Math.round(w/2)}px)`;
+      b.style.top = `calc(100% + ${rand(4,24)}vh)`;
+      b.style.width = w+'px';
+      b.style.height = h+'px';
+
+      // Motion variables
+      const drift = rand(-60, 60);
+      const travel = -rand(90, 140); // in vh
+      const dur = (rand(14, 24) + (r < .35 ? 3 : 0)) + 's';
+      const delay = (-rand(0, 2200)/100) + 's'; // negative to desync start
+      const scale = (r > .82) ? 1.05 : 1.0;
+
+      b.style.setProperty('--x-drift', drift+'px');
+      b.style.setProperty('--y-travel', travel+'vh');
+      b.style.setProperty('--dur', dur);
+      b.style.setProperty('--delay', delay);
+      b.style.setProperty('--scale', scale);
+
+      // Text content: bold, short, viral questions
+      const content = document.createElement('div');
+      content.className = 'content';
+      const span = document.createElement('span');
+      span.className = 'bubble-text';
+      const q = QUESTIONS[(i + rand(0, QUESTIONS.length-1)) % QUESTIONS.length];
+      span.textContent = q;
+      content.appendChild(span);
+      b.appendChild(content);
+      return b;
+    }
+
+    for (let i=0;i<COUNT;i++) layer.appendChild(makeBubble(i));
+
+    // Rebuild on prefers-reduced-motion toggle
+    if (prefersReduced.addEventListener) {
+      prefersReduced.addEventListener('change', (e)=>{ if(e.matches){ layer.innerHTML=''; } });
+    } else if (prefersReduced.addListener) {
+      prefersReduced.addListener((e)=>{ if(e.matches){ layer.innerHTML=''; } });
+    }
   })();
   </script>
 
