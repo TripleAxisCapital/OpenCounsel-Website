@@ -288,6 +288,8 @@
     .market-orb.c2{ background: radial-gradient(closest-side, rgba(14,111,92,.20), transparent 70%); right: -40px; top: 120px; }
     .market-orb.c3{ background: radial-gradient(closest-side, rgba(160,228,212,.18), transparent 70%); left: 20%; bottom: -30px; width:260px; height:260px; }
     @media (prefers-reduced-motion: reduce){ #marketFx{ display:none !important } }
+
+    /* MonoCoreDemo styles removed */
   </style>
 </head>
 
@@ -414,47 +416,7 @@
       </div>
   </section>
 
-  <!-- POST-HERO DEMO CHAT (animation slot below hero) -->
-  <section id="core-demo" class="mx-auto max-w-[1200px] oc-container mt-6 md:mt-10">
-    <div id="coreDemoSlot" class="relative mx-auto w-full max-w-[620px]">
-      <!-- Segmented control -->
-      <div id="coreSwitcher" role="radiogroup" aria-label="Select a Core" class="mx-auto w-fit rounded-full border border-oc-line bg-white/80 backdrop-blur-sm px-1 py-1 flex gap-1 dark:bg-neutral-900/70" tabindex="0">
-        <button type="button" role="radio" aria-checked="true" data-core="oc" aria-controls="coreDemoPanel" class="seg-pill inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-semibold text-neutral-800 dark:text-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-white/70 dark:focus-visible:ring-offset-neutral-900">
-          <i class="ph ph-cpu text-base"></i>
-          <span>OC‑Core</span>
-        </button>
-        <button type="button" role="radio" aria-checked="false" data-core="research" aria-controls="coreDemoPanel" class="seg-pill inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium text-neutral-700 dark:text-neutral-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-white/70 dark:focus-visible:ring-offset-neutral-900">
-          <i class="ph ph-flask text-base"></i>
-          <span>OC‑Research‑Core</span>
-        </button>
-        <button type="button" role="radio" aria-checked="false" data-core="coach" aria-controls="coreDemoPanel" class="seg-pill inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium text-neutral-700 dark:text-neutral-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-white/70 dark:focus-visible:ring-offset-neutral-900">
-          <i class="ph ph-compass-tool text-base"></i>
-          <span>OC‑Coach‑Core</span>
-        </button>
-      </div>
-
-      <!-- Chat Card -->
-      <div id="coreDemoPanel" role="region" aria-labelledby="coreTitle" aria-live="polite" aria-atomic="true" class="mt-4 rounded-2xl border border-oc-line bg-white/75 dark:bg-neutral-900/70 backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,.12)]">
-        <div id="coreDemoHeader" class="flex items-center justify-between px-4 py-3">
-          <div class="flex items-center gap-2">
-            <div id="coreIcon" class="h-7 w-7 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center">
-              <i class="ph ph-cpu"></i>
-            </div>
-            <div>
-              <div id="coreTitle" class="text-sm font-semibold text-neutral-900 dark:text-white">OC‑Core</div>
-              <div id="coreSub" class="text-[11px] text-neutral-600 dark:text-neutral-300">General</div>
-            </div>
-          </div>
-          <div id="coreHeaderChip" class="hidden text-[11px] px-2 py-1 rounded-full border font-medium"></div>
-        </div>
-        <div class="px-4 pb-4">
-          <div id="chatWrap" class="relative">
-            <!-- Bubbles injected by script -->
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <!-- POST-HERO DEMO REMOVED BY REQUEST -->
 
   <!-- MARKETPLACE -->
   <section id="marketplace" class="section-clip mx-auto max-w-[1200px] oc-container my-10 md:my-12">
@@ -586,8 +548,9 @@
     if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
     document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
 
-    // ====== DemoCoreChat (post-hero) ======
-    (function DemoCoreChat(){
+    // ====== MonoCoreDemo removed ======
+    /*
+    (function MonoCoreDemo(){
       const slot = document.getElementById('coreDemoSlot'); if (!slot) return;
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const switcher = document.getElementById('coreSwitcher');
@@ -598,51 +561,52 @@
         chip: document.getElementById('coreHeaderChip')
       };
       const chatWrap = document.getElementById('chatWrap');
+      const insert = document.getElementById('insertDemo');
+      if (reduce) insert.classList.add('reduce');
 
-      const CORES = ['oc','research','coach'];
+      const CORES = ['oc','research','chat'];
       let i = 0; let timer = null; let paused = false;
       const dur = 7200; // ~7s
 
-      const bubbleBase = 'w-fit max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-[0_6px_18px_rgba(0,0,0,.08)]';
+      const bubbleBase = 'w-fit max-w-[75%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed shadow-[0_6px_18px_rgba(0,0,0,.08)] border';
 
       const makeBubbles = (key)=>{
         switch(key){
           case 'research': return [
-            { role:'user', text:'Compare studies on GLP‑1 and weight loss.' },
-            { role:'ai', text:'Key findings across 4 peer‑reviewed papers. (1) … (2) …', cite:true }
+            { role:'user', text:'Compare 3 papers on GLP‑1 and weight loss.' },
+            { role:'ai', text:'Key findings across 3 studies. ', citations:[1,2,3] }
           ];
-          case 'coach': return [
-            { role:'user', text:'Hold me to 90 minutes deep work.' },
-            { role:'ai', text:'Timer set. I’ll check in at 30/60/90—stay locked in.' }
+          case 'chat': return [
+            { role:'user', text:'Plan my day & remind me to water plants.' },
+            { role:'ai', text:'Added tasks and a 7pm reminder. I’ll remember you prefer mornings.' }
           ];
           case 'oc':
           default: return [
-            { role:'user', text:'Summarize my meeting notes.' },
-            { role:'ai', text:'Here’s a crisp 5‑bullet summary and next steps.' }
+            { role:'user', text:'Draft a 2‑line reschedule email.' },
+            { role:'ai', text:'Sure — 2 concise lines with a new time. Sent.', status:true }
           ];
         }
       };
 
       function setHeader(key){
-        header.chip.className = 'hidden text-[11px] px-2 py-1 rounded-full border font-medium';
+        header.chip.className = 'hidden text-[11px] px-2 py-1 rounded-full border border-black/20 text-black dark:text-white dark:border-white/30';
         switch(key){
           case 'research':
-            header.icon.innerHTML = '<i class="ph ph-flask"></i>';
-            header.icon.className = 'h-7 w-7 rounded-xl bg-cyan-600 text-white flex items-center justify-center';
-            header.title.textContent = 'OC‑Research‑Core';
+            header.icon.innerHTML = '<i class="ph ph-book"></i>';
+            header.icon.className = 'h-7 w-7 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center';
+            header.title.textContent = 'OC‑Research';
             header.sub.textContent = 'Research';
             break;
-          case 'coach':
-            header.icon.innerHTML = '<i class="ph ph-compass-tool"></i>';
-            header.icon.className = 'h-7 w-7 rounded-xl bg-amber-600 text-white flex items-center justify-center';
-            header.title.textContent = 'OC‑Coach‑Core';
-            header.sub.textContent = 'Coaching';
-            header.chip.textContent = 'Check‑in';
-            header.chip.className = 'text-[11px] px-2 py-1 rounded-full border font-medium border-amber-300/60 text-amber-800 bg-amber-50/70 dark:text-amber-200 dark:border-amber-400/30 dark:bg-amber-900/30';
+          case 'chat':
+            header.icon.innerHTML = '<i class="ph ph-smiley"></i>';
+            header.icon.className = 'h-7 w-7 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center';
+            header.title.textContent = 'OC‑Chat';
+            header.sub.textContent = 'Companion';
+            // show memory chip momentarily after render
             break;
           default:
             header.icon.innerHTML = '<i class="ph ph-cpu"></i>';
-            header.icon.className = 'h-7 w-7 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 flex items-center justify-center';
+            header.icon.className = 'h-7 w-7 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center';
             header.title.textContent = 'OC‑Core';
             header.sub.textContent = 'General';
         }
@@ -653,21 +617,32 @@
         const wrap = document.createElement('div');
         wrap.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mt-2`;
         const bubble = document.createElement('div');
-        bubble.className = `${bubbleBase} ${isUser ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : theme.aiBg}`;
+        bubble.className = `${bubbleBase} ${isUser ? 'bg-black text-white dark:bg-white dark:text-black border-black/30 dark:border-white/20' : theme.aiBg}`;
         bubble.setAttribute('data-bubble','');
-        bubble.textContent = item.text;
+        // inner content
+        if (item.citations){
+          const span = document.createElement('span'); span.textContent = item.text;
+          bubble.appendChild(span);
+          const chips = document.createElement('span'); chips.className = 'inline-flex items-center gap-1 ml-1 align-middle';
+          item.citations.forEach(n=>{
+            const c = document.createElement('span'); c.className = 'inline-block text-[11px] leading-none px-1.5 py-0.5 rounded border border-black/30 text-black dark:text-white dark:border-white/30'; c.textContent = `[${n}]`; chips.appendChild(c);
+          });
+          bubble.appendChild(chips);
+        } else {
+          bubble.textContent = item.text;
+        }
         if (!reduce) bubble.style.opacity = '0';
         // Optional micro adornments
-        if (!isUser && item.cite){
+        if (!isUser && item.status){
           const dot = document.createElement('span'); dot.setAttribute('aria-hidden','true');
-          dot.className = 'inline-flex items-center justify-center ml-1 -mr-1 align-middle';
-          dot.innerHTML = '<i class="ph ph-dot text-cyan-600"></i>';
+          dot.className = 'inline-flex items-center justify-center ml-1 -mr-1 align-middle text-black/60 dark:text-white/60';
+          dot.innerHTML = '<i class="ph ph-dot"></i>';
           bubble.appendChild(dot);
         }
-        // OC-Core micro badge on assistant bubble
+        // OC-Core micro badge on assistant bubble (mono)
         if (!isUser && theme.k === 'oc'){
           const badge = document.createElement('span'); badge.setAttribute('aria-hidden','true');
-          badge.className = 'inline-flex items-center justify-center ml-1 -mr-1 align-middle text-neutral-500';
+          badge.className = 'inline-flex items-center justify-center ml-1 -mr-1 align-middle text-black/60 dark:text-white/60';
           badge.innerHTML = '<i class="ph ph-circle-wavy-check"></i>';
           bubble.appendChild(badge);
         }
@@ -676,10 +651,11 @@
       }
 
       function themeFor(key){
+        const monoAI = 'bg-white text-black border-black/20 dark:bg-black dark:text-white dark:border-white/30';
         switch(key){
-          case 'research': return { k:'research', aiBg: 'bg-cyan-50 text-neutral-900 border border-cyan-200/70 dark:bg-cyan-900/20 dark:text-white dark:border-cyan-400/20' };
-          case 'coach': return { k:'coach', aiBg: 'bg-amber-50 text-neutral-900 border border-amber-200/70 dark:bg-amber-900/20 dark:text-white dark:border-amber-400/20' };
-          default: return { k:'oc', aiBg: 'bg-neutral-100 text-neutral-900 border border-neutral-200/70 dark:bg-neutral-800/60 dark:text-white dark:border-neutral-600/40' };
+          case 'research': return { k:'research', aiBg: monoAI };
+          case 'chat': return { k:'chat', aiBg: monoAI };
+          default: return { k:'oc', aiBg: monoAI };
         }
       }
 
@@ -700,6 +676,28 @@
         });
       }
 
+      function researchDocsEffect(){
+        const fx = document.createElement('div'); fx.className = 'absolute left-4 right-4 -top-2 flex items-end gap-1 pointer-events-none';
+        const mkDoc = (d)=>{ const el = document.createElement('div'); el.className = 'h-8 w-12 rounded border border-black/20 bg-white dark:bg-black dark:border-white/20 shadow-[0_6px_12px_rgba(0,0,0,.08)] overflow-hidden'; el.innerHTML = '<div class="h-px bg-black/20 mt-1 mx-2"></div><div class="h-px bg-black/10 mt-1 mx-2"></div><div class="h-px bg-black/10 mt-1 mx-2"></div>'; return el; };
+        const a = mkDoc(); const b = mkDoc(); const c = mkDoc();
+        fx.appendChild(a); fx.appendChild(b); fx.appendChild(c);
+        chatWrap.appendChild(fx);
+        if (reduce){ setTimeout(()=> fx.remove(), 300); return; }
+        [a,b,c].forEach((el, idx)=>{
+          el.animate([
+            { opacity: 0, transform: 'translateY(-8px) scale(.96)' },
+            { opacity: 1, transform: 'translateY(0) scale(1)' }
+          ], { duration: 200, delay: 80*idx, easing: 'cubic-bezier(.22,.8,.22,1)', fill:'both' });
+        });
+        // Condense into a loaded strip
+        setTimeout(()=>{
+          const strip = document.createElement('div'); strip.className = 'ml-1 text-[11px] px-2 py-0.5 rounded border border-black/20 bg-white/80 dark:bg-black/60 dark:border-white/25 text-black dark:text-white'; strip.textContent = 'Loaded';
+          fx.appendChild(strip);
+          strip.animate([{opacity:0, transform:'translateY(-4px)'},{opacity:1, transform:'translateY(0)'}],{duration:160, easing:'ease-out', fill:'both'});
+          setTimeout(()=>{ fx.animate([{opacity:1},{opacity:0}],{duration:220, easing:'ease-in', fill:'forwards'}); setTimeout(()=> fx.remove(), 240); }, 500);
+        }, 260);
+      }
+
       function render(key){
         setHeader(key);
         // Replace bubbles
@@ -710,6 +708,24 @@
           chatWrap.appendChild(bubbleEl(items[idx], idx, t));
         }
         if (!reduce) animateIn(chatWrap);
+        // Per-core micro effects
+        if (key==='research') researchDocsEffect();
+        if (key==='chat'){
+          header.chip.textContent = 'Memory saved';
+          header.chip.classList.remove('hidden');
+          if (!reduce){ header.chip.animate([{opacity:0, transform:'translateY(-4px)'},{opacity:1, transform:'translateY(0)'},{opacity:0, offset:1}],{duration:1400, easing:'cubic-bezier(.22,.8,.22,1)'}); setTimeout(()=> header.chip.classList.add('hidden'), 1200); }
+          else { setTimeout(()=> header.chip.classList.add('hidden'), 800); }
+          // Tiny checklist under assistant bubble
+          const last = chatWrap.querySelector('[data-bubble]:last-child');
+          if (last){ const list = document.createElement('div'); list.className='mt-2 text-xs text-black/70 dark:text-white/70'; list.innerHTML = '<div class="flex items-center gap-1"><i class="ph ph-check"></i><span>Today — Deep work 90m</span></div><div class="flex items-center gap-1"><i class="ph ph-check"></i><span>Water plants at 7pm</span></div>'; if (!reduce) list.style.opacity='0'; last.appendChild(list); if (!reduce){ list.animate([{opacity:0},{opacity:.85},{opacity:0}],{duration:1600, delay:220, easing:'ease', fill:'forwards'}); } }
+        }
+      }
+
+      function replayInsertion(){
+        insert.classList.remove('play'); // restart
+        // Force reflow
+        void insert.offsetWidth;
+        insert.classList.add('play');
       }
 
       function setActive(core){
@@ -719,15 +735,14 @@
           btn.setAttribute('aria-checked', String(active));
           btn.classList.toggle('font-semibold', active);
           btn.classList.toggle('font-medium', !active);
-          btn.classList.toggle('bg-neutral-900', active && btn.dataset.core==='oc');
-          btn.classList.toggle('text-white', active && btn.dataset.core==='oc');
-          btn.classList.toggle('bg-white', active && btn.dataset.core!=='oc');
-          btn.classList.toggle('text-neutral-900', active && btn.dataset.core!=='oc');
           btn.classList.toggle('ring-1', active);
           btn.classList.toggle('ring-black/70', active);
           btn.classList.toggle('dark:ring-white/70', active);
         });
-        render(core);
+        // Replay insertion first, then render chat
+        replayInsertion();
+        const delay = reduce ? 160 : 320;
+        setTimeout(()=> render(core), delay);
       }
 
       function next(){ i = (i+1)%CORES.length; setActive(CORES[i]); }
@@ -748,7 +763,7 @@
 
       function start(){ if (timer) clearInterval(timer); if (!reduce) timer = setInterval(()=>{ if (!paused) next(); }, dur); }
       function stop(){ if (timer) { clearInterval(timer); timer=null; } }
-      const hoverables = [switcher, chatWrap];
+      const hoverables = [switcher, chatWrap, insert];
       hoverables.forEach(el=>{
         el.addEventListener('mouseenter', ()=>{ paused = true; });
         el.addEventListener('mouseleave', ()=>{ paused = false; });
@@ -761,6 +776,7 @@
       start();
       document.addEventListener('visibilitychange', ()=>{ if (document.hidden) stop(); else start(); });
     })();
+    */
 
     // ====== Marketplace data (five cores only) ======
     const CORES = [
