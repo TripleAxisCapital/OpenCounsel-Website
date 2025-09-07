@@ -18,6 +18,7 @@
   <link rel="dns-prefetch" href="//cdn.opencounsel.ca">
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
+  <link rel="preload" as="image" href="OCProLogo.svg">
   <link rel="preload" as="image" href="logo.svg">
 
   <!-- Icons -->
@@ -109,7 +110,8 @@
     /* Logo masks (kept) */
     .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
     .hero-logo-white{ display:inline-block; width: var(--hero-logo-size, clamp(140px, 45vw, 400px)); height: var(--hero-logo-size, clamp(140px, 45vw, 400px)); background: #ffffff; -webkit-mask-image: url('logo.svg'); -webkit-mask-repeat: no-repeat; -webkit-mask-position: center; -webkit-mask-size: contain; mask-image: url('logo.svg'); mask-repeat: no-repeat; mask-position: center; mask-size: contain; opacity: 0; filter: blur(8px); transform: translateY(6px) scale(.985); animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle; }
-    .no-hero-glow .hero-logo-white{ animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
+    .hero-logo-pro{ display:inline-block; width: var(--hero-logo-size, clamp(140px, 45vw, 400px)); height: var(--hero-logo-size, clamp(140px, 45vw, 400px)); background:#ffffff; -webkit-mask-image:url('OCProLogo.svg'); -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; mask-image:url('OCProLogo.svg'); mask-repeat:no-repeat; mask-position:center; mask-size:contain; opacity:0; filter:blur(8px); transform: translateY(6px) scale(.985); animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle; }
+    .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important; }
     @keyframes heroLogoReveal { 0% { opacity: 0; filter: blur(8px); transform: translateY(6px) scale(.985);} 60% { opacity: 1; filter: blur(1.5px); transform: translateY(0) scale(1.000);} 100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1);} }
 
     /* Caret + hero lines */
@@ -118,6 +120,57 @@
     @media (min-width: 768px){ #home .hero-sub1{ margin-top: 3px !important; } }
     @keyframes heroBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
     #home .hero-line1, #home .hero-line2 { display:block; }
+
+    /* Hero shimmer sweep for the first line (copied from index) */
+    #home .hero-line1 .seg-fullshine {
+      position: relative;
+      background-image:
+        linear-gradient(var(--hero-shine-angle, 90deg),
+          rgba(255,255,255,0) 0%,
+          rgba(255,255,255,0) calc(50% - var(--hero-shine-softness, 3.5%)),
+          rgba(255,255,255,0.98) 50%,
+          rgba(255,255,255,0) calc(50% + var(--hero-shine-softness, 3.5%)),
+          rgba(255,255,255,0) 100%
+        ),
+        linear-gradient(var(--hero-shine-base, #e6e6e6), var(--hero-shine-base, #e6e6e6));
+      background-size: var(--hero-shine-bg-size-x, 240%) 100%, 100% 100%;
+      background-repeat: no-repeat;
+      background-position: -150% 0, 0 0;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      animation: heroShine var(--hero-shine-duration, 5.5s) var(--hero-shine-ease, linear) infinite;
+      animation-direction: var(--hero-shine-direction, normal);
+      will-change: background-position;
+    }
+    @keyframes heroShine {
+      0%   { background-position: -150% 0, 0 0; }
+      100% { background-position:  150% 0, 0 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #home .hero-line1 .seg-fullshine { animation: none; -webkit-text-fill-color: #fff; color: #fff; background: none; }
+    }
+
+    /* Logo glow container and animation (copied from index) */
+    .hero-logo-wrap { position: relative; display: inline-block; }
+    .hero-logo-glow {
+      --glow-c1: rgba(0,207,255,.40);
+      --glow-c2: rgba(14,111,92,.28);
+      --glow-opacity: .55;
+      --glow-blur: 30px;
+      position: absolute; inset: -16%; border-radius: 9999px;
+      background:
+        radial-gradient(60% 60% at 50% 40%, var(--glow-c1), rgba(0,0,0,0) 70%),
+        radial-gradient(55% 55% at 40% 60%, var(--glow-c2), rgba(0,0,0,0) 70%);
+      filter: blur(var(--glow-blur)); opacity: 0; z-index: 0; pointer-events: none;
+      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards;
+    }
+    .hero-logo-glow.glow-pulse {
+      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards,
+                 heroGlowPulse var(--glow-pulse-dur, 6s) ease-in-out infinite 1.1s;
+    }
+    @keyframes heroGlowReveal { 0%{opacity:0; filter:blur(40px)} 60%{opacity:var(--glow-opacity); filter:blur(16px)} 100%{opacity:var(--glow-opacity); filter:blur(var(--glow-blur))} }
+    @keyframes heroGlowPulse { 0%,100%{ transform:scale(1); filter:blur(var(--glow-blur)); opacity:var(--glow-opacity);} 50%{ transform:scale(1.03); filter:blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05);} }
+    .no-hero-glow .hero-logo-glow{ display:none !important; }
 
     /* Page blur + mobile menu (dark overrides later) */
     .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background: rgba(0,0,0,.28); z-index:9999; pointer-events:none; transition: backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
@@ -322,7 +375,7 @@
       <!-- Very light blur between bubbles and foreground (tunable via --hero-mid-blur) -->
       <div class="hero-mid-blur" aria-hidden="true"></div>
       <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
-        <span class="hero-title font-extrabold text-white text-5xl md:text-7xl leading-tight">Unsensored AI</span>
+        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OC</span>
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html"
@@ -651,27 +704,56 @@
 
     // Typewriter helpers
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    // Stream HTML preserving inline elements (bold segments), typing text nodes gradually
+    async function streamHTML(el, html, charMin=10, charMax=18){
+      const container = document.createElement('div');
+      container.innerHTML = html.trim();
+      async function walk(src, dst){
+        const kids = Array.from(src.childNodes);
+        for(const child of kids){
+          if(child.nodeType === Node.TEXT_NODE){
+            const text = child.textContent || '';
+            // Use OC_HERO.streamSpeed if available to scale timing
+            const spLocal = (ms)=>{ const c=window.OC_HERO||{}; const f=(typeof c.streamSpeed==='number'&&c.streamSpeed>0)?c.streamSpeed:1.0; return ms*f; };
+            await new Promise(res=>{ let i=0; const tn=document.createTextNode(''); dst.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, i++); if(i<=text.length) setTimeout(tick, spLocal(rand(charMin,charMax))); else res(); })(); });
+          } else if (child.nodeType === Node.ELEMENT_NODE){
+            const clone = child.cloneNode(false); dst.appendChild(clone); await walk(child, clone);
+          }
+        }
+      }
+      el.innerHTML='';
+      await walk(container, el);
+    }
     (function heroTyping(){
       const cfg = window.OC_HERO || {}; if(!cfg.enabled) return;
       const hero=document.getElementById('home'); if(!hero) return;
       const titleEl=hero.querySelector('.hero-title'); const sub1El=hero.querySelector('.hero-sub1'); const ctaTxt=hero.querySelector('.hero-cta-text'); const ctaBtn=hero.querySelector('#heroCtaBtn');
       if(!titleEl||!ctaTxt||!ctaBtn) return; const prefersReduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       const bTxt=ctaTxt.textContent||'';
-      const TAGLINE_FULL = 'Uncensored AI - for the 1%';
-      const MOBILE_LINE1 = 'Uncensored AI -';
-      const MOBILE_LINE2 = 'for the 1%';
+      const TAGLINE_FULL_HTML = '<span class="hero-word">Uncensored AI</span> - for the 1%';
+      const MOBILE_LINE1_HTML = '<span class="hero-word">Uncensored AI</span> -';
+      const MOBILE_LINE2_HTML = 'for the 1%';
       const isMobile=window.matchMedia('(max-width: 767px)').matches;
-      // Title: Bold text instead of logo
-      titleEl.classList.remove('font-semibold');
-      titleEl.classList.add('font-extrabold');
-      titleEl.textContent = 'Unsensored AI';
-      if(prefersReduced){ if(sub1El){ sub1El.innerHTML = isMobile ? `<span class="hero-line1">${MOBILE_LINE1}</span><span class="hero-line2">${MOBILE_LINE2}</span>` : `<span class="hero-line1">${TAGLINE_FULL}</span>`; } ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-text-done')); return; }
+      // Title: replace with OC-Pro logo mask
+      titleEl.innerHTML='';
+      const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
+      if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
+      const logo=document.createElement('span'); logo.className='hero-logo-pro'; logo.setAttribute('role','img'); logo.setAttribute('aria-label','OC-Pro'); wrapSpan.appendChild(logo);
+      if(prefersReduced){ if(sub1El){ sub1El.innerHTML = isMobile ? `<span class="hero-line1">${MOBILE_LINE1_HTML}</span><span class="hero-line2">${MOBILE_LINE2_HTML}</span>` : `<span class="hero-line1">${TAGLINE_FULL_HTML}</span>`; } ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-text-done')); return; }
       if(sub1El) sub1El.textContent=''; ctaTxt.textContent=''; ctaBtn.classList.remove('cta-visible');
       function spH(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
       function typeHero(el, text, min, max){ return new Promise(resolve=>{ let i=0; const tn=document.createTextNode(''); el.textContent=''; el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })(); }); }
       const wait=(ms)=>new Promise(r=>setTimeout(r, ms));
-      async function run(){ await wait(Math.max(0, cfg.startDelayMs|0)); if(sub1El){ const min=(cfg.line1CharMin ?? cfg.lineCharMin)|0; const max=(cfg.line1CharMax ?? cfg.lineCharMax)|0; if(isMobile){ sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine l1"></span></span><span class="hero-line2"><span class="seg-fullshine l2"></span></span>'; const l1=sub1El.querySelector('.l1'); const l2=sub1El.querySelector('.l2'); await typeHero(l1, MOBILE_LINE1, min, max); await typeHero(l2, MOBILE_LINE2, min, max); } else { sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine"></span></span>'; const seg=sub1El.querySelector('.seg-fullshine'); await typeHero(seg, TAGLINE_FULL, min, max); } }
-        await wait(cfg.staggerMs|0); ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-visible')); await wait(60); document.dispatchEvent(new Event('oc:cta-text-start')); await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0); document.dispatchEvent(new Event('oc:cta-text-done')); }
+      function afterTransition(el, fallbackMs = 900){
+        return new Promise((resolve)=>{
+          let done=false; const finish=()=>{ if(done) return; done=true; resolve(); };
+          const onEnd=(e)=>{ if(e.target===el) finish(); };
+          el.addEventListener('transitionend', onEnd, { once:true });
+          setTimeout(()=>{ el.removeEventListener('transitionend', onEnd); finish(); }, fallbackMs);
+        });
+      }
+      async function run(){ await wait(Math.max(0, cfg.startDelayMs|0)); if(sub1El){ const min=(cfg.line1CharMin ?? cfg.lineCharMin)|0; const max=(cfg.line1CharMax ?? cfg.lineCharMax)|0; if(isMobile){ sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine l1"></span></span><span class="hero-line2"><span class="seg-fullshine l2"></span></span>'; const l1=sub1El.querySelector('.l1'); const l2=sub1El.querySelector('.l2'); await streamHTML(l1, MOBILE_LINE1_HTML, min, max); await streamHTML(l2, MOBILE_LINE2_HTML, min, max); } else { sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine"></span></span>'; const seg=sub1El.querySelector('.seg-fullshine'); await streamHTML(seg, TAGLINE_FULL_HTML, min, max); } }
+        await wait(cfg.staggerMs|0); ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-visible')); await afterTransition(ctaBtn, 900); await wait(60); document.dispatchEvent(new Event('oc:cta-text-start')); await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0); document.dispatchEvent(new Event('oc:cta-text-done')); }
       let started=false; let inView=!cfg.startOnView; let blurReady=!cfg.waitForBlur;
       function tryStart(){ if(!started && inView && blurReady){ started=true; run(); } }
       if(cfg.startOnView){ const ob=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ inView=true; tryStart(); ob.disconnect(); break; } } }, {threshold:.35}); ob.observe(hero); }
