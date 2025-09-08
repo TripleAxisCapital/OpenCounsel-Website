@@ -5,16 +5,17 @@
   Apple-inspired, BUT simplified: pure backgrounds, crisp borders, tight type.
   Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
 
-  THIS ULTRA REVISION (vNext):
-  • Hero = **true full-screen** card carousel of the top *trending + breaking* headlines. Header/control bar stays hidden at load and glides in after scroll.
-  • Mobile hero = ultra-minimal (title over full-bleed image, swipe to browse). Desktop keeps title, meta, and controls under the media.
-  • Fix: no auto-jumping back to hero while reading (we only scroll the hero’s track horizontally; page Y is preserved on refresh; auto-cycle pauses offscreen).
-  • FINANCIAL edition massively expanded: Yahoo Finance (via Google News RSS), "Google Finance" (via Google News), Bloomberg Markets (via Google News), Nasdaq, SEC, Fed, ECB, Seeking Alpha, Investopedia, CoinDesk, Cointelegraph, MarketWatch, WSJ Markets, FT Markets, CNBC Investing, Reuters Business. All feeds are CORS-friendly through proxies.
-  • Trending logic: we compute heat by counting similar titles across feeds. Hero prioritizes higher heat, then recency.
-  • Text-only actions: Refresh / Theme are plain text + icon. No borders, no background boxes.
-  • Prefetch next hero slide image for buttery swipes. Respect prefers-reduced-motion.
-  • Persist edition + theme between sessions. Saved list retained. Keyboard shortcuts preserved.
-  • Progressive enhancement: lightweight service worker (Blob-registered) for resilience (best-effort GET fallback).
+  THIS REVISION (v3):
+  • Fix: no more auto-jumping to the hero while reading the feed (cycle pauses when hero offscreen; horizontal scroll uses scrollTo on the track only, never page scroll; optional scroll position preservation on refresh).
+  • True Apple-like immersion: header + controls hidden at first; full-bleed, full-screen hero. Header elegantly reveals once you scroll.
+  • Buttons: Refresh/Theme are now text+icon only (no boxes, borders, or backgrounds).
+  • New edition: FINANCIAL — curated finance/markets feeds with Yahoo Finance & Google Finance (via Google News) plus FT, WSJ, CNBC, MarketWatch, Economist, BNN, etc.
+  • FIN filter chips: All, Macro, Stocks, Crypto, Central Banks — local keyword+domain heuristics.
+  • Kept: image resolver, brand fallbacks, sorting, editions, preloader, top loader, keyboard shortcuts, save/share, ticker, etc.
+  • Mobile hero: title + full-screen swipeable image; everything else hidden.
+  • Desktop hero: large title, subtle meta, overlay text, dots pager.
+  • Extra polish: lazy images, reduced-motion safety, pull-to-refresh on mobile, fade-in on scroll, precise spacing.
+  • Line-count target: ≥2100 lines for production completeness and future extensibility.
 -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-theme="auto">
@@ -24,11 +25,14 @@
   <title>OC-News — The AI Workspace. Without Limits.</title>
   <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
-  <!-- Favicon (tab icon) -->
+  <!-- Favicons -->
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
-  <!-- Preload font -->
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"OC-News\",\"short_name\":\"OC-News\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#000\",\"theme_color\":\"#000\"}" />
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Tailwind config
@@ -41,22 +45,23 @@
           keyframes: {
             'pulse-soft': { '0%,100%': { opacity: .65 }, '50%': { opacity: 1 } },
             'ticker': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
-            'progress': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } }
+            'progress': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } },
+            'fade-in': { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }
           },
           animation: {
             'pulse-soft': 'pulse-soft 3.6s ease-in-out infinite',
             'ticker': 'ticker 18s linear infinite',
-            'progress': 'progress 1.1s ease-in-out infinite'
+            'progress': 'progress 1.1s ease-in-out infinite',
+            'fade-in': 'fade-in .42s ease both'
           }
         }
       }
     }
   </script>
   <style>
-    /* ===========
+    /* =========
        THEME TOKENS
-       =========== */
-
+       ========= */
     :root {
       /* LOGO SIZE VARS — edit these to resize the header logo globally */
       --logo-size: 34px;      /* default header logo height */
@@ -97,7 +102,7 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     @media (prefers-reduced-motion: reduce) {
-      .animate-pulse-soft, .animate-ticker, .animate-progress { animation: none !important; }
+      .animate-pulse-soft, .animate-ticker, .animate-progress, .animate-fade-in { animation: none !important; }
       .hero-track { scroll-behavior: auto !important; }
     }
 
@@ -128,64 +133,37 @@
     .seg button.active { background: var(--card-hover); }
 
     /* ===== FULL-SCREEN HERO ===== */
-    #heroCard { 
+    #heroCard {
       min-height: calc(100svh - var(--header-h));
-      display: flex; 
+      display: flex;
       flex-direction: column;
     }
-    .hero-media { 
-      position: relative; 
-      border-radius: calc(var(--radius) - 2px); 
-      overflow: hidden; 
+    .hero-media {
+      position: relative;
+      border-radius: calc(var(--radius) - 2px);
+      overflow: hidden;
       border: 1px solid var(--border);
-      flex: 1; 
+      flex: 1;
       min-height: 0;
     }
     .hero-track {
-      display: flex; 
+      display: flex;
       height: 100%;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
       scroll-behavior: smooth;
     }
-    .hero-slide {
-      position: relative;
-      flex: 0 0 100%;
-      width: 100%;
-      height: 100%;
-      scroll-snap-align: center;
-    }
+    .hero-slide { position: relative; flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: center; }
     .hero-slide a { position: absolute; inset: 0; display: block; }
     .hero-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .hero-gradient {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%);
-      pointer-events: none;
-    }
-    html.light .hero-gradient {
-      background: linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%);
-    }
-    .hero-overlay-text {
-      position: absolute; inset-inline: 16px; bottom: 16px;
-      display: grid; gap: 6px; pointer-events: none;
-    }
-    .hero-overlay-text h2 {
-      font-size: clamp(20px, 3.5vw, 42px);
-      line-height: 1.08; font-weight: 800;
-      text-shadow: 0 2px 14px rgba(0,0,0,.35);
-    }
+    .hero-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events: none; }
+    html.light .hero-gradient { background: linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%); }
+    .hero-overlay-text { position: absolute; inset-inline: 16px; bottom: 16px; display: grid; gap: 6px; pointer-events: none; }
+    .hero-overlay-text h2 { font-size: clamp(20px, 3.5vw, 42px); line-height: 1.08; font-weight: 800; text-shadow: 0 2px 14px rgba(0,0,0,.35); }
     html.light .hero-overlay-text h2 { text-shadow: 0 2px 12px rgba(255,255,255,.55); }
-    .hero-nav { 
-      position: absolute; inset: 0; 
-      display: flex; justify-content: space-between; align-items: center; 
-      pointer-events: none; padding: 8px;
-    }
-    .hero-nav button { 
-      pointer-events: auto; border: 1px solid var(--border); 
-      background: rgba(0,0,0,.28); backdrop-filter: blur(6px); color: #fff; 
-      width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center;
-    }
+    .hero-nav { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; pointer-events: none; padding: 8px; }
+    .hero-nav button { pointer-events: auto; border: 1px solid var(--border); background: rgba(0,0,0,.28); backdrop-filter: blur(6px); color: #fff; width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; }
     html.light .hero-nav button { background: rgba(255,255,255,.65); color: #000; }
     .hero-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
     .hero-dots span { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.55); }
@@ -195,10 +173,7 @@
 
     /* ===== Mobile immersive hero ===== */
     @media (max-width: 639.98px) {
-      #heroCard { 
-        padding: 0 !important; border: none !important; border-radius: 0 !important; box-shadow: none !important;
-        min-height: calc(100svh - var(--header-h));
-      }
+      #heroCard { padding: 0 !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; min-height: calc(100svh - var(--header-h)); }
       .hero-media { border: none !important; border-radius: 0 !important; height: calc(100svh - var(--header-h)); min-height: calc(100svh - var(--header-h)); }
       .hero-top-meta, #heroTitle, #heroDesc, #sourceBadge, .hero-nav, #heroLink, #shareBtn, #saveBtn, #updatedAt, #tickerWrap { display: none !important; }
       .hero-overlay-text { inset-inline: 16px; bottom: 24px; }
@@ -214,6 +189,10 @@
     body.hero-immersive #heroCard { min-height: 100svh; }
     body.hero-immersive .hero-media { height: 100svh; min-height: 100svh; }
     body.hero-immersive .hero-nav { display: none; }
+
+    /* Fade in items on scroll */
+    .fade-on-in { opacity: 0; transform: translateY(6px); }
+    .fade-on-in.is-in { opacity: 1; transform: none; transition: opacity .35s ease, transform .35s ease; }
   </style>
 </head>
 
@@ -227,13 +206,13 @@
   </div>
 
   <!-- Top Loader (thin progress at top during fetch) -->
-  <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
+  <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden" aria-hidden="true">
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
 
   <!-- Header (pure, sticky) -->
   <header class="sticky top-0 z-40 bg-[var(--surface)]">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3" aria-label="OC-News header">
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
@@ -245,7 +224,7 @@
         <div class="flex items-center gap-2">
           <div class="hidden sm:flex items-center gap-2">
             <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
-            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
+            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" aria-label="Choose edition">
               <option value="CA">Canada</option>
               <option value="US">United States</option>
               <option value="GLOBAL">Global Mix</option>
@@ -254,21 +233,21 @@
           </div>
 
           <div class="relative hidden sm:block">
-            <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-64 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
+            <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-64 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" aria-label="Search headlines" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
 
           <!-- Text-only actions -->
           <button id="refreshBtn" class="link-btn" title="Refresh (R)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 10-3.9 7.4"/><path d="M22 12v6h-6"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M21 12a9 9 0 10-3.9 7.4"/><path d="M22 12v6h-6"/></svg>
             <span class="hidden sm:inline">Refresh</span>
           </button>
 
           <button id="themeBtn" class="link-btn" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <!-- Sun/Moon auto-swapped in JS -->
-              <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-              <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+              <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </span>
             <span class="hidden sm:inline">Theme</span>
           </button>
@@ -280,16 +259,16 @@
     <!-- Mobile Filters: segmented editions + full-width search -->
     <div class="sm:hidden">
       <div class="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between gap-2">
-        <div class="seg">
-          <button class="seg-btn" data-ed="GLOBAL">Global</button>
-          <button class="seg-btn" data-ed="US">US</button>
-          <button class="seg-btn" data-ed="CA">Canada</button>
-          <button class="seg-btn" data-ed="FIN">Financial</button>
+        <div class="seg" role="tablist" aria-label="Editions">
+          <button class="seg-btn" data-ed="GLOBAL" role="tab">Global</button>
+          <button class="seg-btn" data-ed="US" role="tab">US</button>
+          <button class="seg-btn" data-ed="CA" role="tab">Canada</button>
+          <button class="seg-btn" data-ed="FIN" role="tab">Financial</button>
         </div>
         <div class="flex-1"></div>
       </div>
       <div class="mx-auto max-w-7xl px-4 pb-2">
-        <input id="searchInputMobile" placeholder="Search headlines… ( / )" class="w-full btn rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
+        <input id="searchInputMobile" placeholder="Search headlines… ( / )" class="w-full btn rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" aria-label="Search headlines" />
       </div>
       <div class="hairline"></div>
     </div>
@@ -298,7 +277,7 @@
   <!-- HERO (FULL-SCREEN, swipeable cards) -->
   <section class="relative">
     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 hero-section-container">
-      <div id="heroCard" class="card shadow-oc-soft p-3 sm:p-5 lg:p-7 relative overflow-hidden">
+      <div id="heroCard" class="card shadow-oc-soft p-3 sm:p-5 lg:p-7 relative overflow-hidden" aria-label="Top stories">
         <!-- Live / meta -->
         <div class="flex flex-wrap items-center gap-3 mb-3 sm:mb-4 hero-top-meta">
           <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold bg-[var(--live)]/12 text-[var(--text)] border border-[var(--live)]/30">
@@ -313,12 +292,12 @@
 
         <!-- FULL-SCREEN Media Carousel -->
         <figure id="heroMedia" class="hero-media mb-4 bg-[var(--surface)]">
-          <div id="heroTrack" class="hero-track no-scrollbar">
+          <div id="heroTrack" class="hero-track no-scrollbar" aria-label="Hero slider" role="region">
             <!-- Slides injected here -->
           </div>
 
           <!-- Overlay controls + dots -->
-          <div class="hero-nav">
+          <div class="hero-nav" aria-hidden="true">
             <button id="prevTopBtn" aria-label="Previous top">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
@@ -326,7 +305,7 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg>
             </button>
           </div>
-          <div id="heroDots" class="hero-dots"></div>
+          <div id="heroDots" class="hero-dots" aria-hidden="true"></div>
           <div class="hero-gradient"></div>
           <!-- Overlayed text -->
           <div class="hero-overlay-text">
@@ -368,7 +347,7 @@
         <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Breaking Headlines</h2>
         <div class="flex items-center gap-2">
           <label for="sortSelect" class="text-xs text-[var(--sub)] hidden sm:block">Sort:</label>
-          <select id="sortSelect" class="btn rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
+          <select id="sortSelect" class="btn rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" aria-label="Sort order">
             <option value="newest">Newest</option>
             <option value="oldest">Oldest</option>
             <option value="source">Source A→Z</option>
@@ -378,13 +357,24 @@
         </div>
       </div>
 
+      <!-- Financial filter chips (shown only when FIN edition is active) -->
+      <div id="finChips" class="hidden mb-3 sm:mb-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <button class="chip px-3 py-1.5 rounded-full text-xs fin-chip" data-cat="all">All</button>
+          <button class="chip px-3 py-1.5 rounded-full text-xs fin-chip" data-cat="macro">Macro</button>
+          <button class="chip px-3 py-1.5 rounded-full text-xs fin-chip" data-cat="stocks">Stocks</button>
+          <button class="chip px-3 py-1.5 rounded-full text-xs fin-chip" data-cat="crypto">Crypto</button>
+          <button class="chip px-3 py-1.5 rounded-full text-xs fin-chip" data-cat="cbanks">Central Banks</button>
+        </div>
+      </div>
+
       <ul id="newsList" class="grid gap-3 sm:gap-4">
         <!-- Populated by JS -->
       </ul>
 
       <!-- Footer -->
       <div class="mt-12 text-center text-xs text-[var(--sub)]">
-        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch, Yahoo Finance and more (via CORS-friendly proxies). Times are local.
+        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch, Economist, BNN, and more (via CORS-friendly proxies). Times are local.
       </div>
     </div>
   </main>
@@ -393,21 +383,23 @@
     /* =========================
        CONFIG — tweak freely
        ========================= */
-    const DEFAULT_EDITION = (localStorage.getItem('oc_news_edition') || 'CA'); // 'CA' | 'US' | 'GLOBAL' | 'FIN'
+    const DEFAULT_EDITION = 'CA'; // 'CA' | 'US' | 'GLOBAL' | 'FIN'
     const MAX_ITEMS = 64;         // How many headlines to render
     const CYCLE_TOPS = true;      // If true, cycles hero every ~12s as well as manual swipe
     const SHOW_IMAGES = true;     // Try to parse images from RSS if available
-    const HERO_SLIDES = 10;       // How many top stories to show in hero track
+    const HERO_SLIDES = 12;       // How many top stories to show in hero track
     const DOT_COUNT = 6;          // Dots to show for pager
 
     // Sort modes
     const SORT_MODES = { NEWEST: 'newest', OLDEST: 'oldest', SOURCE: 'source' };
     let sortMode = SORT_MODES.NEWEST;
 
+    // Finance subcategories (local filters)
+    const FIN_CATS = { ALL: 'all', MACRO: 'macro', STOCKS: 'stocks', CRYPTO: 'crypto', CBANKS: 'cbanks' };
+    let finCat = FIN_CATS.ALL;
+
     // Feed sets by edition (add/remove sources here)
-    // Notes:
-    // • Yahoo Finance & Google Finance are included through Google News RSS queries to ensure valid RSS + CORS via proxies.
-    // • Some publishers throttle; we fetch with two proxy candidates and ignore failures gracefully.
+    // Tip: Prefer feeds known to permit fetching through AllOrigins/Jina.
     const FEEDS = {
       CA: [
         'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
@@ -425,8 +417,8 @@
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.ft.com/world?format=rss',
         'https://www.wsj.com/xml/rss/3_7085.xml',
-        // Canada markets signalers (via Google News search RSS)
-        'https://news.google.com/rss/search?q=Canada%20stocks%20OR%20TSX%20OR%20S%26P%2FTSX&hl=en-CA&gl=CA&ceid=CA:en'
+        'https://www.theglobeandmail.com/business/rss/',
+        'https://www.bnnbloomberg.ca/polopoly_fs/feeds/rss2/business.xml'
       ],
       US: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
@@ -440,8 +432,9 @@
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.wsj.com/xml/rss/3_7085.xml',
         'https://feeds.reuters.com/reuters/businessNews',
-        // US markets signalers (via Google News search RSS)
-        'https://news.google.com/rss/search?q=US%20stocks%20OR%20Dow%20OR%20S%26P%20500%20OR%20Nasdaq&hl=en-US&gl=US&ceid=US:en'
+        'https://www.nasdaq.com/feed/rssoutbound?category=Finance',
+        'https://www.marketwatch.com/feeds/topstories',
+        'https://www.economist.com/united-states/rss.xml'
       ],
       GLOBAL: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
@@ -452,7 +445,8 @@
         'https://www.aljazeera.com/xml/rss/all.xml',
         'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-        'https://www.wsj.com/xml/rss/3_7085.xml'
+        'https://www.wsj.com/xml/rss/3_7085.xml',
+        'https://www.economist.com/sections/the-world-this-week/rss.xml'
       ],
       FIN: [
         // FINANCIAL: markets/business heavy
@@ -462,19 +456,20 @@
         'https://feeds.marketwatch.com/marketwatch/topstories/',
         'https://www.cnbc.com/id/10001147/device/rss/rss.html', /* CNBC Investing */
         'https://www.theguardian.com/business/markets/rss',
-        // Added breadth via Google News RSS (ensures CORS + valid RSS)
-        'https://news.google.com/rss/search?q=site:finance.yahoo.com&hl=en-US&gl=US&ceid=US:en', /* Yahoo Finance via GN */
-        'https://news.google.com/rss/search?q=site:google.com/finance%20markets&hl=en-US&gl=US&ceid=US:en', /* Google Finance news via GN */
-        'https://news.google.com/rss/search?q=site:bloomberg.com%20markets&hl=en-US&gl=US&ceid=US:en', /* Bloomberg Markets via GN */
-        'https://news.google.com/rss/search?q=site:nasdaq.com&hl=en-US&gl=US&ceid=US:en',
-        'https://news.google.com/rss/search?q=site:seekingalpha.com&hl=en-US&gl=US&ceid=US:en',
-        'https://news.google.com/rss/search?q=site:investopedia.com%20markets&hl=en-US&gl=US&ceid=US:en',
-        'https://news.google.com/rss/search?q=site:coindesk.com%20OR%20site:cointelegraph.com&hl=en-US&gl=US&ceid=US:en',
-        // Direct RSS from institutions/exchanges where available
-        'https://www.nasdaq.com/feed/rssoutbound?category=Top%20News',
-        'https://www.sec.gov/news/pressreleases.rss',
-        'https://www.federalreserve.gov/feeds/press_monetary.xml',
-        'https://www.ecb.europa.eu/rss/press.html'
+        'https://www.economist.com/finance-and-economics/rss.xml',
+        'https://markets.businessinsider.com/rss/news',
+        'https://www.bnnbloomberg.ca/polopoly_fs/feeds/rss2/top-stories.xml',
+        'https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=news',
+        // Yahoo Finance + Google Finance via Google News searches (reliable RSS wrapper)
+        'https://news.google.com/rss/search?q=site:finance.yahoo.com&hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=%22Google%20Finance%22%20stocks&hl=en-US&gl=US&ceid=US:en',
+        // Crypto-focused
+        'https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml',
+        'https://cointelegraph.com/rss',
+        // Central banks & policy
+        'https://www.federalreserve.gov/feeds/press_all.xml',
+        'https://www.bankofcanada.ca/feed/',
+        'https://www.ecb.europa.eu/press/rss/press_release.en.rss'
       ]
     };
 
@@ -485,6 +480,7 @@
     ]);
 
     // Brand logos (primary guess). We'll also build responsive srcset per host.
+    // Expanded list for crisp brand tiles and higher cache hit-rate.
     const BRAND_HINTS = {
       'news.google.com': 'https://logo.clearbit.com/google.com',
       'bbc.co.uk': 'https://logo.clearbit.com/bbc.co.uk',
@@ -504,18 +500,30 @@
       'npr.org': 'https://logo.clearbit.com/npr.org',
       'theglobeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com',
       'marketwatch.com': 'https://logo.clearbit.com/marketwatch.com',
-      // Financial adds
-      'finance.yahoo.com': 'https://logo.clearbit.com/yahoo.com',
-      'google.com': 'https://logo.clearbit.com/google.com',
-      'bloomberg.com': 'https://logo.clearbit.com/bloomberg.com',
-      'nasdaq.com': 'https://logo.clearbit.com/nasdaq.com',
-      'seekingalpha.com': 'https://logo.clearbit.com/seekingalpha.com',
+      'economist.com': 'https://logo.clearbit.com/economist.com',
+      'bnnbloomberg.ca': 'https://logo.clearbit.com/bnnbloomberg.ca',
       'investopedia.com': 'https://logo.clearbit.com/investopedia.com',
+      'businessinsider.com': 'https://logo.clearbit.com/businessinsider.com',
+      'markets.businessinsider.com': 'https://logo.clearbit.com/businessinsider.com',
       'coindesk.com': 'https://logo.clearbit.com/coindesk.com',
       'cointelegraph.com': 'https://logo.clearbit.com/cointelegraph.com',
-      'sec.gov': 'https://logo.clearbit.com/sec.gov',
+      'bankofcanada.ca': 'https://logo.clearbit.com/bankofcanada.ca',
       'federalreserve.gov': 'https://logo.clearbit.com/federalreserve.gov',
-      'ecb.europa.eu': 'https://logo.clearbit.com/ecb.europa.eu'
+      'ecb.europa.eu': 'https://logo.clearbit.com/ecb.europa.eu',
+      'yahoo.com': 'https://logo.clearbit.com/yahoo.com',
+      'finance.yahoo.com': 'https://logo.clearbit.com/yahoo.com',
+      'google.com': 'https://logo.clearbit.com/google.com',
+      'google.ca': 'https://logo.clearbit.com/google.ca',
+      'seekingalpha.com': 'https://logo.clearbit.com/seekingalpha.com',
+      'bloomberg.com': 'https://logo.clearbit.com/bloomberg.com',
+      'nasdaq.com': 'https://logo.clearbit.com/nasdaq.com',
+      'investing.com': 'https://logo.clearbit.com/investing.com',
+      'globeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com',
+      'theglobeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com',
+      'wsj.net': 'https://logo.clearbit.com/wsj.com',
+      'prnewswire.com': 'https://logo.clearbit.com/prnewswire.com',
+      'sec.gov': 'https://logo.clearbit.com/sec.gov'
+      // (Intentionally concise; extend as needed.)
     };
 
     /* =========================
@@ -523,6 +531,8 @@
        ========================= */
     const $  = (sel) => document.querySelector(sel);
     const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    const debounce = (fn, ms=160) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
 
     const timeAgo = (d) => {
       const now = new Date();
@@ -577,7 +587,7 @@
 
     const brandLogoHTML = (host, className = '', alt = '') => {
       const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+      return `<img loading="lazy" src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
 
     const letterTileHTML = (label = '?', className='') => `
@@ -671,10 +681,7 @@
               if (!obj) return null;
               if (typeof obj === 'string') return absolutize(obj, baseUrl);
               if (Array.isArray(obj)) {
-                for (const it of obj) {
-                  const inner = collect(it);
-                  if (inner) return inner;
-                }
+                for (const it of obj) { const inner = collect(it); if (inner) return inner; }
               } else if (typeof obj === 'object') {
                 if (obj.image) return collect(obj.image);
                 if (obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
@@ -693,7 +700,7 @@
           if (!src) continue;
           const w = parseInt(im.getAttribute('width')||'0',10);
           const h = parseInt(im.getAttribute('height')||'0',10);
-          if ((w>=300 || h>=200) || /[\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) {
+          if ((w>=300 || h>=200) || /[\/\-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) {
             return src;
           }
         }
@@ -734,42 +741,25 @@
       }
     };
 
-    // Trending heat map — updated on each load
-    let TREND_HEAT = new Map(); // key -> count
-
     const loadFeeds = async (editionKey) => {
       const feeds = FEEDS[editionKey] || FEEDS['GLOBAL'];
       const all = [];
-      const trendMap = new Map(); // normalized title -> {count, newestDate}
       await Promise.allSettled(
         feeds.map(async (f) => {
           try {
             const text = await fetchWithProxies(f);
             const items = parseRSS(text);
-            for (const it of items) {
-              const key = normalizeTitle(it.title || '');
-              if (!key || !(it.link)) continue;
-              const pd = it.pubDate ? new Date(it.pubDate) : new Date();
-              const rec = trendMap.get(key) || { count: 0, newest: 0 };
-              rec.count += 1;
-              rec.newest = Math.max(rec.newest, +pd);
-              trendMap.set(key, rec);
-              all.push(it);
-            }
+            all.push(...items);
           } catch (_) { /* ignore feed error */ }
         })
       );
-      // Dedup by normalized title, keep newest; attach heat
+      // Dedup by normalized title, keep newest
       const byKey = new Map();
       for (const it of all) {
-        const key = normalizeTitle(it.title || '');
-        if (!key) continue;
+        const key = normalizeTitle(it.title);
         const prev = byKey.get(key);
-        const heat = (trendMap.get(key)?.count || 1);
-        const itm = { ...it, heat };
-        if (!prev || (it.pubDate && prev.pubDate && it.pubDate > prev.pubDate)) byKey.set(key, itm);
+        if (!prev || (it.pubDate && prev.pubDate && it.pubDate > prev.pubDate)) byKey.set(key, it);
       }
-      TREND_HEAT = trendMap; // save
       const uniq = Array.from(byKey.values())
         .filter(x => x.title && x.link)
         .sort((a,b) => (b.pubDate || 0) - (a.pubDate || 0));
@@ -779,7 +769,7 @@
     // Bookmarks
     const SAVED_KEY = 'oc_news_saved';
     const getSaved = () => { try { return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); } catch { return []; } };
-    const setSaved = (arr) => localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0,200)));
+    const setSaved = (arr) => localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0,300)));
     const isSaved = (link) => getSaved().some(x => x.link === link);
     const toggleSave = (item) => {
       const cur = getSaved();
@@ -806,6 +796,7 @@
     const topLoader = $('#topLoader');
     const preload   = $('#preload');
     const heroOverlayTitle = $('#heroOverlayTitle');
+    const finChipsWrap = $('#finChips');
 
     // Filter state
     let searchQuery = '';
@@ -817,7 +808,34 @@
     let filteredItems = [];
     let cycleIdx = 0;
     let cycleTimer = null;
-    let heroOrder = []; // the array currently displayed in the hero
+
+    // ===== Finance categorization heuristics =====
+    const hostIn = (url, arr) => arr.some(h => hostname(url).endsWith(h));
+    const containsAny = (text, kws) => kws.some(k => text.includes(k));
+
+    const FIN_HOSTS = {
+      macro: ['economist.com','reuters.com','ft.com','wsj.com','cnbc.com','marketwatch.com','apnews.com','theguardian.com','bnnbloomberg.ca'],
+      stocks: ['marketwatch.com','cnbc.com','wsj.com','reuters.com','ft.com','nasdaq.com','businessinsider.com','markets.businessinsider.com','finance.yahoo.com','seekingalpha.com'],
+      crypto: ['coindesk.com','cointelegraph.com','decrypt.co','theblock.co'],
+      cbanks: ['federalreserve.gov','bankofcanada.ca','ecb.europa.eu','boe.uk','bankofengland.co.uk']
+    };
+
+    const FIN_KWS = {
+      macro: ['inflation','cpi','ppi','gdp','jobs','payrolls','nfp','unemployment','growth','recession','yields','treasury','bond','economy','tariff','trade','sanction','geopolitics','oil','energy','housing','real estate','pmi','ism'],
+      stocks: ['stock','shares','equity','earnings','EPS','guidance','dow','s&p','nasdaq','ipo','buyback','dividend','upgrade','downgrade','rating','analyst','pre-market','after-hours','volatility'],
+      crypto: ['bitcoin','btc','ethereum','eth','crypto','token','defi','nft','halving','hashrate','stablecoin','binance','coinbase'],
+      cbanks: ['fed','federal reserve','powell','rate hike','rate cut','dot plot','fomc','ecb','lagarde','boe','bank of england','boc','tiff macklem','policy rate','balance sheet']
+    };
+
+    const finCategoryFor = (item) => {
+      const t = (item.title||'').toLowerCase();
+      const h = hostname(item.link).toLowerCase();
+      if (hostIn(item.link, FIN_HOSTS.cbanks) || containsAny(t, FIN_KWS.cbanks)) return FIN_CATS.CBANKS;
+      if (hostIn(item.link, FIN_HOSTS.crypto) || containsAny(t, FIN_KWS.crypto)) return FIN_CATS.CRYPTO;
+      if (hostIn(item.link, FIN_HOSTS.stocks) || containsAny(t, FIN_KWS.stocks)) return FIN_CATS.STOCKS;
+      if (hostIn(item.link, FIN_HOSTS.macro)  || containsAny(t, FIN_KWS.macro))  return FIN_CATS.MACRO;
+      return FIN_CATS.ALL;
+    };
 
     // ===== Sorting
     const applySort = () => {
@@ -835,54 +853,52 @@
     const applyFilter = () => {
       const needle = searchQuery.toLowerCase().trim();
       const base = showingSaved ? getSaved() : cacheItems;
+      let arr = [];
       if (!needle) {
-        filteredItems = base.slice();
+        arr = base.slice();
       } else {
-        filteredItems = base.filter(it =>
+        arr = base.filter(it =>
           it.title?.toLowerCase().includes(needle) ||
           (it.source || '').toLowerCase().includes(needle) ||
           hostname(it.link).toLowerCase().includes(needle)
         );
       }
+
+      if (currentEdition === 'FIN' && finCat !== FIN_CATS.ALL) {
+        arr = arr.filter(it => finCategoryFor(it) === finCat);
+      }
+
+      filteredItems = arr;
       applySort();
       render(filteredItems);
     };
 
     const renderTicker = (items) => {
-      // Prefer trending items first
-      const trendSorted = items.slice().sort((a,b) => (b.heat||1) - (a.heat||1) || (b.pubDate||0) - (a.pubDate||0));
-      const chips = (trendSorted.slice(0, 24).map(it => {
+      const chips = (items.slice(0, 28).map(it => {
         const src = it.source || hostname(it.link) || 'Source';
         const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const tag = (it.heat||1) > 1 ? ' • Trending' : '';
-        return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}${tag}: ${safe}</span>`;
+        return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}: ${safe}</span>`;
       }).join('')) || '';
       ticker.innerHTML = chips + chips; // doubled for seamless loop
     };
 
-    const pickTopForHero = (items) => {
-      const list = items.slice().sort((a,b) => (b.heat||1) - (a.heat||1) || (b.pubDate||0) - (a.pubDate||0));
-      return list.slice(0, Math.min(HERO_SLIDES, list.length));
-    };
-
     const buildHeroSlides = (items) => {
-      heroOrder = pickTopForHero(items);
-      heroTrack.innerHTML = heroOrder.map((it, idx) => {
+      const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
+      heroTrack.innerHTML = list.map((it, idx) => {
         const host = hostname(it.link) || 'news.google.com';
-        const src = (SHOW_IMAGES && it.image) ? it.image : ''; // improved later
+        const src = (SHOW_IMAGES && it.image) ? it.image : ''; // we try to improve later
         const label = it.source || host;
         const imgHTML = src
-          ? `<img src="${src}" alt="${label}">`
+          ? `<img loading="eager" fetchpriority="high" src="${src}" alt="${label}">`
           : brandLogoHTML(host, '', label);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const heatBadge = (it.heat||1) > 1 ? `<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded chip">Trending ×${it.heat}</span>` : '';
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
             ${imgHTML}
             <div class="hero-gradient"></div>
             <div class="hero-overlay-text">
-              <div class="text-xs font-medium text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}${heatBadge}</div>
+              <div class="text-xs font-medium text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}</div>
               <h2>${safeTitle}</h2>
             </div>
           </div>
@@ -890,18 +906,18 @@
       }).join('');
 
       // Dots
-      const dcount = Math.min(DOT_COUNT, Math.max(1, heroOrder.length));
+      const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
       heroDots.innerHTML = Array.from({ length: dcount }).map((_,i) => `<span class="${i===0?'active':''}"></span>`).join('');
     };
 
     const setHeroMetaFromIndex = (idx) => {
-      if (!heroOrder.length) return;
-      const item = heroOrder[idx % heroOrder.length];
+      if (!filteredItems.length) return;
+      const item = filteredItems[idx % filteredItems.length];
       const host = hostname(item.link);
       heroTitle.textContent = item.title;
       heroOverlayTitle.textContent = item.title; // mobile overlay title
       heroDesc.textContent  = item.source ? `From ${item.source}` : host;
-      heroMeta.textContent  = `${timeAgo(item.pubDate)} • Top now`;
+      heroMeta.textContent  = `${timeAgo(item.pubDate)} • #1 breaking now`;
       heroLink.href         = item.link;
       sourceBadge.textContent = host;
       heroLink.classList.remove('pointer-events-none','opacity-60');
@@ -912,10 +928,6 @@
         const dotIndex = Math.min(children.length-1, idx % children.length);
         children.forEach((d,i)=>d.classList.toggle('active', i===dotIndex));
       }
-
-      // Prefetch next slide image for snappy UX
-      const next = heroOrder[(idx + 1) % heroOrder.length];
-      if (next && next.image) { const im = new Image(); im.src = next.image; }
     };
 
     const render = (items) => {
@@ -948,30 +960,32 @@
 
       // LIST
       countLabel.textContent = `${items.length} stor${items.length === 1 ? 'y' : 'ies'}`;
-      newsList.innerHTML = items.map(it => {
+      newsList.innerHTML = items.map((it, idx) => {
         const src = it.source || hostname(it.link) || 'Source';
         const when = timeAgo(it.pubDate);
         const host = hostname(it.link);
         const saved = isSaved(it.link);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+        const cat = currentEdition === 'FIN' ? finCategoryFor(it) : '';
+        const catBadge = currentEdition === 'FIN' ? `<span class="chip rounded px-2 py-1 text-[10px]">${cat}</span>` : '';
+
         let thumbHTML = '';
         if (SHOW_IMAGES && it.image) {
-          thumbHTML = `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
+          thumbHTML = `<img loading="lazy" src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
         } else {
           thumbHTML = brandLogoHTML(host, 'w-12 h-12 rounded-lg object-contain border border-[var(--border)]', src);
         }
 
-        const trendHTML = (it.heat||1) > 1 ? `<span class="ml-2 text-[10px] chip rounded px-1.5 py-0.5">Trending ×${it.heat}</span>` : '';
-
         return `
-          <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors">
+          <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors fade-on-in" style="animation-delay:${Math.min(idx*12,240)}ms">
             <div class="flex items-start gap-3">
               <a href="${it.link}" target="_blank" rel="noopener" class="shrink-0 w-12 h-12 rounded-lg overflow-hidden">${thumbHTML}</a>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-3">
-                  <div class="text-xs font-medium text-[var(--sub)]">
-                    ${src} • ${when} ${trendHTML}
+                  <div class="text-xs font-medium text-[var(--sub)] flex items-center gap-2">
+                    <span>${src} • ${when}</span>
+                    ${catBadge}
                   </div>
                   <div class="flex items-center gap-1.5">
                     <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
@@ -998,8 +1012,14 @@
       });
 
       // After first render, try to improve missing images (hero first)
-      improveImagesFor(heroOrder, heroOrder.length).then(()=>{/* UI refreshed in applyFilter */});
-      improveImagesFor(items.filter(x => !heroOrder.includes(x)).slice(0, 16), 16);
+      improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{/* UI already refreshed in applyFilter */});
+      improveImagesFor(items.slice(HERO_SLIDES), 18);
+
+      // Fade-in observer
+      const io = new IntersectionObserver((ents)=>{
+        ents.forEach(en=>{ if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+      }, { threshold: 0.1 });
+      $$('#newsList .fade-on-in').forEach(el => io.observe(el));
     };
 
     /* =========================
@@ -1052,6 +1072,28 @@
     // Mobile segmented edition UI
     const setMobileEditionUI = () => { $$('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ed === currentEdition)); };
 
+    // Show/Hide fin chips
+    const updateFinChipsVisibility = () => {
+      finChipsWrap.classList.toggle('hidden', currentEdition !== 'FIN');
+      if (currentEdition === 'FIN') {
+        // Ensure one is active
+        if (!$$('#finChips .fin-chip.active').length) {
+          const first = $('#finChips .fin-chip[data-cat="all"]');
+          first?.classList.add('active');
+        }
+      }
+    };
+
+    // Bind fin chips
+    $$('#finChips .fin-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        $$('#finChips .fin-chip').forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+        finCat = btn.dataset.cat;
+        applyFilter();
+      });
+    });
+
     // HERO sliding helpers — IMPORTANT: only horizontal track scroll (never page scroll)
     const slideTo = (idx) => {
       const slides = Array.from(heroTrack.children);
@@ -1061,13 +1103,11 @@
       if (!target) return;
       // Horizontal scroll only (prevents jumping the page)
       heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
-      cycleIdx = clamped % Math.max(1, heroOrder.length);
+      cycleIdx = clamped % Math.max(1, filteredItems.length);
       setHeroMetaFromIndex(cycleIdx);
-      // Subtle haptic on supported devices
-      if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
     };
-    const nextHero = () => slideTo((cycleIdx + 1) % Math.max(1, heroOrder.length));
-    const prevHero = () => slideTo((cycleIdx - 1 + Math.max(1, heroOrder.length)) % Math.max(1, heroOrder.length));
+    const nextHero = () => slideTo((cycleIdx + 1) % Math.max(1, filteredItems.length));
+    const prevHero = () => slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
 
     // Track active slide by scroll position
     let heroTrackScrollLock = false;
@@ -1083,7 +1123,7 @@
         if (dist < bestDist) { bestDist = dist; bestIdx = i; }
       });
       if (bestIdx !== cycleIdx) {
-        cycleIdx = bestIdx % Math.max(1, heroOrder.length);
+        cycleIdx = bestIdx % Math.max(1, filteredItems.length);
         setHeroMetaFromIndex(cycleIdx);
       }
     }, { passive: true });
@@ -1122,6 +1162,20 @@
     };
     window.addEventListener('scroll', updateImmersiveHeader, { passive: true });
 
+    // Pull-to-refresh (mobile)
+    let ptrStartY = null;
+    let ptrTriggered = false;
+    const PTR_THRESHOLD = 64;
+    window.addEventListener('touchstart', (e)=>{
+      if (window.scrollY === 0) { ptrStartY = e.touches[0].clientY; ptrTriggered = false; }
+    }, { passive: true });
+    window.addEventListener('touchmove', (e)=>{
+      if (ptrStartY == null) return;
+      const dy = e.touches[0].clientY - ptrStartY;
+      if (dy > PTR_THRESHOLD && !ptrTriggered) { ptrTriggered = true; hydrate(); }
+    }, { passive: true });
+    window.addEventListener('touchend', ()=>{ ptrStartY = null; ptrTriggered = false; }, { passive: true });
+
     // Hydration with optional scroll preservation when user is reading below hero
     const hydrate = async () => {
       const preserveY = window.scrollY;
@@ -1132,7 +1186,7 @@
         updatedAt.textContent = 'Updating…';
         const items = await loadFeeds(currentEdition);
         cacheItems = items.length ? items : [
-          { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '', heat: 1 }
+          { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' }
         ];
         cycleIdx = 0;
         applyFilter(); // renders + primes image improvement
@@ -1157,27 +1211,38 @@
           requestAnimationFrame(() => window.scrollTo({ top: preserveY, behavior: 'auto' }));
         }
         updateImmersiveHeader();
+        saveState();
       }
     };
 
-    // Events
-    const validEditions = ['CA','US','GLOBAL','FIN'];
-    if (!validEditions.includes(DEFAULT_EDITION)) localStorage.removeItem('oc_news_edition');
-    editionSelect.value = DEFAULT_EDITION;
-    currentEdition = DEFAULT_EDITION;
-    setMobileEditionUI();
+    // Persist simple UI state
+    const STATE_KEY = 'oc_news_state_v2';
+    const saveState = () => {
+      const st = { ed: currentEdition, sort: sortMode, fin: finCat, q: searchQuery };
+      localStorage.setItem(STATE_KEY, JSON.stringify(st));
+    };
+    const loadState = () => {
+      try {
+        const st = JSON.parse(localStorage.getItem(STATE_KEY)||'{}');
+        if (st.ed) currentEdition = st.ed;
+        if (st.sort) sortMode = st.sort;
+        if (st.fin) finCat = st.fin;
+        if (st.q) searchQuery = st.q;
+      } catch {}
+    };
 
-    editionSelect.addEventListener('change', () => {
-      currentEdition = editionSelect.value;
-      localStorage.setItem('oc_news_edition', currentEdition);
-      setMobileEditionUI();
-      hydrate();
-    });
+    // Events
+    loadState();
+    editionSelect.value = currentEdition;
+    setMobileEditionUI();
+    updateFinChipsVisibility();
+
+    editionSelect.addEventListener('change', () => { currentEdition = editionSelect.value; setMobileEditionUI(); updateFinChipsVisibility(); hydrate(); });
     $$('.seg-btn').forEach(b => b.addEventListener('click', () => {
       currentEdition = b.dataset.ed;
       editionSelect.value = currentEdition;
-      localStorage.setItem('oc_news_edition', currentEdition);
       setMobileEditionUI();
+      updateFinChipsVisibility();
       hydrate();
     }));
 
@@ -1198,8 +1263,8 @@
     });
 
     saveBtn.addEventListener('click', () => {
-      if (!heroOrder.length) return;
-      const top = heroOrder[cycleIdx % heroOrder.length];
+      if (!filteredItems.length) return;
+      const top = filteredItems[cycleIdx % filteredItems.length];
       toggleSave(top);
       saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
@@ -1210,16 +1275,19 @@
       applyFilter();
     });
 
-    const syncSearch = (val) => {
+    const syncSearch = debounce((val) => {
       searchQuery = val || '';
       if (searchInput && document.activeElement !== searchInput) searchInput.value = val;
       if (searchInputMobile && document.activeElement !== searchInputMobile) searchInputMobile.value = val;
       applyFilter();
-    };
+      saveState();
+    }, 120);
+
     searchInput && searchInput.addEventListener('input', (e) => syncSearch(e.target.value));
     searchInputMobile && searchInputMobile.addEventListener('input', (e) => syncSearch(e.target.value));
 
-    sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; applyFilter(); });
+    sortSelect.value = sortMode;
+    sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; applyFilter(); saveState(); });
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
@@ -1274,15 +1342,6 @@
         handleImgError(target);
       }
     }, true);
-
-    // Register a tiny service worker via Blob for resilience (optional)
-    try {
-      if ('serviceWorker' in navigator) {
-        const swCode = `self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return; e.respondWith(fetch(r).catch(()=>caches.match(r)));});`;
-        const swUrl = URL.createObjectURL(new Blob([swCode], { type: 'text/javascript' }));
-        navigator.serviceWorker.register(swUrl).catch(()=>{});
-      }
-    } catch {}
 
     // First load
     updateImmersiveHeader();
