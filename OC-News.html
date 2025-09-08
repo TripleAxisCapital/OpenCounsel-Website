@@ -9,6 +9,10 @@
   - Global logo size vars: --logo-size, --logo-size-lg (edit in :root)
   - Dark mode: header logo auto-swaps to white via invert filter
   - Fullscreen preloader: white background with black spinner shown before feeds render
+  - Sort control: Newest (default), Oldest, Source A→Z
+  - Brand logo fallback if no article image: Clearbit → Google S2 → letter tile
+  - Large hero image with swipe/arrow navigation
+  - Mobile filters: segmented edition switcher (Global/US/Canada) + full-width search
 -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-theme="auto">
@@ -101,19 +105,29 @@
 
     /* Header logo handling */
     .logo-img { height: var(--logo-size); width: auto; transition: filter .2s ease; }
-    @media (min-width: 640px) {
-      .logo-img { height: var(--logo-size-lg); }
-    }
-    /* Make external SVG logo white in dark mode (no change to your actual asset) */
+    @media (min-width: 640px) { .logo-img { height: var(--logo-size-lg); } }
     .dark .logo-img { filter: invert(1) brightness(1.08); }
 
     /* Fullscreen preloader (white bg + black spinner) */
-    #preload {
-      position: fixed; inset: 0; z-index: 70;
-      background: #ffffff; display: grid; place-items: center;
-    }
-    /* Prevent layout shift under preloader */
+    #preload { position: fixed; inset: 0; z-index: 70; background: #ffffff; display: grid; place-items: center; }
     body.preloading { overflow: hidden; }
+
+    /* Segmented control (mobile editions) */
+    .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; background: var(--surface); }
+    .seg button { padding: 6px 10px; border-radius: 999px; font-size: 12px; }
+    .seg button.active { background: var(--card-hover); }
+
+    /* Hero media */
+    .hero-media { position: relative; border-radius: calc(var(--radius) - 2px); overflow: hidden; border: 1px solid var(--border); }
+    .hero-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hero-nav { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+    .hero-nav button { pointer-events: auto; border: 1px solid var(--border); background: rgba(0,0,0,.25); backdrop-filter: blur(6px); color: #fff; width: 36px; height: 36px; border-radius: 999px; display: grid; place-items: center; }
+    html.light .hero-nav button { background: rgba(255,255,255,.55); color: #000; }
+    .hero-dots { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+    .hero-dots span { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.55); }
+    .hero-dots span.active { background: #fff; }
+    html.light .hero-dots span { background: rgba(0,0,0,.35); }
+    html.light .hero-dots span.active { background: #000; }
   </style>
 </head>
 
@@ -152,8 +166,8 @@
             </select>
           </div>
 
-          <div class="relative">
-            <input id="searchInput" placeholder="Search headlines… ( / )" class="w-40 sm:w-56 md:w-64 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
+          <div class="relative hidden sm:block">
+            <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-64 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
 
@@ -170,6 +184,22 @@
       </div>
     </div>
     <div class="hairline"></div>
+
+    <!-- Mobile Filters: segmented editions + full-width search -->
+    <div class="sm:hidden">
+      <div class="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between gap-2">
+        <div class="seg">
+          <button class="seg-btn" data-ed="GLOBAL">Global</button>
+          <button class="seg-btn" data-ed="US">US</button>
+          <button class="seg-btn" data-ed="CA">Canada</button>
+        </div>
+        <div class="flex-1"></div>
+      </div>
+      <div class="mx-auto max-w-7xl px-4 pb-2">
+        <input id="searchInputMobile" placeholder="Search headlines… ( / )" class="w-full btn rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
+      </div>
+      <div class="hairline"></div>
+    </div>
   </header>
 
   <!-- HERO (minimal, flat) -->
@@ -188,6 +218,20 @@
           <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
         </div>
 
+        <!-- Hero Media (large) -->
+        <figure id="heroMedia" class="hero-media aspect-[16/9] mb-5 bg-[var(--surface)]">
+          <!-- Injected image -->
+          <div class="hero-nav px-2">
+            <button id="prevTopBtn" aria-label="Previous top">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button id="nextTopBtn" aria-label="Next top">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+            </button>
+          </div>
+          <div id="heroDots" class="hero-dots"></div>
+        </figure>
+
         <!-- Title -->
         <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">
           OC-News is waking up…
@@ -203,7 +247,6 @@
           <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
           <button id="shareBtn" class="btn rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Share</button>
           <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
-          <button id="nextTopBtn" class="hidden btn rounded-lg px-3 py-2 text-sm">Next Top</button>
           <span id="updatedAt" class="text-xs text-[var(--sub)]">—</span>
         </div>
 
@@ -218,9 +261,15 @@
   <!-- MAIN LIST -->
   <main class="relative">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Breaking Headlines</h2>
         <div class="flex items-center gap-2">
+          <label for="sortSelect" class="text-xs text-[var(--sub)] hidden sm:block">Sort:</label>
+          <select id="sortSelect" class="btn rounded-lg px-2.5 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+            <option value="source">Source A→Z</option>
+          </select>
           <button id="showSavedBtn" class="btn rounded px-2.5 py-1.5 text-xs">Saved</button>
           <div class="text-xs text-[var(--sub)]" id="countLabel">0 stories</div>
         </div>
@@ -245,29 +294,31 @@
     const MAX_ITEMS = 48;         // How many headlines to render
     const CYCLE_TOPS = true;      // If true, cycles hero every ~12s
     const SHOW_IMAGES = true;     // Try to parse images from RSS if available
+    const DOT_COUNT = 6;          // How many dots to show for hero pager (visual only)
+
+    // Sort modes
+    const SORT_MODES = { NEWEST: 'newest', OLDEST: 'oldest', SOURCE: 'source' };
+    let sortMode = SORT_MODES.NEWEST;
 
     // Feed sets by edition (add/remove sources here)
     // Note: Some feeds may be slow or blocked; code ignores failures.
     const FEEDS = {
       CA: [
-        // Aggregators + world
         'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
         'https://feeds.bbci.co.uk/news/rss.xml',
         'https://feeds.reuters.com/reuters/topNews',
         'https://rss.cnn.com/rss/cnn_topstories.rss',
         'https://www.theguardian.com/world/rss',
         'https://www.aljazeera.com/xml/rss/all.xml',
-        'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news', // AP
-        // Canada
+        'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
         'https://www.cbc.ca/cmlink/rss-topstories',
         'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',
         'https://globalnews.ca/feed/',
         'https://www.nationalpost.com/feed/',
-        // Business
         'https://feeds.reuters.com/reuters/businessNews',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-        'https://www.ft.com/world?format=rss', // FT world
-        'https://www.wsj.com/xml/rss/3_7085.xml' // WSJ world (many links paywalled; still useful)
+        'https://www.ft.com/world?format=rss',
+        'https://www.wsj.com/xml/rss/3_7085.xml'
       ],
       US: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
@@ -300,6 +351,27 @@
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
     ]);
+
+    // Brand logos (primary guess). We also try Clearbit and Google S2 dynamically.
+    const BRAND_HINTS = {
+      'news.google.com': 'https://www.gstatic.com/onebox/sports/logos/news.png',
+      'bbc.co.uk': 'https://logo.clearbit.com/bbc.co.uk',
+      'bbc.com': 'https://logo.clearbit.com/bbc.com',
+      'reuters.com': 'https://logo.clearbit.com/reuters.com',
+      'cnn.com': 'https://logo.clearbit.com/cnn.com',
+      'theguardian.com': 'https://logo.clearbit.com/theguardian.com',
+      'aljazeera.com': 'https://logo.clearbit.com/aljazeera.com',
+      'apnews.com': 'https://logo.clearbit.com/apnews.com',
+      'cbc.ca': 'https://logo.clearbit.com/cbc.ca',
+      'ctvnews.ca': 'https://logo.clearbit.com/ctvnews.ca',
+      'globalnews.ca': 'https://logo.clearbit.com/globalnews.ca',
+      'nationalpost.com': 'https://logo.clearbit.com/nationalpost.com',
+      'cnbc.com': 'https://logo.clearbit.com/cnbc.com',
+      'ft.com': 'https://logo.clearbit.com/ft.com',
+      'wsj.com': 'https://logo.clearbit.com/wsj.com',
+      'npr.org': 'https://logo.clearbit.com/npr.org',
+      'theglobeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com'
+    };
 
     /* =========================
        UTILITIES
@@ -339,6 +411,12 @@
 
     const getAttr = (el, sel, attr) => el.querySelector(sel)?.getAttribute(attr);
 
+    const brandLogoUrl = (host) => {
+      const primary = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
+      const alt1 = `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
+      return { primary, alt1 };
+    };
+
     const parseRSS = (text) => {
       const tryXML = () => {
         const dom = new DOMParser().parseFromString(text, 'text/xml');
@@ -354,7 +432,6 @@
           const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || [,'' ])[1]);
           const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || [,'' ])[1];
           const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || [,'' ])[1];
-          // media tags
           const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || [,'' ])[1];
           if (t && lk) items.push({title:t, link:lk, pubDate: pd?new Date(pd):new Date(), source: sc||hostname(lk), image: img||''});
         }
@@ -441,6 +518,8 @@
     const heroDesc  = $('#heroDesc');
     const heroMeta  = $('#heroMeta');
     const heroLink  = $('#heroLink');
+    const heroMedia = $('#heroMedia');
+    const heroDots  = $('#heroDots');
     const updatedAt = $('#updatedAt');
     const newsList  = $('#newsList');
     const countLabel= $('#countLabel');
@@ -460,11 +539,24 @@
     let cycleIdx = 0;
     let cycleTimer = null;
 
+    // ===== Sorting
+    const applySort = () => {
+      const arr = filteredItems.slice();
+      if (sortMode === SORT_MODES.NEWEST) {
+        arr.sort((a,b) => (b.pubDate||0) - (a.pubDate||0));
+      } else if (sortMode === SORT_MODES.OLDEST) {
+        arr.sort((a,b) => (a.pubDate||0) - (b.pubDate||0));
+      } else if (sortMode === SORT_MODES.SOURCE) {
+        arr.sort((a,b) => (a.source||hostname(a.link)||'').localeCompare(b.source||hostname(b.link)||''));
+      }
+      filteredItems = arr;
+    };
+
     const applyFilter = () => {
       const needle = searchQuery.toLowerCase().trim();
       const base = showingSaved ? getSaved() : cacheItems;
       if (!needle) {
-        filteredItems = base;
+        filteredItems = base.slice();
       } else {
         filteredItems = base.filter(it =>
           it.title?.toLowerCase().includes(needle) ||
@@ -472,6 +564,7 @@
           hostname(it.link).toLowerCase().includes(needle)
         );
       }
+      applySort();
       render(filteredItems);
     };
 
@@ -484,6 +577,52 @@
       ticker.innerHTML = chips + chips; // doubled for seamless loop
     };
 
+    // Build brand/logo placeholder tile (as HTML string)
+    const letterTileHTML = (label = '?') => `
+      <div class="w-full h-full grid place-items-center bg-[var(--surface)]">
+        <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
+      </div>
+    `;
+
+    // Render hero media (image or brand logo)
+    const setHeroMedia = (item) => {
+      const host = hostname(item.link) || 'news.google.com';
+      const { primary, alt1 } = brandLogoUrl(host);
+      const src = (SHOW_IMAGES && item.image) ? item.image : primary;
+      heroMedia.innerHTML = `
+        <img id="heroImg" class="block w-full h-full object-cover" alt="${(item.source||host)}" 
+             src="${src}" data-alt1="${alt1}" data-host="${host}">
+        <div class="hero-nav px-2">
+          <button id="prevTopBtn" aria-label="Previous top">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <button id="nextTopBtn" aria-label="Next top">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div id="heroDots" class="hero-dots"></div>
+      `;
+
+      // Dots (visual pager)
+      const dots = Array.from({ length: Math.min(DOT_COUNT, Math.max(1, filteredItems.length)) })
+        .map((_,i) => `<span class="${i === (cycleIdx % DOT_COUNT) ? 'active' : ''}"></span>`).join('');
+      $('#heroDots').innerHTML = dots;
+
+      // Bind arrows
+      $('#prevTopBtn').addEventListener('click', prevHero);
+      $('#nextTopBtn').addEventListener('click', nextHero);
+
+      // Touch swipe
+      let startX = null;
+      heroMedia.addEventListener('touchstart', (e) => { startX = e.changedTouches[0].clientX; }, { passive: true });
+      heroMedia.addEventListener('touchend', (e) => {
+        if (startX == null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 48) (dx < 0 ? nextHero : prevHero)();
+        startX = null;
+      }, { passive: true });
+    };
+
     const render = (items) => {
       if (!items || !items.length) {
         heroTitle.textContent = 'No headlines available right now.';
@@ -494,17 +633,19 @@
         countLabel.textContent = '0 stories';
         newsList.innerHTML = '';
         ticker.innerHTML = '';
+        heroMedia.innerHTML = '';
         return;
       }
 
-      // Top story
-      const top = items[0];
+      // Top story (index = cycleIdx % items.length)
+      const top = items[cycleIdx % items.length];
       heroTitle.textContent = top.title;
       heroDesc.textContent  = top.source ? `From ${top.source}` : hostname(top.link);
       heroMeta.textContent  = `${timeAgo(top.pubDate)} • #1 breaking now`;
       heroLink.href         = top.link;
       sourceBadge.textContent = hostname(top.link);
       heroLink.classList.remove('pointer-events-none','opacity-60');
+      setHeroMedia(top);
 
       // Update time
       const now = new Date();
@@ -514,7 +655,7 @@
       renderTicker(items);
 
       // List
-      const others = items.slice(0); // include top also in list for continuity
+      const others = items.slice(0); // include top also for continuity
       countLabel.textContent = `${items.length} stor${items.length === 1 ? 'y' : 'ies'}`;
 
       newsList.innerHTML = others.map(it => {
@@ -523,15 +664,19 @@
         const host = hostname(it.link);
         const saved = isSaved(it.link);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const imgTag = (SHOW_IMAGES && it.image) ? `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)]">` : `
-          <div class="w-12 h-12 rounded-lg grid place-items-center border border-[var(--border)] chip">
-            <span class="text-[10px] text-[var(--sub)]">${(src || host).slice(0,3).toUpperCase()}</span>
-          </div>
-        `;
+
+        let imgHTML = '';
+        if (SHOW_IMAGES && it.image) {
+          imgHTML = `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
+        } else {
+          const { primary, alt1 } = brandLogoUrl(host);
+          imgHTML = `<img src="${primary}" data-alt1="${alt1}" data-host="${host}" alt="${src}" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb">`;
+        }
+
         return `
           <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors">
             <div class="flex items-start gap-3">
-              <a href="${it.link}" target="_blank" rel="noopener" class="shrink-0">${imgTag}</a>
+              <a href="${it.link}" target="_blank" rel="noopener" class="shrink-0 w-12 h-12 rounded-lg overflow-hidden">${imgHTML}</a>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-3">
                   <div class="text-xs font-medium text-[var(--sub)]">
@@ -599,11 +744,30 @@
        ========================= */
     const editionSelect = $('#editionSelect');
     const refreshBtn = $('#refreshBtn');
-    const nextTopBtn = $('#nextTopBtn');
     const shareBtn = $('#shareBtn');
     const saveBtn  = $('#saveBtn');
     const showSavedBtn = $('#showSavedBtn');
     const searchInput = $('#searchInput');
+    const searchInputMobile = $('#searchInputMobile');
+    const sortSelect = $('#sortSelect');
+
+    const setMobileEditionUI = () => {
+      $$('.seg-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.ed === currentEdition);
+      });
+    };
+
+    // Cycle hero helpers
+    const nextHero = () => {
+      if (!filteredItems.length) return;
+      cycleIdx = (cycleIdx + 1) % filteredItems.length;
+      render(filteredItems);
+    };
+    const prevHero = () => {
+      if (!filteredItems.length) return;
+      cycleIdx = (cycleIdx - 1 + filteredItems.length) % filteredItems.length;
+      render(filteredItems);
+    };
 
     const hydrate = async () => {
       try {
@@ -614,13 +778,13 @@
         cacheItems = items.length ? items : [
           { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' }
         ];
+        cycleIdx = 0;
         applyFilter();
-        if (CYCLE_TOPS && cacheItems.length > 3) {
-          nextTopBtn.classList.remove('hidden');
+        // Auto-cycle
+        if (CYCLE_TOPS && filteredItems.length > 3) {
           startCycle();
         } else {
           stopCycle();
-          nextTopBtn.classList.add('hidden');
         }
       } catch (e) {
         console.error(e);
@@ -637,26 +801,24 @@
 
     const startCycle = () => {
       stopCycle();
-      cycleIdx = 0;
-      cycleTimer = setInterval(() => {
-        if (!filteredItems.length) return;
-        cycleIdx = (cycleIdx + 1) % Math.min(filteredItems.length, 10);
-        const rotated = [filteredItems[cycleIdx], ...filteredItems.slice(0, cycleIdx), ...filteredItems.slice(cycleIdx+1)];
-        render(rotated);
-      }, 12000);
+      cycleTimer = setInterval(() => nextHero(), 12000);
     };
     const stopCycle = () => { if (cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
 
     // Events
     editionSelect.value = DEFAULT_EDITION;
-    editionSelect.addEventListener('change', () => { currentEdition = editionSelect.value; hydrate(); });
+    currentEdition = DEFAULT_EDITION;
+    setMobileEditionUI();
+
+    editionSelect.addEventListener('change', () => { currentEdition = editionSelect.value; setMobileEditionUI(); hydrate(); });
+    $$('.seg-btn').forEach(b => b.addEventListener('click', () => {
+      currentEdition = b.dataset.ed;
+      editionSelect.value = currentEdition;
+      setMobileEditionUI();
+      hydrate();
+    }));
+
     refreshBtn.addEventListener('click', hydrate);
-    nextTopBtn.addEventListener('click', () => {
-      if (!filteredItems.length) return;
-      cycleIdx = (cycleIdx + 1) % Math.min(filteredItems.length, 10);
-      const rotated = [filteredItems[cycleIdx], ...filteredItems.slice(0, cycleIdx), ...filteredItems.slice(cycleIdx+1)];
-      render(rotated);
-    });
 
     shareBtn.addEventListener('click', async () => {
       const url = heroLink.href;
@@ -673,7 +835,7 @@
 
     saveBtn.addEventListener('click', () => {
       if (!filteredItems.length) return;
-      const top = filteredItems[0];
+      const top = filteredItems[cycleIdx % filteredItems.length];
       toggleSave(top);
       saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
@@ -684,8 +846,17 @@
       applyFilter();
     });
 
-    searchInput.addEventListener('input', (e) => {
-      searchQuery = e.target.value || '';
+    const syncSearch = (val) => {
+      searchQuery = val || '';
+      if (searchInput && document.activeElement !== searchInput) searchInput.value = val;
+      if (searchInputMobile && document.activeElement !== searchInputMobile) searchInputMobile.value = val;
+      applyFilter();
+    };
+    searchInput && searchInput.addEventListener('input', (e) => syncSearch(e.target.value));
+    searchInputMobile && searchInputMobile.addEventListener('input', (e) => syncSearch(e.target.value));
+
+    sortSelect.addEventListener('change', () => {
+      sortMode = sortSelect.value;
       applyFilter();
     });
 
@@ -693,8 +864,11 @@
     window.addEventListener('keydown', (e) => {
       if (e.key === 'r' || e.key === 'R') { e.preventDefault(); hydrate(); }
       if (e.key === 't' || e.key === 'T') { e.preventDefault(); cycleTheme(); }
+      if (e.key === 'ArrowRight') { nextHero(); }
+      if (e.key === 'ArrowLeft')  { prevHero(); }
       if (e.key === '/') {
-        if (document.activeElement !== searchInput) { e.preventDefault(); searchInput.focus(); searchInput.select(); }
+        const target = window.innerWidth < 640 ? searchInputMobile : searchInput;
+        if (document.activeElement !== target) { e.preventDefault(); target?.focus(); target?.select(); }
       }
       if ((e.key === 'g' || e.key === 'G') && e.metaKey) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
     });
@@ -702,7 +876,8 @@
     themeBtn.addEventListener('click', cycleTheme);
 
     // Init theme
-    setTheme(localStorage.getItem(THEME_KEY) || 'auto');
+    const THEME_INIT = localStorage.getItem(THEME_KEY) || 'auto';
+    setTheme(THEME_INIT);
     // React to OS theme changes when in auto
     window.matchMedia && window.matchMedia('(prefers-color-scheme: light)')
       .addEventListener('change', () => {
@@ -716,6 +891,35 @@
         document.body.classList.remove('preloading');
       }
     }, 12000);
+
+    // Global image fallback handling (brand logos + article thumbs)
+    const handleImgError = (img) => {
+      const alt1 = img.dataset.alt1;
+      const host = img.dataset.host || '';
+      if (alt1 && img.src !== alt1) {
+        img.src = alt1;
+        img.dataset.alt1 = ''; // consume
+        return;
+      }
+      // Final fallback: replace with letter tile
+      const parent = img.parentElement;
+      if (parent) {
+        parent.innerHTML = letterTileHTML((host || 'SRC'));
+      }
+    };
+    // Capture errors from list + hero images
+    newsList.addEventListener('error', (e) => {
+      const target = e.target;
+      if (target && target.tagName === 'IMG' && (target.classList.contains('brand-fb') || target.id === 'heroImg')) {
+        handleImgError(target);
+      }
+    }, true);
+    heroMedia.addEventListener('error', (e) => {
+      const target = e.target;
+      if (target && target.tagName === 'IMG' && target.id === 'heroImg') {
+        handleImgError(target);
+      }
+    }, true);
 
     // First load
     hydrate();
