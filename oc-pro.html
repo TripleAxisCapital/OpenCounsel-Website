@@ -60,6 +60,18 @@
     (function(d){ try{ if(!window.OC_ENABLE_HERO_LOGO_GLOW) d.documentElement.classList.add('no-hero-glow'); }catch(_){}})(document);
   </script>
 
+  <!-- === Hero bubbles global config (edit these values) =================== -->
+  <script>
+    // Adjust how many bubbles run concurrently and the overall animation speed.
+    // speedMultiplier: 1 = default, 2 = 2× faster, 0.5 = half-speed.
+    window.OC_HERO_BUBBLES = {
+      countMobile: 9,      // bubbles on screen at once (mobile)
+      countDesktop: 16,    // bubbles on screen at once (desktop)
+      speedMultiplier: 1.0 // global speed multiplier for bubble animations
+    };
+  </script>
+  <!-- ===================================================================== -->
+
   <!-- Fonts + Icons + Tailwind -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -448,7 +460,7 @@
                     focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
                     shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-black/60
                     transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 g-grad grad-anim"
-             style="--from:#0e0e0ecc; --via:#141414cc; --to:#1f1f1fcc; --speed:16s; --angle:135deg;"
+             style="--from:#0e0e0ecc; --via:#141414cc; --to:#ffffff; --speed:16s; --angle:135deg;"
              aria-label="Download">
             <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-50" style="background: radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.18), rgba(0,0,0,0));"></span>
             <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
@@ -501,7 +513,12 @@
     if (prefersReduced.matches) return;
 
     const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const COUNT = isMobile ? 9 : 16;
+
+    // Pull global config (defined near the top). Fallbacks keep previous behavior.
+    const BCFG = window.OC_HERO_BUBBLES || {};
+    const TARGET_COUNT = Math.max(0, Math.min(64, isMobile ? (BCFG.countMobile ?? 9) : (BCFG.countDesktop ?? 16)));
+    const SPEED = Math.max(0.05, Number(BCFG.speedMultiplier || 1));
+
     const QUESTIONS = [
       "What are we wrong about?",
       "Which metric is lying to us?",
@@ -550,7 +567,11 @@
       // Motion variables (subtle & premium)
       const drift = rand(-50, 50);
       const travel = -rand(90, 140); // in vh
-      const dur = (rand(16, 24) + (r < .35 ? 2 : 0)) + 's';
+
+      // Base duration in seconds, then scale by global SPEED (higher = faster).
+      const baseSec = rand(16, 24) + (r < .35 ? 2 : 0);
+      const dur = (baseSec / SPEED).toFixed(2) + 's';
+
       const delay = (-rand(0, 2200)/100) + 's'; // negative to desync start
       const scale = (r > .82) ? 1.02 : 1.0;
 
@@ -572,7 +593,7 @@
       return b;
     }
 
-    for (let i=0;i<COUNT;i++) layer.appendChild(makeBubble(i));
+    for (let i=0;i<TARGET_COUNT;i++) layer.appendChild(makeBubble(i));
 
     // Rebuild on prefers-reduced-motion toggle
     if (prefersReduced.addEventListener) {
@@ -824,7 +845,7 @@
 
   <script>
     // Set current year in footer
-    (function(){ var y=document.getElementById('yr'); if(y) ytextContent=new Date().getFullYear(); })();
+    (function(){ var y=document.getElementById('yr'); if(y) y.textContent=new Date().getFullYear(); })();
   </script>
 
   <!-- Define <oc-down-arrow> web component (copied from home) -->
