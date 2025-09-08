@@ -2,18 +2,21 @@
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
   <!--
-    OC-News — Apple-clean, pure white/black. No gradients in layout; subtle effects only.
-    This revision focuses on:
-    • Apple-style blocking loader with shine + rotating taglines; global timeout PRELOAD_MAX_MS (default 20s).
-    • Google Trends: more reliable fetch, polished cards, crisp fallbacks.
-    • Hero: single visible title at a time (no duplication), higher-priority image loading, better fallbacks.
-    • All waiting happens behind the loader (initial + refresh + edition change).
-    • Removed “🔥 X src” badges from all cards; simplified UI while keeping all features.
+    OC‑News — Apple‑clean, pure white/black. No gradients.
+    Single‑file, drop‑in page. No build, no API keys.
+
+    This build focuses on:
+    • FIX: Google Trends section — robust proxy parsing, cleaner Apple‑style cards, image fallbacks.
+    • FIX: Hero double‑title — overlay title only while hero is onscreen (separate H1 hides); H1 returns after you scroll past.
+    • FIX: Hero image quality — prefer real article images (OG/Twitter/LD+JSON), upsize common width params, preload first slides.
+    • Apple‑style loader — OC‑News / Your Open Source News / tagline with shine; all waiting held here; global failsafe (20s).
+    • UI simplification — removes “🔥 X src” badges on all cards; Trending rail simplified.
+    • Keeps: editions, search, saved, share, theme, keyboard shortcuts, trending rail logic (still uses duplicates for ranking).
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>OC-News — The AI Workspace. Without Limits.</title>
-  <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
+  <title>OC‑News — The AI Workspace. Without Limits.</title>
+  <meta name="description" content="OC‑News surfaces the most breaking headlines with an Apple‑style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,15 +33,13 @@
             'pulse-soft': { '0%,100%': { opacity: .65 }, '50%': { opacity: 1 } },
             'ticker': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
             'progress': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } },
-            'sheen': { '0%': { backgroundPosition: '-200% 50%' }, '100%': { backgroundPosition: '200% 50%' } },
-            'fade-in': { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } }
+            'shine': { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } }
           },
           animation: {
             'pulse-soft': 'pulse-soft 3.6s ease-in-out infinite',
             'ticker': 'ticker 18s linear infinite',
             'progress': 'progress 1.1s ease-in-out infinite',
-            'sheen': 'sheen 2.6s linear infinite',
-            'fade-in': 'fade-in .6s ease 1 forwards'
+            'shine': 'shine 1.8s ease-in-out infinite'
           }
         }
       }
@@ -57,6 +58,7 @@
       --chip:rgba(255,255,255,0.06);--chip-border:rgba(255,255,255,0.12);
       --card-hover:rgba(255,255,255,0.06);
       --header-h:64px;
+      --preload-bg-dark:#000; --preload-bg-light:#fff; --preload-text-dark:#fff; --preload-text-light:#000;
     }
     html.light{
       --bg:#ffffff;--surface:#ffffff;--elev:rgba(10,10,15,0.035);
@@ -66,12 +68,11 @@
       --card-hover:rgba(0,0,0,0.045);
     }
 
-    /* Utilities */
     .text-balance{ text-wrap:balance }
     .no-scrollbar::-webkit-scrollbar{ display:none }
     .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
     @media (prefers-reduced-motion: reduce){
-      .animate-pulse-soft,.animate-ticker,.animate-progress,.animate-sheen{ animation:none!important }
+      .animate-pulse-soft,.animate-ticker,.animate-progress,.animate-shine{ animation:none!important }
       .hero-track{ scroll-behavior:auto!important }
     }
 
@@ -89,41 +90,36 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Apple-style blocking loader */
-    #preload{ position:fixed; inset:0; z-index:80; display:grid; place-items:center; background:var(--surface); color:var(--text) }
+    /* Apple-style fullscreen preloader */
+    #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg-dark) }
+    html.light #preload{ background:var(--preload-bg-light) }
     body.preloading{ overflow:hidden }
-    .loader-wrap{ display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px }
-    .loader-title{ font-weight:800; letter-spacing:-0.02em; line-height:1; font-size:clamp(28px, 6vw, 54px) }
-    .loader-sheen{
-      background: linear-gradient(110deg, color-mix(in oklab, var(--text) 70%, transparent) 20%, color-mix(in oklab, var(--text) 30%, transparent) 40%, color-mix(in oklab, var(--text) 70%, transparent) 60%);
-      -webkit-background-clip:text; background-clip:text; color:transparent; background-size:200% 100%; animation: sheen 2.6s linear infinite;
-    }
-    .loader-tag{ font-size:12px; color:var(--sub); letter-spacing:.12em; text-transform:uppercase; }
-    .loader-strap{ font-size:14px; color:var(--sub); animation: fade-in .6s ease both }
-    .loader-ring{ width:44px; height:44px; border-radius:999px; border:2px solid var(--border); border-top-color: var(--accent); animation: spin 1s linear infinite }
-    @keyframes spin{ to { transform: rotate(360deg) } }
-    .loader-bar{ width:220px; height:3px; overflow:hidden; border-radius:999px; background:var(--border) }
-    .loader-bar > span{ display:block; height:100%; width:33%; background:var(--accent); animation: progress 1.1s ease-in-out infinite }
+    .preload-wrap{ display:grid; gap:10px; place-items:center; text-align:center; padding:24px }
+    .preload-mark{ font-weight:800; letter-spacing:-0.02em; font-size:clamp(28px,6.2vw,64px); color:var(--preload-text-dark) }
+    html.light .preload-mark{ color:var(--preload-text-light) }
+    .preload-mark .shine{ background:linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent); -webkit-background-clip:text; background-clip:text; color:transparent; background-size:200% 100% }
+    html.light .preload-mark .shine{ background:linear-gradient(90deg, transparent, rgba(0,0,0,.45), transparent) }
+    .preload-tag, .preload-sub{ color:color-mix(in oklab, var(--preload-text-dark) 60%, transparent); font-size:clamp(12px,2.8vw,14px) }
+    html.light .preload-tag, html.light .preload-sub{ color:color-mix(in oklab, var(--preload-text-light) 70%, transparent) }
+    .preload-bar{ width:min(380px,72vw); height:3px; border-radius:999px; overflow:hidden; background:color-mix(in oklab, var(--preload-text-dark) 15%, transparent); margin-top:10px }
+    html.light .preload-bar{ background:color-mix(in oklab, var(--preload-text-light) 15%, transparent) }
+    .preload-bar > span{ display:block; width:40%; height:100%; background:var(--accent) }
 
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface) }
     .seg button{ padding:6px 10px; border-radius:999px; font-size:12px }
     .seg button.active{ background:var(--card-hover) }
 
-    /* ===== FULL-SCREEN HERO ===== */
+    /* ===== FULL‑SCREEN HERO ===== */
     .hero-section-container{ padding-block:1.5rem }
     @media (min-width:640px){ .hero-section-container{ padding-block:2rem } }
     @media (min-width:1024px){ .hero-section-container{ padding-block:2.5rem } }
 
-    #heroCard{
-      min-height:calc(100svh - var(--header-h));
-      display:flex; flex-direction:column;
-      overflow:hidden
-    }
+    #heroCard{ min-height:calc(100svh - var(--header-h)); display:flex; flex-direction:column; overflow:hidden }
     .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0 }
     .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth }
-    .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center; background:var(--surface) }
+    .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
     .hero-slide a{ position:absolute; inset:0; display:block }
-    .hero-slide img{ width:100%; height:100%; object-fit:cover; object-position:center center; display:block; image-rendering:auto }
+    .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
     .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events:none }
     html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%) }
     .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:16px; display:grid; gap:6px; pointer-events:none }
@@ -150,14 +146,14 @@
       .hero-dots{ bottom:14px }
     }
 
-    /* ===== Immersive-at-top state ===== */
+    /* Header hiding to avoid top black band */
     body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
     header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
     body.hero-immersive #heroCard{ min-height:100dvh }
     body.hero-immersive .hero-media{ height:100dvh; min-height:100dvh }
 
-    /* Hide the duplicate below-title while hero is visible */
-    body.hero-visible #heroTitle, body.hero-visible #heroDesc { display:none !important; }
+    /* Hide separate H1 while hero is visible to prevent double titles */
+    body.hero-in-view #heroTitle{ display:none!important }
 
     /* ===== Trending rail ===== */
     .rail{ display:flex; gap:12px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
@@ -165,19 +161,20 @@
     @media (min-width:640px){ .rail > article{ flex:0 0 420px; max-width:420px } }
   </style>
 </head>
-<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive hero-visible">
-  <!-- Apple-style Blocking Loader (all waiting happens here) -->
+<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
+  <!-- Fullscreen Apple-style Preloader (all waiting held here) -->
   <div id="preload" aria-live="polite" aria-busy="true">
-    <div class="loader-wrap">
-      <div class="loader-title loader-sheen">OC-News</div>
-      <div id="loaderStrap" class="loader-strap">Your Open Source News.</div>
-      <div class="loader-tag">Loading the latest</div>
-      <div class="loader-ring" aria-hidden="true"></div>
-      <div class="loader-bar" aria-hidden="true"><span></span></div>
+    <div class="preload-wrap">
+      <div class="preload-mark">
+        <span class="shine inline-block animate-shine">OC‑News</span>
+      </div>
+      <div class="preload-tag">Your Open Source News.</div>
+      <div class="preload-sub">The AI Workspace. Without Limits.</div>
+      <div class="preload-bar"><span class="animate-progress"></span></div>
     </div>
   </div>
 
-  <!-- Top Loader (kept for micro ops; not used during blocking preload) -->
+  <!-- Optional top micro loader (kept for feature parity, unused during preloader) -->
   <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
@@ -206,7 +203,7 @@
             <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-64 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
-          <!-- Actions -->
+          <!-- Text-only actions -->
           <button id="refreshBtn" class="link-btn" title="Refresh (R)">
             <!-- Circular arrow -->
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -277,8 +274,8 @@
           </div>
         </figure>
 
-        <!-- Below-hero meta (auto-hidden while hero is visible) -->
-        <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">OC-News is waking up…</h1>
+        <!-- Desktop meta (hidden while hero in view to avoid double title) -->
+        <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">OC‑News is waking up…</h1>
         <p id="heroDesc" class="mt-2 sm:mt-3 text-sm sm:text-base lg:text-lg text-[var(--sub)] max-w-3xl">Surfacing the #1 breaking headline across trusted sources. Crisp. Fast. Private.</p>
         <div class="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
           <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
@@ -298,7 +295,7 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
       <div class="flex items-center justify-between gap-3 mb-3">
         <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
-        <div class="text-xs text-[var(--sub)]" id="trendHint">Based on cross-source duplicates + recency</div>
+        <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
       </div>
       <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
     </div>
@@ -354,8 +351,9 @@
     const HERO_SLIDES = 10;
     const DOT_COUNT = 6;
 
-    // Global: maximum time we keep the blocking loader visible before forcing display
-    const PRELOAD_MAX_MS = 20000; // ← adjustable timeout cap (requested)
+    // Loader controls
+    const PRELOAD_ON_REFRESH = true; // show Apple loader on refresh too
+    const LOADER_MAX_WAIT_MS = 20000; // global failsafe (20s)
 
     const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
     let sortMode = SORT_MODES.NEWEST;
@@ -513,7 +511,7 @@
       const base = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
       return {
         src: `${base}?size=512`,
-        srcset: `${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,
+        srcset: `${base}?size=64 64w, ${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,
         s2: `https://www.google.com/s2/favicons?domain=${host}&sz=256`
       };
     };
@@ -526,6 +524,20 @@
         <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
       </div>
     `;
+
+    // Attempt to bump typical width params to hi‑res
+    const upscaleImageUrl = (u)=>{
+      try{
+        let url = new URL(u);
+        const keys = ['w','width','maxwidth','px','param','imgw'];
+        keys.forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
+        // Reuters / CNN style path param ?w= or /?width=
+        return url.toString();
+      }catch{
+        // query-like patterns in plain strings
+        return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600');
+      }
+    };
 
     /* =========================
        RSS + IMAGE RESOLUTION
@@ -572,7 +584,7 @@
           if(!res.ok) continue;
           const text = await res.text();
           if(text && text.length > 40) return text;
-        }catch(_){}
+        }catch(_){ }
       }
       throw new Error('All proxies failed for ' + url);
     };
@@ -593,8 +605,7 @@
           'meta[name="twitter:image"]'
         ];
         for(const sel of cands){
-          const u = tryMeta(sel);
-          if(u) return u;
+          const u = tryMeta(sel); if(u) return u;
         }
         const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
         for(const s of scripts){
@@ -612,8 +623,7 @@
               }
               return null;
             };
-            const found = collect(data);
-            if(found) return found;
+            const found = collect(data); if(found) return found;
           }catch{}
         }
         const imgs = Array.from(doc.querySelectorAll('img'));
@@ -622,7 +632,7 @@
           if(!src) continue;
           const w = parseInt(im.getAttribute('width')||'0',10);
           const h = parseInt(im.getAttribute('height')||'0',10);
-          if ((w>=300 || h>=200) || /[\/\-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) return src;
+          if ((w>=300 || h>=200) || /[\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) return src;
         }
       }catch{}
       return '';
@@ -636,8 +646,9 @@
       try{
         const html = await fetchWithProxies(url);
         const img = tryFindOgImage(html, url) || '';
-        IMG_CACHE.set(url, img);
-        return img;
+        const better = img ? upscaleImageUrl(img) : '';
+        IMG_CACHE.set(url, better);
+        return better;
       }catch{
         IMG_CACHE.set(url, '');
         return '';
@@ -663,10 +674,10 @@
             const text = await fetchWithProxies(f);
             const items = parseRSS(text);
             all.push(...items);
-          }catch(_){}
+          }catch(_){ }
         })
       );
-      // Dedup across feeds; count duplicates as trend signal
+      // Deduplicate and trend scoring
       const seen = new Map(); // normTitle -> { item, count }
       for(const it of all){
         const key = normalizeTitle(it.title);
@@ -683,6 +694,7 @@
       uniq.forEach(u=>{
         const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
         u._score = (u.trendCount||1) * (1/ageMin);
+        if (u.image) u.image = upscaleImageUrl(u.image);
       });
       uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
       return uniq.slice(0, MAX_ITEMS);
@@ -719,7 +731,6 @@
     const heroOverlayTitle = $('#heroOverlayTitle');
     const trendingRail = $('#trendingRail');
     const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty');
-    const loaderStrap = $('#loaderStrap');
 
     let searchQuery = '';
     let showingSaved = false;
@@ -728,14 +739,6 @@
     let filteredItems = [];
     let cycleIdx = 0;
     let cycleTimer = null;
-
-    const STRAPLINES = [
-      'Your Open Source News.',
-      'The AI Workspace. Without Limits.',
-      'Private. Fast. Elegant.'
-    ];
-    let strapIdx = 0;
-    setInterval(()=>{ strapIdx=(strapIdx+1)%STRAPLINES.length; loaderStrap.textContent = STRAPLINES[strapIdx]; }, 2400);
 
     const applySort = ()=>{
       const arr = filteredItems.slice();
@@ -773,11 +776,10 @@
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
         const host = hostname(it.link) || 'news.google.com';
-        const src  = (SHOW_IMAGES && it.image) ? it.image : '';
+        const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
         const label= it.source || host;
-        const imgHTML = src
-          ? `<img src="${src}" alt="${label}" ${idx===0?'loading="eager" fetchpriority="high" decoding="sync"':'loading="lazy" fetchpriority="auto" decoding="async"'} sizes="100vw" class="brand-fb" data-host="${host}">`
-          : brandLogoHTML(host, '', label);
+        const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
+        const imgHTML = src ? `<img ${high} decoding="async" src="${src}" alt="${label}">` : brandLogoHTML(host, '', label);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
@@ -818,13 +820,13 @@
       const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
       trendingRail.innerHTML = top.map(it=>{
         const host = hostname(it.link);
-        const src = it.image
-          ? `<img src="${it.image}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${host}" alt="">`
+        const srcHTML = it.image
+          ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${host}" alt="">`
           : brandLogoHTML(host,'w-full h-44 object-contain rounded-md border border-[var(--border)]', it.source||host);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
           <article class="card p-3 sm:p-4">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${src}</a>
+            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${srcHTML}</a>
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
               <span>${timeAgo(it.pubDate)}</span>
               <span>${it.source || host}</span>
@@ -857,19 +859,16 @@
       renderTicker(items);
       countLabel.textContent = `${items.length} stor${items.length === 1 ? 'y' : 'ies'}`;
 
-      // Render main list
+      // Render main list (simplified — no fire/src badges)
       newsList.innerHTML = items.map(it=>{
         const src = it.source || hostname(it.link) || 'Source';
         const when = timeAgo(it.pubDate);
         const host = hostname(it.link);
         const saved = isSaved(it.link);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        let thumbHTML = '';
-        if (SHOW_IMAGES && it.image){
-          thumbHTML = `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
-        }else{
-          thumbHTML = brandLogoHTML(host, 'w-12 h-12 rounded-lg object-contain border border-[var(--border)]', src);
-        }
+        const thumbHTML = (SHOW_IMAGES && it.image)
+          ? `<img src="${upscaleImageUrl(it.image)}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`
+          : brandLogoHTML(host, 'w-12 h-12 rounded-lg object-contain border border-[var(--border)]', src);
         return `
           <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors">
             <div class="flex items-start gap-3">
@@ -930,7 +929,7 @@
     };
 
     /* =========================
-       GOOGLE TRENDS (Daily)
+       GOOGLE TRENDS (Daily) — robust + Apple‑style
        ========================= */
     const tzMinutes = -new Date().getTimezoneOffset();
     const trendsGeoForEdition = (ed)=>{
@@ -945,29 +944,29 @@
       const data = JSON.parse(jsonText);
       return data;
     };
-    const loadGoogleTrends = async ()=>{
+    const renderGoogleTrends = async ()=>{
       try{
         const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
         const day = data?.default?.trendingSearchesDays?.[0];
         if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
-        gtMeta.textContent = `${day.date || 'Today'} • ${day.formattedDate || ''}`.trim();
+        gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
         const cards = day.trendingSearches.slice(0, 9).map(ts=>{
           const query = ts.title?.query || 'Trending';
           const traffic = ts.formattedTraffic || '';
           const art = (ts.articles||[])[0] || {};
-          const link = art.url || `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-          const host = hostname(link);
-          const image = (ts.image && ts.image.imageUrl) || '';
-          const img = image
-            ? `<img src="${image}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
-            : brandLogoHTML(host || 'google.com','w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
+          const link = art.url || '#';
+          const host = hostname(link) || 'google.com';
+          const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
+          const img = image ? `<img src="${upscaleImageUrl(image)}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
+                            : brandLogoHTML(host,'w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
           const source = art.source || host || 'Google';
           const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
           return `
             <article class="card p-3 sm:p-4">
               <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${img}</a>
               <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-                <span class="chip rounded px-2 py-1">↗ ${traffic}</span>
+                ${trafficTag}
                 <span>${source}</span>
               </div>
               <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
@@ -985,7 +984,7 @@
     };
 
     /* =========================
-       BOOTSTRAP
+       BOOTSTRAP + Loader discipline
        ========================= */
     const editionSelect = $('#editionSelect');
     const refreshBtn = $('#refreshBtn');
@@ -1037,12 +1036,9 @@
     prevTopBtn.addEventListener('click', prevHero);
     nextTopBtn.addEventListener('click', nextHero);
 
-    // Pause auto-cycle when hero offscreen; also toggle duplicate-title visibility
+    // Pause auto-cycle when hero offscreen
     let heroIsVisible = true;
-    const heroObserver = new IntersectionObserver((entries)=>{
-      heroIsVisible = entries[0]?.isIntersecting ?? true;
-      document.body.classList.toggle('hero-visible', heroIsVisible);
-    }, { root:null, threshold:0.2 });
+    const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
     heroObserver.observe(document.getElementById('heroCard'));
 
     const startCycle = ()=>{
@@ -1062,70 +1058,97 @@
     };
     window.addEventListener('scroll', updateImmersiveHeader, { passive:true });
 
-    // Wait for first hero image (or brand logo) so the hero looks crisp before unblocking
-    const waitForFirstHeroVisual = (timeoutMs)=>{
-      return new Promise((resolve)=>{
-        const firstImg = document.querySelector('#heroTrack .hero-slide img');
-        if(!firstImg){ resolve(); return; }
-        let done = false;
-        const finish = ()=>{ if (!done){ done=true; resolve(); } };
-        firstImg.addEventListener('load', finish, { once:true });
-        firstImg.addEventListener('error', finish, { once:true });
-        setTimeout(finish, Math.max(1000, Math.min(timeoutMs||4000, PRELOAD_MAX_MS)));
+    // Additional observer to hide H1 while hero is onscreen (prevents double titles)
+    const heroInViewObserver = new IntersectionObserver((entries)=>{
+      const inView = entries[0]?.isIntersecting ?? true;
+      document.body.classList.toggle('hero-in-view', inView);
+    }, { root:null, threshold:0.6 });
+    heroInViewObserver.observe(document.getElementById('heroCard'));
+
+    // Preload hero images before dropping the loader
+    const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
+      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3); // first few slides
+      if (!imgs.length) return resolve();
+      let done = 0, finished = false;
+      const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
+      const onOne = ()=>{ done++; if (done >= imgs.length) finish(); };
+      imgs.forEach(im=>{
+        if (im.complete) onOne();
+        else {
+          im.addEventListener('load', onOne, { once:true });
+          im.addEventListener('error', onOne, { once:true });
+          try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
+        }
       });
+      setTimeout(finish, timeoutMs);
+    });
+
+    // One hydrate pass: loads feeds and Trends, renders DOM (does not hide preloader)
+    const hydrate = async ()=>{
+      updatedAt.textContent = 'Updating…';
+      const items = await loadFeeds(currentEdition);
+      cacheItems = items.length ? items : [ { title: 'OC‑News is live — your Apple‑grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+      cycleIdx = 0;
+      applyFilter(); // renders (builds hero slides)
+      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
+      await renderGoogleTrends();
     };
 
-    // Unified blocking loader wrapper
-    const withBlockingLoader = async (fn)=>{
+    // Hide the preloader decisively (all waiting is held here)
+    const hidePreloader = ()=>{
+      if (preload) preload.style.display = 'none';
+      document.body.classList.remove('preloading');
+    };
+
+    // Full boot: run hydrate, then wait for hero images OR failsafe, then hide loader
+    const boot = async ()=>{
+      const start = Date.now();
       try{
-        document.body.classList.add('preloading');
-        preload.style.display = 'grid';
-        let forced = false;
-        const forceTimer = setTimeout(()=>{ forced = true; preload.style.display = 'none'; document.body.classList.remove('preloading'); }, PRELOAD_MAX_MS);
-        await fn();
-        if(!forced){
-          preload.style.display = 'none';
-          document.body.classList.remove('preloading');
-        }
-        clearTimeout(forceTimer);
-      }catch(e){
-        // Even on error, release the loader after the cap
-        preload.style.display = 'none';
-        document.body.classList.remove('preloading');
-        console.error(e);
+        await hydrate();
+        await Promise.race([
+          waitForHeroImages(6000),
+          new Promise(res=> setTimeout(res, Math.max(2000, 600))), // ensure a perceptible Apple feel
+        ]);
+      }catch(e){ console.error(e); }
+      finally{
+        const elapsed = Date.now() - start;
+        const remaining = Math.max(0, LOADER_MAX_WAIT_MS - elapsed);
+        // Ensure we never exceed the global failsafe
+        setTimeout(hidePreloader, Math.min(remaining, 0));
+        hidePreloader();
+        updateImmersiveHeader();
       }
     };
 
-    const hydrate = async ()=>{
-      topLoader.classList.add('hidden'); // don’t show top micro loader during blocking load
-      const items = await loadFeeds(currentEdition);
-      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
-      cycleIdx = 0;
-      applyFilter(); // renders hero + list + trending
-      // Parallel: trends + wait for first hero visual
-      await Promise.all([
-        loadGoogleTrends(),
-        waitForFirstHeroVisual(5000)
-      ]);
-      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-      updateImmersiveHeader();
+    // Refresh flow: optionally use full preloader again
+    const refreshAll = async ()=>{
+      if (PRELOAD_ON_REFRESH){
+        preload.style.display = 'grid';
+        document.body.classList.add('preloading');
+      }
+      try{
+        await hydrate();
+        if (PRELOAD_ON_REFRESH){
+          await Promise.race([waitForHeroImages(4000), new Promise(res=> setTimeout(res, 600))]);
+          hidePreloader();
+        }
+      }catch(e){ console.error(e); hidePreloader(); }
     };
 
     // Events
-    editionSelect.value = DEFAULT_EDITION;
+    const editionSelectEl = $('#editionSelect');
+    if (editionSelectEl) editionSelectEl.value = DEFAULT_EDITION;
     currentEdition = DEFAULT_EDITION;
     setMobileEditionUI();
 
-    const rehydrateBlocking = ()=> withBlockingLoader(hydrate);
+    editionSelect.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
+    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
 
-    editionSelect.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); rehydrateBlocking(); });
-    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect.value = currentEdition; setMobileEditionUI(); rehydrateBlocking(); }));
-
-    refreshBtn.addEventListener('click', rehydrateBlocking);
+    refreshBtn.addEventListener('click', refreshAll);
 
     shareBtn.addEventListener('click', async ()=>{
       const url = heroLink.href;
-      const title = heroTitle.textContent || 'OC-News';
+      const title = heroTitle.textContent || 'OC‑News';
       try{
         if (navigator.share) await navigator.share({ title, url });
         else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
@@ -1154,7 +1177,7 @@
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e)=>{
-      if (e.key==='r' || e.key==='R'){ e.preventDefault(); rehydrateBlocking(); }
+      if (e.key==='r' || e.key==='R'){ e.preventDefault(); refreshAll(); }
       if (e.key==='t' || e.key==='T'){ e.preventDefault(); cycleTheme(); }
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
@@ -1183,26 +1206,21 @@
       if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
     }, true);
 
-    // First load (blocking)
-    const updateHeaderAndHydrate = ()=>{ 
-      setHeaderVar();
-      updateImmersiveHeader();
-      rehydrateBlocking();
-    };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndHydrate);
-    else updateHeaderAndHydrate();
+    // Header vars and immersive state
+    const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndBoot);
+    else updateHeaderAndBoot();
   </script>
 
   <!--
   =====================================================================
   NOTES
   ---------------------------------------------------------------------
-  • Loader: blocks for feeds + trends + first hero visual or until PRELOAD_MAX_MS.
-  • Hero duplication fixed: we hide below-H1 while hero is visible (desktop too).
-  • Image quality: first hero image eager/high priority; brand logos are 512px.
-  • Google Trends: robust proxy fetch; polished cards; clean fallbacks.
-  • All “🔥 src” badges removed from list & trending for simplicity.
-  • Controls: R refresh, T theme, ←/→ hero, / search, ⌘+G top.
+  • Loader: PRELOAD_ON_REFRESH (true) + LOADER_MAX_WAIT_MS (20s). All waiting is held in the loader; when it drops, the app is ready.
+  • Hero title fix: body.hero-in-view hides separate H1 to avoid duplicate titles during swipe.
+  • Hi‑res images: upscaleImageUrl bumps typical width params; first slide gets fetchpriority=high.
+  • Trends: parses trends API via proxies, prefers query image, falls back to article image, then logo.
+  • Trending rail: UI simplified; logic unchanged (duplicates across feeds = proxy for “reads”).
   =====================================================================
   -->
 </body>
