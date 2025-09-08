@@ -5,15 +5,16 @@
     OC-News — Apple-clean, pure white/black. No gradients.
 
     This build adds:
-    • Header height reduced: editions + search on the SAME row (mobile & desktop).
+    • Header height reduced: editions + search on the SAME row (mobile & desktop) + News/Weather toggle.
     • New "ALL" edition merges every feed (de-duplicated).
-    • Google Trends FIX: resilient proxies + HTML fallback parser (if API blocks).
-    • No duplicate const declarations; hero title duplication logic preserved.
+    • Google Trends FIX: resilient proxies + HTML fallback parser (if API blocks) and a Top Trend badge in header.
+    • New Apple‑style Weather page: auto geolocate + manual entry (address / postal code / city) via Nominatim → Open‑Meteo.
+    • Smooth preloader, image fallbacks, saved articles, keyboard shortcuts.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>OC-News — The AI Workspace. Without Limits.</title>
-  <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
+  <meta name="description" content="OC-News surfaces breaking headlines with an Apple-style minimal hero. Private, fast, elegant. Includes a Weather page with auto location." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -147,6 +148,11 @@
     .rail{ display:flex; gap:12px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
     .rail > article{ scroll-snap-align:center; flex:0 0 84%; max-width:84% }
     @media (min-width:640px){ .rail > article{ flex:0 0 420px; max-width:420px } }
+
+    /* Weather */
+    .wx-big{ font-weight:800; letter-spacing:-0.03em; font-size:clamp(40px, 14vw, 88px) }
+    .wx-sub{ color:var(--sub) }
+    .wx-kpi{ display:grid; gap:6px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface) }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
@@ -170,13 +176,21 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3 min-w-0">
-          <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
+          <a href="#" class="shrink-0" aria-label="OpenCounsel Home" id="homeLink">
             <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
           </a>
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Desktop: Editions + Search on same line -->
+        <!-- Center: Page toggle -->
+        <div class="hidden sm:flex items-center gap-2 min-w-0">
+          <div class="seg">
+            <button id="navNewsBtn" class="active">News</button>
+            <button id="navWeatherBtn">Weather</button>
+          </div>
+        </div>
+
+        <!-- Desktop: Editions + Search + Controls on same line -->
         <div class="hidden sm:flex items-center gap-2 min-w-0">
           <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
           <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
@@ -190,6 +204,7 @@
             <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-72 lg:w-80 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
+          <span id="gtTopBadge" class="chip rounded px-2 py-1 text-xs hidden"><span class="opacity-80">Top trend:</span> <a id="gtTopLink" class="ml-1 underline decoration-[var(--accent)]/60 underline-offset-4" target="_blank" rel="noopener">—</a></span>
           <button id="refreshBtn" class="link-btn" title="Refresh (R)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
             <span class="hidden sm:inline">Refresh</span>
@@ -203,17 +218,21 @@
           </button>
         </div>
 
-        <!-- Mobile: Editions + Search in a SINGLE row -->
+        <!-- Mobile: Seg + Editions + Search in a SINGLE row -->
         <div class="sm:hidden flex items-center gap-2 w-full justify-end">
-          <div class="seg overflow-x-auto no-scrollbar max-w-[55vw]">
+          <div class="seg overflow-x-auto no-scrollbar max-w-[42vw]">
+            <button id="mNavNewsBtn" class="active">News</button>
+            <button id="mNavWeatherBtn">Weather</button>
+          </div>
+          <div class="seg overflow-x-auto no-scrollbar max-w-[40vw]">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
             <button class="seg-btn" data-ed="US">US</button>
             <button class="seg-btn" data-ed="CA">Canada</button>
             <button class="seg-btn" data-ed="FIN">Financial</button>
           </div>
-          <div class="relative flex-1 min-w-[36vw]">
-            <input id="searchInputMobile" placeholder="Search… ( / )" class="w-full btn rounded-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
+          <div class="relative hidden" id="mobileNewsSearchWrap">
+            <input id="searchInputMobile" placeholder="Search… ( / )" class="w-[36vw] btn rounded-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
           <button id="refreshBtnMobile" class="link-btn" title="Refresh (R)">
@@ -225,78 +244,127 @@
     <div class="hairline"></div>
   </header>
 
-  <!-- HERO + SECTION LEAD -->
-  <section class="relative">
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 hero-section-container">
-      <h1 class="section-lead mb-3 sm:mb-4">Top Stories</h1>
+  <!-- ===== NEWS PAGE ===== -->
+  <main id="newsPage">
+    <!-- HERO + SECTION LEAD -->
+    <section class="relative">
+      <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 hero-section-container">
+        <h1 class="section-lead mb-3 sm:mb-4">Top Stories</h1>
 
-      <div id="heroCard" class="card shadow-oc-soft p-0 relative overflow-hidden">
-        <figure id="heroMedia" class="hero-media bg-[var(--surface)]">
-          <div id="heroTrack" class="hero-track no-scrollbar"><!-- Slides injected --></div>
-          <div class="hero-nav">
-            <button id="prevTopBtn" aria-label="Previous top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg></button>
-            <button id="nextTopBtn" aria-label="Next top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg></button>
-          </div>
-          <div id="heroDots" class="hero-dots"></div>
-          <div class="hero-gradient"></div>
-          <div class="hero-overlay-text">
-            <div class="text-xs font-medium text-white/80 dark:text-white/80">Top story</div>
-            <h2 id="heroOverlayTitle">—</h2>
-          </div>
-        </figure>
+        <div id="heroCard" class="card shadow-oc-soft p-0 relative overflow-hidden">
+          <figure id="heroMedia" class="hero-media bg-[var(--surface)]">
+            <div id="heroTrack" class="hero-track no-scrollbar"><!-- Slides injected --></div>
+            <div class="hero-nav">
+              <button id="prevTopBtn" aria-label="Previous top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <button id="nextTopBtn" aria-label="Next top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+            <div id="heroDots" class="hero-dots"></div>
+            <div class="hero-gradient"></div>
+            <div class="hero-overlay-text">
+              <div class="text-xs font-medium text-white/80 dark:text-white/80">Top story</div>
+              <h2 id="heroOverlayTitle">—</h2>
+            </div>
+          </figure>
 
-        <!-- Headline BELOW image -->
-        <div class="px-4 sm:px-0">
-          <h2 id="heroTitle" class="text-balance text-[clamp(22px,7.2vw,38px)] sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight mt-3 sm:mt-4">OC-News is waking up…</h2>
-          <div class="flex items-center gap-2 mt-2 sm:mt-3">
-            <span class="text-xs text-[var(--sub)]" id="heroMeta">Loading top story…</span>
-            <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
-          </div>
-          <div class="mt-3 sm:mt-4 flex items-center gap-3">
-            <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
-            <button id="shareBtn" class="btn rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Share</button>
-            <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
-            <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
-          </div>
-          <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
-            <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
+          <!-- Headline BELOW image -->
+          <div class="px-4 sm:px-0">
+            <h2 id="heroTitle" class="text-balance text-[clamp(22px,7.2vw,38px)] sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight mt-3 sm:mt-4">OC-News is waking up…</h2>
+            <div class="flex items-center gap-2 mt-2 sm:mt-3">
+              <span class="text-xs text-[var(--sub)]" id="heroMeta">Loading top story…</span>
+              <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
+            </div>
+            <div class="mt-3 sm:mt-4 flex items-center gap-3">
+              <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
+              <button id="shareBtn" class="btn rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Share</button>
+              <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
+              <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
+            </div>
+            <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
+              <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- SUB TILES -->
-  <section class="relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-      <ul id="newsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- Populated by JS --></ul>
-    </div>
-    <div class="hairline"></div>
-  </section>
-
-  <!-- TRENDING -->
-  <section id="trendingSection" class="relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
-      <div class="flex items-center justify-between gap-3 mb-3">
-        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
-        <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
+    <!-- SUB TILES -->
+    <section class="relative">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+        <ul id="newsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- Populated by JS --></ul>
       </div>
-      <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
-    </div>
-    <div class="hairline"></div>
-  </section>
+      <div class="hairline"></div>
+    </section>
 
-  <!-- GOOGLE TRENDS -->
-  <section id="gtSection" class="relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <div class="flex items-center justify-between gap-3 mb-4">
-        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
-        <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
+    <!-- TRENDING -->
+    <section id="trendingSection" class="relative">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
+          <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
+        </div>
+        <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
       </div>
-      <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
-      <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
-    </div>
-  </section>
+      <div class="hairline"></div>
+    </section>
+
+    <!-- GOOGLE TRENDS -->
+    <section id="gtSection" class="relative">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
+          <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
+        </div>
+        <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
+        <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== WEATHER PAGE ===== -->
+  <main id="weatherPage" class="hidden">
+    <section class="relative">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+          <div>
+            <h1 class="section-lead">Weather</h1>
+            <div class="text-sm wx-sub" id="wxSubtitle">Local weather</div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <div class="relative flex-1 sm:flex-none">
+              <input id="wxQuery" class="w-full sm:w-80 btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" placeholder="Enter city / postal code / address" />
+            </div>
+            <button id="wxSearchBtn" class="btn rounded-lg px-3 py-2 text-sm">Search</button>
+            <button id="wxUseMyBtn" class="link-btn">Use my location</button>
+          </div>
+        </div>
+
+        <!-- Summary card -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+          <article class="card p-5 lg:col-span-2" id="wxSummary">
+            <div class="flex items-end gap-3">
+              <div class="wx-big" id="wxTemp">—°</div>
+              <div>
+                <div class="text-lg sm:text-xl font-semibold" id="wxCond">—</div>
+                <div class="text-sm wx-sub" id="wxMeta">—</div>
+              </div>
+              <div class="ml-auto text-right">
+                <div class="text-sm font-semibold" id="wxPlace">—</div>
+                <div class="text-xs wx-sub" id="wxUpdated">—</div>
+              </div>
+            </div>
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2" id="wxKPIs"><!-- KPIs injected --></div>
+          </article>
+
+          <!-- 7‑day forecast -->
+          <article class="card p-4" id="wx7Day">
+            <h3 class="text-sm font-semibold mb-2">7‑Day</h3>
+            <div id="wxDailyGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"><!-- daily injected --></div>
+          </article>
+        </div>
+      </div>
+      <div class="hairline"></div>
+    </section>
+  </main>
 
   <script>
     /* ===== CONFIG ===== */
@@ -536,6 +604,8 @@
       throw new Error('All proxies failed for ' + url);
     };
 
+    const fetchJSONWithProxies = async (url) => JSON.parse(await fetchWithProxies(url));
+
     const IMG_CACHE = new Map();
     const resolving = new Set();
 
@@ -672,6 +742,7 @@
     const heroOverlayTitle = $('#heroOverlayTitle');
     const trendingRail = $('#trendingRail');
     const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty');
+    const gtTopBadge = $('#gtTopBadge'); const gtTopLink = $('#gtTopLink');
 
     // Single declarations
     const editionSelect = $('#editionSelect');
@@ -684,6 +755,15 @@
     const prevTopBtn = $('#prevTopBtn');
     const nextTopBtn = $('#nextTopBtn');
     const refreshBtnMobile = $('#refreshBtnMobile');
+
+    // Page nav
+    const navNewsBtn = $('#navNewsBtn');
+    const navWeatherBtn = $('#navWeatherBtn');
+    const mNavNewsBtn = $('#mNavNewsBtn');
+    const mNavWeatherBtn = $('#mNavWeatherBtn');
+    const newsPage = $('#newsPage');
+    const weatherPage = $('#weatherPage');
+    const mobileNewsSearchWrap = $('#mobileNewsSearchWrap');
 
     let searchQuery = '';
     let showingSaved = false;
@@ -881,16 +961,13 @@
     const fetchGoogleTrendsDailyAPI = async (geo)=>{
       const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
       const raw = await fetchWithProxies(url);
-      // Remove XSSI prefix )]}',
       const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
       return JSON.parse(jsonText);
     };
 
-    // HTML fallback: parse the public daily page if API is blocked
     const fetchGoogleTrendsDailyHTMLFallback = async (geo)=>{
       const url = `https://trends.google.com/trendingsearches/daily?geo=${geo}`;
       const html = await fetchWithProxies(url);
-      // Try to extract "trendingSearchesDays" array from inline data
       const m = html.match(/"trendingSearchesDays"\s*:\s*(\[[\s\S]*?\])\s*,\s*"/);
       if (!m) throw new Error('Trends HTML structure not found');
       const days = JSON.parse(m[1]);
@@ -898,12 +975,8 @@
     };
 
     const fetchGoogleTrendsDaily = async (geo)=>{
-      try{
-        return await fetchGoogleTrendsDailyAPI(geo);
-      }catch(_){
-        // fallback to HTML parser
-        return await fetchGoogleTrendsDailyHTMLFallback(geo);
-      }
+      try{ return await fetchGoogleTrendsDailyAPI(geo); }
+      catch(_){ return await fetchGoogleTrendsDailyHTMLFallback(geo); }
     };
 
     const renderGoogleTrends = async ()=>{
@@ -912,6 +985,15 @@
         const day = data?.default?.trendingSearchesDays?.[0];
         if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
         gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
+        // Header Top Trend badge
+        const top = day.trendingSearches[0];
+        const topQuery = top?.title?.query || 'Trending';
+        if (topQuery){
+          gtTopLink.textContent = topQuery;
+          gtTopLink.href = `https://www.google.com/search?q=${encodeURIComponent(topQuery)}`;
+          gtTopBadge.classList.remove('hidden');
+        }
+        // Grid of trend cards
         const cards = day.trendingSearches.slice(0, 9).map(ts=>{
           const query = ts.title?.query || 'Trending';
           const traffic = ts.formattedTraffic || '';
@@ -943,6 +1025,7 @@
         gtGrid.innerHTML = '';
         gtMeta.textContent = '—';
         gtEmpty.classList.remove('hidden');
+        gtTopBadge.classList.add('hidden');
       }
     };
 
@@ -1113,6 +1196,8 @@
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
       if (e.key==='/'){
+        // Focus search only on News page
+        if (!weatherPage.classList.contains('hidden')) return;
         const target = window.innerWidth < 640 ? searchInputMobile : searchInput;
         if (document.activeElement !== target){ e.preventDefault(); target?.focus(); target?.select(); }
       }
@@ -1131,6 +1216,177 @@
       const t = e.target;
       if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
     }, true);
+
+    // ===== Weather =====
+    const wxQuery = $('#wxQuery');
+    const wxSearchBtn = $('#wxSearchBtn');
+    const wxUseMyBtn = $('#wxUseMyBtn');
+    const wxPlace = $('#wxPlace');
+    const wxTemp = $('#wxTemp');
+    const wxCond = $('#wxCond');
+    const wxMeta = $('#wxMeta');
+    const wxUpdated = $('#wxUpdated');
+    const wxKPIs = $('#wxKPIs');
+    const wxDailyGrid = $('#wxDailyGrid');
+    const wxSubtitle = $('#wxSubtitle');
+
+    const WX_STORE_KEY = 'oc_wx_last_location';
+
+    const WMO = {
+      0:'Clear', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 45:'Fog', 48:'Depositing rime fog', 51:'Light drizzle', 53:'Drizzle', 55:'Dense drizzle', 56:'Freezing drizzle', 57:'Freezing drizzle', 61:'Light rain', 63:'Rain', 65:'Heavy rain', 66:'Freezing rain', 67:'Freezing rain', 71:'Light snow', 73:'Snow', 75:'Heavy snow', 77:'Snow grains', 80:'Rain showers', 81:'Rain showers', 82:'Violent rain showers', 85:'Snow showers', 86:'Snow showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' };
+
+    const degToCard = (deg)=>{
+      if (typeof deg !== 'number' || isNaN(deg)) return '—';
+      const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      return dirs[Math.round(deg/22.5)%16];
+    };
+
+    const toFixed = (n, d=0)=> (n==null || isNaN(n)) ? '—' : Number(n).toFixed(d);
+
+    const geocodeNominatim = async (q)=>{
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=1`;
+      const text = await fetchWithProxies(url);
+      const arr = JSON.parse(text);
+      if (!arr || !arr.length) throw new Error('No results');
+      const hit = arr[0];
+      return { lat: parseFloat(hit.lat), lon: parseFloat(hit.lon), label: hit.display_name };
+    };
+
+    const autoLocate = async ()=>{
+      // 1) Geolocation API
+      const geoByNavigator = ()=> new Promise((resolve, reject)=>{
+        if (!('geolocation' in navigator)) return reject(new Error('no geo'));
+        navigator.geolocation.getCurrentPosition(
+          (pos)=> resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'Current location' }),
+          (err)=> reject(err),
+          { enableHighAccuracy:false, timeout: 6000, maximumAge: 1800000 }
+        );
+      });
+      try{ return await geoByNavigator(); }catch(_){ }
+
+      // 2) IP lookup fallbacks
+      try{
+        const ip1 = await fetchJSONWithProxies('https://ipapi.co/json/');
+        if (ip1 && ip1.latitude && ip1.longitude) return { lat: ip1.latitude, lon: ip1.longitude, label: `${ip1.city||''} ${ip1.region||''} ${ip1.country||''}`.trim() };
+      }catch(_){ }
+      try{
+        const ip2 = await fetchJSONWithProxies('https://ipwho.is/');
+        if (ip2 && ip2.success && ip2.latitude && ip2.longitude) return { lat: ip2.latitude, lon: ip2.longitude, label: `${ip2.city||''} ${ip2.region||''} ${ip2.country||''}`.trim() };
+      }catch(_){ }
+      throw new Error('Could not auto-locate');
+    };
+
+    const fetchOpenMeteo = async ({lat, lon})=>{
+      const varsCurrent = ['temperature_2m','relative_humidity_2m','apparent_temperature','weather_code','wind_speed_10m','wind_direction_10m','precipitation','cloud_cover','pressure_msl','visibility'];
+      const varsHourly = ['temperature_2m','apparent_temperature','relative_humidity_2m','precipitation_probability','precipitation','weather_code','cloud_cover','wind_speed_10m'];
+      const varsDaily  = ['weather_code','temperature_2m_max','temperature_2m_min','sunrise','sunset','uv_index_max'];
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${varsCurrent.join(',')}&hourly=${varsHourly.join(',')}&daily=${varsDaily.join(',')}&timezone=auto`;
+      const json = await fetchJSONWithProxies(url);
+      return json;
+    };
+
+    const renderKPIs = (cur)=>{
+      const cells = [
+        { k:'Feels like', v:`${toFixed(cur.apparent_temperature,0)}°` },
+        { k:'Humidity',   v:`${toFixed(cur.relative_humidity_2m,0)}%` },
+        { k:'Wind',       v:`${toFixed(cur.wind_speed_10m,0)} km/h ${degToCard(cur.wind_direction_10m)}` },
+        { k:'Pressure',   v: cur.pressure_msl ? `${toFixed(cur.pressure_msl,0)} hPa` : '—' },
+        { k:'Visibility', v: cur.visibility ? `${toFixed(cur.visibility/1000,1)} km` : '—' },
+        { k:'Clouds',     v: cur.cloud_cover!=null ? `${toFixed(cur.cloud_cover,0)}%` : '—' },
+        { k:'Precip',     v: cur.precipitation!=null ? `${toFixed(cur.precipitation,1)} mm` : '—' }
+      ];
+      wxKPIs.innerHTML = cells.map(c=>`<div class="wx-kpi"><div class="text-xs wx-sub">${c.k}</div><div class="text-base font-semibold">${c.v}</div></div>`).join('');
+    };
+
+    const dayName = (iso)=> new Date(iso).toLocaleDateString([], { weekday:'short' });
+
+    const renderDaily = (daily)=>{
+      const out = [];
+      const len = Math.min(daily.time?.length||0, 7);
+      for (let i=0;i<len;i++){
+        const name = dayName(daily.time[i]);
+        const hi = daily.temperature_2m_max?.[i];
+        const lo = daily.temperature_2m_min?.[i];
+        const code = daily.weather_code?.[i];
+        out.push(`<div class="p-3 border border-[var(--border)] rounded-lg bg-[var(--surface)]"><div class="text-xs wx-sub">${name}</div><div class="text-sm font-semibold">${WMO[code]||'—'}</div><div class="text-sm mt-1">${toFixed(lo,0)}° / <span class="font-semibold">${toFixed(hi,0)}°</span></div></div>`);
+      }
+      wxDailyGrid.innerHTML = out.join('');
+    };
+
+    const updateWeatherUI = ({place, cur, daily})=>{
+      wxPlace.textContent = place || '—';
+      wxTemp.textContent = `${toFixed(cur.temperature_2m,0)}°`;
+      wxCond.textContent = WMO[cur.weather_code] || '—';
+      wxMeta.textContent = `Feels ${toFixed(cur.apparent_temperature,0)}° • Humidity ${toFixed(cur.relative_humidity_2m,0)}%`;
+      wxUpdated.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+      renderKPIs(cur);
+      renderDaily(daily);
+    };
+
+    const runWeatherLookup = async ({lat, lon, label})=>{
+      wxSubtitle.textContent = 'Loading…';
+      try{
+        const data = await fetchOpenMeteo({lat, lon});
+        const cur = data.current || {};
+        const daily = data.daily || {};
+        updateWeatherUI({ place: label || `${toFixed(lat,2)}, ${toFixed(lon,2)}`, cur, daily });
+        localStorage.setItem(WX_STORE_KEY, JSON.stringify({lat, lon, label: label || ''}));
+        wxSubtitle.textContent = 'Current conditions';
+      }catch(err){
+        console.error('Weather error', err);
+        wxSubtitle.textContent = 'Failed to load weather.';
+      }
+    };
+
+    let weatherInitDone = false;
+    const ensureWeatherInit = async ()=>{
+      if (weatherInitDone) return;
+      weatherInitDone = true;
+      // Try cached
+      try{
+        const cached = JSON.parse(localStorage.getItem(WX_STORE_KEY)||'null');
+        if (cached && cached.lat && cached.lon){ await runWeatherLookup(cached); return; }
+      }catch(_){ }
+      // Try auto locate
+      try{ const loc = await autoLocate(); await runWeatherLookup(loc); }
+      catch(_){ wxSubtitle.textContent = 'Enter a location to begin.'; }
+    };
+
+    wxSearchBtn?.addEventListener('click', async ()=>{
+      const q = (wxQuery.value||'').trim(); if (!q) return;
+      wxSubtitle.textContent = 'Searching…';
+      try{ const loc = await geocodeNominatim(q); await runWeatherLookup(loc); }
+      catch(_){ wxSubtitle.textContent = 'No results. Try a city, postal code, or full address.'; }
+    });
+    wxQuery?.addEventListener('keydown', (e)=>{ if (e.key==='Enter') wxSearchBtn.click(); });
+    wxUseMyBtn?.addEventListener('click', async ()=>{
+      wxSubtitle.textContent = 'Locating…';
+      try{ const loc = await autoLocate(); await runWeatherLookup(loc); }
+      catch(_){ wxSubtitle.textContent = 'Could not determine your location.'; }
+    });
+
+    // Page switching
+    const setActiveNav = (page)=>{
+      const isNews = page==='news';
+      newsPage.classList.toggle('hidden', !isNews);
+      weatherPage.classList.toggle('hidden', isNews);
+      navNewsBtn?.classList.toggle('active', isNews);
+      navWeatherBtn?.classList.toggle('active', !isNews);
+      mNavNewsBtn?.classList.toggle('active', isNews);
+      mNavWeatherBtn?.classList.toggle('active', !isNews);
+      // Mobile search only visible on News
+      mobileNewsSearchWrap?.classList.toggle('hidden', !isNews);
+      // When entering Weather, initialize
+      if (!isNews) ensureWeatherInit();
+      // Scroll to top for clean switch
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    navNewsBtn?.addEventListener('click', ()=> setActiveNav('news'));
+    navWeatherBtn?.addEventListener('click', ()=> setActiveNav('weather'));
+    mNavNewsBtn?.addEventListener('click', ()=> setActiveNav('news'));
+    mNavWeatherBtn?.addEventListener('click', ()=> setActiveNav('weather'));
+    $('#homeLink')?.addEventListener('click', (e)=>{ e.preventDefault(); setActiveNav('news'); });
 
     // Start
     const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
