@@ -4,6 +4,11 @@
   Fetches many RSS feeds through permissive CORS proxies (AllOrigins + Jina Reader) and gracefully degrades.
   Apple-inspired, BUT simplified: pure backgrounds, crisp borders, tight type.
   Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
+
+  NEW:
+  - Global logo size vars: --logo-size, --logo-size-lg (edit in :root)
+  - Dark mode: header logo auto-swaps to white via invert filter
+  - Fullscreen preloader: white background with black spinner shown before feeds render
 -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-theme="auto">
@@ -42,8 +47,16 @@
     }
   </script>
   <style>
-    /* THEME TOKENS (CSS variables) — Pure backgrounds */
+    /* ===========
+       THEME TOKENS
+       =========== */
+
+    /* Global tweakables */
     :root {
+      /* LOGO SIZE VARS — edit these to resize the header logo globally */
+      --logo-size: 34px;      /* default header logo height */
+      --logo-size-lg: 40px;   /* header logo height on ≥640px screens */
+
       --radius: 14px;
       --bg: #0b0b0c;      /* dark default */
       --surface: #000000; /* pure black */
@@ -85,11 +98,35 @@
     .btn { background: transparent; border: 1px solid var(--border); }
     .btn:hover { background: var(--card-hover); }
     .hairline { height: 1px; background: var(--border); }
+
+    /* Header logo handling */
+    .logo-img { height: var(--logo-size); width: auto; transition: filter .2s ease; }
+    @media (min-width: 640px) {
+      .logo-img { height: var(--logo-size-lg); }
+    }
+    /* Make external SVG logo white in dark mode (no change to your actual asset) */
+    .dark .logo-img { filter: invert(1) brightness(1.08); }
+
+    /* Fullscreen preloader (white bg + black spinner) */
+    #preload {
+      position: fixed; inset: 0; z-index: 70;
+      background: #ffffff; display: grid; place-items: center;
+    }
+    /* Prevent layout shift under preloader */
+    body.preloading { overflow: hidden; }
   </style>
 </head>
 
-<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)]">
-  <!-- Top Loader (shows during fetch) -->
+<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading">
+  <!-- Fullscreen Preloader -->
+  <div id="preload" aria-live="polite" aria-busy="true">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-10 h-10 rounded-full border-2 border-black border-t-transparent animate-spin" role="status" aria-label="Loading"></div>
+      <div class="text-xs tracking-wide text-black/70">Loading news…</div>
+    </div>
+  </div>
+
+  <!-- Top Loader (thin progress at top during fetch) -->
   <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
@@ -100,7 +137,7 @@
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
-            <img src="logo.svg" alt="OpenCounsel" class="h-6 w-auto" />
+            <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
           </a>
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
@@ -410,6 +447,7 @@
     const ticker    = $('#ticker');
     const sourceBadge = $('#sourceBadge');
     const topLoader = $('#topLoader');
+    const preload   = $('#preload');
 
     // Filter state
     let searchQuery = '';
@@ -486,10 +524,32 @@
         const saved = isSaved(it.link);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const imgTag = (SHOW_IMAGES && it.image) ? `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)]">` : `
-          <div class=\"w-12 h-12 rounded-lg grid place-items-center border border-[var(--border)] chip\">\n            <span class=\"text-[10px] text-[var(--sub)]\">${(src || host).slice(0,3).toUpperCase()}</span>\n          </div>
+          <div class="w-12 h-12 rounded-lg grid place-items-center border border-[var(--border)] chip">
+            <span class="text-[10px] text-[var(--sub)]">${(src || host).slice(0,3).toUpperCase()}</span>
+          </div>
         `;
         return `
-          <li class=\"card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors\">\n            <div class=\"flex items-start gap-3\">\n              <a href=\"${it.link}\" target=\"_blank\" rel=\"noopener\" class=\"shrink-0\">${imgTag}</a>\n              <div class=\"min-w-0 flex-1\">\n                <div class=\"flex items-center justify-between gap-3\">\n                  <div class=\"text-xs font-medium text-[var(--sub)]\">\n                    ${src} • ${when}\n                  </div>\n                  <div class=\"flex items-center gap-1.5\">\n                    <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link=\"${it.link}\" class=\"saveBtn text-[11px] chip rounded px-2 py-1\">${saved ? 'Saved' : 'Save'}</button>\n                    <a href=\"${it.link}\" target=\"_blank\" rel=\"noopener\" class=\"text-[10px] text-[var(--sub)] chip rounded px-2 py-1 border\">${host}</a>\n                  </div>\n                </div>\n                <a href=\"${it.link}\" target=\"_blank\" rel=\"noopener\" class=\"group block\">\n                  <h3 class=\"mt-2 text-sm sm:text-base font-semibold leading-snug group-hover:underline decoration-[var(--accent)]/60 underline-offset-4\">\n                    ${safeTitle}\n                  </h3>\n                </a>\n              </div>\n            </div>\n          </li>
+          <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors">
+            <div class="flex items-start gap-3">
+              <a href="${it.link}" target="_blank" rel="noopener" class="shrink-0">${imgTag}</a>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="text-xs font-medium text-[var(--sub)]">
+                    ${src} • ${when}
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
+                    <a href="${it.link}" target="_blank" rel="noopener" class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1 border">${host}</a>
+                  </div>
+                </div>
+                <a href="${it.link}" target="_blank" rel="noopener" class="group block">
+                  <h3 class="mt-2 text-sm sm:text-base font-semibold leading-snug group-hover:underline decoration-[var(--accent)]/60 underline-offset-4">
+                    ${safeTitle}
+                  </h3>
+                </a>
+              </div>
+            </div>
+          </li>
         `;
       }).join('');
 
@@ -569,6 +629,9 @@
       } finally {
         document.body.classList.remove('cursor-progress');
         topLoader.classList.add('hidden');
+        // Hide fullscreen preloader
+        if (preload) preload.style.display = 'none';
+        document.body.classList.remove('preloading');
       }
     };
 
@@ -637,6 +700,7 @@
     });
 
     themeBtn.addEventListener('click', cycleTheme);
+
     // Init theme
     setTheme(localStorage.getItem(THEME_KEY) || 'auto');
     // React to OS theme changes when in auto
@@ -644,6 +708,14 @@
       .addEventListener('change', () => {
         if ((localStorage.getItem(THEME_KEY) || 'auto') === 'auto') setTheme('auto');
       });
+
+    // Safety: auto-hide preloader after 12s even if network is slow
+    setTimeout(() => {
+      if (preload && preload.style.display !== 'none') {
+        preload.style.display = 'none';
+        document.body.classList.remove('preloading');
+      }
+    }, 12000);
 
     // First load
     hydrate();
