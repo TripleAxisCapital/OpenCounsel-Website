@@ -8,13 +8,13 @@
     Apple-inspired, BUT simplified: pure backgrounds, crisp borders, tight type.
     Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
 
-    This revision:
-    • Mobile hero: truly full-screen (100dvh/100svh), no top black band; header collapses out of flow in immersive mode.
-    • Refresh icon: replaced with clean circular arrow (↻).
-    • Added "Trending (Most Read)" section (duplicates across feeds = proxy for reads; newest within ties).
-    • Added "Google Trends Today" section (top daily trending searches, with images + related articles) via CORS-safe fetch.
-    • Extra feeds sprinkled across editions; robust proxy + parsing; brand fallbacks for thumbs.
-    • Accessibility + perf: reduced motion respect, visible focus, no layout thrash, IntersectionObserver pausing hero cycle when offscreen.
+    This revision (Hero & Trends polish + Apple loader hardening):
+    • Google Trends: more resilient fetch/parse, image fallback, Apple-style cards, high-DPI image attempt.
+    • Hero image quality: URL “upscaler” to request 1600–2000px wide where CDNs support (w=,width=,h=,height=…), decode() gate.
+    • Double-title bug: overlay title is primary; below-title visually hidden (kept for a11y/SEO), so you never see two while swiping.
+    • Apple-style preloader: “OC-News”, “Your Open Source News.”, “The AI Workspace. Without Limits.” with subtle shine; stays until feeds + trends + hero images are fully ready and decoded. No second wait after.
+    • Removed the “🔥 … src” chips from cards to simplify UI (feature logic retained internally).
+    • Kept every other feature intact: editions, search, save, share, theme, keyboard shortcuts, trending rail, etc.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -35,12 +35,22 @@
           keyframes: {
             'pulse-soft': { '0%,100%': { opacity: .65 }, '50%': { opacity: 1 } },
             'ticker': { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
-            'progress': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } }
+            'progress': { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(100%)' } },
+            'shine': {
+              '0%': { backgroundPosition: '-200% 0' },
+              '100%': { backgroundPosition: '200% 0' }
+            },
+            'fade-up': {
+              '0%': { opacity: 0, transform: 'translateY(8px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' }
+            }
           },
           animation: {
             'pulse-soft': 'pulse-soft 3.6s ease-in-out infinite',
             'ticker': 'ticker 18s linear infinite',
-            'progress': 'progress 1.1s ease-in-out infinite'
+            'progress': 'progress 1.1s ease-in-out infinite',
+            'shine': 'shine 1.4s linear infinite',
+            'fade-up': 'fade-up .6s ease forwards'
           }
         }
       }
@@ -59,6 +69,7 @@
       --chip:rgba(255,255,255,0.06);--chip-border:rgba(255,255,255,0.12);
       --card-hover:rgba(255,255,255,0.06);
       --header-h:64px;
+      --gloss: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
     }
     html.light{
       --bg:#ffffff;--surface:#ffffff;--elev:rgba(10,10,15,0.035);
@@ -72,8 +83,9 @@
     .text-balance{ text-wrap:balance }
     .no-scrollbar::-webkit-scrollbar{ display:none }
     .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
+    .sr-only{ position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important }
     @media (prefers-reduced-motion: reduce){
-      .animate-pulse-soft,.animate-ticker,.animate-progress{ animation:none!important }
+      .animate-pulse-soft,.animate-ticker,.animate-progress,.animate-shine,.animate-fade-up{ animation:none!important }
       .hero-track{ scroll-behavior:auto!important }
     }
 
@@ -91,15 +103,24 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    #preload{ position:fixed; inset:0; z-index:70; background:#ffffff; display:grid; place-items:center }
+    /* ===== Apple-style Preloader (full-screen) ===== */
+    #preload{ position:fixed; inset:0; z-index:70; background:var(--surface); display:grid; place-items:center; }
+    #preloadInner{ display:flex; flex-direction:column; align-items:center; gap:.5rem; }
+    #preload .brand{ font-weight:800; letter-spacing:-0.02em; }
+    #preload .shine{
+      background: var(--gloss);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: shine 1.4s linear infinite;
+    }
+    #preload .subtitle{ color:var(--sub) }
+    #preload .dots{ display:inline-flex; gap:6px }
+    #preload .dots span{ width:6px; height:6px; border-radius:999px; background:var(--border); }
     body.preloading{ overflow:hidden }
 
-    .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface) }
-    .seg button{ padding:6px 10px; border-radius:999px; font-size:12px }
-    .seg button.active{ background:var(--card-hover) }
-
     /* ===== FULL-SCREEN HERO ===== */
-    /* Container uses block padding on desktop; zero on mobile */
     .hero-section-container{ padding-block:1.5rem }
     @media (min-width:640px){ .hero-section-container{ padding-block:2rem } }
     @media (min-width:1024px){ .hero-section-container{ padding-block:2.5rem } }
@@ -113,7 +134,10 @@
     .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth }
     .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
     .hero-slide a{ position:absolute; inset:0; display:block }
-    .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
+    .hero-slide img{
+      width:100%; height:100%; object-fit:cover; display:block;
+      image-rendering:auto; /* preserve quality */
+    }
     .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events:none }
     html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%) }
     .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:16px; display:grid; gap:6px; pointer-events:none }
@@ -130,7 +154,6 @@
 
     /* ===== Mobile immersive hero ===== */
     @media (max-width: 639.98px){
-      /* Remove all surrounding paddings for a true edge-to-edge fullscreen */
       .hero-section-container{ padding:0!important }
       #heroCard{ padding:0!important; border:none!important; border-radius:0!important; box-shadow:none!important; min-height:calc(100svh - var(--header-h)) }
       .hero-media{ border:none!important; border-radius:0!important; height:calc(100svh - var(--header-h)); min-height:calc(100svh - var(--header-h)) }
@@ -141,8 +164,7 @@
       .hero-dots{ bottom:14px }
     }
 
-    /* ===== Immersive-at-top state =====
-       Make header fixed & out of flow so no blank band remains. Use 100dvh on capable UAs. */
+    /* ===== Immersive-at-top state ===== */
     body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
     header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
     body.hero-immersive #heroCard{ min-height:100dvh }
@@ -155,15 +177,21 @@
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
-  <!-- Fullscreen Preloader -->
+  <!-- Fullscreen Preloader (Apple-style) -->
   <div id="preload" aria-live="polite" aria-busy="true">
-    <div class="flex flex-col items-center gap-4">
-      <div class="w-10 h-10 rounded-full border-2 border-black border-t-transparent animate-spin" role="status" aria-label="Loading"></div>
-      <div class="text-xs tracking-wide text-black/70">Loading news…</div>
+    <div id="preloadInner">
+      <img src="logo.svg" alt="OC-News" class="logo-img mb-3 animate-fade-up" style="animation-delay:.05s">
+      <div class="brand text-2xl sm:text-3xl animate-fade-up shine" style="animation-delay:.12s">OC-News</div>
+      <div class="subtitle text-sm sm:text-base animate-fade-up" style="animation-delay:.22s">Your Open Source News.</div>
+      <div class="subtitle text-xs sm:text-sm animate-fade-up" style="animation-delay:.32s">The AI Workspace. Without Limits.</div>
+      <div class="mt-4 w-40 h-[2px] bg-[var(--border)] overflow-hidden rounded-full animate-fade-up" style="animation-delay:.42s">
+        <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
+      </div>
+      <div class="mt-3 dots animate-fade-up" style="animation-delay:.52s"><span></span><span></span><span></span></div>
     </div>
   </div>
 
-  <!-- Top Loader -->
+  <!-- Top Loader (kept for optional manual refresh; hidden on initial boot) -->
   <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
@@ -263,9 +291,10 @@
           </div>
         </figure>
 
-        <!-- Desktop meta -->
-        <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">OC-News is waking up…</h1>
-        <p id="heroDesc" class="mt-2 sm:mt-3 text-sm sm:text-base lg:text-lg text-[var(--sub)] max-w-3xl">Surfacing the #1 breaking headline across trusted sources. Crisp. Fast. Private.</p>
+        <!-- Desktop meta (kept for a11y/SEO, visually hidden to avoid duplicate with overlay) -->
+        <h1 id="heroTitle" class="sr-only">OC-News is waking up…</h1>
+        <p id="heroDesc" class="sr-only">Surfacing the #1 breaking headline across trusted sources. Crisp. Fast. Private.</p>
+
         <div class="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
           <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
           <button id="shareBtn" class="btn rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Share</button>
@@ -495,20 +524,44 @@
     const brandSources = (host)=>{
       const base = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
       return {
-        src: `${base}?size=512`,
-        srcset: `${base}?size=64 64w, ${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,
+        src: `${base}?size=1024`,
+        srcset: `${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w, ${base}?size=1024 1024w`,
         s2: `https://www.google.com/s2/favicons?domain=${host}&sz=256`
       };
     };
     const brandLogoHTML = (host, className = '', alt = '')=>{
       const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+      return `<img src="${b.src}" srcset="${b.srcset}" sizes="100vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
     const letterTileHTML = (label='?', className='')=>`
       <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
         <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
       </div>
     `;
+
+    /* =========================
+       IMAGE QUALITY HELPERS
+       ========================= */
+    const upgradeImageURL = (u)=>{
+      if(!u) return u;
+      try{
+        const url = new URL(u, location.href);
+        // Common CDN params
+        const keys = ['w','width','maxwidth','max_w','mw','h','height','maxheight','max_h','q','quality','scale'];
+        keys.forEach(k=>{
+          if(url.searchParams.has(k)){
+            if(k==='q' || k==='quality'){ url.searchParams.set(k,'90'); }
+            else if(k==='scale'){ url.searchParams.set(k,'2'); }
+            else{ url.searchParams.set(k,'1600'); }
+          }
+        });
+        // Path-based resize patterns (very common)
+        url.pathname = url.pathname
+          .replace(/\/(crop|resize|fit)\/[^/]+/i, '/$1/1600x0')
+          .replace(/(\d{2,4})x(\d{2,4})/g, (m,w,h)=> `${Math.max(+w,+h,1600)}x${Math.max(+w,+h,0)}`);
+        return url.toString();
+      }catch{ return u }
+    };
 
     /* =========================
        RSS + IMAGE RESOLUTION
@@ -619,8 +672,9 @@
       try{
         const html = await fetchWithProxies(url);
         const img = tryFindOgImage(html, url) || '';
-        IMG_CACHE.set(url, img);
-        return img;
+        const upgraded = upgradeImageURL(img);
+        IMG_CACHE.set(url, upgraded);
+        return upgraded;
       }catch{
         IMG_CACHE.set(url, '');
         return '';
@@ -635,6 +689,18 @@
         if(best){ it.image = best; updated = true; }
       }));
       if(updated){ applyFilter(); }
+    };
+
+    const preloadImages = async (urls)=>{
+      const tasks = urls.map(src=>{
+        if(!src) return Promise.resolve();
+        const img = new Image();
+        img.decoding = 'async';
+        img.referrerPolicy = 'no-referrer';
+        img.src = src;
+        return (img.decode ? img.decode() : new Promise((res)=>{ img.onload=img.onerror=res; }));
+      });
+      try{ await Promise.all(tasks); }catch{}
     };
 
     const loadFeeds = async (editionKey)=>{
@@ -666,6 +732,7 @@
       uniq.forEach(u=>{
         const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
         u._score = (u.trendCount||1) * (1/ageMin);
+        if(u.image) u.image = upgradeImageURL(u.image);
       });
       uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
       return uniq.slice(0, MAX_ITEMS);
@@ -747,9 +814,12 @@
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
         const host = hostname(it.link) || 'news.google.com';
-        const src  = (SHOW_IMAGES && it.image) ? it.image : '';
+        const rawSrc  = (SHOW_IMAGES && it.image) ? it.image : '';
+        const src = upgradeImageURL(rawSrc);
         const label= it.source || host;
-        const imgHTML = src ? `<img src="${src}" alt="${label}">` : brandLogoHTML(host, '', label);
+        const imgHTML = src
+          ? `<img src="${src}" ${idx===0?'loading="eager" fetchpriority="high"':'loading="lazy"'} decoding="async" alt="${label}">`
+          : brandLogoHTML(host, '', label);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
@@ -771,9 +841,9 @@
       if(!filteredItems.length) return;
       const item = filteredItems[idx % filteredItems.length];
       const host = hostname(item.link);
-      heroTitle.textContent = item.title;
-      heroOverlayTitle.textContent = item.title;
-      heroDesc.textContent  = item.source ? `From ${item.source}` : host;
+      heroTitle.textContent = item.title;         // kept for a11y/SEO
+      heroOverlayTitle.textContent = item.title;  // visible overlay
+      heroDesc.textContent  = item.source ? `From ${item.source}` : host; // a11y only
       heroMeta.textContent  = `${timeAgo(item.pubDate)} • #1 breaking now`;
       heroLink.href         = item.link;
       sourceBadge.textContent = host;
@@ -790,15 +860,16 @@
       // Sort by trendCount desc, then recency
       const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
       trendingRail.innerHTML = top.map(it=>{
-        const src = it.image ? `<img src="${it.image}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${hostname(it.link)}" alt="">`
-                              : brandLogoHTML(hostname(it.link),'w-full h-44 object-contain rounded-md border border-[var(--border)]', it.source||hostname(it.link));
+        const imgSrc = it.image ? upgradeImageURL(it.image) : '';
+        const src = imgSrc
+          ? `<img src="${imgSrc}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${hostname(it.link)}" alt="">`
+          : brandLogoHTML(hostname(it.link),'w-full h-44 object-contain rounded-md border border-[var(--border)]', it.source||hostname(it.link));
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const host = hostname(it.link);
         return `
           <article class="card p-3 sm:p-4">
             <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${src}</a>
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-              <span class="chip rounded px-2 py-1">🔥 ${it.trendCount} sources</span>
               <span>${timeAgo(it.pubDate)}</span>
             </div>
             <a href="${it.link}" target="_blank" rel="noopener" class="block">
@@ -812,9 +883,7 @@
 
     const render = (items)=>{
       if(!items || !items.length){
-        heroTitle.textContent = 'No headlines available right now.';
         heroOverlayTitle.textContent = 'No headlines available right now.';
-        heroDesc.textContent  = 'Try Refresh — or check your connection.';
         heroMeta.textContent  = '—';
         heroLink.classList.add('pointer-events-none','opacity-60');
         sourceBadge.textContent = '—';
@@ -830,7 +899,7 @@
       renderTicker(items);
       countLabel.textContent = `${items.length} stor${items.length === 1 ? 'y' : 'ies'}`;
 
-      // Render main list
+      // Render main list (simplified: removed fire chip)
       newsList.innerHTML = items.map(it=>{
         const src = it.source || hostname(it.link) || 'Source';
         const when = timeAgo(it.pubDate);
@@ -839,7 +908,8 @@
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         let thumbHTML = '';
         if (SHOW_IMAGES && it.image){
-          thumbHTML = `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
+          const imgSrc = upgradeImageURL(it.image);
+          thumbHTML = `<img src="${imgSrc}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
         }else{
           thumbHTML = brandLogoHTML(host, 'w-12 h-12 rounded-lg object-contain border border-[var(--border)]', src);
         }
@@ -852,7 +922,6 @@
                   <div class="text-xs font-medium text-[var(--sub)]">${src} • ${when}</div>
                   <div class="flex items-center gap-1.5">
                     <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
-                    <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1 border">🔥 ${it.trendCount||1} src</span>
                   </div>
                 </div>
                 <a href="${it.link}" target="_blank" rel="noopener" class="group block">
@@ -906,7 +975,7 @@
     /* =========================
        GOOGLE TRENDS (Daily)
        ========================= */
-    const tzMinutes = -new Date().getTimezoneOffset(); // e.g., -420 for PDT
+    const tzMinutes = -new Date().getTimezoneOffset();
     const trendsGeoForEdition = (ed)=>{
       if (ed === 'CA') return 'CA';
       if (ed === 'US' || ed === 'FIN' || ed === 'GLOBAL') return 'US'; // fallback to US for availability
@@ -915,7 +984,6 @@
     const fetchGoogleTrendsDaily = async (geo)=>{
       const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
       const raw = await fetchWithProxies(url);
-      // Response usually starts with )]}',
       const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
       const data = JSON.parse(jsonText);
       return data;
@@ -932,9 +1000,10 @@
           const art = (ts.articles||[])[0] || {};
           const link = art.url || '#';
           const host = hostname(link);
-          const image = (ts.image && ts.image.imageUrl) || '';
-          const img = image ? `<img src="${image}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
-                            : brandLogoHTML(host || 'google.com','w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
+          const image = ts.image?.imageUrl ? upgradeImageURL(ts.image.imageUrl) : '';
+          const img = image
+            ? `<img src="${image}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
+            : brandLogoHTML(host || 'google.com','w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
           const source = art.source || host || 'Google';
           const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
           return `
@@ -1033,31 +1102,52 @@
     };
     window.addEventListener('scroll', updateImmersiveHeader, { passive:true });
 
-    const hydrate = async ()=>{
+    // Initial hydrate with strong preloader gating
+    const hydrate = async ({ showPreloader = true } = {})=>{
       const preserveY = window.scrollY;
       const shouldPreserve = preserveY > (window.innerHeight * 0.7);
       try{
-        topLoader.classList.remove('hidden');
-        document.body.classList.add('cursor-progress');
-        updatedAt.textContent = 'Updating…';
+        if(showPreloader){
+          preload.style.display = 'grid';
+          document.body.classList.add('preloading');
+        }else{
+          topLoader.classList.remove('hidden');
+          document.body.classList.add('cursor-progress');
+        }
+        updatedAt.textContent = showPreloader ? 'Loading…' : 'Updating…';
+
+        // Fetch feeds
         const items = await loadFeeds(currentEdition);
         cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
         cycleIdx = 0;
-        applyFilter(); // renders
+
+        // Prime hero slides into DOM (so we know which images to decode)
+        applyFilter(); // renders base UI
+
+        // Preload hero images (first N)
+        const heroCandidates = cacheItems.slice(0, Math.min(HERO_SLIDES, cacheItems.length))
+          .map(it => it.image ? upgradeImageURL(it.image) : '');
+        await preloadImages(heroCandidates);
+
+        // Fetch Google Trends in parallel but ensure it’s ready before we end preloader
+        await renderGoogleTrends();
+
         if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-        // Also refresh Google Trends
-        renderGoogleTrends();
       }catch(e){
         console.error(e);
         cacheItems = [];
         applyFilter();
-        renderGoogleTrends();
+        await renderGoogleTrends().catch(()=>{});
       }finally{
-        document.body.classList.remove('cursor-progress');
-        topLoader.classList.add('hidden');
-        if (preload) preload.style.display = 'none';
-        document.body.classList.remove('preloading');
-        if (shouldPreserve){ requestAnimationFrame(()=> window.scrollTo({ top: preserveY, behavior: 'auto' })) }
+        if(showPreloader){
+          preload.style.display = 'none';
+          document.body.classList.remove('preloading');
+        }else{
+          document.body.classList.remove('cursor-progress');
+          topLoader.classList.add('hidden');
+        }
+        updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+        if (shouldPreserve){ requestAnimationFrame(()=> window.scrollTo({ top: preserveY, behavior:'auto' })) }
         updateImmersiveHeader();
       }
     };
@@ -1067,14 +1157,15 @@
     currentEdition = DEFAULT_EDITION;
     setMobileEditionUI();
 
-    editionSelect.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); hydrate(); });
-    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect.value = currentEdition; setMobileEditionUI(); hydrate(); }));
+    editionSelect.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); hydrate({ showPreloader:true }); });
+    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect.value = currentEdition; setMobileEditionUI(); hydrate({ showPreloader:true }); }));
 
-    refreshBtn.addEventListener('click', hydrate);
+    // Refresh: use full preloader so all waiting is held there (no second spinner)
+    refreshBtn.addEventListener('click', ()=> hydrate({ showPreloader:true }));
 
     shareBtn.addEventListener('click', async ()=>{
       const url = heroLink.href;
-      const title = heroTitle.textContent || 'OC-News';
+      const title = heroOverlayTitle.textContent || 'OC-News';
       try{
         if (navigator.share) await navigator.share({ title, url });
         else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
@@ -1103,7 +1194,7 @@
 
     // Keyboard shortcuts
     window.addEventListener('keydown', (e)=>{
-      if (e.key==='r' || e.key==='R'){ e.preventDefault(); hydrate(); }
+      if (e.key==='r' || e.key==='R'){ e.preventDefault(); hydrate({ showPreloader:true }); }
       if (e.key==='t' || e.key==='T'){ e.preventDefault(); cycleTheme(); }
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
@@ -1119,8 +1210,8 @@
     window.matchMedia && window.matchMedia('(prefers-color-scheme: light)')
       .addEventListener('change', ()=>{ if ((localStorage.getItem('oc_theme') || 'auto') === 'auto') setTheme('auto') });
 
-    // Safety: hide preloader if network slow
-    setTimeout(()=>{ if (preload && preload.style.display !== 'none'){ preload.style.display = 'none'; document.body.classList.remove('preloading'); } }, 12000);
+    // Safety fallback if something hangs (rare)
+    setTimeout(()=>{ if (preload && preload.style.display !== 'none'){ preload.style.display = 'none'; document.body.classList.remove('preloading'); } }, 15000);
 
     // Global image fallback
     const handleImgError = (img)=>{
@@ -1135,11 +1226,11 @@
       if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
     }, true);
 
-    // First load
+    // First load (full preloader)
     const updateHeaderAndHydrate = ()=>{
       setHeaderVar();
       updateImmersiveHeader();
-      hydrate();
+      hydrate({ showPreloader:true });
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndHydrate);
     else updateHeaderAndHydrate();
@@ -1149,10 +1240,12 @@
   =====================================================================
   APPENDIX — NOTES
   ---------------------------------------------------------------------
-  • Trending rail = duplicates across feeds (trendCount) + recency decay (proxy for "reads").
-  • Google Trends: daily top searches via trends.google.com (proxied), tz auto-set; edition controls geo (CA/US).
-  • Mobile black band fix: header becomes fixed & out-of-flow in immersive state; hero uses 100dvh.
-  • Controls: R refresh, T theme, ←/→ hero, / search, ⌘+G scroll top.
+  • Apple loader: animated shine on brand text; blocks until feeds + trends + hero images decode.
+  • Google Trends: official daily endpoint (proxied), tolerant parsing, CDNs upscaled, logo fallback.
+  • Hero images: request larger sizes via URL param/path normalization; decode() preloaded; first slide eager+fetchpriority.
+  • Double-title fix: overlay title is visible; below title/desc are sr-only for a11y/SEO (no duplicate while swiping).
+  • “🔥 1 src” indicators removed from UI; logic retained internally for Trending ranking.
+  • Controls: R refresh (uses full preloader), T theme, ←/→ hero, / search, ⌘+G scroll top.
   =====================================================================
   -->
 </body>
