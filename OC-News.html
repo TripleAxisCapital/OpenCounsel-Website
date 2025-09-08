@@ -4,20 +4,22 @@
   <!--
     OC-News — Apple-clean, pure white/black. No gradients.
     Single-file, drop-in page. No build, no API keys.
+    Fetches many RSS feeds through permissive CORS proxies (AllOrigins + Jina Reader) and gracefully degrades.
+    Apple-inspired, BUT simplified: pure backgrounds, crisp borders, tight type.
+    Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
 
     This revision:
-    • Mobile black bar fixed (100dvh, safe-area insets, header transform logic tightened).
-    • Mobile hero = true full-screen, swipeable, headline over full-bleed photo.
-    • Refresh icon replaced with a proper circular arrow.
-    • Added "Trending Articles" section (×N sources = popularity proxy).
-    • Added "Most Searched Today" (Google Trends RSS via proxies; shows approx traffic).
-    • More feeds (finance & general) while remaining CORS-friendly via AllOrigins + Jina Reader.
-    • Kept: image resolver, dedup, sort/filter, save/share, ticker, editions, shortcuts, reduced motion, etc.
+    • Mobile hero: truly full-screen (100dvh/100svh), no top black band; header collapses out of flow in immersive mode.
+    • Refresh icon: replaced with clean circular arrow (↻).
+    • Added "Trending (Most Read)" section (duplicates across feeds = proxy for reads; newest within ties).
+    • Added "Google Trends Today" section (top daily trending searches, with images + related articles) via CORS-safe fetch.
+    • Extra feeds sprinkled across editions; robust proxy + parsing; brand fallbacks for thumbs.
+    • Accessibility + perf: reduced motion respect, visible focus, no layout thrash, IntersectionObserver pausing hero cycle when offscreen.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>OC-News — The AI Workspace. Without Limits.</title>
-  <meta name="description" content="OC-News surfaces breaking headlines with an Apple-style minimal hero. Private, fast, elegant." />
+  <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,101 +51,111 @@
        THEME TOKENS
        ========== */
     :root{
-      --logo-size:34px; --logo-size-lg:40px;
+      --logo-size:34px;--logo-size-lg:40px;
       --radius:14px;
-      --bg:#0b0b0c; --surface:#000; --elev:rgba(255,255,255,.04);
-      --border:rgba(255,255,255,.12);
-      --text:#f5f7fb; --sub:#a6acb8; --accent:#356dff; --live:#ff3b30;
-      --chip:rgba(255,255,255,.06); --chip-border:rgba(255,255,255,.12);
-      --card-hover:rgba(255,255,255,.06);
+      --bg:#0b0b0c;--surface:#000000;--elev:rgba(255,255,255,0.04);
+      --border:rgba(255,255,255,0.12);
+      --text:#f5f7fb;--sub:#a6acb8;--accent:#356dff;--live:#ff3b30;
+      --chip:rgba(255,255,255,0.06);--chip-border:rgba(255,255,255,0.12);
+      --card-hover:rgba(255,255,255,0.06);
       --header-h:64px;
     }
     html.light{
-      --bg:#fff; --surface:#fff; --elev:rgba(10,10,15,.035);
-      --border:rgba(5,13,38,.10);
-      --text:#0b0b0e; --sub:#5a6274; --accent:#356dff; --live:#e5484d;
-      --chip:rgba(0,0,0,.035); --chip-border:rgba(0,0,0,.08);
-      --card-hover:rgba(0,0,0,.045);
+      --bg:#ffffff;--surface:#ffffff;--elev:rgba(10,10,15,0.035);
+      --border:rgba(5,13,38,0.10);
+      --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
+      --chip:rgba(0,0,0,0.035);--chip-border:rgba(0,0,0,0.08);
+      --card-hover:rgba(0,0,0,0.045);
     }
 
-    /* Global safe-area polish */
-    html,body{background:var(--bg);}
-    header{padding-top:env(safe-area-inset-top,0);}
-    .text-balance{ text-wrap:balance; }
-    .no-scrollbar::-webkit-scrollbar{ display:none; }
-    .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
-
-    @media (prefers-reduced-motion:reduce){
-      .animate-pulse-soft,.animate-ticker,.animate-progress{ animation:none !important; }
-      .hero-track{ scroll-behavior:auto !important; }
+    /* Utilities */
+    .text-balance{ text-wrap:balance }
+    .no-scrollbar::-webkit-scrollbar{ display:none }
+    .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
+    @media (prefers-reduced-motion: reduce){
+      .animate-pulse-soft,.animate-ticker,.animate-progress{ animation:none!important }
+      .hero-track{ scroll-behavior:auto!important }
     }
 
-    .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); }
-    .chip{ background:var(--chip); border:1px solid var(--chip-border); }
-    .btn{ background:transparent; border:1px solid var(--border); }
-    .btn:hover{ background:var(--card-hover); }
-    .hairline{ height:1px; background:var(--border); }
+    .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
+    .chip{ background:var(--chip); border:1px solid var(--chip-border) }
+    .btn{ background:transparent; border:1px solid var(--border) }
+    .btn:hover{ background:var(--card-hover) }
+    .hairline{ height:1px; background:var(--border) }
 
-    .link-btn{ border:0;background:transparent;padding:6px 8px;font-size:.875rem;color:var(--sub);display:inline-flex;align-items:center;gap:8px;border-radius:8px;}
-    .link-btn:hover{ color:var(--text); }
-    .link-btn:focus-visible{ outline:2px solid color-mix(in oklab, var(--accent) 40%, transparent); outline-offset:2px; border-radius:10px; }
+    .link-btn{ border:0; background:transparent; padding:6px 8px; font-size:.875rem; color:var(--sub); display:inline-flex; align-items:center; gap:8px; border-radius:8px }
+    .link-btn:hover{ color:var(--text) }
+    .link-btn:focus-visible{ outline:2px solid color-mix(in oklab, var(--accent) 40%, transparent); outline-offset:2px; border-radius:10px }
 
-    .logo-img{ height:var(--logo-size); width:auto; transition:filter .2s ease; }
-    @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg); } }
-    .dark .logo-img{ filter:invert(1) brightness(1.08); }
+    .logo-img{ height:var(--logo-size); width:auto; transition:filter .2s ease }
+    @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
+    .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Preloader */
-    #preload{ position:fixed; inset:0; z-index:70; background:#ffffff; display:grid; place-items:center; }
-    body.preloading{ overflow:hidden; }
+    #preload{ position:fixed; inset:0; z-index:70; background:#ffffff; display:grid; place-items:center }
+    body.preloading{ overflow:hidden }
 
-    /* Segmented control (mobile editions) */
-    .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); }
-    .seg button{ padding:6px 10px; border-radius:999px; font-size:12px; }
-    .seg button.active{ background:var(--card-hover); }
+    .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface) }
+    .seg button{ padding:6px 10px; border-radius:999px; font-size:12px }
+    .seg button.active{ background:var(--card-hover) }
 
     /* ===== FULL-SCREEN HERO ===== */
-    #heroCard{ min-height:calc(100dvh - var(--header-h)); display:flex; flex-direction:column; }
-    .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0; }
-    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; }
-    .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center; }
-    .hero-slide a{ position:absolute; inset:0; display:block; }
-    .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block; }
-    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events:none; }
-    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%); }
-    .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:16px; display:grid; gap:6px; pointer-events:none; }
-    .hero-overlay-text h2{ font-size:clamp(20px, 3.5vw, 42px); line-height:1.08; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.35); }
-    html.light .hero-overlay-text h2{ text-shadow:0 2px 12px rgba(255,255,255,.55); }
-    .hero-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; padding:8px; }
-    .hero-nav button{ pointer-events:auto; border:1px solid var(--border); background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center; }
-    html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000; }
-    .hero-dots{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; }
-    .hero-dots span{ width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.55); }
-    .hero-dots span.active{ background:#fff; }
-    html.light .hero-dots span{ background:rgba(0,0,0,.35); }
-    html.light .hero-dots span.active{ background:#000; }
+    /* Container uses block padding on desktop; zero on mobile */
+    .hero-section-container{ padding-block:1.5rem }
+    @media (min-width:640px){ .hero-section-container{ padding-block:2rem } }
+    @media (min-width:1024px){ .hero-section-container{ padding-block:2.5rem } }
+
+    #heroCard{
+      min-height:calc(100svh - var(--header-h));
+      display:flex; flex-direction:column;
+      overflow:hidden
+    }
+    .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0 }
+    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth }
+    .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
+    .hero-slide a{ position:absolute; inset:0; display:block }
+    .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
+    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events:none }
+    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%) }
+    .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:16px; display:grid; gap:6px; pointer-events:none }
+    .hero-overlay-text h2{ font-size:clamp(20px, 3.5vw, 42px); line-height:1.08; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.35) }
+    html.light .hero-overlay-text h2{ text-shadow:0 2px 12px rgba(255,255,255,.55) }
+    .hero-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; padding:8px }
+    .hero-nav button{ pointer-events:auto; border:1px solid var(--border); background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
+    html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
+    .hero-dots{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px }
+    .hero-dots span{ width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.55) }
+    .hero-dots span.active{ background:#fff }
+    html.light .hero-dots span{ background:rgba(0,0,0,.35) }
+    html.light .hero-dots span.active{ background:#000 }
 
     /* ===== Mobile immersive hero ===== */
-    @media (max-width:639.98px){
-      #heroCard{ padding:0 !important; border:none !important; border-radius:0 !important; box-shadow:none !important; min-height:calc(100dvh - var(--header-h)); }
-      .hero-media{ border:none !important; border-radius:0 !important; height:calc(100dvh - var(--header-h)); min-height:calc(100dvh - var(--header-h)); }
-      .hero-top-meta, #heroTitle, #heroDesc, #sourceBadge, .hero-nav, #heroLink, #shareBtn, #saveBtn, #updatedAt, #tickerWrap{ display:none !important; }
-      .hero-overlay-text{ inset-inline:16px; bottom:24px; }
-      .hero-overlay-text > :not(h2){ display:none !important; }
-      .hero-overlay-text h2{ font-size:clamp(20px, 7vw, 28px); font-weight:800; }
-      .hero-dots{ bottom:14px; }
-      .hero-section-container{ padding-left:0 !important; padding-right:0 !important; }
+    @media (max-width: 639.98px){
+      /* Remove all surrounding paddings for a true edge-to-edge fullscreen */
+      .hero-section-container{ padding:0!important }
+      #heroCard{ padding:0!important; border:none!important; border-radius:0!important; box-shadow:none!important; min-height:calc(100svh - var(--header-h)) }
+      .hero-media{ border:none!important; border-radius:0!important; height:calc(100svh - var(--header-h)); min-height:calc(100svh - var(--header-h)) }
+      .hero-top-meta, #heroTitle, #heroDesc, #sourceBadge, .hero-nav, #heroLink, #shareBtn, #saveBtn, #updatedAt, #tickerWrap{ display:none!important }
+      .hero-overlay-text{ inset-inline:16px; bottom:24px }
+      .hero-overlay-text > :not(h2){ display:none!important }
+      .hero-overlay-text h2{ font-size:clamp(20px, 7vw, 28px); font-weight:800 }
+      .hero-dots{ bottom:14px }
     }
 
-    /* ===== Immersive-at-top state ===== */
-    body.hero-immersive header{ transform:translateY(calc(-100% - env(safe-area-inset-top,0))); opacity:0; pointer-events:none; }
-    header{ transition:transform .28s ease, opacity .28s ease; }
-    body.hero-immersive #heroCard{ min-height:100dvh; }
-    body.hero-immersive .hero-media{ height:100dvh; min-height:100dvh; }
-    body.hero-immersive .hero-nav{ display:none; }
+    /* ===== Immersive-at-top state =====
+       Make header fixed & out of flow so no blank band remains. Use 100dvh on capable UAs. */
+    body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
+    header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
+    body.hero-immersive #heroCard{ min-height:100dvh }
+    body.hero-immersive .hero-media{ height:100dvh; min-height:100dvh }
+
+    /* ===== Trending rail ===== */
+    .rail{ display:flex; gap:12px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
+    .rail > article{ scroll-snap-align:center; flex:0 0 84%; max-width:84% }
+    @media (min-width:640px){ .rail > article{ flex:0 0 420px; max-width:420px } }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
-  <!-- Preloader -->
+  <!-- Fullscreen Preloader -->
   <div id="preload" aria-live="polite" aria-busy="true">
     <div class="flex flex-col items-center gap-4">
       <div class="w-10 h-10 rounded-full border-2 border-black border-t-transparent animate-spin" role="status" aria-label="Loading"></div>
@@ -157,7 +169,7 @@
   </div>
 
   <!-- Header -->
-  <header class="sticky top-0 z-40 bg-[var(--surface)]">
+  <header>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
@@ -180,12 +192,12 @@
             <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-64 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
-          <!-- Actions -->
+          <!-- Text-only actions -->
           <button id="refreshBtn" class="link-btn" title="Refresh (R)">
-            <!-- proper circular refresh (clockwise) -->
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 8a9 9 0 1 0 2.26 6.06" />
-              <path d="M21 2v6h-6" />
+            <!-- Circular arrow -->
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-3.22-6.86"/>
+              <path d="M21 3v7h-7"/>
             </svg>
             <span class="hidden sm:inline">Refresh</span>
           </button>
@@ -200,8 +212,7 @@
       </div>
     </div>
     <div class="hairline"></div>
-
-    <!-- Mobile controls -->
+    <!-- Mobile Filters -->
     <div class="sm:hidden">
       <div class="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between gap-2">
         <div class="seg">
@@ -221,7 +232,7 @@
 
   <!-- HERO -->
   <section class="relative">
-    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 hero-section-container">
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 hero-section-container">
       <div id="heroCard" class="card shadow-oc-soft p-3 sm:p-5 lg:p-7 relative overflow-hidden">
         <div class="flex flex-wrap items-center gap-3 mb-3 sm:mb-4 hero-top-meta">
           <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold bg-[var(--live)]/12 text-[var(--text)] border border-[var(--live)]/30">
@@ -234,14 +245,13 @@
           <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
         </div>
 
-        <!-- Full-screen media carousel -->
         <figure id="heroMedia" class="hero-media mb-4 bg-[var(--surface)]">
-          <div id="heroTrack" class="hero-track no-scrollbar"></div>
+          <div id="heroTrack" class="hero-track no-scrollbar"><!-- Slides injected --></div>
           <div class="hero-nav">
-            <button id="prevTopBtn" aria-label="Previous">
+            <button id="prevTopBtn" aria-label="Previous top">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
-            <button id="nextTopBtn" aria-label="Next">
+            <button id="nextTopBtn" aria-label="Next top">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg>
             </button>
           </div>
@@ -253,7 +263,7 @@
           </div>
         </figure>
 
-        <!-- Desktop title/desc/actions -->
+        <!-- Desktop meta -->
         <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">OC-News is waking up…</h1>
         <p id="heroDesc" class="mt-2 sm:mt-3 text-sm sm:text-base lg:text-lg text-[var(--sub)] max-w-3xl">Surfacing the #1 breaking headline across trusted sources. Crisp. Fast. Private.</p>
         <div class="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
@@ -262,8 +272,6 @@
           <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
           <span id="updatedAt" class="text-xs text-[var(--sub)]">—</span>
         </div>
-
-        <!-- Ticker (desktop only) -->
         <div id="tickerWrap" class="mt-6 sm:mt-7 overflow-hidden">
           <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
         </div>
@@ -271,22 +279,21 @@
     </div>
   </section>
 
-  <!-- TRENDING ARTICLES -->
-  <section class="relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <!-- TRENDING (Most Read proxy = duplicates across feeds) -->
+  <section id="trendingSection" class="relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
       <div class="flex items-center justify-between gap-3 mb-3">
-        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending Articles</h2>
-        <div class="text-xs text-[var(--sub)]">Based on cross-source popularity</div>
+        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
+        <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
       </div>
-      <ul id="trendingList" class="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <!-- populated -->
-      </ul>
+      <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
     </div>
+    <div class="hairline"></div>
   </section>
 
   <!-- MAIN LIST -->
   <main class="relative">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-20">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Breaking Headlines</h2>
         <div class="flex items-center gap-2">
@@ -300,24 +307,27 @@
           <div class="text-xs text-[var(--sub)]" id="countLabel">0 stories</div>
         </div>
       </div>
-      <ul id="newsList" class="grid gap-3 sm:gap-4"><!-- Populated --></ul>
-
-      <!-- GOOGLE TRENDS -->
-      <div class="mt-12">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Most Searched Today</h2>
-          <div class="text-xs text-[var(--sub)]" id="trendsUpdated">—</div>
-        </div>
-        <div id="trendsChips" class="flex flex-wrap gap-2 mb-4"><!-- chips --></div>
-        <ul id="trendsNews" class="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3"><!-- related news if present --></ul>
-      </div>
-
-      <!-- Footer -->
-      <div class="mt-12 text-center text-xs text-[var(--sub)]">
-        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch, Yahoo Finance, Nasdaq, Investing.com, Seeking Alpha, Bloomberg*, The Economist, and more (via CORS-friendly proxies). Times are local. *May throttle via proxies.
+      <ul id="newsList" class="grid gap-3 sm:gap-4"><!-- Populated by JS --></ul>
+      <div class="mt-10 text-center text-xs text-[var(--sub)]">
+        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch, Yahoo Finance, Nasdaq, Investing.com, Seeking Alpha, and more (via CORS-friendly proxies). Times are local.
       </div>
     </div>
   </main>
+
+  <!-- GOOGLE TRENDS TODAY -->
+  <section id="gtSection" class="relative">
+    <div class="hairline"></div>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
+        <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
+      </div>
+      <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <!-- trend cards injected -->
+      </div>
+      <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
+    </div>
+  </section>
 
   <script>
     /* =========================
@@ -333,13 +343,13 @@
     const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
     let sortMode = SORT_MODES.NEWEST;
 
-    /* Expanded feeds (CORS-friendly via proxies) */
+    // Expanded feeds
     const FEEDS = {
       CA: [
         'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
         'https://feeds.bbci.co.uk/news/rss.xml',
         'https://feeds.reuters.com/reuters/topNews',
-        'https://feeds.reuters.com/reuters/businessNews',
+        'https://feeds.reuters.com/reuters/worldNews',
         'https://rss.cnn.com/rss/cnn_topstories.rss',
         'https://www.theguardian.com/world/rss',
         'https://www.aljazeera.com/xml/rss/all.xml',
@@ -348,30 +358,18 @@
         'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',
         'https://globalnews.ca/feed/',
         'https://www.nationalpost.com/feed/',
+        // business/markets
+        'https://feeds.reuters.com/reuters/businessNews',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.ft.com/world?format=rss',
         'https://www.wsj.com/xml/rss/3_7085.xml',
-        // Finance adds
-        'https://www.ft.com/markets?format=rss',
-        'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
-        'https://feeds.marketwatch.com/marketwatch/topstories/',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Investing',
-        'https://www.investing.com/rss/news.rss',
-        'https://www.investing.com/rss/news_285.rss',
-        'https://www.investing.com/rss/news_25.rss',
-        'http://finance.yahoo.com/rss/topstories',
-        'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-CA&gl=CA&ceid=CA:en',
-        'https://news.google.com/rss/search?q=site%3Afinance.yahoo.com&hl=en-CA&gl=CA&ceid=CA:en',
-        'https://feeds.bloomberg.com/markets/news.rss',
-        'https://www.economist.com/finance-and-economics/rss.xml',
-        'https://seekingalpha.com/feed.xml'
+        'https://www.theglobeandmail.com/arc/outboundfeeds/rss/?outputType=xml',
+        'https://financialpost.com/feed/'
       ],
       US: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
         'https://feeds.bbci.co.uk/news/rss.xml',
         'https://feeds.reuters.com/reuters/topNews',
-        'https://feeds.reuters.com/reuters/businessNews',
         'https://rss.cnn.com/rss/cnn_topstories.rss',
         'https://www.theguardian.com/us-news/rss',
         'https://www.aljazeera.com/xml/rss/all.xml',
@@ -379,36 +377,23 @@
         'https://www.npr.org/rss/rss.php?id=1001',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.wsj.com/xml/rss/3_7085.xml',
-        // Finance adds
-        'https://www.ft.com/markets?format=rss',
+        'https://feeds.reuters.com/reuters/businessNews',
         'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
         'https://feeds.marketwatch.com/marketwatch/topstories/',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Investing',
-        'http://finance.yahoo.com/rss/topstories',
-        'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en',
-        'https://news.google.com/rss/search?q=stock%20market%20OR%20stocks%20OR%20%22S%26P%20500%22&hl=en-US&gl=US&ceid=US:en',
-        'https://feeds.bloomberg.com/markets/news.rss',
-        'https://www.economist.com/finance-and-economics/rss.xml',
-        'https://seekingalpha.com/feed.xml'
+        'https://markets.businessinsider.com/rss/news',
+        'https://www.usatoday.com/rss/news/'
       ],
       GLOBAL: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
         'https://feeds.bbci.co.uk/news/rss.xml',
         'https://feeds.reuters.com/reuters/topNews',
+        'https://feeds.reuters.com/reuters/worldNews',
         'https://rss.cnn.com/rss/cnn_topstories.rss',
         'https://www.theguardian.com/world/rss',
         'https://www.aljazeera.com/xml/rss/all.xml',
         'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-        'https://www.wsj.com/xml/rss/3_7085.xml',
-        // finance flavor globally
-        'https://feeds.reuters.com/reuters/businessNews',
-        'https://www.ft.com/markets?format=rss',
-        'https://feeds.marketwatch.com/marketwatch/topstories/',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
-        'https://www.investing.com/rss/news.rss',
-        'https://www.investing.com/rss/news_25.rss'
+        'https://www.wsj.com/xml/rss/3_7085.xml'
       ],
       FIN: [
         'https://feeds.reuters.com/reuters/businessNews',
@@ -455,209 +440,317 @@
       'ft.com':'https://logo.clearbit.com/ft.com',
       'wsj.com':'https://logo.clearbit.com/wsj.com',
       'npr.org':'https://logo.clearbit.com/npr.org',
+      'theglobeandmail.com':'https://logo.clearbit.com/theglobeandmail.com',
       'marketwatch.com':'https://logo.clearbit.com/marketwatch.com',
       'finance.yahoo.com':'https://logo.clearbit.com/yahoo.com',
       'nasdaq.com':'https://logo.clearbit.com/nasdaq.com',
       'investing.com':'https://logo.clearbit.com/investing.com',
       'bloomberg.com':'https://logo.clearbit.com/bloomberg.com',
       'economist.com':'https://logo.clearbit.com/economist.com',
-      'seekingalpha.com':'https://logo.clearbit.com/seekingalpha.com'
+      'seekingalpha.com':'https://logo.clearbit.com/seekingalpha.com',
+      'businessinsider.com':'https://logo.clearbit.com/businessinsider.com',
+      'usatoday.com':'https://logo.clearbit.com/usatoday.com'
     };
 
     /* =========================
        UTILS
        ========================= */
-    const $ = (s)=>document.querySelector(s);
-    const $$ = (s)=>Array.from(document.querySelectorAll(s));
-    const timeAgo=(d)=>{const now=new Date();const diff=Math.max(0,now-d);const s=Math.floor(diff/1000);if(s<45)return`${s}s ago`;const m=Math.floor(s/60);if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;const day=Math.floor(h/24);return`${day}d ago`;};
-    const cleanLink=(u)=>{try{const x=new URL(u);const w=x.searchParams.get('url')||x.searchParams.get('u');return w?decodeURIComponent(w):u;}catch{return u;}};
-    const hostname=(u)=>{try{return new URL(u).hostname.replace(/^www\./,'');}catch{return'';}};
-    const absolutize=(src,base)=>{try{ if(!src) return ''; if(src.startsWith('data:')) return ''; if(/^https?:\/\//i.test(src)) return src; if(src.startsWith('//')) return (new URL(base)).protocol+src; return new URL(src,base).toString(); }catch{return src;}};
+    const $ = (sel)=>document.querySelector(sel);
+    const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
+
+    const timeAgo = (d)=>{
+      const now = new Date();
+      const diff = Math.max(0, now - d);
+      const sec = Math.floor(diff/1000);
+      if (sec<45) return `${sec}s ago`;
+      const min = Math.floor(sec/60);
+      if (min<60) return `${min}m ago`;
+      const hr = Math.floor(min/60);
+      if (hr<24) return `${hr}h ago`;
+      const day = Math.floor(hr/24);
+      return `${day}d ago`;
+    };
+
+    const cleanLink = (url)=>{
+      try{
+        const u = new URL(url);
+        const wrapped = u.searchParams.get('url') || u.searchParams.get('u');
+        return wrapped ? decodeURIComponent(wrapped) : url;
+      }catch{ return url }
+    };
+    const hostname = (url)=>{ try{ return new URL(url).hostname.replace(/^www\./,'') } catch{ return '' } };
+    const absolutize = (src, base)=>{
+      try{
+        if(!src) return '';
+        if (src.startsWith('data:')) return '';
+        if (/^https?:\/\//i.test(src)) return src;
+        if (src.startsWith('//')) return (new URL(base)).protocol + src;
+        return new URL(src, base).toString();
+      }catch{ return src }
+    };
     const normalizeTitle = (t)=> t.toLowerCase().replace(/[\W_]+/g,' ').trim();
-    const pick = (el,sel)=> el.querySelector(sel)?.getAttribute('content')?.trim() || el.querySelector(sel)?.textContent?.trim();
-    const getAttr = (el,sel,attr)=> el.querySelector(sel)?.getAttribute(attr);
-    const brandSources=(host)=>{const base=BRAND_HINTS[host]||`https://logo.clearbit.com/${host}`;return{src:`${base}?size=512`,srcset:`${base}?size=64 64w, ${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,s2:`https://www.google.com/s2/favicons?domain=${host}&sz=256`};};
-    const brandLogoHTML=(host,cls='',alt='')=>{const b=brandSources(host);return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt||host}" class="${cls} brand-fb">`;};
-    const letterTileHTML=(label='?',cls='')=>`<div class="w-full h-full grid place-items-center bg-[var(--surface)] ${cls}"><span class="text-xs sm:text-sm font-semibold" style="color:var(--sub)">${label.slice(0,3).toUpperCase()}</span></div>`;
+    const pick = (el, sel)=> el.querySelector(sel)?.getAttribute('content')?.trim() || el.querySelector(sel)?.textContent?.trim();
+    const getAttr = (el, sel, attr)=> el.querySelector(sel)?.getAttribute(attr);
+
+    const brandSources = (host)=>{
+      const base = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
+      return {
+        src: `${base}?size=512`,
+        srcset: `${base}?size=64 64w, ${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,
+        s2: `https://www.google.com/s2/favicons?domain=${host}&sz=256`
+      };
+    };
+    const brandLogoHTML = (host, className = '', alt = '')=>{
+      const b = brandSources(host);
+      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+    };
+    const letterTileHTML = (label='?', className='')=>`
+      <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
+        <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
+      </div>
+    `;
 
     /* =========================
        RSS + IMAGE RESOLUTION
        ========================= */
     const parseRSS = (text)=>{
-      const dom = (()=>{const d=new DOMParser().parseFromString(text,'text/xml');return d.querySelector('parsererror')?null:d;})();
+      const tryXML = ()=>{
+        const dom = new DOMParser().parseFromString(text, 'text/xml');
+        return dom.querySelector('parsererror') ? null : dom;
+      };
+      const dom = tryXML();
       if(!dom){
-        const items=[]; const blocks=text.split(/<\/item>/i);
+        const items = [];
+        const blocks = text.split(/<\/item>/i);
         for(const b of blocks){
-          const t=(b.match(/<title>([^<]+)<\/title>/i)||['',''])[1];
-          const lk=cleanLink((b.match(/<link>([^<]+)<\/link>/i)||['',''])[1]);
-          const pd=(b.match(/<pubDate>([^<]+)<\/pubDate>/i)||['',''])[1];
-          const sc=(b.match(/<source[^>]*>([^<]+)<\/source>/i)||['',''])[1];
-          const img=(b.match(/<media:content[^>]*url="([^"]+)"/i)||b.match(/<enclosure[^>]*url="([^"]+)"/i)||['',''])[1];
-          if(t&&lk) items.push({title:t,link:lk,pubDate:pd?new Date(pd):new Date(),source:sc||hostname(lk),image:img||''});
+          const t  = (b.match(/<title>([^<]+)<\/title>/i) || ['', '' ])[1];
+          const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || ['', '' ])[1]);
+          const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || ['', '' ])[1];
+          const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || ['', '' ])[1];
+          const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || ['', '' ])[1];
+          if(t && lk) items.push({title:t, link:lk, pubDate: pd?new Date(pd):new Date(), source: sc||hostname(lk), image: img||''});
         }
         return items;
-      } else {
-        const items=[];
+      }else{
+        const items = [];
         dom.querySelectorAll('item').forEach(it=>{
-          const title=pick(it,'title')||''; let link=pick(it,'link')||''; link=cleanLink(link);
-          const pub=pick(it,'pubDate')||''; const src=pick(it,'source')||'';
-          const img1=getAttr(it,'media\\:content','url'); const img2=getAttr(it,'enclosure','url');
-          items.push({ title, link, pubDate: pub?new Date(pub):new Date(), source: src||hostname(link), image: img1||img2||'' });
+          const title = pick(it,'title') || '';
+          let link = pick(it,'link') || '';
+          link = cleanLink(link);
+          const pub  = pick(it,'pubDate') || '';
+          const src  = pick(it,'source') || '';
+          const img1 = getAttr(it,'media\\:content','url');
+          const img2 = getAttr(it,'enclosure','url');
+          items.push({ title, link, pubDate: pub ? new Date(pub) : new Date(), source: src || hostname(link), image: img1 || img2 || '' });
         });
         return items;
       }
     };
 
     const fetchWithProxies = async (url)=>{
-      const cand=proxyCandidates(url);
-      for(const p of cand){
+      const candidates = proxyCandidates(url);
+      for (const prox of candidates){
         try{
-          const res=await fetch(p,{cache:'no-store'});
+          const res = await fetch(prox, { cache: 'no-store' });
           if(!res.ok) continue;
-          const text=await res.text();
-          if(text && text.length>40) return text;
-        }catch{}
+          const text = await res.text();
+          if(text && text.length > 40) return text;
+        }catch(_){}
       }
-      throw new Error('All proxies failed for '+url);
+      throw new Error('All proxies failed for ' + url);
     };
 
-    const IMG_CACHE=new Map(); const resolving=new Set();
-    const tryFindOgImage=(html,base)=>{
+    const IMG_CACHE = new Map();
+    const resolving = new Set();
+
+    const tryFindOgImage = (html, baseUrl)=>{
       try{
-        const doc=new DOMParser().parseFromString(html,'text/html');
-        const tryMeta=(sel)=>absolutize(pick(doc,sel),base);
-        const cands=['meta[property="og:image:secure_url"]','meta[property="og:image:url"]','meta[property="og:image"]','meta[name="og:image"]','meta[name="twitter:image:src"]','meta[name="twitter:image"]'];
-        for(const sel of cands){const u=tryMeta(sel); if(u) return u;}
-        const scripts=doc.querySelectorAll('script[type="application/ld+json"]');
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const tryMeta = (sel)=> absolutize(pick(doc, sel), baseUrl);
+        const cands = [
+          'meta[property="og:image:secure_url"]',
+          'meta[property="og:image:url"]',
+          'meta[property="og:image"]',
+          'meta[name="og:image"]',
+          'meta[name="twitter:image:src"]',
+          'meta[name="twitter:image"]'
+        ];
+        for(const sel of cands){
+          const u = tryMeta(sel);
+          if(u) return u;
+        }
+        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
         for(const s of scripts){
           try{
-            const data=JSON.parse(s.textContent.trim());
-            const collect=(obj)=>{
+            const data = JSON.parse(s.textContent.trim());
+            const collect = (obj)=>{
               if(!obj) return null;
-              if(typeof obj==='string') return absolutize(obj,base);
-              if(Array.isArray(obj)){ for(const it of obj){ const v=collect(it); if(v) return v; } }
-              else if(typeof obj==='object'){
+              if(typeof obj === 'string') return absolutize(obj, baseUrl);
+              if(Array.isArray(obj)){
+                for(const it of obj){ const inner = collect(it); if(inner) return inner; }
+              }else if(typeof obj === 'object'){
                 if(obj.image) return collect(obj.image);
-                if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl,base);
+                if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
                 if(obj.logo) return collect(obj.logo);
               }
               return null;
             };
-            const found=collect(data); if(found) return found;
+            const found = collect(data);
+            if(found) return found;
           }catch{}
         }
-        const imgs=Array.from(doc.querySelectorAll('img'));
+        const imgs = Array.from(doc.querySelectorAll('img'));
         for(const im of imgs){
-          const src=absolutize(im.getAttribute('src')||im.getAttribute('data-src')||'',base);
+          const src = absolutize(im.getAttribute('src') || im.getAttribute('data-src') || '', baseUrl);
           if(!src) continue;
-          const w=parseInt(im.getAttribute('width')||'0',10);
-          const h=parseInt(im.getAttribute('height')||'0',10);
-          if((w>=300||h>=200)||/[\/\-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)){ return src; }
+          const w = parseInt(im.getAttribute('width')||'0',10);
+          const h = parseInt(im.getAttribute('height')||'0',10);
+          if ((w>=300 || h>=200) || /[\/\-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) return src;
         }
       }catch{}
       return '';
     };
-    const resolveArticleImage=async (url)=>{
+
+    const resolveArticleImage = async (url)=>{
       if(!url) return '';
       if(IMG_CACHE.has(url)) return IMG_CACHE.get(url);
       if(resolving.has(url)) return '';
       resolving.add(url);
       try{
-        const html=await fetchWithProxies(url);
-        const img=tryFindOgImage(html,url)||'';
-        IMG_CACHE.set(url,img);
+        const html = await fetchWithProxies(url);
+        const img = tryFindOgImage(html, url) || '';
+        IMG_CACHE.set(url, img);
         return img;
       }catch{
-        IMG_CACHE.set(url,''); return '';
-      }finally{ resolving.delete(url); }
+        IMG_CACHE.set(url, '');
+        return '';
+      }finally{ resolving.delete(url) }
     };
-    const improveImagesFor=async(items,limit=12)=>{
-      const targets=items.filter(it=>!it.image).slice(0,limit);
-      let updated=false;
-      await Promise.all(targets.map(async(it)=>{ const best=await resolveArticleImage(it.link); if(best){ it.image=best; updated=true; } }));
+
+    const improveImagesFor = async (items, limit=12)=>{
+      const targets = items.filter(it=>!it.image).slice(0, limit);
+      let updated = false;
+      await Promise.all(targets.map(async (it)=>{
+        const best = await resolveArticleImage(it.link);
+        if(best){ it.image = best; updated = true; }
+      }));
       if(updated){ applyFilter(); }
     };
 
-    const loadFeeds=async(editionKey)=>{
-      const feeds=FEEDS[editionKey]||FEEDS['GLOBAL'];
-      const all=[];
-      await Promise.allSettled(feeds.map(async(f)=>{
-        try{ const text=await fetchWithProxies(f); const items=parseRSS(text); all.push(...items); }catch{}
-      }));
-      // dedup + score
-      const seen=new Map();
+    const loadFeeds = async (editionKey)=>{
+      const feeds = FEEDS[editionKey] || FEEDS['GLOBAL'];
+      const all = [];
+      await Promise.allSettled(
+        feeds.map(async (f)=>{
+          try{
+            const text = await fetchWithProxies(f);
+            const items = parseRSS(text);
+            all.push(...items);
+          }catch(_){}
+        })
+      );
+      // Dedup across feeds; count duplicates as trend signal
+      const seen = new Map(); // normTitle -> { item, count }
       for(const it of all){
-        const key=normalizeTitle(it.title);
+        const key = normalizeTitle(it.title);
         if(!key) continue;
-        const prev=seen.get(key);
-        if(!prev){ seen.set(key,{ item:it, count:1 }); }
-        else{ if(it.pubDate && prev.item.pubDate && it.pubDate>prev.item.pubDate) prev.item=it; prev.count++; }
+        const prev = seen.get(key);
+        if(!prev){ seen.set(key, { item: it, count: 1 }); }
+        else{
+          if (it.pubDate && prev.item.pubDate && it.pubDate > prev.item.pubDate) prev.item = it;
+          prev.count++;
+        }
       }
-      let uniq=Array.from(seen.values()).map(({item,count})=>({...item, trendCount:count}));
-      const now=Date.now();
+      let uniq = Array.from(seen.values()).map(({item, count})=> ({...item, trendCount: count}));
+      const now = Date.now();
       uniq.forEach(u=>{
-        const ageMin=Math.max(1,(now-(u.pubDate?.getTime?.()||now))/60000);
-        u._score=(u.trendCount||1)*(1/ageMin);
+        const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
+        u._score = (u.trendCount||1) * (1/ageMin);
       });
-      uniq.sort((a,b)=>(b._score-a._score)||((b.pubDate||0)-(a.pubDate||0)));
-      return uniq.slice(0,MAX_ITEMS);
+      uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
+      return uniq.slice(0, MAX_ITEMS);
     };
 
     // Bookmarks
-    const SAVED_KEY='oc_news_saved';
-    const getSaved=()=>{ try{return JSON.parse(localStorage.getItem(SAVED_KEY)||'[]');}catch{return[];} };
-    const setSaved=(arr)=>localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0,200)));
-    const isSaved=(link)=>getSaved().some(x=>x.link===link);
-    const toggleSave=(item)=>{ const cur=getSaved(); const i=cur.findIndex(x=>x.link===item.link); if(i>=0) cur.splice(i,1); else cur.unshift({...item, savedAt:Date.now()}); setSaved(cur); };
+    const SAVED_KEY = 'oc_news_saved';
+    const getSaved = ()=>{ try{ return JSON.parse(localStorage.getItem(SAVED_KEY)||'[]') }catch{ return [] } };
+    const setSaved = (arr)=> localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0,200)));
+    const isSaved = (link)=> getSaved().some(x=>x.link===link);
+    const toggleSave = (item)=>{
+      const cur = getSaved();
+      const idx = cur.findIndex(x=>x.link===item.link);
+      if(idx>=0){ cur.splice(idx,1) } else { cur.unshift({ ...item, savedAt: Date.now() }) }
+      setSaved(cur);
+    };
 
     /* =========================
        RENDER
        ========================= */
-    const heroTitle=$('#heroTitle'), heroDesc=$('#heroDesc'), heroMeta=$('#heroMeta'), heroLink=$('#heroLink');
-    const heroTrack=$('#heroTrack'), heroDots=$('#heroDots'), updatedAt=$('#updatedAt');
-    const newsList=$('#newsList'), countLabel=$('#countLabel'), ticker=$('#ticker'), sourceBadge=$('#sourceBadge');
-    const topLoader=$('#topLoader'), preload=$('#preload'), heroOverlayTitle=$('#heroOverlayTitle');
-    const trendingList=$('#trendingList');
-    const trendsChips=$('#trendsChips'), trendsNews=$('#trendsNews'), trendsUpdated=$('#trendsUpdated');
+    const heroTitle = $('#heroTitle');
+    const heroDesc  = $('#heroDesc');
+    const heroMeta  = $('#heroMeta');
+    const heroLink  = $('#heroLink');
+    const heroTrack = $('#heroTrack');
+    const heroDots  = $('#heroDots');
+    const updatedAt = $('#updatedAt');
+    const newsList  = $('#newsList');
+    const countLabel= $('#countLabel');
+    const ticker    = $('#ticker');
+    const sourceBadge = $('#sourceBadge');
+    const topLoader = $('#topLoader');
+    const preload   = $('#preload');
+    const heroOverlayTitle = $('#heroOverlayTitle');
+    const trendingRail = $('#trendingRail');
+    const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty');
 
-    let searchQuery=''; let showingSaved=false;
-    let currentEdition=DEFAULT_EDITION;
-    let cacheItems=[]; let filteredItems=[]; let cycleIdx=0; let cycleTimer=null;
+    let searchQuery = '';
+    let showingSaved = false;
+    let currentEdition = DEFAULT_EDITION;
+    let cacheItems = [];
+    let filteredItems = [];
+    let cycleIdx = 0;
+    let cycleTimer = null;
 
-    const applySort=()=>{
-      const arr=filteredItems.slice();
-      if(sortMode===SORT_MODES.NEWEST){ arr.sort((a,b)=> (b.pubDate||0)-(a.pubDate||0)); }
-      else if(sortMode===SORT_MODES.OLDEST){ arr.sort((a,b)=> (a.pubDate||0)-(b.pubDate||0)); }
-      else if(sortMode===SORT_MODES.SOURCE){ arr.sort((a,b)=>(a.source||hostname(a.link)||'').localeCompare(b.source||hostname(b.link)||'')); }
-      filteredItems=arr;
+    const applySort = ()=>{
+      const arr = filteredItems.slice();
+      if (sortMode === SORT_MODES.NEWEST) arr.sort((a,b)=>(b.pubDate||0)-(a.pubDate||0));
+      else if (sortMode === SORT_MODES.OLDEST) arr.sort((a,b)=>(a.pubDate||0)-(b.pubDate||0));
+      else if (sortMode === SORT_MODES.SOURCE) arr.sort((a,b)=>(a.source||hostname(a.link)||'').localeCompare(b.source||hostname(b.link)||''));
+      filteredItems = arr;
     };
 
-    const applyFilter=()=>{
-      const needle=searchQuery.toLowerCase().trim();
-      const base=showingSaved? getSaved() : cacheItems;
-      filteredItems = !needle ? base.slice() :
-        base.filter(it=> it.title?.toLowerCase().includes(needle) || (it.source||'').toLowerCase().includes(needle) || hostname(it.link).toLowerCase().includes(needle) );
+    const applyFilter = ()=>{
+      const needle = searchQuery.toLowerCase().trim();
+      const base = showingSaved ? getSaved() : cacheItems;
+      if(!needle){ filteredItems = base.slice(); }
+      else{
+        filteredItems = base.filter(it =>
+          it.title?.toLowerCase().includes(needle) ||
+          (it.source || '').toLowerCase().includes(needle) ||
+          hostname(it.link).toLowerCase().includes(needle)
+        );
+      }
       applySort();
       render(filteredItems);
     };
 
-    const renderTicker=(items)=>{
-      const chips=(items.slice(0,24).map(it=>{
-        const src=it.source||hostname(it.link)||'Source';
-        const safe=it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const renderTicker = (items)=>{
+      const chips = (items.slice(0, 24).map(it=>{
+        const src = it.source || hostname(it.link) || 'Source';
+        const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}: ${safe}</span>`;
-      }).join(''))||'';
-      ticker.innerHTML=chips+chips;
+      }).join('')) || '';
+      ticker.innerHTML = chips + chips;
     };
 
-    const buildHeroSlides=(items)=>{
-      const list=items.slice(0, Math.min(HERO_SLIDES, items.length));
-      heroTrack.innerHTML = list.map((it,idx)=>{
-        const host=hostname(it.link)||'news.google.com';
-        const src=(SHOW_IMAGES && it.image) ? it.image : '';
-        const label=it.source||host;
-        const imgHTML = src ? `<img src="${src}" alt="${label}">` : brandLogoHTML(host,'',label);
-        const safeTitle=it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const buildHeroSlides = (items)=>{
+      const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
+      heroTrack.innerHTML = list.map((it, idx)=>{
+        const host = hostname(it.link) || 'news.google.com';
+        const src  = (SHOW_IMAGES && it.image) ? it.image : '';
+        const label= it.source || host;
+        const imgHTML = src ? `<img src="${src}" alt="${label}">` : brandLogoHTML(host, '', label);
+        const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
@@ -670,81 +763,85 @@
           </div>
         `;
       }).join('');
-      const dcount=Math.min(DOT_COUNT, Math.max(1, list.length));
-      heroDots.innerHTML = Array.from({length:dcount}).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
+      const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
+      heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
     };
 
-    const setHeroMetaFromIndex=(idx)=>{
+    const setHeroMetaFromIndex = (idx)=>{
       if(!filteredItems.length) return;
-      const item=filteredItems[idx % filteredItems.length];
-      const host=hostname(item.link);
-      heroTitle.textContent=item.title;
-      heroOverlayTitle.textContent=item.title;
-      heroDesc.textContent=item.source ? `From ${item.source}` : host;
-      heroMeta.textContent=`${timeAgo(item.pubDate)} • #1 breaking now`;
-      heroLink.href=item.link;
-      sourceBadge.textContent=host;
+      const item = filteredItems[idx % filteredItems.length];
+      const host = hostname(item.link);
+      heroTitle.textContent = item.title;
+      heroOverlayTitle.textContent = item.title;
+      heroDesc.textContent  = item.source ? `From ${item.source}` : host;
+      heroMeta.textContent  = `${timeAgo(item.pubDate)} • #1 breaking now`;
+      heroLink.href         = item.link;
+      sourceBadge.textContent = host;
       heroLink.classList.remove('pointer-events-none','opacity-60');
-      const children=Array.from(heroDots.children);
-      if(children.length){
-        const dotIndex=Math.min(children.length-1, idx % children.length);
+      const children = Array.from(heroDots.children);
+      if (children.length){
+        const dotIndex = Math.min(children.length-1, idx % children.length);
         children.forEach((d,i)=>d.classList.toggle('active', i===dotIndex));
       }
     };
 
-    const render=(items)=>{
-      if(!items || !items.length){
-        heroTitle.textContent='No headlines available right now.';
-        heroOverlayTitle.textContent='No headlines available right now.';
-        heroDesc.textContent='Try Refresh — or check your connection.';
-        heroMeta.textContent='—'; heroLink.classList.add('pointer-events-none','opacity-60'); sourceBadge.textContent='—';
-        countLabel.textContent='0 stories'; newsList.innerHTML=''; ticker.innerHTML=''; heroTrack.innerHTML=''; heroDots.innerHTML='';
-        trendingList.innerHTML=''; trendsChips.innerHTML=''; trendsNews.innerHTML='';
-        return;
-      }
-      if(cycleIdx>=items.length) cycleIdx=0;
-      buildHeroSlides(items);
-      setHeroMetaFromIndex(cycleIdx);
-
-      const now=new Date(); updatedAt.textContent=`Updated ${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-      renderTicker(items);
-
-      // Trending Articles (top by trendCount, then recency)
-      const trending = items.slice().sort((a,b)=>(b.trendCount-a.trendCount)||((b.pubDate||0)-(a.pubDate||0))).slice(0, 12);
-      trendingList.innerHTML = trending.map(it=>{
-        const src=it.source||hostname(it.link)||'Source';
-        const when=timeAgo(it.pubDate); const host=hostname(it.link);
-        const safeTitle=it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const badge=`<span class="ml-auto text-[10px] chip rounded px-1.5 py-0.5">×${it.trendCount||1} sources</span>`;
-        const thumb = (SHOW_IMAGES && it.image)
-          ? `<img src="${it.image}" alt="" class="w-full h-40 object-cover rounded-lg border border-[var(--border)] mb-3 brand-fb" data-host="${host}">`
-          : `<div class="w-full h-40 rounded-lg overflow-hidden border border-[var(--border)] mb-3">${brandLogoHTML(host,'w-full h-full object-contain',src)}</div>`;
+    const renderTrending = (items)=>{
+      if(!items.length){ trendingRail.innerHTML = ''; return; }
+      // Sort by trendCount desc, then recency
+      const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
+      trendingRail.innerHTML = top.map(it=>{
+        const src = it.image ? `<img src="${it.image}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${hostname(it.link)}" alt="">`
+                              : brandLogoHTML(hostname(it.link),'w-full h-44 object-contain rounded-md border border-[var(--border)]', it.source||hostname(it.link));
+        const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const host = hostname(it.link);
         return `
-          <li class="card hover:bg-[var(--card-hover)] p-4 transition-colors">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block">${thumb}</a>
-            <div class="flex items-center gap-2 text-xs text-[var(--sub)] mb-1"><span>${src} • ${when}</span>${badge}</div>
-            <a href="${it.link}" target="_blank" rel="noopener" class="group block">
-              <h3 class="text-sm font-semibold leading-snug group-hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
-            </a>
-            <div class="mt-2 flex items-center gap-1.5">
-              <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${isSaved(it.link)?'Saved':'Save'}</button>
-              <a href="${it.link}" target="_blank" rel="noopener" class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1 border">${host}</a>
+          <article class="card p-3 sm:p-4">
+            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${src}</a>
+            <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
+              <span class="chip rounded px-2 py-1">🔥 ${it.trendCount} sources</span>
+              <span>${timeAgo(it.pubDate)}</span>
             </div>
-          </li>
+            <a href="${it.link}" target="_blank" rel="noopener" class="block">
+              <h3 class="text-sm sm:text-base font-semibold leading-snug hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
+            </a>
+            <div class="mt-2 text-[10px] text-[var(--sub)]">${it.source || host} • ${host}</div>
+          </article>
         `;
       }).join('');
+    };
 
-      countLabel.textContent = `${items.length} stor${items.length===1?'y':'ies'}`;
+    const render = (items)=>{
+      if(!items || !items.length){
+        heroTitle.textContent = 'No headlines available right now.';
+        heroOverlayTitle.textContent = 'No headlines available right now.';
+        heroDesc.textContent  = 'Try Refresh — or check your connection.';
+        heroMeta.textContent  = '—';
+        heroLink.classList.add('pointer-events-none','opacity-60');
+        sourceBadge.textContent = '—';
+        countLabel.textContent = '0 stories';
+        newsList.innerHTML = ''; ticker.innerHTML = ''; heroTrack.innerHTML = ''; heroDots.innerHTML = '';
+        trendingRail.innerHTML = '';
+        return;
+      }
+      if (cycleIdx >= items.length) cycleIdx = 0;
+      buildHeroSlides(items);
+      setHeroMetaFromIndex(cycleIdx);
+      updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+      renderTicker(items);
+      countLabel.textContent = `${items.length} stor${items.length === 1 ? 'y' : 'ies'}`;
+
+      // Render main list
       newsList.innerHTML = items.map(it=>{
-        const src=it.source||hostname(it.link)||'Source';
-        const when=timeAgo(it.pubDate); const host=hostname(it.link);
-        const saved=isSaved(it.link);
-        const safeTitle=it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        let thumbHTML='';
-        if(SHOW_IMAGES && it.image){
-          thumbHTML=`<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
+        const src = it.source || hostname(it.link) || 'Source';
+        const when = timeAgo(it.pubDate);
+        const host = hostname(it.link);
+        const saved = isSaved(it.link);
+        const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        let thumbHTML = '';
+        if (SHOW_IMAGES && it.image){
+          thumbHTML = `<img src="${it.image}" alt="" class="w-12 h-12 rounded-lg object-cover border border-[var(--border)] brand-fb" data-host="${host}">`;
         }else{
-          thumbHTML=brandLogoHTML(host,'w-12 h-12 rounded-lg object-contain border border-[var(--border)]',src);
+          thumbHTML = brandLogoHTML(host, 'w-12 h-12 rounded-lg object-contain border border-[var(--border)]', src);
         }
         return `
           <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors">
@@ -754,9 +851,8 @@
                 <div class="flex items-center justify-between gap-3">
                   <div class="text-xs font-medium text-[var(--sub)]">${src} • ${when}</div>
                   <div class="flex items-center gap-1.5">
-                    <span class="text-[10px] text-[var(--sub)] chip rounded px-1.5 py-0.5">×${it.trendCount||1}</span>
-                    <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved?'Saved':'Save'}</button>
-                    <a href="${it.link}" target="_blank" rel="noopener" class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1 border">${host}</a>
+                    <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
+                    <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1 border">🔥 ${it.trendCount||1} src</span>
                   </div>
                 </div>
                 <a href="${it.link}" target="_blank" rel="noopener" class="group block">
@@ -768,235 +864,296 @@
         `;
       }).join('');
 
-      // Bind save buttons in both lists
+      // Bind save buttons
       $$('.saveBtn').forEach(btn=>{
-        btn.addEventListener('click',(e)=>{
-          const raw=decodeURIComponent(e.currentTarget.getAttribute('data-save')||'%7B%7D');
+        btn.addEventListener('click', (e)=>{
+          const raw = decodeURIComponent(e.currentTarget.getAttribute('data-save')||'%7B%7D');
           try{ toggleSave(JSON.parse(raw)); applyFilter(); }catch{}
         });
       });
 
-      // Improve images progressively
+      // Render Trending rail
+      renderTrending(items);
+
+      // Improve missing images progressively
       improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
       improveImagesFor(items.slice(HERO_SLIDES), 18);
     };
 
     /* =========================
-       GOOGLE TRENDS (Most searched today)
-       ========================= */
-    const TRENDS_RSS = (geo)=>`https://trends.google.com/trends/trendingsearches/daily/rss?geo=${encodeURIComponent(geo)}`;
-    const geoForEdition=(ed)=> ed==='CA' ? 'CA' : (ed==='US' ? 'US' : 'US');
-    const parseTrends = (xmlText)=>{
-      const dom=new DOMParser().parseFromString(xmlText,'text/xml');
-      const items=[];
-      dom.querySelectorAll('item').forEach(it=>{
-        const title=pick(it,'title')||'';
-        const link=pick(it,'link')||'#';
-        const approx = pick(it,'ht\\:approx_traffic') || '';
-        // Related news (optional)
-        const newsBlocks = Array.from(it.querySelectorAll('ht\\:news_item'));
-        const related = newsBlocks.map(nb=>{
-          const ntitle = pick(nb,'ht\\:news_item_title') || '';
-          const nsrc = pick(nb,'ht\\:news_item_source') || '';
-          const nurl = pick(nb,'ht\\:news_item_url') || '';
-          return { title: ntitle, source: nsrc, link: nurl };
-        }).slice(0,3);
-        items.push({ title, link, approx, related });
-      });
-      return items;
-    };
-    const loadTrends = async (editionKey)=>{
-      try{
-        const geo=geoForEdition(editionKey);
-        const txt = await fetchWithProxies(TRENDS_RSS(geo));
-        const items = parseTrends(txt).slice(0, 24);
-        const now=new Date();
-        trendsUpdated.textContent = `Updated ${now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} • ${geo}`;
-        // Chips
-        trendsChips.innerHTML = items.map(t=>{
-          const traffic = t.approx ? `<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-[var(--card-hover)] border border-[var(--border)]">${t.approx}</span>` : '';
-          const safe = t.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          return `<a href="${t.link}" target="_blank" rel="noopener" class="chip rounded-full px-3 py-1.5 text-xs hover:bg-[var(--card-hover)]">${safe}${traffic}</a>`;
-        }).join('');
-        // Related news grid (flatten a bit)
-        const related = items.flatMap(t => t.related.map(r=>({ ...r, topic:t.title }))).slice(0, 12);
-        trendsNews.innerHTML = related.map(r=>{
-          const host = hostname(r.link); const safe = r.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          return `<li class="card hover:bg-[var(--card-hover)] p-4 transition-colors">
-            <div class="text-[10px] text-[var(--sub)] mb-1">${r.source||host}</div>
-            <a href="${r.link}" target="_blank" rel="noopener" class="group block">
-              <h3 class="text-sm font-semibold leading-snug group-hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safe}</h3>
-            </a>
-            <div class="mt-2 text-[11px] text-[var(--sub)] truncate">Topic: ${tEscape(r.topic)}</div>
-          </li>`;
-        }).join('');
-      }catch{
-        trendsChips.innerHTML = `<span class="text-xs text-[var(--sub)]">Google Trends unavailable right now.</span>`;
-        trendsNews.innerHTML = '';
-      }
-    };
-    const tEscape = (s)=> (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-    /* =========================
        THEME
        ========================= */
-    const themeBtn=$('#themeBtn'); const sunIcon=$('#sun'); const moonIcon=$('#moon'); const THEME_KEY='oc_theme';
-    const resolveAutoTheme=()=> window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    const setTheme=(mode)=>{
-      document.documentElement.dataset.theme=mode;
-      const final=(mode==='auto')? resolveAutoTheme() : mode;
-      document.documentElement.classList.toggle('light', final==='light');
-      document.documentElement.classList.toggle('dark', final==='dark');
+    const themeBtn = $('#themeBtn');
+    const sunIcon = document.getElementById('sun');
+    const moonIcon = document.getElementById('moon');
+    const THEME_KEY = 'oc_theme';
+    const resolveAutoTheme = ()=> window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    const setTheme = (mode)=>{
+      document.documentElement.dataset.theme = mode;
+      const final = (mode === 'auto') ? resolveAutoTheme() : mode;
+      document.documentElement.classList.toggle('light', final === 'light');
+      document.documentElement.classList.toggle('dark',  final === 'dark');
       localStorage.setItem(THEME_KEY, mode);
-      sunIcon.classList.toggle('hidden', final!=='light');
-      moonIcon.classList.toggle('hidden', final!=='dark');
+      sunIcon.classList.toggle('hidden', final !== 'light');
+      moonIcon.classList.toggle('hidden', final !== 'dark');
     };
-    const cycleTheme=()=>{
-      const cur=localStorage.getItem(THEME_KEY)||'auto';
-      const next= cur==='auto' ? 'dark' : (cur==='dark' ? 'light':'auto');
+    const cycleTheme = ()=>{
+      const cur = localStorage.getItem(THEME_KEY) || 'auto';
+      const next = cur === 'auto' ? 'dark' : (cur === 'dark' ? 'light' : 'auto');
       setTheme(next);
+    };
+
+    /* =========================
+       GOOGLE TRENDS (Daily)
+       ========================= */
+    const tzMinutes = -new Date().getTimezoneOffset(); // e.g., -420 for PDT
+    const trendsGeoForEdition = (ed)=>{
+      if (ed === 'CA') return 'CA';
+      if (ed === 'US' || ed === 'FIN' || ed === 'GLOBAL') return 'US'; // fallback to US for availability
+      return 'US';
+    };
+    const fetchGoogleTrendsDaily = async (geo)=>{
+      const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
+      const raw = await fetchWithProxies(url);
+      // Response usually starts with )]}',
+      const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
+      const data = JSON.parse(jsonText);
+      return data;
+    };
+    const renderGoogleTrends = async ()=>{
+      try{
+        const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
+        const day = data?.default?.trendingSearchesDays?.[0];
+        if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
+        gtMeta.textContent = `${day.date || 'Today'} • ${day.formattedDate || ''}`.trim();
+        const cards = day.trendingSearches.slice(0, 9).map(ts=>{
+          const query = ts.title?.query || 'Trending';
+          const traffic = ts.formattedTraffic || '';
+          const art = (ts.articles||[])[0] || {};
+          const link = art.url || '#';
+          const host = hostname(link);
+          const image = (ts.image && ts.image.imageUrl) || '';
+          const img = image ? `<img src="${image}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
+                            : brandLogoHTML(host || 'google.com','w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
+          const source = art.source || host || 'Google';
+          const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          return `
+            <article class="card p-3 sm:p-4">
+              <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${img}</a>
+              <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
+                <span class="chip rounded px-2 py-1">↗ ${traffic}</span>
+                <span>${source}</span>
+              </div>
+              <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
+              <div class="mt-1 text-[11px] text-[var(--sub)]">${query}</div>
+            </article>
+          `;
+        }).join('');
+        gtGrid.innerHTML = cards;
+        gtEmpty.classList.add('hidden');
+      }catch(e){
+        gtGrid.innerHTML = '';
+        gtMeta.textContent = '—';
+        gtEmpty.classList.remove('hidden');
+      }
     };
 
     /* =========================
        BOOTSTRAP
        ========================= */
-    const editionSelect=$('#editionSelect'); const refreshBtn=$('#refreshBtn'); const shareBtn=$('#shareBtn'); const saveBtn=$('#saveBtn');
-    const showSavedBtn=$('#showSavedBtn'); const searchInput=$('#searchInput'); const searchInputMobile=$('#searchInputMobile'); const sortSelect=$('#sortSelect');
-    const prevTopBtn=$('#prevTopBtn'); const nextTopBtn=$('#nextTopBtn');
-    const headerEl=document.querySelector('header');
-    const setHeaderVar=()=>document.documentElement.style.setProperty('--header-h', (headerEl?.offsetHeight||64)+'px');
-    setHeaderVar(); window.addEventListener('resize', setHeaderVar);
+    const editionSelect = $('#editionSelect');
+    const refreshBtn = $('#refreshBtn');
+    const shareBtn = $('#shareBtn');
+    const saveBtn  = $('#saveBtn');
+    const showSavedBtn = $('#showSavedBtn');
+    const searchInput = $('#searchInput');
+    const searchInputMobile = $('#searchInputMobile');
+    const sortSelect = $('#sortSelect');
+    const prevTopBtn = $('#prevTopBtn');
+    const nextTopBtn = $('#nextTopBtn');
 
-    const setMobileEditionUI=()=>{$$('.seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.ed===currentEdition));};
+    const headerEl = document.querySelector('header');
+    const setHeaderVar = ()=> document.documentElement.style.setProperty('--header-h', (headerEl?.offsetHeight || 64)+'px');
+    setHeaderVar();
+    window.addEventListener('resize', setHeaderVar);
 
-    // HERO slide helpers (track only)
-    const slideTo=(idx)=>{
-      const slides=Array.from(heroTrack.children);
+    const setMobileEditionUI = ()=> { $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition)); };
+
+    // Hero slide helpers
+    const slideTo = (idx)=>{
+      const slides = Array.from(heroTrack.children);
       if(!slides.length) return;
-      const clamp=Math.max(0, Math.min(slides.length-1, idx));
-      const target=slides[clamp]; if(!target) return;
-      heroTrack.scrollTo({ left: target.offsetLeft, behavior:'smooth' });
-      cycleIdx = clamp % Math.max(1, filteredItems.length);
+      const clamped = Math.max(0, Math.min(slides.length-1, idx));
+      const target = slides[clamped];
+      if(!target) return;
+      heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+      cycleIdx = clamped % Math.max(1, filteredItems.length);
       setHeroMetaFromIndex(cycleIdx);
     };
-    const nextHero=()=>slideTo((cycleIdx+1)%Math.max(1,filteredItems.length));
-    const prevHero=()=>slideTo((cycleIdx-1+Math.max(1,filteredItems.length))%Math.max(1,filteredItems.length));
+    const nextHero = ()=> slideTo((cycleIdx + 1) % Math.max(1, filteredItems.length));
+    const prevHero = ()=> slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
 
-    // Track active slide
-    let heroTrackScrollLock=false;
-    heroTrack.addEventListener('scroll',()=>{
-      if(heroTrackScrollLock) return;
-      const slides=Array.from(heroTrack.children);
-      let bestIdx=0,bestDist=Infinity;
-      const viewportCenter=heroTrack.getBoundingClientRect().left + heroTrack.clientWidth/2;
+    let heroTrackScrollLock = false;
+    heroTrack.addEventListener('scroll', ()=>{
+      if (heroTrackScrollLock) return;
+      const slides = Array.from(heroTrack.children);
+      let bestIdx = 0, bestDist = Infinity;
+      const viewportCenter = heroTrack.getBoundingClientRect().left + heroTrack.clientWidth / 2;
       slides.forEach((el,i)=>{
-        const rect=el.getBoundingClientRect(); const slideCenter=rect.left+rect.width/2;
-        const dist=Math.abs(slideCenter-viewportCenter);
-        if(dist<bestDist){ bestDist=dist; bestIdx=i; }
+        const rect = el.getBoundingClientRect();
+        const slideCenter = rect.left + rect.width/2;
+        const dist = Math.abs(slideCenter - viewportCenter);
+        if (dist < bestDist){ bestDist = dist; bestIdx = i; }
       });
-      if(bestIdx!==cycleIdx){ cycleIdx=bestIdx % Math.max(1, filteredItems.length); setHeroMetaFromIndex(cycleIdx); }
-    },{passive:true});
+      if (bestIdx !== cycleIdx){ cycleIdx = bestIdx % Math.max(1, filteredItems.length); setHeroMetaFromIndex(cycleIdx); }
+    }, { passive:true });
 
     prevTopBtn.addEventListener('click', prevHero);
     nextTopBtn.addEventListener('click', nextHero);
 
-    // Visibility-driven auto-cycle
-    let heroIsVisible=true;
-    const heroObserver=new IntersectionObserver((entries)=>{ heroIsVisible=entries[0]?.isIntersecting ?? true; },{root:null,threshold:0.2});
+    // Pause auto-cycle when hero offscreen
+    let heroIsVisible = true;
+    const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
     heroObserver.observe(document.getElementById('heroCard'));
-    const startCycle=()=>{ stopCycle(); cycleTimer=setInterval(()=>{ if(!heroIsVisible) return; if(document.activeElement===searchInput||document.activeElement===searchInputMobile) return; heroTrackScrollLock=true; nextHero(); setTimeout(()=>{heroTrackScrollLock=false;},400); },12000); };
-    const stopCycle=()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer=null; };
 
-    // Immersive header
-    const updateImmersiveHeader=()=>{
-      const threshold=12;
-      if(window.scrollY<=threshold){ document.body.classList.add('hero-immersive'); }
-      else{ document.body.classList.remove('hero-immersive'); }
+    const startCycle = ()=>{
+      stopCycle();
+      cycleTimer = setInterval(()=>{
+        if (!heroIsVisible) return;
+        if (document.activeElement === searchInput || document.activeElement === searchInputMobile) return;
+        heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
+      }, 12000);
     };
-    window.addEventListener('scroll', updateImmersiveHeader, {passive:true});
+    const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
 
-    // Hydrate
-    const hydrate=async()=>{
-      const preserveY=window.scrollY;
-      const shouldPreserve=preserveY>(window.innerHeight*0.7);
+    const updateImmersiveHeader = ()=>{
+      const threshold = 12;
+      if (window.scrollY <= threshold) document.body.classList.add('hero-immersive');
+      else document.body.classList.remove('hero-immersive');
+    };
+    window.addEventListener('scroll', updateImmersiveHeader, { passive:true });
+
+    const hydrate = async ()=>{
+      const preserveY = window.scrollY;
+      const shouldPreserve = preserveY > (window.innerHeight * 0.7);
       try{
-        topLoader.classList.remove('hidden'); document.body.classList.add('cursor-progress'); updatedAt.textContent='Updating…';
-        const items=await loadFeeds(currentEdition);
-        cacheItems = items.length? items : [ { title:'OC-News is live — your Apple-grade breaking news surface.', link:'#', pubDate:new Date(), source:'OC', image:'' } ];
-        cycleIdx=0; applyFilter();
-        if(CYCLE_TOPS && filteredItems.length>3){ startCycle(); } else { stopCycle(); }
-        await loadTrends(currentEdition); // parallel-ish but after first paint
+        topLoader.classList.remove('hidden');
+        document.body.classList.add('cursor-progress');
+        updatedAt.textContent = 'Updating…';
+        const items = await loadFeeds(currentEdition);
+        cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+        cycleIdx = 0;
+        applyFilter(); // renders
+        if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
+        // Also refresh Google Trends
+        renderGoogleTrends();
       }catch(e){
-        console.error(e); cacheItems=[]; applyFilter();
-        trendsChips.innerHTML = `<span class="text-xs text-[var(--sub)]">Trends unavailable.</span>`;
+        console.error(e);
+        cacheItems = [];
+        applyFilter();
+        renderGoogleTrends();
       }finally{
-        document.body.classList.remove('cursor-progress'); topLoader.classList.add('hidden');
-        if(preload) preload.style.display='none'; document.body.classList.remove('preloading');
-        if(shouldPreserve){ requestAnimationFrame(()=>window.scrollTo({top:preserveY, behavior:'auto'})); }
+        document.body.classList.remove('cursor-progress');
+        topLoader.classList.add('hidden');
+        if (preload) preload.style.display = 'none';
+        document.body.classList.remove('preloading');
+        if (shouldPreserve){ requestAnimationFrame(()=> window.scrollTo({ top: preserveY, behavior: 'auto' })) }
         updateImmersiveHeader();
       }
     };
 
     // Events
-    editionSelect.value=DEFAULT_EDITION; currentEdition=DEFAULT_EDITION; setMobileEditionUI();
-    editionSelect.addEventListener('change',()=>{ currentEdition=editionSelect.value; setMobileEditionUI(); hydrate(); });
-    $$('.seg-btn').forEach(b=>b.addEventListener('click',()=>{ currentEdition=b.dataset.ed; editionSelect.value=currentEdition; setMobileEditionUI(); hydrate(); }));
+    editionSelect.value = DEFAULT_EDITION;
+    currentEdition = DEFAULT_EDITION;
+    setMobileEditionUI();
+
+    editionSelect.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); hydrate(); });
+    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect.value = currentEdition; setMobileEditionUI(); hydrate(); }));
+
     refreshBtn.addEventListener('click', hydrate);
 
     shareBtn.addEventListener('click', async ()=>{
-      const url=heroLink.href; const title=heroTitle.textContent||'OC-News';
+      const url = heroLink.href;
+      const title = heroTitle.textContent || 'OC-News';
       try{
-        if(navigator.share) await navigator.share({title,url});
-        else{ await navigator.clipboard.writeText(url); shareBtn.textContent='Copied'; setTimeout(()=>shareBtn.textContent='Share',1200); }
+        if (navigator.share) await navigator.share({ title, url });
+        else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
       }catch{}
     });
 
     saveBtn.addEventListener('click', ()=>{
-      if(!filteredItems.length) return;
-      const top=filteredItems[cycleIdx % filteredItems.length];
+      if (!filteredItems.length) return;
+      const top = filteredItems[cycleIdx % filteredItems.length];
       toggleSave(top);
-      saveBtn.textContent = isSaved(top.link)? 'Saved':'Save';
+      saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
 
-    const showSavedBtnEl=$('#showSavedBtn');
-    showSavedBtnEl.addEventListener('click',()=>{ showingSaved=!showingSaved; showSavedBtnEl.textContent = showingSaved? 'All':'Saved'; applyFilter(); });
+    showSavedBtn.addEventListener('click', ()=>{ showingSaved = !showingSaved; showSavedBtn.textContent = showingSaved ? 'All' : 'Saved'; applyFilter(); });
 
-    const syncSearch=(val)=>{ searchQuery=val||''; if(searchInput && document.activeElement!==searchInput) searchInput.value=val; if(searchInputMobile && document.activeElement!==searchInputMobile) searchInputMobile.value=val; applyFilter(); };
-    searchInput && searchInput.addEventListener('input',(e)=>syncSearch(e.target.value));
-    searchInputMobile && searchInputMobile.addEventListener('input',(e)=>syncSearch(e.target.value));
-    sortSelect.addEventListener('change',()=>{ sortMode=sortSelect.value; applyFilter(); });
+    const syncSearch = (val)=>{
+      searchQuery = val || '';
+      if (searchInput && document.activeElement !== searchInput) searchInput.value = val;
+      if (searchInputMobile && document.activeElement !== searchInputMobile) searchInputMobile.value = val;
+      applyFilter();
+    };
+    searchInput && searchInput.addEventListener('input', (e)=> syncSearch(e.target.value));
+    searchInputMobile && searchInputMobile.addEventListener('input', (e)=> syncSearch(e.target.value));
+
+    sortSelect.addEventListener('change', ()=>{ sortMode = sortSelect.value; applyFilter(); });
 
     // Keyboard shortcuts
-    window.addEventListener('keydown',(e)=>{
-      if(e.key==='r'||e.key==='R'){ e.preventDefault(); hydrate(); }
-      if(e.key==='t'||e.key==='T'){ e.preventDefault(); cycleTheme(); }
-      if(e.key==='ArrowRight'){ nextHero(); }
-      if(e.key==='ArrowLeft'){ prevHero(); }
-      if(e.key==='/'){ const target=window.innerWidth<640? searchInputMobile : searchInput; if(document.activeElement!==target){ e.preventDefault(); target?.focus(); target?.select(); } }
-      if((e.key==='g'||e.key==='G')&&e.metaKey){ window.scrollTo({top:0,behavior:'smooth'}); }
+    window.addEventListener('keydown', (e)=>{
+      if (e.key==='r' || e.key==='R'){ e.preventDefault(); hydrate(); }
+      if (e.key==='t' || e.key==='T'){ e.preventDefault(); cycleTheme(); }
+      if (e.key==='ArrowRight') nextHero();
+      if (e.key==='ArrowLeft')  prevHero();
+      if (e.key==='/'){
+        const target = window.innerWidth < 640 ? searchInputMobile : searchInput;
+        if (document.activeElement !== target){ e.preventDefault(); target?.focus(); target?.select(); }
+      }
+      if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
     });
 
-    themeBtn.addEventListener('click', cycleTheme);
-
-    // Init theme
-    const THEME_INIT=localStorage.getItem(THEME_KEY)||'auto';
+    const THEME_INIT = localStorage.getItem('oc_theme') || 'auto';
     setTheme(THEME_INIT);
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').addEventListener('change',()=>{ if((localStorage.getItem(THEME_KEY)||'auto')==='auto') setTheme('auto'); });
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: light)')
+      .addEventListener('change', ()=>{ if ((localStorage.getItem('oc_theme') || 'auto') === 'auto') setTheme('auto') });
 
-    // Safety: auto-hide preloader after 12s
-    setTimeout(()=>{ if(preload && preload.style.display!=='none'){ preload.style.display='none'; document.body.classList.remove('preloading'); } }, 12000);
+    // Safety: hide preloader if network slow
+    setTimeout(()=>{ if (preload && preload.style.display !== 'none'){ preload.style.display = 'none'; document.body.classList.remove('preloading'); } }, 12000);
 
     // Global image fallback
-    const handleImgError=(img)=>{
-      const alt1=img.dataset.alt1; const host=img.dataset.host||'';
-      if(alt1 && img.src!==alt1){ img.src=alt1; img.dataset.alt1=''; return; }
-      const parent=img.parentElement; if(parent){ parent.innerHTML=letterTileHTML((host||'SRC'), img.className); }
+    const handleImgError = (img)=>{
+      const alt1 = img.dataset.alt1;
+      const host = img.dataset.host || '';
+      if (alt1 && img.src !== alt1){ img.src = alt1; img.dataset.alt1=''; return; }
+      const parent = img.parentElement;
+      if (parent){ parent.innerHTML = letterTileHTML((host || 'SRC'), img.className); }
     };
-    document.addEventListener('error',(e)=>{ const t=e.target; if(t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t); },true);
+    document.addEventListener('error', (e)=>{
+      const t = e.target;
+      if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
+    }, true);
 
     // First load
-    updateImmersiveHeader();
-    hydrate();
+    const updateHeaderAndHydrate = ()=>{
+      setHeaderVar();
+      updateImmersiveHeader();
+      hydrate();
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndHydrate);
+    else updateHeaderAndHydrate();
   </script>
+
+  <!--
+  =====================================================================
+  APPENDIX — NOTES
+  ---------------------------------------------------------------------
+  • Trending rail = duplicates across feeds (trendCount) + recency decay (proxy for "reads").
+  • Google Trends: daily top searches via trends.google.com (proxied), tz auto-set; edition controls geo (CA/US).
+  • Mobile black band fix: header becomes fixed & out-of-flow in immersive state; hero uses 100dvh.
+  • Controls: R refresh, T theme, ←/→ hero, / search, ⌘+G scroll top.
+  =====================================================================
+  -->
 </body>
 </html>
