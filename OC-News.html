@@ -6,10 +6,9 @@
   Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
 
   NEW (this edit):
-  - Robust image resolver: tries RSS <media>, then OpenGraph/Twitter cards via proxies (AllOrigins + Jina Reader), then first large <img>.
-  - Cached per-URL image discovery + incremental UI updates as images are found.
-  - High-quality brand fallback: Clearbit logos with responsive srcset (64/128/256/512) → Google S2 (256) → letter tile.
-  - Hero becomes FULL-SCREEN swipeable, scroll-snap cards (touch/keys/arrows) and clicking anywhere on a card opens the story.
+  - Mobile hero is truly minimal: full-screen swipeable image + overlaid title only; all other hero chrome hides on mobile.
+  - Desktop hero remains info-rich (title, subtle meta, actions, ticker), larger and cleaner.
+  - Edge-to-edge hero on mobile (no card padding/borders) while preserving full desktop styling.
   - Keeps ALL previous features (sorting, search, saved, theme, ticker, editions, preloader, top loader, keyboard shortcuts).
 -->
 <!DOCTYPE html>
@@ -119,21 +118,21 @@
     .seg button.active { background: var(--card-hover); }
 
     /* ===== FULL-SCREEN HERO ===== */
-    #heroCard { 
+    #heroCard {
       min-height: calc(100svh - var(--header-h));
-      display: flex; 
+      display: flex;
       flex-direction: column;
     }
-    .hero-media { 
-      position: relative; 
-      border-radius: calc(var(--radius) - 2px); 
-      overflow: hidden; 
+    .hero-media {
+      position: relative;
+      border-radius: calc(var(--radius) - 2px);
+      overflow: hidden;
       border: 1px solid var(--border);
-      flex: 1; 
+      flex: 1;
       min-height: 0;
     }
     .hero-track {
-      display: flex; 
+      display: flex;
       height: 100%;
       overflow-x: auto;
       scroll-snap-type: x mandatory;
@@ -167,22 +166,36 @@
       text-shadow: 0 2px 14px rgba(0,0,0,.35);
     }
     html.light .hero-overlay-text h2 { text-shadow: 0 2px 12px rgba(255,255,255,.55); }
-    .hero-nav { 
-      position: absolute; inset: 0; 
-      display: flex; justify-content: space-between; align-items: center; 
+
+    .hero-nav {
+      position: absolute; inset: 0;
+      display: flex; justify-content: space-between; align-items: center;
       pointer-events: none; padding: 8px;
     }
-    .hero-nav button { 
-      pointer-events: auto; border: 1px solid var(--border); 
-      background: rgba(0,0,0,.28); backdrop-filter: blur(6px); color: #fff; 
+    .hero-nav button {
+      pointer-events: auto; border: 1px solid var(--border);
+      background: rgba(0,0,0,.28); backdrop-filter: blur(6px); color: #fff;
       width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center;
     }
     html.light .hero-nav button { background: rgba(255,255,255,.65); color: #000; }
+
     .hero-dots { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
     .hero-dots span { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.55); }
     .hero-dots span.active { background: #fff; }
     html.light .hero-dots span { background: rgba(0,0,0,.35); }
     html.light .hero-dots span.active { background: #000; }
+
+    /* ===== Desktop vs Mobile hero chrome ===== */
+    .desktop-only { display: revert; }
+    .hero-overlay-meta { display: block; }
+
+    /* MOBILE: strip hero down to image + title only, edge-to-edge */
+    @media (max-width: 640px) {
+      #heroCard { padding: 0 !important; border: 0; border-radius: 0; box-shadow: none; }
+      .hero-media { border: 0; border-radius: 0; }
+      .desktop-only { display: none !important; }
+      .hero-overlay-meta { display: none !important; }
+    }
   </style>
 </head>
 
@@ -261,8 +274,8 @@
   <section class="relative">
     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
       <div id="heroCard" class="card shadow-oc-soft p-3 sm:p-5 lg:p-7 relative overflow-hidden">
-        <!-- Live / meta -->
-        <div class="flex flex-wrap items-center gap-3 mb-3 sm:mb-4">
+        <!-- Live / meta (desktop-only) -->
+        <div id="heroTopMeta" class="desktop-only flex flex-wrap items-center gap-3 mb-3 sm:mb-4">
           <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold bg-[var(--live)]/12 text-[var(--text)] border border-[var(--live)]/30">
             <span class="relative inline-block size-2 rounded-full bg-[var(--live)]">
               <span class="absolute inset-0 rounded-full bg-[var(--live)]/60 animate-pulse-soft"></span>
@@ -291,18 +304,16 @@
           <div id="heroDots" class="hero-dots"></div>
         </figure>
 
-        <!-- Title (kept for accessibility/feature parity) -->
-        <h1 id="heroTitle" class="text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">
+        <!-- Title / Desc / Actions (desktop-only) -->
+        <h1 id="heroTitle" class="desktop-only text-balance text-2xl sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight">
           OC-News is waking up…
         </h1>
 
-        <!-- Desc -->
-        <p id="heroDesc" class="mt-2 sm:mt-3 text-sm sm:text-base lg:text-lg text-[var(--sub)] max-w-3xl">
+        <p id="heroDesc" class="desktop-only mt-2 sm:mt-3 text-sm sm:text-base lg:text-lg text-[var(--sub)] max-w-3xl">
           Surfacing the #1 breaking headline across trusted sources. Crisp. Fast. Private.
         </p>
 
-        <!-- Actions -->
-        <div class="mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
+        <div class="desktop-only mt-4 sm:mt-6 flex flex-wrap items-center gap-3">
           <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
           <button id="shareBtn" class="btn rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Share</button>
           <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
@@ -310,7 +321,7 @@
         </div>
 
         <!-- Headline ticker chips (animated) -->
-        <div id="tickerWrap" class="mt-6 sm:mt-7 overflow-hidden">
+        <div id="tickerWrap" class="desktop-only mt-6 sm:mt-7 overflow-hidden">
           <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
         </div>
       </div>
@@ -514,11 +525,11 @@
         const items = [];
         const blocks = text.split(/<\/item>/i);
         for (const b of blocks) {
-          const t  = (b.match(/<title>([^<]+)<\/title>/i) || [,'' ])[1];
-          const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || [,'' ])[1]);
-          const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || [,'' ])[1];
-          const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || [,'' ])[1];
-          const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || [,'' ])[1];
+          const t  = (b.match(/<title>([^<]+)<\/title>/i) || ['','' ])[1];
+          const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || ['','' ])[1]);
+          const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || ['','' ])[1];
+          const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || ['','' ])[1];
+          const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || ['','' ])[1];
           if (t && lk) items.push({title:t, link:lk, pubDate: pd?new Date(pd):new Date(), source: sc||hostname(lk), image: img||''});
         }
         return items;
@@ -768,7 +779,7 @@
             ${imgHTML}
             <div class="hero-gradient"></div>
             <div class="hero-overlay-text">
-              <div class="text-xs font-medium text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}</div>
+              <div class="hero-overlay-meta text-xs font-medium text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}</div>
               <h2>${safeTitle}</h2>
             </div>
           </div>
