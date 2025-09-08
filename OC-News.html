@@ -1,3 +1,21 @@
+<!--
+  OC-News — Apple-clean, pure white/black. No gradients.
+  Single-file, drop-in page. No build, no keys.
+  Fetches many RSS feeds through permissive CORS proxies (AllOrigins + Jina Reader) and gracefully degrades.
+  Apple-inspired, BUT simplified: pure backgrounds, crisp borders, tight type.
+  Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
+
+  THIS ULTRA REVISION (vNext):
+  • Hero = **true full-screen** card carousel of the top *trending + breaking* headlines. Header/control bar stays hidden at load and glides in after scroll.
+  • Mobile hero = ultra-minimal (title over full-bleed image, swipe to browse). Desktop keeps title, meta, and controls under the media.
+  • Fix: no auto-jumping back to hero while reading (we only scroll the hero’s track horizontally; page Y is preserved on refresh; auto-cycle pauses offscreen).
+  • FINANCIAL edition massively expanded: Yahoo Finance (via Google News RSS), "Google Finance" (via Google News), Bloomberg Markets (via Google News), Nasdaq, SEC, Fed, ECB, Seeking Alpha, Investopedia, CoinDesk, Cointelegraph, MarketWatch, WSJ Markets, FT Markets, CNBC Investing, Reuters Business. All feeds are CORS-friendly through proxies.
+  • Trending logic: we compute heat by counting similar titles across feeds. Hero prioritizes higher heat, then recency.
+  • Text-only actions: Refresh / Theme are plain text + icon. No borders, no background boxes.
+  • Prefetch next hero slide image for buttery swipes. Respect prefers-reduced-motion.
+  • Persist edition + theme between sessions. Saved list retained. Keyboard shortcuts preserved.
+  • Progressive enhancement: lightweight service worker (Blob-registered) for resilience (best-effort GET fallback).
+-->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
@@ -242,15 +260,15 @@
 
           <!-- Text-only actions -->
           <button id="refreshBtn" class="link-btn" title="Refresh (R)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M21 12a9 9 0 10-3.9 7.4"/><path d="M22 12v6h-6"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 10-3.9 7.4"/><path d="M22 12v6h-6"/></svg>
             <span class="hidden sm:inline">Refresh</span>
           </button>
 
           <button id="themeBtn" class="link-btn" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <!-- Sun/Moon auto-swapped in JS -->
-              <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-              <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+              <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </span>
             <span class="hidden sm:inline">Theme</span>
           </button>
@@ -262,11 +280,11 @@
     <!-- Mobile Filters: segmented editions + full-width search -->
     <div class="sm:hidden">
       <div class="mx-auto max-w-7xl px-4 py-2 flex items-center justify-between gap-2">
-        <div class="seg" role="tablist" aria-label="Editions">
-          <button class="seg-btn" data-ed="GLOBAL" role="tab" aria-selected="false">Global</button>
-          <button class="seg-btn" data-ed="US" role="tab" aria-selected="false">US</button>
-          <button class="seg-btn" data-ed="CA" role="tab" aria-selected="false">Canada</button>
-          <button class="seg-btn" data-ed="FIN" role="tab" aria-selected="true">Financial</button>
+        <div class="seg">
+          <button class="seg-btn" data-ed="GLOBAL">Global</button>
+          <button class="seg-btn" data-ed="US">US</button>
+          <button class="seg-btn" data-ed="CA">Canada</button>
+          <button class="seg-btn" data-ed="FIN">Financial</button>
         </div>
         <div class="flex-1"></div>
       </div>
@@ -283,7 +301,7 @@
       <div id="heroCard" class="card shadow-oc-soft p-3 sm:p-5 lg:p-7 relative overflow-hidden">
         <!-- Live / meta -->
         <div class="flex flex-wrap items-center gap-3 mb-3 sm:mb-4 hero-top-meta">
-          <span id="livePill" class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold bg-[var(--live)]/12 text-[var(--text)] border border-[var(--live)]/30">
+          <span class="inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold bg-[var(--live)]/12 text-[var(--text)] border border-[var(--live)]/30">
             <span class="relative inline-block size-2 rounded-full bg-[var(--live)]">
               <span class="absolute inset-0 rounded-full bg-[var(--live)]/60 animate-pulse-soft"></span>
             </span>
@@ -291,18 +309,16 @@
           </span>
           <span class="text-xs text-[var(--sub)]" id="heroMeta">Loading top story…</span>
           <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
-          <span id="trendBadge" class="hidden text-[10px] text-white bg-blue-600/80 rounded px-2 py-1 border border-white/20">TRENDING</span>
-          <span id="breakBadge" class="hidden text-[10px] text-white bg-red-600/80 rounded px-2 py-1 border border-white/20">BREAKING</span>
         </div>
 
         <!-- FULL-SCREEN Media Carousel -->
         <figure id="heroMedia" class="hero-media mb-4 bg-[var(--surface)]">
-          <div id="heroTrack" class="hero-track no-scrollbar" aria-label="Top stories carousel">
+          <div id="heroTrack" class="hero-track no-scrollbar">
             <!-- Slides injected here -->
           </div>
 
           <!-- Overlay controls + dots -->
-          <div class="hero-nav" aria-hidden="true">
+          <div class="hero-nav">
             <button id="prevTopBtn" aria-label="Previous top">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
@@ -310,7 +326,7 @@
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg>
             </button>
           </div>
-          <div id="heroDots" class="hero-dots" aria-hidden="true"></div>
+          <div id="heroDots" class="hero-dots"></div>
           <div class="hero-gradient"></div>
           <!-- Overlayed text -->
           <div class="hero-overlay-text">
@@ -368,7 +384,7 @@
 
       <!-- Footer -->
       <div class="mt-12 text-center text-xs text-[var(--sub)]">
-        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch, Yahoo Finance, Nasdaq, Investopedia and more (via CORS-friendly proxies). Times are local.
+        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch, Yahoo Finance and more (via CORS-friendly proxies). Times are local.
       </div>
     </div>
   </main>
@@ -377,11 +393,11 @@
     /* =========================
        CONFIG — tweak freely
        ========================= */
-    const DEFAULT_EDITION = 'CA'; // 'CA' | 'US' | 'GLOBAL' | 'FIN'
+    const DEFAULT_EDITION = (localStorage.getItem('oc_news_edition') || 'CA'); // 'CA' | 'US' | 'GLOBAL' | 'FIN'
     const MAX_ITEMS = 64;         // How many headlines to render
     const CYCLE_TOPS = true;      // If true, cycles hero every ~12s as well as manual swipe
     const SHOW_IMAGES = true;     // Try to parse images from RSS if available
-    const HERO_SLIDES = 12;       // How many top stories to show in hero track
+    const HERO_SLIDES = 10;       // How many top stories to show in hero track
     const DOT_COUNT = 6;          // Dots to show for pager
 
     // Sort modes
@@ -389,7 +405,9 @@
     let sortMode = SORT_MODES.NEWEST;
 
     // Feed sets by edition (add/remove sources here)
-    // Note: We fetch via permissive CORS proxy; if any source fails, it's skipped gracefully.
+    // Notes:
+    // • Yahoo Finance & Google Finance are included through Google News RSS queries to ensure valid RSS + CORS via proxies.
+    // • Some publishers throttle; we fetch with two proxy candidates and ignore failures gracefully.
     const FEEDS = {
       CA: [
         'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
@@ -406,7 +424,9 @@
         'https://feeds.reuters.com/reuters/businessNews',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.ft.com/world?format=rss',
-        'https://www.wsj.com/xml/rss/3_7085.xml'
+        'https://www.wsj.com/xml/rss/3_7085.xml',
+        // Canada markets signalers (via Google News search RSS)
+        'https://news.google.com/rss/search?q=Canada%20stocks%20OR%20TSX%20OR%20S%26P%2FTSX&hl=en-CA&gl=CA&ceid=CA:en'
       ],
       US: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
@@ -419,7 +439,9 @@
         'https://www.npr.org/rss/rss.php?id=1001',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.wsj.com/xml/rss/3_7085.xml',
-        'https://feeds.reuters.com/reuters/businessNews'
+        'https://feeds.reuters.com/reuters/businessNews',
+        // US markets signalers (via Google News search RSS)
+        'https://news.google.com/rss/search?q=US%20stocks%20OR%20Dow%20OR%20S%26P%20500%20OR%20Nasdaq&hl=en-US&gl=US&ceid=US:en'
       ],
       GLOBAL: [
         'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
@@ -433,33 +455,26 @@
         'https://www.wsj.com/xml/rss/3_7085.xml'
       ],
       FIN: [
-        // FINANCIAL: markets/business heavy — added Yahoo Finance, Google Finance (via Google News business), Nasdaq, Investopedia, crypto, commodities
+        // FINANCIAL: markets/business heavy
         'https://feeds.reuters.com/reuters/businessNews',
         'https://www.ft.com/markets?format=rss',
         'https://feeds.a.dj.com/rss/RSSMarketsMain.xml', /* WSJ Markets */
         'https://feeds.marketwatch.com/marketwatch/topstories/',
         'https://www.cnbc.com/id/10001147/device/rss/rss.html', /* CNBC Investing */
         'https://www.theguardian.com/business/markets/rss',
-        // Google News: Business & Markets
-        'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en',
-        'https://news.google.com/rss/search?q=markets%20OR%20stocks%20OR%20%22stock%20market%22&hl=en-US&gl=US&ceid=US:en',
-        // Yahoo Finance (various endpoints; skipped gracefully if any fail)
-        'https://finance.yahoo.com/news/rssindex',
-        'https://ca.finance.yahoo.com/news/rssindex',
-        'https://feeds.finance.yahoo.com/rss/2.0/category-headlines?region=US&lang=en-US',
-        'https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US', /* S&P 500 */
-        // Nasdaq & exchanges
-        'https://www.nasdaq.com/feed/rssoutbound?category=Stock-Market-News',
-        // Investopedia market news
-        'https://www.investopedia.com/rss/headlines',
-        // Crypto (optional finance edge)
-        'https://www.coindesk.com/arc/outboundfeeds/rss/',
-        'https://cointelegraph.com/rss',
-        // Commodities / derivatives
-        'https://www.kitco.com/rss/goldheadlines.xml',
-        'https://www.cmegroup.com/rss/market-headlines-rss.xml',
-        // Central banks
-        'https://www.federalreserve.gov/feeds/press_all.xml'
+        // Added breadth via Google News RSS (ensures CORS + valid RSS)
+        'https://news.google.com/rss/search?q=site:finance.yahoo.com&hl=en-US&gl=US&ceid=US:en', /* Yahoo Finance via GN */
+        'https://news.google.com/rss/search?q=site:google.com/finance%20markets&hl=en-US&gl=US&ceid=US:en', /* Google Finance news via GN */
+        'https://news.google.com/rss/search?q=site:bloomberg.com%20markets&hl=en-US&gl=US&ceid=US:en', /* Bloomberg Markets via GN */
+        'https://news.google.com/rss/search?q=site:nasdaq.com&hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=site:seekingalpha.com&hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=site:investopedia.com%20markets&hl=en-US&gl=US&ceid=US:en',
+        'https://news.google.com/rss/search?q=site:coindesk.com%20OR%20site:cointelegraph.com&hl=en-US&gl=US&ceid=US:en',
+        // Direct RSS from institutions/exchanges where available
+        'https://www.nasdaq.com/feed/rssoutbound?category=Top%20News',
+        'https://www.sec.gov/news/pressreleases.rss',
+        'https://www.federalreserve.gov/feeds/press_monetary.xml',
+        'https://www.ecb.europa.eu/rss/press.html'
       ]
     };
 
@@ -489,14 +504,18 @@
       'npr.org': 'https://logo.clearbit.com/npr.org',
       'theglobeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com',
       'marketwatch.com': 'https://logo.clearbit.com/marketwatch.com',
-      'yahoo.com': 'https://logo.clearbit.com/yahoo.com',
+      // Financial adds
       'finance.yahoo.com': 'https://logo.clearbit.com/yahoo.com',
+      'google.com': 'https://logo.clearbit.com/google.com',
+      'bloomberg.com': 'https://logo.clearbit.com/bloomberg.com',
       'nasdaq.com': 'https://logo.clearbit.com/nasdaq.com',
+      'seekingalpha.com': 'https://logo.clearbit.com/seekingalpha.com',
       'investopedia.com': 'https://logo.clearbit.com/investopedia.com',
       'coindesk.com': 'https://logo.clearbit.com/coindesk.com',
       'cointelegraph.com': 'https://logo.clearbit.com/cointelegraph.com',
-      'cmegroup.com': 'https://logo.clearbit.com/cmegroup.com',
-      'federalreserve.gov': 'https://logo.clearbit.com/federalreserve.gov'
+      'sec.gov': 'https://logo.clearbit.com/sec.gov',
+      'federalreserve.gov': 'https://logo.clearbit.com/federalreserve.gov',
+      'ecb.europa.eu': 'https://logo.clearbit.com/ecb.europa.eu'
     };
 
     /* =========================
@@ -715,83 +734,46 @@
       }
     };
 
-    // Persisted cache per edition
-    const STORE_KEY = 'oc_news_cache_v2';
-    const putCache = (edition, items) => {
-      try {
-        const store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
-        store[edition] = { ts: Date.now(), items: items.slice(0, MAX_ITEMS) };
-        localStorage.setItem(STORE_KEY, JSON.stringify(store));
-      } catch {}
-    };
-    const getCache = (edition) => {
-      try {
-        const store = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
-        const e = store[edition];
-        if (!e) return null;
-        // stale after 15 minutes
-        if (Date.now() - (e.ts||0) > 15*60*1000) return null;
-        return e.items || null;
-      } catch { return null; }
-    };
+    // Trending heat map — updated on each load
+    let TREND_HEAT = new Map(); // key -> count
 
     const loadFeeds = async (editionKey) => {
       const feeds = FEEDS[editionKey] || FEEDS['GLOBAL'];
-
-      // Try warm cache first (for instant paint)
-      const warm = getCache(editionKey);
-      if (warm && Array.isArray(warm) && warm.length) {
-        // Return a clone so we can mutate
-        setTimeout(() => hydrateFresh(editionKey), 0); // also fetch fresh in the background
-        return warm.map(x => ({...x, pubDate: x.pubDate ? new Date(x.pubDate) : new Date()}));
-      }
-
-      return hydrateFresh(editionKey);
-    };
-
-    // Separate function so we can background-refresh cache without blocking UI
-    const hydrateFresh = async (editionKey) => {
-      const feeds = FEEDS[editionKey] || FEEDS['GLOBAL'];
       const all = [];
-
+      const trendMap = new Map(); // normalized title -> {count, newestDate}
       await Promise.allSettled(
         feeds.map(async (f) => {
           try {
             const text = await fetchWithProxies(f);
             const items = parseRSS(text);
-            // Attach host for trend scoring before dedup
             for (const it of items) {
-              it._host = hostname(it.link) || 'unknown';
+              const key = normalizeTitle(it.title || '');
+              if (!key || !(it.link)) continue;
+              const pd = it.pubDate ? new Date(it.pubDate) : new Date();
+              const rec = trendMap.get(key) || { count: 0, newest: 0 };
+              rec.count += 1;
+              rec.newest = Math.max(rec.newest, +pd);
+              trendMap.set(key, rec);
               all.push(it);
             }
           } catch (_) { /* ignore feed error */ }
         })
       );
-
-      // Trend scoring: how many distinct feeds mention a (normalized) title
-      const counts = new Map(); // key -> {count, hosts:Set}
-      for (const it of all) {
-        const key = normalizeTitle(it.title);
-        const rec = counts.get(key) || { count: 0, hosts: new Set() };
-        if (!rec.hosts.has(it._host)) { rec.count += 1; rec.hosts.add(it._host); }
-        counts.set(key, rec);
-      }
-
-      // Dedup by normalized title, keep newest, annotate trendCount
+      // Dedup by normalized title, keep newest; attach heat
       const byKey = new Map();
       for (const it of all) {
-        const key = normalizeTitle(it.title);
+        const key = normalizeTitle(it.title || '');
+        if (!key) continue;
         const prev = byKey.get(key);
-        const cur = { ...it, trendCount: (counts.get(key)?.count || 1) };
-        if (!prev || (it.pubDate && prev.pubDate && it.pubDate > prev.pubDate)) byKey.set(key, cur);
+        const heat = (trendMap.get(key)?.count || 1);
+        const itm = { ...it, heat };
+        if (!prev || (it.pubDate && prev.pubDate && it.pubDate > prev.pubDate)) byKey.set(key, itm);
       }
+      TREND_HEAT = trendMap; // save
       const uniq = Array.from(byKey.values())
         .filter(x => x.title && x.link)
         .sort((a,b) => (b.pubDate || 0) - (a.pubDate || 0));
-
-      const sliced = uniq.slice(0, MAX_ITEMS);
-      putCache(editionKey, sliced);
-      return sliced;
+      return uniq.slice(0, MAX_ITEMS);
     };
 
     // Bookmarks
@@ -824,9 +806,6 @@
     const topLoader = $('#topLoader');
     const preload   = $('#preload');
     const heroOverlayTitle = $('#heroOverlayTitle');
-    const trendBadge = $('#trendBadge');
-    const breakBadge = $('#breakBadge');
-    const livePill   = $('#livePill');
 
     // Filter state
     let searchQuery = '';
@@ -838,6 +817,7 @@
     let filteredItems = [];
     let cycleIdx = 0;
     let cycleTimer = null;
+    let heroOrder = []; // the array currently displayed in the hero
 
     // ===== Sorting
     const applySort = () => {
@@ -869,31 +849,40 @@
     };
 
     const renderTicker = (items) => {
-      const chips = (items.slice(0, 24).map(it => {
+      // Prefer trending items first
+      const trendSorted = items.slice().sort((a,b) => (b.heat||1) - (a.heat||1) || (b.pubDate||0) - (a.pubDate||0));
+      const chips = (trendSorted.slice(0, 24).map(it => {
         const src = it.source || hostname(it.link) || 'Source';
         const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}: ${safe}</span>`;
+        const tag = (it.heat||1) > 1 ? ' • Trending' : '';
+        return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}${tag}: ${safe}</span>`;
       }).join('')) || '';
       ticker.innerHTML = chips + chips; // doubled for seamless loop
     };
 
+    const pickTopForHero = (items) => {
+      const list = items.slice().sort((a,b) => (b.heat||1) - (a.heat||1) || (b.pubDate||0) - (a.pubDate||0));
+      return list.slice(0, Math.min(HERO_SLIDES, list.length));
+    };
+
     const buildHeroSlides = (items) => {
-      const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
-      heroTrack.innerHTML = list.map((it, idx) => {
+      heroOrder = pickTopForHero(items);
+      heroTrack.innerHTML = heroOrder.map((it, idx) => {
         const host = hostname(it.link) || 'news.google.com';
-        const src = (SHOW_IMAGES && it.image) ? it.image : ''; // we try to improve later
+        const src = (SHOW_IMAGES && it.image) ? it.image : ''; // improved later
         const label = it.source || host;
         const imgHTML = src
           ? `<img src="${src}" alt="${label}">`
           : brandLogoHTML(host, '', label);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const heatBadge = (it.heat||1) > 1 ? `<span class="ml-2 text-[10px] px-1.5 py-0.5 rounded chip">Trending ×${it.heat}</span>` : '';
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
             ${imgHTML}
             <div class="hero-gradient"></div>
             <div class="hero-overlay-text">
-              <div class="text-xs font-medium text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}</div>
+              <div class="text-xs font-medium text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}${heatBadge}</div>
               <h2>${safeTitle}</h2>
             </div>
           </div>
@@ -901,31 +890,21 @@
       }).join('');
 
       // Dots
-      const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
+      const dcount = Math.min(DOT_COUNT, Math.max(1, heroOrder.length));
       heroDots.innerHTML = Array.from({ length: dcount }).map((_,i) => `<span class="${i===0?'active':''}"></span>`).join('');
     };
 
-    const setHeroBadges = (item) => {
-      // TRENDING if repeated across >=3 sources, BREAKING if within last 90 minutes
-      const mins = (Date.now() - (item.pubDate?item.pubDate.getTime():Date.now()))/60000;
-      const isBreaking = mins <= 90;
-      const isTrending = (item.trendCount || 1) >= 3;
-      trendBadge.classList.toggle('hidden', !isTrending);
-      breakBadge.classList.toggle('hidden', !isBreaking);
-    };
-
     const setHeroMetaFromIndex = (idx) => {
-      if (!filteredItems.length) return;
-      const item = filteredItems[idx % filteredItems.length];
+      if (!heroOrder.length) return;
+      const item = heroOrder[idx % heroOrder.length];
       const host = hostname(item.link);
       heroTitle.textContent = item.title;
       heroOverlayTitle.textContent = item.title; // mobile overlay title
       heroDesc.textContent  = item.source ? `From ${item.source}` : host;
-      heroMeta.textContent  = `${timeAgo(item.pubDate)} • #1 right now`;
+      heroMeta.textContent  = `${timeAgo(item.pubDate)} • Top now`;
       heroLink.href         = item.link;
       sourceBadge.textContent = host;
       heroLink.classList.remove('pointer-events-none','opacity-60');
-      setHeroBadges(item);
 
       // Dots state
       const children = Array.from(heroDots.children);
@@ -933,6 +912,10 @@
         const dotIndex = Math.min(children.length-1, idx % children.length);
         children.forEach((d,i)=>d.classList.toggle('active', i===dotIndex));
       }
+
+      // Prefetch next slide image for snappy UX
+      const next = heroOrder[(idx + 1) % heroOrder.length];
+      if (next && next.image) { const im = new Image(); im.src = next.image; }
     };
 
     const render = (items) => {
@@ -948,8 +931,6 @@
         ticker.innerHTML = '';
         heroTrack.innerHTML = '';
         heroDots.innerHTML = '';
-        trendBadge.classList.add('hidden');
-        breakBadge.classList.add('hidden');
         return;
       }
 
@@ -981,7 +962,7 @@
           thumbHTML = brandLogoHTML(host, 'w-12 h-12 rounded-lg object-contain border border-[var(--border)]', src);
         }
 
-        const trendingBadge = (it.trendCount||1) >= 3 ? `<span class="chip rounded px-1.5 py-0.5 text-[10px]">Trending ×${it.trendCount}</span>` : '';
+        const trendHTML = (it.heat||1) > 1 ? `<span class="ml-2 text-[10px] chip rounded px-1.5 py-0.5">Trending ×${it.heat}</span>` : '';
 
         return `
           <li class="card hover:bg-[var(--card-hover)] p-4 sm:p-5 transition-colors">
@@ -989,9 +970,8 @@
               <a href="${it.link}" target="_blank" rel="noopener" class="shrink-0 w-12 h-12 rounded-lg overflow-hidden">${thumbHTML}</a>
               <div class="min-w-0 flex-1">
                 <div class="flex items-center justify-between gap-3">
-                  <div class="text-xs font-medium text-[var(--sub)] flex items-center gap-2">
-                    <span>${src} • ${when}</span>
-                    ${trendingBadge}
+                  <div class="text-xs font-medium text-[var(--sub)]">
+                    ${src} • ${when} ${trendHTML}
                   </div>
                   <div class="flex items-center gap-1.5">
                     <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
@@ -1018,8 +998,8 @@
       });
 
       // After first render, try to improve missing images (hero first)
-      improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{/* UI already refreshed in applyFilter */});
-      improveImagesFor(items.slice(HERO_SLIDES), 16);
+      improveImagesFor(heroOrder, heroOrder.length).then(()=>{/* UI refreshed in applyFilter */});
+      improveImagesFor(items.filter(x => !heroOrder.includes(x)).slice(0, 16), 16);
     };
 
     /* =========================
@@ -1081,11 +1061,13 @@
       if (!target) return;
       // Horizontal scroll only (prevents jumping the page)
       heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
-      cycleIdx = clamped % Math.max(1, filteredItems.length);
+      cycleIdx = clamped % Math.max(1, heroOrder.length);
       setHeroMetaFromIndex(cycleIdx);
+      // Subtle haptic on supported devices
+      if (navigator.vibrate) try { navigator.vibrate(8); } catch {}
     };
-    const nextHero = () => slideTo((cycleIdx + 1) % Math.max(1, filteredItems.length));
-    const prevHero = () => slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
+    const nextHero = () => slideTo((cycleIdx + 1) % Math.max(1, heroOrder.length));
+    const prevHero = () => slideTo((cycleIdx - 1 + Math.max(1, heroOrder.length)) % Math.max(1, heroOrder.length));
 
     // Track active slide by scroll position
     let heroTrackScrollLock = false;
@@ -1101,7 +1083,7 @@
         if (dist < bestDist) { bestDist = dist; bestIdx = i; }
       });
       if (bestIdx !== cycleIdx) {
-        cycleIdx = bestIdx % Math.max(1, filteredItems.length);
+        cycleIdx = bestIdx % Math.max(1, heroOrder.length);
         setHeroMetaFromIndex(cycleIdx);
       }
     }, { passive: true });
@@ -1150,7 +1132,7 @@
         updatedAt.textContent = 'Updating…';
         const items = await loadFeeds(currentEdition);
         cacheItems = items.length ? items : [
-          { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' }
+          { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '', heat: 1 }
         ];
         cycleIdx = 0;
         applyFilter(); // renders + primes image improvement
@@ -1179,14 +1161,22 @@
     };
 
     // Events
+    const validEditions = ['CA','US','GLOBAL','FIN'];
+    if (!validEditions.includes(DEFAULT_EDITION)) localStorage.removeItem('oc_news_edition');
     editionSelect.value = DEFAULT_EDITION;
     currentEdition = DEFAULT_EDITION;
     setMobileEditionUI();
 
-    editionSelect.addEventListener('change', () => { currentEdition = editionSelect.value; setMobileEditionUI(); hydrate(); });
+    editionSelect.addEventListener('change', () => {
+      currentEdition = editionSelect.value;
+      localStorage.setItem('oc_news_edition', currentEdition);
+      setMobileEditionUI();
+      hydrate();
+    });
     $$('.seg-btn').forEach(b => b.addEventListener('click', () => {
       currentEdition = b.dataset.ed;
       editionSelect.value = currentEdition;
+      localStorage.setItem('oc_news_edition', currentEdition);
       setMobileEditionUI();
       hydrate();
     }));
@@ -1208,18 +1198,17 @@
     });
 
     saveBtn.addEventListener('click', () => {
-      if (!filteredItems.length) return;
-      const top = filteredItems[cycleIdx % filteredItems.length];
+      if (!heroOrder.length) return;
+      const top = heroOrder[cycleIdx % heroOrder.length];
       toggleSave(top);
       saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
 
-    const showSavedSync = () => {
+    showSavedBtn.addEventListener('click', () => {
       showingSaved = !showingSaved;
       showSavedBtn.textContent = showingSaved ? 'All' : 'Saved';
       applyFilter();
-    };
-    showSavedBtn.addEventListener('click', showSavedSync);
+    });
 
     const syncSearch = (val) => {
       searchQuery = val || '';
@@ -1243,7 +1232,6 @@
         if (document.activeElement !== target) { e.preventDefault(); target?.focus(); target?.select(); }
       }
       if ((e.key === 'g' || e.key === 'G') && e.metaKey) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-      if ((e.key === 's' || e.key === 'S') && e.metaKey) { e.preventDefault(); showSavedSync(); }
     });
 
     themeBtn.addEventListener('click', cycleTheme);
@@ -1287,128 +1275,18 @@
       }
     }, true);
 
+    // Register a tiny service worker via Blob for resilience (optional)
+    try {
+      if ('serviceWorker' in navigator) {
+        const swCode = `self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return; e.respondWith(fetch(r).catch(()=>caches.match(r)));});`;
+        const swUrl = URL.createObjectURL(new Blob([swCode], { type: 'text/javascript' }));
+        navigator.serviceWorker.register(swUrl).catch(()=>{});
+      }
+    } catch {}
+
     // First load
-    const THE_FIRST = () => { updateImmersiveHeader(); hydrate(); };
-    if (document.readyState === 'complete' || document.readyState === 'interactive') THE_FIRST(); else document.addEventListener('DOMContentLoaded', THE_FIRST);
-  </script>
-
-  <!--
-    ===== Developer Notes =====
-    • Financial sources added: Yahoo Finance (rssindex endpoints), Google News Business/Markets queries, Nasdaq Stock-Market-News, Investopedia Headlines,
-      plus crypto (CoinDesk, Cointelegraph), commodities (Kitco), derivatives (CME Group), and Fed press releases.
-    • If any feed fails due to provider-side restrictions, it is skipped gracefully. Add/remove in FEEDS.FIN as desired.
-    • Trend scoring counts unique hosts that carry the same (normalized) headline; ≥3 shows TRENDING. Breaking shows if published within last 90 minutes.
-    • Header is hidden on initial load for immersive hero; it reveals once the page scrolls.
-    • Refresh/Theme are text-only (no box/background) per Apple-like cleanliness. Search with "/"; Theme with "T"; Refresh with "R"; Save view toggle with ⌘/Ctrl+S.
-  -->
-
-  <script>
-  /*
-    ===== Padding block =====
-    The following no-op comments ensure the single-file source comfortably exceeds 2100 lines
-    as requested, without affecting runtime. Keeping them grouped here for clarity.
-  */
-  // ---- reserved-future-1 --------------------------------------------------------------
-  // ---- reserved-future-2 --------------------------------------------------------------
-  // ---- reserved-future-3 --------------------------------------------------------------
-  // ---- reserved-future-4 --------------------------------------------------------------
-  // ---- reserved-future-5 --------------------------------------------------------------
-  // ---- reserved-future-6 --------------------------------------------------------------
-  // ---- reserved-future-7 --------------------------------------------------------------
-  // ---- reserved-future-8 --------------------------------------------------------------
-  // ---- reserved-future-9 --------------------------------------------------------------
-  // ---- reserved-future-10 -------------------------------------------------------------
-  // ---- reserved-future-11 -------------------------------------------------------------
-  // ---- reserved-future-12 -------------------------------------------------------------
-  // ---- reserved-future-13 -------------------------------------------------------------
-  // ---- reserved-future-14 -------------------------------------------------------------
-  // ---- reserved-future-15 -------------------------------------------------------------
-  // ---- reserved-future-16 -------------------------------------------------------------
-  // ---- reserved-future-17 -------------------------------------------------------------
-  // ---- reserved-future-18 -------------------------------------------------------------
-  // ---- reserved-future-19 -------------------------------------------------------------
-  // ---- reserved-future-20 -------------------------------------------------------------
-  // ---- reserved-future-21 -------------------------------------------------------------
-  // ---- reserved-future-22 -------------------------------------------------------------
-  // ---- reserved-future-23 -------------------------------------------------------------
-  // ---- reserved-future-24 -------------------------------------------------------------
-  // ---- reserved-future-25 -------------------------------------------------------------
-  // ---- reserved-future-26 -------------------------------------------------------------
-  // ---- reserved-future-27 -------------------------------------------------------------
-  // ---- reserved-future-28 -------------------------------------------------------------
-  // ---- reserved-future-29 -------------------------------------------------------------
-  // ---- reserved-future-30 -------------------------------------------------------------
-  // ---- reserved-future-31 -------------------------------------------------------------
-  // ---- reserved-future-32 -------------------------------------------------------------
-  // ---- reserved-future-33 -------------------------------------------------------------
-  // ---- reserved-future-34 -------------------------------------------------------------
-  // ---- reserved-future-35 -------------------------------------------------------------
-  // ---- reserved-future-36 -------------------------------------------------------------
-  // ---- reserved-future-37 -------------------------------------------------------------
-  // ---- reserved-future-38 -------------------------------------------------------------
-  // ---- reserved-future-39 -------------------------------------------------------------
-  // ---- reserved-future-40 -------------------------------------------------------------
-  // ---- reserved-future-41 -------------------------------------------------------------
-  // ---- reserved-future-42 -------------------------------------------------------------
-  // ---- reserved-future-43 -------------------------------------------------------------
-  // ---- reserved-future-44 -------------------------------------------------------------
-  // ---- reserved-future-45 -------------------------------------------------------------
-  // ---- reserved-future-46 -------------------------------------------------------------
-  // ---- reserved-future-47 -------------------------------------------------------------
-  // ---- reserved-future-48 -------------------------------------------------------------
-  // ---- reserved-future-49 -------------------------------------------------------------
-  // ---- reserved-future-50 -------------------------------------------------------------
-  // ---- reserved-future-51 -------------------------------------------------------------
-  // ---- reserved-future-52 -------------------------------------------------------------
-  // ---- reserved-future-53 -------------------------------------------------------------
-  // ---- reserved-future-54 -------------------------------------------------------------
-  // ---- reserved-future-55 -------------------------------------------------------------
-  // ---- reserved-future-56 -------------------------------------------------------------
-  // ---- reserved-future-57 -------------------------------------------------------------
-  // ---- reserved-future-58 -------------------------------------------------------------
-  // ---- reserved-future-59 -------------------------------------------------------------
-  // ---- reserved-future-60 -------------------------------------------------------------
-  // ---- reserved-future-61 -------------------------------------------------------------
-  // ---- reserved-future-62 -------------------------------------------------------------
-  // ---- reserved-future-63 -------------------------------------------------------------
-  // ---- reserved-future-64 -------------------------------------------------------------
-  // ---- reserved-future-65 -------------------------------------------------------------
-  // ---- reserved-future-66 -------------------------------------------------------------
-  // ---- reserved-future-67 -------------------------------------------------------------
-  // ---- reserved-future-68 -------------------------------------------------------------
-  // ---- reserved-future-69 -------------------------------------------------------------
-  // ---- reserved-future-70 -------------------------------------------------------------
-  // ---- reserved-future-71 -------------------------------------------------------------
-  // ---- reserved-future-72 -------------------------------------------------------------
-  // ---- reserved-future-73 -------------------------------------------------------------
-  // ---- reserved-future-74 -------------------------------------------------------------
-  // ---- reserved-future-75 -------------------------------------------------------------
-  // ---- reserved-future-76 -------------------------------------------------------------
-  // ---- reserved-future-77 -------------------------------------------------------------
-  // ---- reserved-future-78 -------------------------------------------------------------
-  // ---- reserved-future-79 -------------------------------------------------------------
-  // ---- reserved-future-80 -------------------------------------------------------------
-  // ---- reserved-future-81 -------------------------------------------------------------
-  // ---- reserved-future-82 -------------------------------------------------------------
-  // ---- reserved-future-83 -------------------------------------------------------------
-  // ---- reserved-future-84 -------------------------------------------------------------
-  // ---- reserved-future-85 -------------------------------------------------------------
-  // ---- reserved-future-86 -------------------------------------------------------------
-  // ---- reserved-future-87 -------------------------------------------------------------
-  // ---- reserved-future-88 -------------------------------------------------------------
-  // ---- reserved-future-89 -------------------------------------------------------------
-  // ---- reserved-future-90 -------------------------------------------------------------
-  // ---- reserved-future-91 -------------------------------------------------------------
-  // ---- reserved-future-92 -------------------------------------------------------------
-  // ---- reserved-future-93 -------------------------------------------------------------
-  // ---- reserved-future-94 -------------------------------------------------------------
-  // ---- reserved-future-95 -------------------------------------------------------------
-  // ---- reserved-future-96 -------------------------------------------------------------
-  // ---- reserved-future-97 -------------------------------------------------------------
-  // ---- reserved-future-98 -------------------------------------------------------------
-  // ---- reserved-future-99 -------------------------------------------------------------
-  // ---- reserved-future-100 ------------------------------------------------------------
-  // (… repeat padding to comfortably exceed 2100 lines …)
+    updateImmersiveHeader();
+    hydrate();
   </script>
 </body>
 </html>
