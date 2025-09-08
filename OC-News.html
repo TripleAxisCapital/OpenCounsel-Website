@@ -2,19 +2,18 @@
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
   <!--
-    OC-News — Apple-clean, pure white/black. No gradients.
+    OC-News — Apple-clean, pure white/black.
 
-    This build adds:
-    • Header height reduced: editions + search on the SAME row (mobile & desktop) + News/Weather toggle.
-    • New "ALL" edition merges every feed (de-duplicated).
-    • Google Trends FIX: resilient proxies + HTML fallback parser (if API blocks) and a Top Trend badge in header.
-    • New Apple‑style Weather page: auto geolocate + manual entry (address / postal code / city) via Nominatim → Open‑Meteo.
-    • Smooth preloader, image fallbacks, saved articles, keyboard shortcuts.
+    What’s new:
+    • Header height reduced: editions + search on the SAME row (mobile & desktop).
+    • New "ALL" edition merges all feeds (de-duplicated).
+    • Google Trends: robust fetch (API + HTML fallback via proxies), plus “Most searched today” pill.
+    • Weather page: Apple-style cards. Auto-locates via Geolocation API with IP fallback; manual input accepts city/address/postal.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>OC-News — The AI Workspace. Without Limits.</title>
-  <meta name="description" content="OC-News surfaces breaking headlines with an Apple-style minimal hero. Private, fast, elegant. Includes a Weather page with auto location." />
+  <meta name="description" content="OC-News surfaces breaking headlines with an Apple-style minimal hero. Now with Trends + Weather." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,18 +44,16 @@
   </script>
   <style>
     :root{
-      --logo-size:34px;--logo-size-lg:40px;
-      --radius:14px;
-      --bg:#0b0b0c;--surface:#000000;--elev:rgba(255,255,255,0.04);
+      --logo-size:34px;--logo-size-lg:40px;--radius:14px;
+      --bg:#0b0b0c;--surface:#000;--elev:rgba(255,255,255,0.04);
       --border:rgba(255,255,255,0.12);
       --text:#f5f7fb;--sub:#a6acb8;--accent:#356dff;--live:#ff3b30;
       --chip:rgba(255,255,255,0.06);--chip-border:rgba(255,255,255,0.12);
-      --card-hover:rgba(255,255,255,0.06);
-      --header-h:60px;
+      --card-hover:rgba(255,255,255,0.06);--header-h:60px;
       --preload-bg-dark:#000; --preload-bg-light:#fff; --preload-text-dark:#fff; --preload-text-light:#000;
     }
     html.light{
-      --bg:#ffffff;--surface:#ffffff;--elev:rgba(10,10,15,0.035);
+      --bg:#fff;--surface:#fff;--elev:rgba(10,10,15,0.035);
       --border:rgba(5,13,38,0.10);
       --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
       --chip:rgba(0,0,0,0.035);--chip-border:rgba(0,0,0,0.08);
@@ -140,7 +137,7 @@
     /* Header behavior */
     body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
     header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
-    body.hero-in-view #heroTitle{ display:none!important } /* desktop only; mobile overridden above */
+    body.hero-in-view #heroTitle{ display:none!important }
 
     /* Tiles */
     .tile-img{ width:100%; height:11rem; object-fit:cover; border:1px solid var(--border); border-radius:12px }
@@ -150,9 +147,12 @@
     @media (min-width:640px){ .rail > article{ flex:0 0 420px; max-width:420px } }
 
     /* Weather */
-    .wx-big{ font-weight:800; letter-spacing:-0.03em; font-size:clamp(40px, 14vw, 88px) }
-    .wx-sub{ color:var(--sub) }
-    .wx-kpi{ display:grid; gap:6px; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface) }
+    .wx-chip{ font-size:11px }
+    .wx-big{ font-size:clamp(28px, 9vw, 56px); font-weight:800; letter-spacing:-0.02em }
+    .wx-row{ display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px }
+    .wx-hour-rail{ display:flex; gap:10px; overflow:auto; padding-bottom:4px }
+    .wx-hour{ min-width:80px }
+    @media (min-width:640px){ .wx-row{ grid-template-columns: repeat(6, minmax(0,1fr)); } }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
@@ -166,7 +166,7 @@
     </div>
   </div>
 
-  <!-- Tiny top loader (kept for parity) -->
+  <!-- Tiny top loader -->
   <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
@@ -176,21 +176,13 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-3 min-w-0">
-          <a href="#" class="shrink-0" aria-label="OpenCounsel Home" id="homeLink">
+          <a href="#" class="shrink-0" aria-label="OC-News Home">
             <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
           </a>
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Center: Page toggle -->
-        <div class="hidden sm:flex items-center gap-2 min-w-0">
-          <div class="seg">
-            <button id="navNewsBtn" class="active">News</button>
-            <button id="navWeatherBtn">Weather</button>
-          </div>
-        </div>
-
-        <!-- Desktop: Editions + Search + Controls on same line -->
+        <!-- Desktop: Editions + Search + View seg on same row -->
         <div class="hidden sm:flex items-center gap-2 min-w-0">
           <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
           <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
@@ -200,11 +192,17 @@
             <option value="GLOBAL">Global Mix</option>
             <option value="FIN">Financial</option>
           </select>
+
           <div class="relative">
             <input id="searchInput" placeholder="Search headlines… ( / )" class="w-56 md:w-72 lg:w-80 btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
-          <span id="gtTopBadge" class="chip rounded px-2 py-1 text-xs hidden"><span class="opacity-80">Top trend:</span> <a id="gtTopLink" class="ml-1 underline decoration-[var(--accent)]/60 underline-offset-4" target="_blank" rel="noopener">—</a></span>
+
+          <div class="seg" id="viewSeg">
+            <button data-view="news" class="active">News</button>
+            <button data-view="weather">Weather</button>
+          </div>
+
           <button id="refreshBtn" class="link-btn" title="Refresh (R)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
             <span class="hidden sm:inline">Refresh</span>
@@ -218,22 +216,22 @@
           </button>
         </div>
 
-        <!-- Mobile: Seg + Editions + Search in a SINGLE row -->
+        <!-- Mobile: editions + search in one row + view seg -->
         <div class="sm:hidden flex items-center gap-2 w-full justify-end">
-          <div class="seg overflow-x-auto no-scrollbar max-w-[42vw]">
-            <button id="mNavNewsBtn" class="active">News</button>
-            <button id="mNavWeatherBtn">Weather</button>
-          </div>
-          <div class="seg overflow-x-auto no-scrollbar max-w-[40vw]">
+          <div class="seg overflow-x-auto no-scrollbar max-w-[55vw]">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
             <button class="seg-btn" data-ed="US">US</button>
             <button class="seg-btn" data-ed="CA">Canada</button>
             <button class="seg-btn" data-ed="FIN">Financial</button>
           </div>
-          <div class="relative hidden" id="mobileNewsSearchWrap">
-            <input id="searchInputMobile" placeholder="Search… ( / )" class="w-[36vw] btn rounded-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
+          <div class="relative flex-1 min-w-[36vw]">
+            <input id="searchInputMobile" placeholder="Search… ( / )" class="w-full btn rounded-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
+          </div>
+          <div class="seg">
+            <button data-view="news" class="view-m active">News</button>
+            <button data-view="weather" class="view-m">Wx</button>
           </div>
           <button id="refreshBtnMobile" class="link-btn" title="Refresh (R)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
@@ -244,8 +242,8 @@
     <div class="hairline"></div>
   </header>
 
-  <!-- ===== NEWS PAGE ===== -->
-  <main id="newsPage">
+  <!-- ===== NEWS VIEW ===== -->
+  <main id="newsView">
     <!-- HERO + SECTION LEAD -->
     <section class="relative">
       <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 hero-section-container">
@@ -253,7 +251,7 @@
 
         <div id="heroCard" class="card shadow-oc-soft p-0 relative overflow-hidden">
           <figure id="heroMedia" class="hero-media bg-[var(--surface)]">
-            <div id="heroTrack" class="hero-track no-scrollbar"><!-- Slides injected --></div>
+            <div id="heroTrack" class="hero-track no-scrollbar"></div>
             <div class="hero-nav">
               <button id="prevTopBtn" aria-label="Previous top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg></button>
               <button id="nextTopBtn" aria-label="Next top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -279,6 +277,14 @@
               <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
               <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
             </div>
+
+            <!-- Most searched today -->
+            <div class="mt-3">
+              <span class="chip rounded-full px-3 py-1 text-sm" id="mostSearchedPill" hidden>
+                Most searched today: <strong id="mostSearchedTerm" class="ml-1">—</strong>
+              </span>
+            </div>
+
             <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
               <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
             </div>
@@ -290,7 +296,7 @@
     <!-- SUB TILES -->
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-        <ul id="newsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- Populated by JS --></ul>
+        <ul id="newsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"></ul>
       </div>
       <div class="hairline"></div>
     </section>
@@ -302,7 +308,7 @@
           <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
           <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
         </div>
-        <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
+        <div id="trendingRail" class="rail no-scrollbar"></div>
       </div>
       <div class="hairline"></div>
     </section>
@@ -310,62 +316,77 @@
     <!-- GOOGLE TRENDS -->
     <section id="gtSection" class="relative">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="flex items-center justify-between gap-3 mb-2">
           <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
           <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
         </div>
-        <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
+        <div id="gtTopBadge" class="mb-3" hidden>
+          <span class="chip rounded-full px-3 py-1 text-sm">#1 today: <strong id="gtTopTerm">—</strong></span>
+        </div>
+        <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"></div>
         <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
       </div>
     </section>
   </main>
 
-  <!-- ===== WEATHER PAGE ===== -->
-  <main id="weatherPage" class="hidden">
+  <!-- ===== WEATHER VIEW ===== -->
+  <main id="weatherView" class="hidden">
     <section class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
-          <div>
-            <h1 class="section-lead">Weather</h1>
-            <div class="text-sm wx-sub" id="wxSubtitle">Local weather</div>
-          </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <div class="relative flex-1 sm:flex-none">
-              <input id="wxQuery" class="w-full sm:w-80 btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" placeholder="Enter city / postal code / address" />
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div class="flex items-center justify-between mb-3">
+          <h1 class="section-lead">Weather</h1>
+          <div class="text-xs text-[var(--sub)]" id="wxUpdated">—</div>
+        </div>
+
+        <!-- Search + actions -->
+        <div class="card p-3 sm:p-4 mb-4">
+          <form id="wxForm" class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+            <input id="wxQuery" class="flex-1 btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" placeholder="City, address, or postal code…" />
+            <button class="btn rounded-lg px-3 py-2 text-sm" id="wxSearchBtn" type="submit">Search</button>
+            <button class="btn rounded-lg px-3 py-2 text-sm" id="wxUseMyLocationBtn" type="button">Use my location</button>
+          </form>
+          <p class="mt-2 text-xs text-[var(--sub)]">Auto-detect uses browser Geolocation (secure contexts) with an IP fallback if denied.</p>
+        </div>
+
+        <!-- Current -->
+        <div id="wxCurrent" class="card p-4 sm:p-6 mb-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="text-sm text-[var(--sub)]" id="wxPlace">Loading location…</div>
+              <div class="wx-big" id="wxTemp">—</div>
+              <div class="mt-1 text-sm" id="wxDesc">—</div>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <span class="chip wx-chip rounded px-2 py-1" id="wxFeels">—</span>
+                <span class="chip wx-chip rounded px-2 py-1" id="wxWind">—</span>
+                <span class="chip wx-chip rounded px-2 py-1" id="wxHumidity">—</span>
+                <span class="chip wx-chip rounded px-2 py-1" id="wxUv">—</span>
+                <span class="chip wx-chip rounded px-2 py-1" id="wxVisibility">—</span>
+              </div>
             </div>
-            <button id="wxSearchBtn" class="btn rounded-lg px-3 py-2 text-sm">Search</button>
-            <button id="wxUseMyBtn" class="link-btn">Use my location</button>
+            <div class="text-right">
+              <div class="text-xs text-[var(--sub)]">Sunrise <span id="wxSunrise">—</span></div>
+              <div class="text-xs text-[var(--sub)]">Sunset <span id="wxSunset">—</span></div>
+            </div>
           </div>
         </div>
 
-        <!-- Summary card -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-          <article class="card p-5 lg:col-span-2" id="wxSummary">
-            <div class="flex items-end gap-3">
-              <div class="wx-big" id="wxTemp">—°</div>
-              <div>
-                <div class="text-lg sm:text-xl font-semibold" id="wxCond">—</div>
-                <div class="text-sm wx-sub" id="wxMeta">—</div>
-              </div>
-              <div class="ml-auto text-right">
-                <div class="text-sm font-semibold" id="wxPlace">—</div>
-                <div class="text-xs wx-sub" id="wxUpdated">—</div>
-              </div>
-            </div>
-            <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2" id="wxKPIs"><!-- KPIs injected --></div>
-          </article>
+        <!-- Hourly -->
+        <div class="card p-4 sm:p-6 mb-4">
+          <h2 class="text-base font-semibold mb-3">Next 24 hours</h2>
+          <div id="wxHourly" class="wx-hour-rail no-scrollbar"></div>
+        </div>
 
-          <!-- 7‑day forecast -->
-          <article class="card p-4" id="wx7Day">
-            <h3 class="text-sm font-semibold mb-2">7‑Day</h3>
-            <div id="wxDailyGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-2"><!-- daily injected --></div>
-          </article>
+        <!-- Daily -->
+        <div class="card p-4 sm:p-6">
+          <h2 class="text-base font-semibold mb-3">7-day outlook</h2>
+          <div id="wxDaily" class="wx-row"></div>
         </div>
       </div>
       <div class="hairline"></div>
     </section>
   </main>
 
+  <!-- ===== SCRIPT ===== -->
   <script>
     /* ===== CONFIG ===== */
     const DEFAULT_EDITION = 'CA';
@@ -375,7 +396,6 @@
     const HERO_SLIDES = 10;
     const DOT_COUNT = 6;
     const PRELOAD_ON_REFRESH = true;
-    const LOADER_MAX_WAIT_MS = 20000;
 
     const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
     let sortMode = SORT_MODES.NEWEST;
@@ -457,16 +477,18 @@
     const feedsFor = (ed) => {
       if (ed === 'ALL') {
         const merged = [].concat(...Object.values(FEEDS));
-        return Array.from(new Set(merged)); // de-dup
+        return Array.from(new Set(merged));
       }
       return FEEDS[ed] || FEEDS.GLOBAL;
     };
 
+    /* ===== PROXIES (CORS-safe) ===== */
     const proxyCandidates = (url) => ([
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
     ]);
 
+    /* ===== BRAND LOGOS ===== */
     const BRAND_HINTS = {
       'news.google.com':'https://logo.clearbit.com/google.com',
       'bbc.co.uk':'https://logo.clearbit.com/bbc.co.uk',
@@ -531,6 +553,13 @@
     const normalizeTitle = (t)=> t.toLowerCase().replace(/[\W_]+/g,' ').trim();
     const pick = (el, sel)=> el.querySelector(sel)?.getAttribute('content')?.trim() || el.querySelector(sel)?.textContent?.trim();
     const getAttr = (el, sel, attr)=> el.querySelector(sel)?.getAttribute(attr);
+    const upscaleImageUrl = (u)=>{
+      try{
+        let url = new URL(u);
+        ['w','width','maxwidth','px','param','imgw'].forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
+        return url.toString();
+      }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
+    };
 
     const brandSources = (host)=>{
       const base = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
@@ -549,13 +578,6 @@
         <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
       </div>
     `;
-    const upscaleImageUrl = (u)=>{
-      try{
-        let url = new URL(u);
-        ['w','width','maxwidth','px','param','imgw'].forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
-        return url.toString();
-      }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
-    };
 
     /* ===== RSS + IMAGE RESOLUTION ===== */
     const parseRSS = (text)=>{
@@ -604,26 +626,17 @@
       throw new Error('All proxies failed for ' + url);
     };
 
-    const fetchJSONWithProxies = async (url) => JSON.parse(await fetchWithProxies(url));
-
     const IMG_CACHE = new Map();
     const resolving = new Set();
-
     const tryFindOgImage = (html, baseUrl)=>{
       try{
         const doc = new DOMParser().parseFromString(html, 'text/html');
         const tryMeta = (sel)=> absolutize(pick(doc, sel), baseUrl);
         const cands = [
-          'meta[property="og:image:secure_url"]',
-          'meta[property="og:image:url"]',
-          'meta[property="og:image"]',
-          'meta[name="og:image"]',
-          'meta[name="twitter:image:src"]',
-          'meta[name="twitter:image"]'
+          'meta[property="og:image:secure_url"]','meta[property="og:image:url"]','meta[property="og:image"]','meta[name="og:image"]',
+          'meta[name="twitter:image:src"]','meta[name="twitter:image"]'
         ];
-        for(const sel of cands){
-          const u = tryMeta(sel); if(u) return u;
-        }
+        for(const sel of cands){ const u = tryMeta(sel); if(u) return u; }
         const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
         for(const s of scripts){
           try{
@@ -631,9 +644,8 @@
             const collect = (obj)=>{
               if(!obj) return null;
               if(typeof obj === 'string') return absolutize(obj, baseUrl);
-              if(Array.isArray(obj)){
-                for(const it of obj){ const inner = collect(it); if(inner) return inner; }
-              }else if(typeof obj === 'object'){
+              if(Array.isArray(obj)){ for(const it of obj){ const inner = collect(it); if(inner) return inner; } }
+              else if(typeof obj === 'object'){
                 if(obj.image) return collect(obj.image);
                 if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
                 if(obj.logo) return collect(obj.logo);
@@ -654,7 +666,6 @@
       }catch{}
       return '';
     };
-
     const resolveArticleImage = async (url)=>{
       if(!url) return '';
       if(IMG_CACHE.has(url)) return IMG_CACHE.get(url);
@@ -667,11 +678,9 @@
         IMG_CACHE.set(url, better);
         return better;
       }catch{
-        IMG_CACHE.set(url, '');
-        return '';
+        IMG_CACHE.set(url, ''); return '';
       }finally{ resolving.delete(url) }
     };
-
     const improveImagesFor = async (items, limit=12)=>{
       const targets = items.filter(it=>!it.image).slice(0, limit);
       let updated = false;
@@ -687,11 +696,8 @@
       const all = [];
       await Promise.allSettled(
         feeds.map(async (f)=>{
-          try{
-            const text = await fetchWithProxies(f);
-            const items = parseRSS(text);
-            all.push(...items);
-          }catch(_){ }
+          try{ const text = await fetchWithProxies(f); const items = parseRSS(text); all.push(...items); }
+          catch(_){ }
         })
       );
       const seen = new Map(); // normTitle -> { item, count }
@@ -728,50 +734,24 @@
       setSaved(cur);
     };
 
-    /* ===== RENDER ===== */
-    const heroTitle = $('#heroTitle');
-    const heroMeta  = $('#heroMeta');
-    const heroLink  = $('#heroLink');
-    const heroTrack = $('#heroTrack');
-    const heroDots  = $('#heroDots');
-    const updatedAt = $('#updatedAt');
-    const newsList  = $('#newsList');
-    const ticker    = $('#ticker');
-    const sourceBadge = $('#sourceBadge');
-    const preload   = $('#preload');
-    const heroOverlayTitle = $('#heroOverlayTitle');
-    const trendingRail = $('#trendingRail');
+    /* ===== RENDER (NEWS) ===== */
+    const heroTitle = $('#heroTitle'); const heroMeta = $('#heroMeta'); const heroLink = $('#heroLink');
+    const heroTrack = $('#heroTrack'); const heroDots = $('#heroDots'); const updatedAt = $('#updatedAt');
+    const newsList = $('#newsList'); const ticker = $('#ticker'); const sourceBadge = $('#sourceBadge');
+    const heroOverlayTitle = $('#heroOverlayTitle'); const trendingRail = $('#trendingRail');
     const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty');
-    const gtTopBadge = $('#gtTopBadge'); const gtTopLink = $('#gtTopLink');
+    const mostPill = $('#mostSearchedPill'); const mostTerm = $('#mostSearchedTerm');
+    const gtTopBadge = $('#gtTopBadge'); const gtTopTerm = $('#gtTopTerm');
 
-    // Single declarations
-    const editionSelect = $('#editionSelect');
-    const refreshBtn = $('#refreshBtn');
-    const themeBtn = $('#themeBtn');
-    const shareBtn = $('#shareBtn');
-    const saveBtn  = $('#saveBtn');
-    const searchInput = $('#searchInput');
-    const searchInputMobile = $('#searchInputMobile');
-    const prevTopBtn = $('#prevTopBtn');
-    const nextTopBtn = $('#nextTopBtn');
-    const refreshBtnMobile = $('#refreshBtnMobile');
+    const editionSelect = $('#editionSelect'); const refreshBtn = $('#refreshBtn'); const themeBtn = $('#themeBtn');
+    const shareBtn = $('#shareBtn'); const saveBtn  = $('#saveBtn');
+    const searchInput = $('#searchInput'); const searchInputMobile = $('#searchInputMobile');
+    const prevTopBtn = $('#prevTopBtn'); const nextTopBtn = $('#nextTopBtn'); const refreshBtnMobile = $('#refreshBtnMobile');
 
-    // Page nav
-    const navNewsBtn = $('#navNewsBtn');
-    const navWeatherBtn = $('#navWeatherBtn');
-    const mNavNewsBtn = $('#mNavNewsBtn');
-    const mNavWeatherBtn = $('#mNavWeatherBtn');
-    const newsPage = $('#newsPage');
-    const weatherPage = $('#weatherPage');
-    const mobileNewsSearchWrap = $('#mobileNewsSearchWrap');
+    const newsView = $('#newsView'); const weatherView = $('#weatherView');
 
-    let searchQuery = '';
-    let showingSaved = false;
-    let currentEdition = DEFAULT_EDITION;
-    let cacheItems = [];
-    let filteredItems = [];
-    let cycleIdx = 0;
-    let cycleTimer = null;
+    let searchQuery = ''; let showingSaved = false; let currentEdition = DEFAULT_EDITION;
+    let cacheItems = []; let filteredItems = []; let cycleIdx = 0; let cycleTimer = null;
 
     const applySort = ()=>{
       const arr = filteredItems.slice();
@@ -780,7 +760,6 @@
       else if (sortMode === SORT_MODES.SOURCE) arr.sort((a,b)=>(a.source||hostname(a.link)||'').localeCompare(b.source||hostname(b.link)||''));
       filteredItems = arr;
     };
-
     const applyFilter = ()=>{
       const needle = searchQuery.toLowerCase().trim();
       const base = showingSaved ? getSaved() : cacheItems;
@@ -888,7 +867,6 @@
       updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
       renderTicker(items);
 
-      // Sub-grid tiles (skip hero)
       const tiles = items.slice(1, 13);
       newsList.innerHTML = tiles.map(it=>{
         const src = it.source || hostname(it.link) || 'Source';
@@ -917,7 +895,6 @@
         `;
       }).join('');
 
-      // Bind save buttons
       $$('.saveBtn').forEach(btn=>{
         btn.addEventListener('click', (e)=>{
           const raw = decodeURIComponent(e.currentTarget.getAttribute('data-save')||'%7B%7D');
@@ -931,8 +908,7 @@
     };
 
     /* ===== THEME ===== */
-    const sunIcon = document.getElementById('sun');
-    const moonIcon = document.getElementById('moon');
+    const sunIcon = document.getElementById('sun'); const moonIcon = document.getElementById('moon');
     const THEME_KEY = 'oc_theme';
     const resolveAutoTheme = ()=> window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     const setTheme = (mode)=>{
@@ -950,21 +926,16 @@
       setTheme(next);
     };
 
-    /* ===== TRENDS ===== */
+    /* ===== GOOGLE TRENDS ===== */
     const tzMinutes = -new Date().getTimezoneOffset();
-    const trendsGeoForEdition = (ed)=>{
-      if (ed === 'CA') return 'CA';
-      // For US/FIN/GLOBAL/ALL, use US which has the richest feed
-      return 'US';
-    };
+    const trendsGeoForEdition = (ed)=> (ed === 'CA' ? 'CA' : 'US');
 
     const fetchGoogleTrendsDailyAPI = async (geo)=>{
       const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
       const raw = await fetchWithProxies(url);
-      const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
+      const jsonText = raw.replace(/^\)\]\}',?/, '').trim(); // strip XSSI prefix
       return JSON.parse(jsonText);
     };
-
     const fetchGoogleTrendsDailyHTMLFallback = async (geo)=>{
       const url = `https://trends.google.com/trendingsearches/daily?geo=${geo}`;
       const html = await fetchWithProxies(url);
@@ -973,7 +944,6 @@
       const days = JSON.parse(m[1]);
       return { default: { trendingSearchesDays: days } };
     };
-
     const fetchGoogleTrendsDaily = async (geo)=>{
       try{ return await fetchGoogleTrendsDailyAPI(geo); }
       catch(_){ return await fetchGoogleTrendsDailyHTMLFallback(geo); }
@@ -984,16 +954,17 @@
         const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
         const day = data?.default?.trendingSearchesDays?.[0];
         if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
-        gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
-        // Header Top Trend badge
-        const top = day.trendingSearches[0];
-        const topQuery = top?.title?.query || 'Trending';
-        if (topQuery){
-          gtTopLink.textContent = topQuery;
-          gtTopLink.href = `https://www.google.com/search?q=${encodeURIComponent(topQuery)}`;
-          gtTopBadge.classList.remove('hidden');
+
+        const topTerm = day.trendingSearches[0]?.title?.query || '';
+        if (topTerm){
+          mostTerm.textContent = topTerm;
+          mostPill.hidden = false;
+          gtTopTerm.textContent = topTerm;
+          gtTopBadge.hidden = false;
         }
-        // Grid of trend cards
+
+        gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
+
         const cards = day.trendingSearches.slice(0, 9).map(ts=>{
           const query = ts.title?.query || 'Trending';
           const traffic = ts.formattedTraffic || '';
@@ -1025,9 +996,185 @@
         gtGrid.innerHTML = '';
         gtMeta.textContent = '—';
         gtEmpty.classList.remove('hidden');
-        gtTopBadge.classList.add('hidden');
+        mostPill.hidden = true; gtTopBadge.hidden = true;
       }
     };
+
+    /* ===== WEATHER ===== */
+    const WX_DEFAULT = { name: 'Toronto, ON', latitude: 43.65107, longitude: -79.347015, country_code: 'CA' };
+    const WX_KEY = 'oc_wx_last';
+
+    const wxUpdated = $('#wxUpdated'); const wxPlace = $('#wxPlace'); const wxTemp = $('#wxTemp');
+    const wxDesc = $('#wxDesc'); const wxFeels = $('#wxFeels'); const wxWind = $('#wxWind');
+    const wxHumidity = $('#wxHumidity'); const wxUv = $('#wxUv'); const wxVisibility = $('#wxVisibility');
+    const wxSunrise = $('#wxSunrise'); const wxSunset = $('#wxSunset'); const wxHourly = $('#wxHourly'); const wxDaily = $('#wxDaily');
+    const wxForm = $('#wxForm'); const wxQuery = $('#wxQuery'); const wxUseMyLocationBtn = $('#wxUseMyLocationBtn');
+
+    const WX_CODES = {
+      0:'Clear', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+      45:'Fog', 48:'Depositing rime fog',
+      51:'Drizzle', 53:'Drizzle', 55:'Drizzle',
+      56:'Freezing drizzle', 57:'Freezing drizzle',
+      61:'Rain', 63:'Rain', 65:'Heavy rain',
+      66:'Freezing rain', 67:'Freezing rain',
+      71:'Snow', 73:'Snow', 75:'Heavy snow',
+      77:'Snow grains', 80:'Rain showers', 81:'Rain showers', 82:'Violent rain showers',
+      85:'Snow showers', 86:'Snow showers',
+      95:'Thunderstorm', 96:'Thunderstorm hail', 99:'Thunderstorm hail'
+    };
+
+    const c = (n)=> (n==null ? '—' : Math.round(n) + '°C');
+    const km = (n)=> (n==null ? '—' : Math.round(n) + ' km');
+    const ks = (n)=> (n==null ? '—' : Math.round(n) + ' km/h');
+
+    const geolocate = (timeoutMs=8000)=> new Promise((resolve,reject)=>{
+      if (!navigator.geolocation) return reject(new Error('Geolocation unsupported'));
+      const ok = (pos)=> resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      const err = (e)=> reject(e);
+      navigator.geolocation.getCurrentPosition(ok, err, { enableHighAccuracy:false, timeout: timeoutMs, maximumAge: 60000 });
+    });
+
+    const ipFallback = async ()=>{
+      try{
+        const res = await fetch('https://ipapi.co/json/', { cache:'no-store' });
+        if(!res.ok) throw new Error('ipapi');
+        const j = await res.json();
+        return { lat: j.latitude, lon: j.longitude, label: `${j.city || ''}${j.region ? ', ' + j.region : ''}${j.country ? ', ' + j.country : ''}`.trim().replace(/^, /,'') };
+      }catch{
+        return null;
+      }
+    };
+
+    const geocodeName = async (name)=>{
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
+      const text = await fetchWithProxies(url);
+      const data = JSON.parse(text);
+      const r = data?.results?.[0];
+      if (!r) return null;
+      return { lat: r.latitude, lon: r.longitude, label: `${r.name}${r.admin1 ? ', ' + r.admin1 : ''}${r.country ? ', ' + r.country : ''}` };
+    };
+
+    const fetchWeather = async ({ lat, lon })=>{
+      const base = 'https://api.open-meteo.com/v1/forecast';
+      const params = new URLSearchParams({
+        latitude: lat, longitude: lon, timezone:'auto',
+        current: ['temperature_2m','relative_humidity_2m','apparent_temperature','precipitation','weather_code','wind_speed_10m','wind_direction_10m','visibility','is_day','uv_index'].join(','),
+        hourly: ['temperature_2m','relative_humidity_2m','precipitation_probability','wind_speed_10m','visibility','uv_index','dew_point_2m','apparent_temperature','weather_code'].join(','),
+        daily: ['temperature_2m_max','temperature_2m_min','apparent_temperature_max','apparent_temperature_min','sunrise','sunset','uv_index_max','precipitation_sum','precipitation_probability_max','wind_speed_10m_max','weather_code'].join(',')
+      });
+      const url = `${base}?${params.toString()}`;
+      const res = await fetch(url, { cache:'no-store' });
+      if (!res.ok) throw new Error('weather');
+      return res.json();
+    };
+
+    const renderWeather = (data, label)=>{
+      const cur = data.current || {};
+      wxPlace.textContent = label || '—';
+      wxTemp.textContent = c(cur.temperature_2m);
+      wxDesc.textContent = WX_CODES[cur.weather_code] || '—';
+      wxFeels.textContent = `Feels like ${c(cur.apparent_temperature)}`;
+      wxWind.textContent = `Wind ${ks(cur.wind_speed_10m)} ${cur.wind_direction_10m!=null ? '• ' + Math.round(cur.wind_direction_10m) + '°' : ''}`;
+      wxHumidity.textContent = `Humidity ${cur.relative_humidity_2m!=null ? Math.round(cur.relative_humidity_2m)+'%' : '—'}`;
+      wxUv.textContent = `UV ${cur.uv_index!=null ? Math.round(cur.uv_index) : '—'}`;
+      wxVisibility.textContent = `Visibility ${km((cur.visibility ?? 0)/1000)}`;
+      const d = data.daily || {};
+      const fmt = (iso)=> (iso ? new Date(iso).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : '—');
+      wxSunrise.textContent = fmt(d.sunrise?.[0]);
+      wxSunset.textContent = fmt(d.sunset?.[0]);
+      wxUpdated.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+
+      // Hourly (next 24)
+      const H = data.hourly || {};
+      const idxNow = (H.time||[]).findIndex(t => new Date(t) >= new Date());
+      const start = Math.max(0, idxNow);
+      const end = Math.min((H.time||[]).length, start + 24);
+      const hours = [];
+      for (let i=start; i<end; i++){
+        hours.push({
+          t: new Date(H.time[i]),
+          temp: H.temperature_2m?.[i],
+          feels: H.apparent_temperature?.[i],
+          w: H.weather_code?.[i],
+          uv: H.uv_index?.[i],
+          p: H.precipitation_probability?.[i]
+        });
+      }
+      wxHourly.innerHTML = hours.map(h=>{
+        const hh = h.t.toLocaleTimeString([], { hour:'numeric' });
+        return `
+          <div class="wx-hour chip rounded px-2 py-2 border border-[var(--chip-border)]">
+            <div class="text-[10px] text-[var(--sub)]">${hh}</div>
+            <div class="text-sm font-semibold">${c(h.temp)}</div>
+            <div class="text-[10px] text-[var(--sub)]">${WX_CODES[h.w]||''}</div>
+            <div class="text-[10px] mt-1">UV ${h.uv!=null?Math.round(h.uv):'—'} • ${h.p!=null?('P '+h.p+'%'):'—'}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Daily (7)
+      wxDaily.innerHTML = (d.time||[]).slice(0,7).map((t,i)=>{
+        const day = new Date(t).toLocaleDateString([], { weekday:'short' });
+        const hi = d.temperature_2m_max?.[i]; const lo = d.temperature_2m_min?.[i];
+        const w  = d.weather_code?.[i];
+        const p  = d.precipitation_probability_max?.[i];
+        return `
+          <div class="chip rounded px-3 py-2 border border-[var(--chip-border)]">
+            <div class="text-sm font-semibold">${day}</div>
+            <div class="text-xs text-[var(--sub)]">${WX_CODES[w]||''}</div>
+            <div class="mt-1 text-sm">${c(hi)} / ${c(lo)}</div>
+            <div class="text-[10px] mt-1">Precip ${p!=null?p+'%':'—'}</div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    const loadWeatherFromCoords = async (coords, labelHint)=>{
+      const data = await fetchWeather(coords);
+      const label = labelHint || `${data?.latitude?.toFixed?.(2)||coords.lat}, ${data?.longitude?.toFixed?.(2)||coords.lon}`;
+      renderWeather(data, label);
+      localStorage.setItem(WX_KEY, JSON.stringify({ coords, label }));
+    };
+
+    const autoWeather = async ()=>{
+      // last saved
+      try{
+        const saved = JSON.parse(localStorage.getItem(WX_KEY)||'null');
+        if (saved?.coords){ loadWeatherFromCoords(saved.coords, saved.label).catch(()=>{}); }
+      }catch{}
+
+      try{
+        const pos = await geolocate().catch(()=>null);
+        if (pos){ await loadWeatherFromCoords({ lat: pos.lat, lon: pos.lon }, 'Your location'); return; }
+        const ip = await ipFallback();
+        if (ip){ await loadWeatherFromCoords({ lat: ip.lat, lon: ip.lon }, ip.label || 'Approximate location'); return; }
+        await loadWeatherFromCoords({ lat: WX_DEFAULT.latitude, lon: WX_DEFAULT.longitude }, WX_DEFAULT.name);
+      }catch{
+        await loadWeatherFromCoords({ lat: WX_DEFAULT.latitude, lon: WX_DEFAULT.longitude }, WX_DEFAULT.name);
+      }
+    };
+
+    wxForm?.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const q = (wxQuery.value||'').trim();
+      if (!q) return;
+      try{
+        const geo = await geocodeName(q);
+        if (!geo) return;
+        await loadWeatherFromCoords({ lat: geo.lat, lon: geo.lon }, geo.label);
+      }catch(err){ console.error(err); }
+    });
+
+    wxUseMyLocationBtn?.addEventListener('click', async ()=>{
+      try{
+        const pos = await geolocate().catch(()=>null);
+        if (pos){ await loadWeatherFromCoords({ lat: pos.lat, lon: pos.lon }, 'Your location'); }
+        else{
+          const ip = await ipFallback();
+          if (ip){ await loadWeatherFromCoords({ lat: ip.lat, lon: ip.lon }, ip.label || 'Approximate location'); }
+        }
+      }catch(err){ console.error(err); }
+    });
 
     /* ===== BOOTSTRAP + LOADER ===== */
     const headerEl = document.querySelector('header');
@@ -1038,13 +1185,14 @@
     const setMobileEditionUI = ()=> { $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition)); };
 
     // Slides
+    const heroTrackEl = $('#heroTrack');
     const slideTo = (idx)=>{
-      const slides = Array.from(heroTrack.children);
+      const slides = Array.from(heroTrackEl.children);
       if(!slides.length) return;
       const clamped = Math.max(0, Math.min(slides.length-1, idx));
       const target = slides[clamped];
       if(!target) return;
-      heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+      heroTrackEl.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
       cycleIdx = clamped % Math.max(1, filteredItems.length);
       setHeroMetaFromIndex(cycleIdx);
     };
@@ -1052,11 +1200,11 @@
     const prevHero = ()=> slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
 
     let heroTrackScrollLock = false;
-    heroTrack.addEventListener('scroll', ()=>{
+    heroTrackEl.addEventListener('scroll', ()=>{
       if (heroTrackScrollLock) return;
-      const slides = Array.from(heroTrack.children);
+      const slides = Array.from(heroTrackEl.children);
       let bestIdx = 0, bestDist = Infinity;
-      const viewportCenter = heroTrack.getBoundingClientRect().left + heroTrack.clientWidth / 2;
+      const viewportCenter = heroTrackEl.getBoundingClientRect().left + heroTrackEl.clientWidth / 2;
       slides.forEach((el,i)=>{
         const rect = el.getBoundingClientRect();
         const slideCenter = rect.left + rect.width/2;
@@ -1066,8 +1214,8 @@
       if (bestIdx !== cycleIdx){ cycleIdx = bestIdx % Math.max(1, filteredItems.length); setHeroMetaFromIndex(cycleIdx); }
     }, { passive:true });
 
-    prevTopBtn.addEventListener('click', prevHero);
-    nextTopBtn.addEventListener('click', nextHero);
+    $('#prevTopBtn').addEventListener('click', prevHero);
+    $('#nextTopBtn').addEventListener('click', nextHero);
 
     // Visibility + cycle
     let heroIsVisible = true;
@@ -1097,7 +1245,7 @@
     heroInViewObserver.observe(document.getElementById('heroCard'));
 
     const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
-      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
+      const imgs = Array.from(heroTrackEl.querySelectorAll('img')).slice(0, 3);
       if (!imgs.length) return resolve();
       let done = 0, finished = false;
       const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
@@ -1123,6 +1271,7 @@
       await renderGoogleTrends();
     };
 
+    const preload = $('#preload');
     const hidePreloader = ()=>{
       if (preload) preload.style.display = 'none';
       document.body.classList.remove('preloading');
@@ -1130,16 +1279,14 @@
 
     const boot = async ()=>{
       try{
-        if (editionSelect) editionSelect.value = DEFAULT_EDITION;
+        editionSelect && (editionSelect.value = DEFAULT_EDITION);
         currentEdition = DEFAULT_EDITION;
         setMobileEditionUI();
         await hydrate();
         await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
+        await autoWeather(); // prime weather in background
       }catch(e){ console.error(e); }
-      finally{
-        hidePreloader();
-        updateImmersiveHeader();
-      }
+      finally{ hidePreloader(); updateImmersiveHeader(); }
     };
 
     const refreshAll = async ()=>{
@@ -1158,7 +1305,7 @@
 
     // Controls
     editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
-    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; if (editionSelect) editionSelect.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
+    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect && (editionSelect.value = currentEdition); setMobileEditionUI(); refreshAll(); }));
     refreshBtn?.addEventListener('click', refreshAll);
     refreshBtnMobile?.addEventListener('click', refreshAll);
     themeBtn?.addEventListener('click', cycleTheme);
@@ -1171,7 +1318,6 @@
         else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
       }catch{}
     });
-
     saveBtn?.addEventListener('click', ()=>{
       if (!filteredItems.length) return;
       const top = filteredItems[cycleIdx % filteredItems.length];
@@ -1179,7 +1325,7 @@
       saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
 
-    // Search (single source of truth)
+    // Search
     const syncSearch = (val)=>{
       searchQuery = val || '';
       if (searchInput && document.activeElement !== searchInput) searchInput.value = val;
@@ -1196,15 +1342,13 @@
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
       if (e.key==='/'){
-        // Focus search only on News page
-        if (!weatherPage.classList.contains('hidden')) return;
         const target = window.innerWidth < 640 ? searchInputMobile : searchInput;
         if (document.activeElement !== target){ e.preventDefault(); target?.focus(); target?.select(); }
       }
       if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
     });
 
-    // Image fallbacks
+    // Image fallback
     const handleImgError = (img)=>{
       const alt1 = img.dataset.alt1;
       const host = img.dataset.host || '';
@@ -1217,176 +1361,18 @@
       if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
     }, true);
 
-    // ===== Weather =====
-    const wxQuery = $('#wxQuery');
-    const wxSearchBtn = $('#wxSearchBtn');
-    const wxUseMyBtn = $('#wxUseMyBtn');
-    const wxPlace = $('#wxPlace');
-    const wxTemp = $('#wxTemp');
-    const wxCond = $('#wxCond');
-    const wxMeta = $('#wxMeta');
-    const wxUpdated = $('#wxUpdated');
-    const wxKPIs = $('#wxKPIs');
-    const wxDailyGrid = $('#wxDailyGrid');
-    const wxSubtitle = $('#wxSubtitle');
-
-    const WX_STORE_KEY = 'oc_wx_last_location';
-
-    const WMO = {
-      0:'Clear', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast', 45:'Fog', 48:'Depositing rime fog', 51:'Light drizzle', 53:'Drizzle', 55:'Dense drizzle', 56:'Freezing drizzle', 57:'Freezing drizzle', 61:'Light rain', 63:'Rain', 65:'Heavy rain', 66:'Freezing rain', 67:'Freezing rain', 71:'Light snow', 73:'Snow', 75:'Heavy snow', 77:'Snow grains', 80:'Rain showers', 81:'Rain showers', 82:'Violent rain showers', 85:'Snow showers', 86:'Snow showers', 95:'Thunderstorm', 96:'Thunderstorm', 99:'Thunderstorm' };
-
-    const degToCard = (deg)=>{
-      if (typeof deg !== 'number' || isNaN(deg)) return '—';
-      const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-      return dirs[Math.round(deg/22.5)%16];
-    };
-
-    const toFixed = (n, d=0)=> (n==null || isNaN(n)) ? '—' : Number(n).toFixed(d);
-
-    const geocodeNominatim = async (q)=>{
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&addressdetails=1&limit=1`;
-      const text = await fetchWithProxies(url);
-      const arr = JSON.parse(text);
-      if (!arr || !arr.length) throw new Error('No results');
-      const hit = arr[0];
-      return { lat: parseFloat(hit.lat), lon: parseFloat(hit.lon), label: hit.display_name };
-    };
-
-    const autoLocate = async ()=>{
-      // 1) Geolocation API
-      const geoByNavigator = ()=> new Promise((resolve, reject)=>{
-        if (!('geolocation' in navigator)) return reject(new Error('no geo'));
-        navigator.geolocation.getCurrentPosition(
-          (pos)=> resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, label: 'Current location' }),
-          (err)=> reject(err),
-          { enableHighAccuracy:false, timeout: 6000, maximumAge: 1800000 }
-        );
-      });
-      try{ return await geoByNavigator(); }catch(_){ }
-
-      // 2) IP lookup fallbacks
-      try{
-        const ip1 = await fetchJSONWithProxies('https://ipapi.co/json/');
-        if (ip1 && ip1.latitude && ip1.longitude) return { lat: ip1.latitude, lon: ip1.longitude, label: `${ip1.city||''} ${ip1.region||''} ${ip1.country||''}`.trim() };
-      }catch(_){ }
-      try{
-        const ip2 = await fetchJSONWithProxies('https://ipwho.is/');
-        if (ip2 && ip2.success && ip2.latitude && ip2.longitude) return { lat: ip2.latitude, lon: ip2.longitude, label: `${ip2.city||''} ${ip2.region||''} ${ip2.country||''}`.trim() };
-      }catch(_){ }
-      throw new Error('Could not auto-locate');
-    };
-
-    const fetchOpenMeteo = async ({lat, lon})=>{
-      const varsCurrent = ['temperature_2m','relative_humidity_2m','apparent_temperature','weather_code','wind_speed_10m','wind_direction_10m','precipitation','cloud_cover','pressure_msl','visibility'];
-      const varsHourly = ['temperature_2m','apparent_temperature','relative_humidity_2m','precipitation_probability','precipitation','weather_code','cloud_cover','wind_speed_10m'];
-      const varsDaily  = ['weather_code','temperature_2m_max','temperature_2m_min','sunrise','sunset','uv_index_max'];
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${varsCurrent.join(',')}&hourly=${varsHourly.join(',')}&daily=${varsDaily.join(',')}&timezone=auto`;
-      const json = await fetchJSONWithProxies(url);
-      return json;
-    };
-
-    const renderKPIs = (cur)=>{
-      const cells = [
-        { k:'Feels like', v:`${toFixed(cur.apparent_temperature,0)}°` },
-        { k:'Humidity',   v:`${toFixed(cur.relative_humidity_2m,0)}%` },
-        { k:'Wind',       v:`${toFixed(cur.wind_speed_10m,0)} km/h ${degToCard(cur.wind_direction_10m)}` },
-        { k:'Pressure',   v: cur.pressure_msl ? `${toFixed(cur.pressure_msl,0)} hPa` : '—' },
-        { k:'Visibility', v: cur.visibility ? `${toFixed(cur.visibility/1000,1)} km` : '—' },
-        { k:'Clouds',     v: cur.cloud_cover!=null ? `${toFixed(cur.cloud_cover,0)}%` : '—' },
-        { k:'Precip',     v: cur.precipitation!=null ? `${toFixed(cur.precipitation,1)} mm` : '—' }
-      ];
-      wxKPIs.innerHTML = cells.map(c=>`<div class="wx-kpi"><div class="text-xs wx-sub">${c.k}</div><div class="text-base font-semibold">${c.v}</div></div>`).join('');
-    };
-
-    const dayName = (iso)=> new Date(iso).toLocaleDateString([], { weekday:'short' });
-
-    const renderDaily = (daily)=>{
-      const out = [];
-      const len = Math.min(daily.time?.length||0, 7);
-      for (let i=0;i<len;i++){
-        const name = dayName(daily.time[i]);
-        const hi = daily.temperature_2m_max?.[i];
-        const lo = daily.temperature_2m_min?.[i];
-        const code = daily.weather_code?.[i];
-        out.push(`<div class="p-3 border border-[var(--border)] rounded-lg bg-[var(--surface)]"><div class="text-xs wx-sub">${name}</div><div class="text-sm font-semibold">${WMO[code]||'—'}</div><div class="text-sm mt-1">${toFixed(lo,0)}° / <span class="font-semibold">${toFixed(hi,0)}°</span></div></div>`);
-      }
-      wxDailyGrid.innerHTML = out.join('');
-    };
-
-    const updateWeatherUI = ({place, cur, daily})=>{
-      wxPlace.textContent = place || '—';
-      wxTemp.textContent = `${toFixed(cur.temperature_2m,0)}°`;
-      wxCond.textContent = WMO[cur.weather_code] || '—';
-      wxMeta.textContent = `Feels ${toFixed(cur.apparent_temperature,0)}° • Humidity ${toFixed(cur.relative_humidity_2m,0)}%`;
-      wxUpdated.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
-      renderKPIs(cur);
-      renderDaily(daily);
-    };
-
-    const runWeatherLookup = async ({lat, lon, label})=>{
-      wxSubtitle.textContent = 'Loading…';
-      try{
-        const data = await fetchOpenMeteo({lat, lon});
-        const cur = data.current || {};
-        const daily = data.daily || {};
-        updateWeatherUI({ place: label || `${toFixed(lat,2)}, ${toFixed(lon,2)}`, cur, daily });
-        localStorage.setItem(WX_STORE_KEY, JSON.stringify({lat, lon, label: label || ''}));
-        wxSubtitle.textContent = 'Current conditions';
-      }catch(err){
-        console.error('Weather error', err);
-        wxSubtitle.textContent = 'Failed to load weather.';
-      }
-    };
-
-    let weatherInitDone = false;
-    const ensureWeatherInit = async ()=>{
-      if (weatherInitDone) return;
-      weatherInitDone = true;
-      // Try cached
-      try{
-        const cached = JSON.parse(localStorage.getItem(WX_STORE_KEY)||'null');
-        if (cached && cached.lat && cached.lon){ await runWeatherLookup(cached); return; }
-      }catch(_){ }
-      // Try auto locate
-      try{ const loc = await autoLocate(); await runWeatherLookup(loc); }
-      catch(_){ wxSubtitle.textContent = 'Enter a location to begin.'; }
-    };
-
-    wxSearchBtn?.addEventListener('click', async ()=>{
-      const q = (wxQuery.value||'').trim(); if (!q) return;
-      wxSubtitle.textContent = 'Searching…';
-      try{ const loc = await geocodeNominatim(q); await runWeatherLookup(loc); }
-      catch(_){ wxSubtitle.textContent = 'No results. Try a city, postal code, or full address.'; }
-    });
-    wxQuery?.addEventListener('keydown', (e)=>{ if (e.key==='Enter') wxSearchBtn.click(); });
-    wxUseMyBtn?.addEventListener('click', async ()=>{
-      wxSubtitle.textContent = 'Locating…';
-      try{ const loc = await autoLocate(); await runWeatherLookup(loc); }
-      catch(_){ wxSubtitle.textContent = 'Could not determine your location.'; }
-    });
-
-    // Page switching
-    const setActiveNav = (page)=>{
-      const isNews = page==='news';
-      newsPage.classList.toggle('hidden', !isNews);
-      weatherPage.classList.toggle('hidden', isNews);
-      navNewsBtn?.classList.toggle('active', isNews);
-      navWeatherBtn?.classList.toggle('active', !isNews);
-      mNavNewsBtn?.classList.toggle('active', isNews);
-      mNavWeatherBtn?.classList.toggle('active', !isNews);
-      // Mobile search only visible on News
-      mobileNewsSearchWrap?.classList.toggle('hidden', !isNews);
-      // When entering Weather, initialize
-      if (!isNews) ensureWeatherInit();
-      // Scroll to top for clean switch
+    // View toggle (News / Weather)
+    const switchView = (view)=>{
+      const news = view==='news';
+      newsView.classList.toggle('hidden', !news);
+      weatherView.classList.toggle('hidden', news);
+      // toggle active states on seg buttons
+      $$('#viewSeg button').forEach(b=> b.classList.toggle('active', b.dataset.view === view));
+      $$('.view-m').forEach(b=> b.classList.toggle('active', b.dataset.view === view));
+      if (view === 'weather'){ /* nothing extra; autoWeather already ran */ }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
-    navNewsBtn?.addEventListener('click', ()=> setActiveNav('news'));
-    navWeatherBtn?.addEventListener('click', ()=> setActiveNav('weather'));
-    mNavNewsBtn?.addEventListener('click', ()=> setActiveNav('news'));
-    mNavWeatherBtn?.addEventListener('click', ()=> setActiveNav('weather'));
-    $('#homeLink')?.addEventListener('click', (e)=>{ e.preventDefault(); setActiveNav('news'); });
+    $$('#viewSeg button, .view-m').forEach(b=> b.addEventListener('click', ()=> switchView(b.dataset.view)));
 
     // Start
     const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
