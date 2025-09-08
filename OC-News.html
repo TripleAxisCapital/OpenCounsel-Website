@@ -4,11 +4,12 @@
   <!--
     OC-News — Apple-clean, pure white/black. No gradients.
 
-    This edit delivers:
-    • HEADER: removes inline search + refresh. Adds magnifying-glass button that opens an Apple-style search sheet.
-    • PRELOADER: cycles text phases: “OC-News” → “Open Source News. Without Limits.” → “The AI Workspace For Pros”.
-    • HERO: removes the below-image subtitle; keeps a small white title over the bottom of the cover (also on mobile).
-    • SCROLL: reduces jitter with GPU hints, stable header behavior, and minor CSS tuning.
+    This build:
+    • HEADER: removed inline search + refresh; added magnifying-glass that opens an overlay search sheet.
+    • PRELOADER: cycles text lines: “OC-News” → “Open Source News. Without Limits.” → “The AI Workspace For Pros”.
+    • SCROLL JITTER: removed header translate hide/show; keeps sticky header solid.
+    • HERO: remove big below-image subtitle; always show a small white title over the image bottom (mobile & desktop).
+    • Everything else preserved (editions, weather page, trends, theme toggle, shortcuts like "R" to refresh).
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -67,7 +68,6 @@
       --chip:rgba(0,0,0,0.035);--chip-border:rgba(0,0,0,0.08);
       --card-hover:rgba(0,0,0,0.045);
     }
-    html,body{ -webkit-font-smoothing:antialiased; overscroll-behavior-y:none }
     .text-balance{ text-wrap:balance }
     .no-scrollbar::-webkit-scrollbar{ display:none }
     .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
@@ -87,7 +87,7 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Loader — Apple-style sheet with centered mark + spinner + text crossfade phases */
+    /* Loader — Apple-style sheet with centered mark + spinner + cycling text */
     #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg) }
     body.preloading{ overflow:hidden }
     .preload-wrap{ display:grid; gap:14px; place-items:center; text-align:center; padding:24px; color:var(--preload-text) }
@@ -109,18 +109,19 @@
     .hero-section-container{ padding-block:1.1rem }
     @media (min-width:640px){ .hero-section-container{ padding-block:1.6rem } }
     @media (min-width:1024px){ .hero-section-container{ padding-block:2rem } }
-    #heroCard{ min-height:58svh; display:flex; flex-direction:column; overflow:hidden; transform:translateZ(0) }
-    .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0; contain:paint }
-    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; backface-visibility:hidden; transform:translateZ(0) }
-    .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center; will-change:transform }
+    #heroCard{ min-height:58svh; display:flex; flex-direction:column; overflow:hidden }
+    .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0 }
+    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; will-change:scroll-position }
+    .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
     .hero-slide a{ position:absolute; inset:0; display:block }
     .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
-    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 45%, rgba(0,0,0,.60) 96%); pointer-events:none }
-    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 45%, rgba(255,255,255,.75) 96%) }
-    .hero-overlay-text{ position:absolute; inset-inline:14px; bottom:12px; display:grid; gap:4px; pointer-events:none }
-    .hero-overlay-text h2{ font-size:clamp(16px, 3.3vw, 22px); line-height:1.12; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.35) }
-    html.light .hero-overlay-text h2{ text-shadow:0 2px 12px rgba(255,255,255,.55) }
-    .hero-overlay-text .kicker{ font-size:10px; letter-spacing:.04em; text-transform:uppercase; opacity:.9 }
+    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events:none }
+    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%) }
+    .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:14px; display:grid; gap:4px; pointer-events:none }
+    .hero-overlay-text h2{ font-size:clamp(16px, 2.6vw, 22px); line-height:1.15; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.35); color:#fff }
+    .hero-overlay-text .kicker{ font-size:11px; color:rgba(255,255,255,.8) }
+    html.light .hero-overlay-text h2{ text-shadow:0 2px 12px rgba(255,255,255,.55); color:#000 }
+
     .hero-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; padding:8px }
     .hero-nav button{ pointer-events:auto; border:1px solid var(--border); background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
     html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
@@ -130,19 +131,18 @@
     html.light .hero-dots span{ background:rgba(0,0,0,.35) }
     html.light .hero-dots span.active{ background:#000 }
 
-    /* Mobile hero: keep overlay title; remove below-image heading entirely */
+    /* Mobile hero — keep overlay text visible (fix "subtitle" jitter by removing below-image title entirely) */
     @media (max-width: 639.98px){
       .hero-section-container{ padding:0!important }
       #heroCard{ padding:0!important; border:none!important; border-radius:0!important; box-shadow:none!important; }
       .hero-media{ border:none!important; border-radius:0!important; height:54svh; min-height:54svh }
-      .hero-nav{ display:none!important } /* keep dots only */
-      .hero-dots{ bottom:10px }
+      .hero-overlay-text{ display:grid!important }
+      .hero-nav{ display:none!important }
+      .hero-dots{ bottom:12px }
     }
 
-    /* Header behavior + jitter smoothing */
-    body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
-    header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease; will-change:transform,opacity; backface-visibility:hidden; transform:translateZ(0) }
-    body.hero-in-view #heroTitle{ display:none!important } /* defensive: we keep the node hidden */
+    /* Header (solid sticky; remove translateY hide/show to avoid jitter) */
+    header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:opacity .2s ease; }
 
     /* Tiles */
     .tile-img{ width:100%; height:11rem; object-fit:cover; border:1px solid var(--border); border-radius:12px }
@@ -158,24 +158,32 @@
     .wx-rail { display:flex; gap:8px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
     .wx-rail > div { scroll-snap-align:center; }
 
-    /* Search Sheet (Apple-style) */
-    #searchSheet{ pointer-events:none }
-    #searchBackdrop{ background:rgba(0,0,0,.35); opacity:0 }
-    html.light #searchBackdrop{ background:rgba(0,0,0,.25) }
-    #searchPanel{ transform:translateY(-10px); opacity:0 }
-    #searchSheet[data-open="true"]{ pointer-events:auto }
-    #searchSheet[data-open="true"] #searchBackdrop{ opacity:1 }
-    #searchSheet[data-open="true"] #searchPanel{ transform:translateY(0); opacity:1 }
+    /* Search overlay (Apple-style) */
+    #searchOverlay{ position:fixed; inset:0; z-index:50; display:none; }
+    #searchOverlay.show{ display:block; }
+    .so-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.35); backdrop-filter:blur(6px); }
+    html.light .so-backdrop{ background:rgba(255,255,255,.45); }
+    .so-panel{ position:relative; margin: max(10svh,70px) auto 0; width:min(900px,92vw); }
+    .so-card{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:16px; background:var(--surface); border:1px solid var(--border); box-shadow:0 12px 40px -18px rgba(0,0,0,.5) }
+    .so-input{ flex:1; background:transparent; border:0; outline:none; padding:8px 6px; font-size:15px; color:var(--text) }
+    .so-kbd{ font-size:10px; color:var(--sub) }
+    .so-helper{ margin-top:8px; font-size:12px; color:var(--sub); text-align:center }
+    .so-icon{ color:var(--sub) }
+    .so-close{ color:var(--sub) }
+    .so-close:hover{ color:var(--text) }
+
+    /* Hide the below-image heroTitle permanently to avoid jitter */
+    #heroTitle{ display:none !important; }
   </style>
 </head>
-<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
-  <!-- Fullscreen Apple-style Preloader (logo + spinner + phased text) -->
+<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading">
+  <!-- Fullscreen Apple-style Preloader (logo + spinner + cycling text) -->
   <div id="preload" aria-live="polite" aria-busy="true">
     <div class="preload-wrap">
       <img src="logo.svg" alt="OC-News" class="preload-logo" />
       <div class="preload-spinner"></div>
       <div id="preloadLine" class="preload-line">OC-News</div>
-      <div id="preloadSub" class="preload-sub" style="opacity:.001; display:none;"></div>
+      <div id="preloadSub" class="preload-sub" style="opacity:.001">Open Source News. Without Limits.</div>
     </div>
   </div>
 
@@ -198,7 +206,7 @@
 
         <!-- Editions + actions -->
         <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
-          <!-- Mobile editions rail -->
+          <!-- Mobile editions -->
           <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
@@ -228,13 +236,6 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
           </button>
 
-          <!-- Search toggle (Apple-style sheet) -->
-          <button id="searchToggle" class="link-btn shrink-0" title="Search (/ or ⌘K)">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </button>
-
           <!-- Theme -->
           <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
@@ -242,23 +243,29 @@
               <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </span>
           </button>
+
+          <!-- Search icon -->
+          <button id="searchBtn" class="link-btn shrink-0" title="Search ( / )">
+            <svg class="so-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.4-3.4"/></svg>
+          </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Search Sheet -->
-  <div id="searchSheet" class="fixed inset-x-0 top-0 z-[60] hidden">
-    <div id="searchBackdrop" class="absolute inset-0 transition-opacity duration-200"></div>
-    <div id="searchPanel" class="relative mx-auto max-w-3xl px-3 sm:px-6 pt-3 pb-4 transition-all duration-200">
-      <div class="card p-2 sm:p-2.5 flex items-center gap-2 sm:gap-3 rounded-2xl backdrop-blur">
-        <svg viewBox="0 0 24 24" width="18" height="18" class="text-[var(--sub)]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input id="searchField" autocomplete="off" placeholder="Search headlines, sources, or sites…" class="flex-1 bg-transparent outline-none text-sm sm:text-base" />
-        <button id="searchClear" class="link-btn">Clear</button>
-        <button id="searchClose" class="link-btn">Cancel</button>
+  <!-- Search Overlay -->
+  <div id="searchOverlay" aria-hidden="true">
+    <div class="so-backdrop"></div>
+    <div class="so-panel">
+      <div class="so-card">
+        <svg class="so-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.4-3.4"/></svg>
+        <input id="searchOverlayInput" class="so-input" placeholder="Search headlines… ( / to open, Esc to close )" />
+        <kbd class="so-kbd hidden sm:block">/</kbd>
+        <button id="searchCloseBtn" class="link-btn so-close" title="Close">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
+      <div class="so-helper">Filter by title or source. Press Enter to keep focus on results.</div>
     </div>
   </div>
 
@@ -278,17 +285,16 @@
             </div>
             <div id="heroDots" class="hero-dots"></div>
             <div class="hero-gradient"></div>
-            <!-- Small white title over cover -->
             <div class="hero-overlay-text">
-              <div class="kicker text-white/80 dark:text-white/80">Top story</div>
+              <div class="kicker">Top story</div>
               <h2 id="heroOverlayTitle">—</h2>
             </div>
           </figure>
 
-          <!-- Below-image area (subtitle removed; keep meta/actions only) -->
+          <!-- Headline BELOW image (removed visually to avoid jitter) -->
           <div class="px-4 sm:px-0">
-            <h2 id="heroTitle" class="hidden">—</h2> <!-- permanently hidden to avoid “activating” -->
-            <div class="flex items-center gap-2 mt-3">
+            <h2 id="heroTitle" class="text-balance text-[clamp(22px,7.2vw,38px)] sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight mt-3 sm:mt-4">OC-News is waking up…</h2>
+            <div class="flex items-center gap-2 mt-2 sm:mt-3">
               <span class="text-xs text-[var(--sub)]" id="heroMeta">Loading top story…</span>
               <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
             </div>
@@ -675,7 +681,7 @@
             const found = collect(data); if(found) return found;
           }catch{}
         }
-        const imgs = doc.querySelectorAll('img');
+        const imgs = Array.from(doc.querySelectorAll('img'));
         for(const im of imgs){
           const src = absolutize(im.getAttribute('src') || im.getAttribute('data-src') || '', baseUrl);
           if(!src) continue;
@@ -761,7 +767,7 @@
     };
 
     /* ===== RENDER (NEWS) ===== */
-    const heroTitle = $('#heroTitle'); // kept hidden
+    const heroTitle = $('#heroTitle');
     const heroMeta  = $('#heroMeta');
     const heroLink  = $('#heroLink');
     const heroTrack = $('#heroTrack');
@@ -783,14 +789,11 @@
     const nextTopBtn = $('#nextTopBtn');
     const weatherBtn = $('#weatherBtn'); const weatherBtnMobile = $('#weatherBtnMobile');
 
-    // Search sheet controls
-    const searchToggle = $('#searchToggle');
-    const searchSheet  = $('#searchSheet');
-    const searchBackdrop = $('#searchBackdrop');
-    const searchPanel = $('#searchPanel');
-    const searchField = $('#searchField');
-    const searchClose = $('#searchClose');
-    const searchClear = $('#searchClear');
+    // Search overlay controls
+    const searchBtn = $('#searchBtn');
+    const searchOverlay = $('#searchOverlay');
+    const searchInputOverlay = $('#searchOverlayInput');
+    const searchCloseBtn = $('#searchCloseBtn');
 
     const newsMain = $('#newsMain'); const weatherMain = $('#weatherMain');
     const newsTab = $('#newsTab'); const weatherTab = $('#weatherTab');
@@ -802,6 +805,7 @@
     let filteredItems = [];
     let cycleIdx = 0;
     let cycleTimer = null;
+    let searchOpen = false;
 
     const applySort = ()=>{
       const arr = filteredItems.slice();
@@ -812,7 +816,7 @@
     };
 
     const applyFilter = ()=>{
-      const needle = searchQuery.toLowerCase().trim();
+      const needle = (searchQuery||'').toLowerCase().trim();
       const base = showingSaved ? getSaved() : cacheItems;
       if(!needle){ filteredItems = base.slice(); }
       else{
@@ -850,7 +854,7 @@
             ${imgHTML}
             <div class="hero-gradient"></div>
             <div class="hero-overlay-text">
-              <div class="kicker text-white/80 dark:text-white/80">${label} • ${timeAgo(it.pubDate)}</div>
+              <div class="kicker">${label} • ${timeAgo(it.pubDate)}</div>
               <h2>${safeTitle}</h2>
             </div>
           </div>
@@ -864,7 +868,6 @@
       if(!filteredItems.length) return;
       const item = filteredItems[idx % filteredItems.length];
       const host = hostname(item.link);
-      if (heroTitle) heroTitle.textContent = item.title; // element is hidden; keep for logic compatibility
       heroOverlayTitle.textContent = item.title;
       heroMeta.textContent  = `${timeAgo(item.pubDate)} • ${item.source || host}`;
       heroLink.href         = item.link;
@@ -902,7 +905,6 @@
 
     const render = (items)=>{
       if(!items || !items.length){
-        if (heroTitle) heroTitle.textContent = 'No headlines available right now.';
         heroOverlayTitle.textContent = 'No headlines available right now.';
         heroMeta.textContent  = '—';
         heroLink.classList.add('pointer-events-none','opacity-60');
@@ -978,7 +980,7 @@
       setTheme(next);
     };
 
-    /* ===== GOOGLE TRENDS (unchanged) ===== */
+    /* ===== GOOGLE TRENDS (unchanged logic) ===== */
     const tzMinutes = -new Date().getTimezoneOffset();
     const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
     const fetchGoogleTrendsDailyAPI = async (geo)=>{
@@ -1042,7 +1044,7 @@
       }
     };
 
-    /* ===== WEATHER (unchanged sources; Apple-clean layout) ===== */
+    /* ===== WEATHER (unchanged) ===== */
     const wxQuery = $('#wxQuery');
     const wxMyLocation = $('#wxMyLocation');
     const wxMeta = $('#wxMeta');
@@ -1219,179 +1221,53 @@
     $('#prevTopBtn').addEventListener('click', prevHero);
     $('#nextTopBtn').addEventListener('click', nextHero);
 
-    // Header immersive behavior
-    let heroIsVisible = true;
-    const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
-    heroObserver.observe(document.getElementById('heroCard'));
     const startCycle = ()=>{
       stopCycle();
       cycleTimer = setInterval(()=>{
-        if (!heroIsVisible) return;
-        if (document.activeElement === searchField) return; // respect search focus
+        if (searchOpen) return; // don't auto-cycle while typing search
         heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
       }, 12000);
     };
     const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
 
-    const updateImmersiveHeader = ()=>{
-      const threshold = 12;
-      if (window.scrollY <= threshold) document.body.classList.add('hero-immersive');
-      else document.body.classList.remove('hero-immersive');
-    };
-    window.addEventListener('scroll', updateImmersiveHeader, { passive:true });
-
-    const heroInViewObserver = new IntersectionObserver((entries)=>{
-      const inView = entries[0]?.isIntersecting ?? true;
-      document.body.classList.toggle('hero-in-view', inView);
-    }, { root:null, threshold:0.6 });
-    heroInViewObserver.observe(document.getElementById('heroCard'));
-
-    const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
-      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
-      if (!imgs.length) return resolve();
-      let done = 0, finished = false;
-      const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
-      const onOne = ()=>{ done++; if (done >= imgs.length) finish(); };
-      imgs.forEach(im=>{
-        if (im.complete) onOne();
-        else {
-          im.addEventListener('load', onOne, { once:true });
-          im.addEventListener('error', onOne, { once:true });
-          try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
-        }
-      });
-      setTimeout(finish, timeoutMs);
-    });
-
-    // Preloader text phases
-    function preloadTextSequence(){
-      const line = document.getElementById('preloadLine');
-      const phases = [
-        'OC-News',
-        'Open Source News. Without Limits.',
-        'The AI Workspace For Pros'
-      ];
-      let idx = 0;
-      const advance = ()=>{
-        idx++;
-        if (idx >= phases.length) return;
-        line.classList.add('animate-fade-out');
-        setTimeout(()=>{
-          line.textContent = phases[idx];
-          line.classList.remove('animate-fade-out');
-          line.classList.add('animate-fade-in');
-          setTimeout(()=>{ line.classList.remove('animate-fade-in'); if (idx < phases.length-1) setTimeout(advance, 700); }, 380);
-        }, 220);
-      };
-      setTimeout(advance, 900);
-      setTimeout(advance, 1800);
+    // Search overlay behavior
+    function openSearchOverlay(){
+      searchOpen = true;
+      searchOverlay.classList.add('show');
+      searchOverlay.setAttribute('aria-hidden','false');
+      setTimeout(()=> searchInputOverlay?.focus(), 10);
+    }
+    function closeSearchOverlay(){
+      searchOpen = false;
+      searchOverlay.classList.remove('show');
+      searchOverlay.setAttribute('aria-hidden','true');
+      searchInputOverlay.value = searchQuery || '';
     }
 
-    const hydrate = async ()=>{
-      updatedAt.textContent = 'Updating…';
-      const items = await loadFeeds(currentEdition);
-      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
-      cycleIdx = 0;
-      applyFilter();
-      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-      await renderGoogleTrends();
-    };
-
-    const hidePreloader = ()=>{
-      const pre = document.getElementById('preload');
-      if (pre) pre.style.display = 'none';
-      document.body.classList.remove('preloading');
-    };
-
-    const boot = async ()=>{
-      try{
-        currentEdition = DEFAULT_EDITION;
-        setMobileEditionUI();
-        const sel = document.getElementById('editionSelect');
-        if (sel) sel.value = DEFAULT_EDITION;
-
-        preloadTextSequence();
-        await hydrate();
-        await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
-      }catch(e){ console.error(e); }
-      finally{
-        hidePreloader();
-        updateImmersiveHeader();
-      }
-    };
-
-    const refreshAll = async ()=>{
-      if (PRELOAD_ON_REFRESH){
-        const pre = document.getElementById('preload');
-        pre.style.display = 'grid';
-        document.body.classList.add('preloading');
-      }
-      try{
-        await hydrate();
-        if (PRELOAD_ON_REFRESH){
-          await Promise.race([waitForHeroImages(4000), new Promise(res=> setTimeout(res, 600))]);
-          hidePreloader();
-        }
-      }catch(e){ console.error(e); hidePreloader(); }
-    };
-
-    // Edition controls
-    editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
-    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
-    themeBtn?.addEventListener('click', cycleTheme);
-
-    // Share / Save
-    shareBtn?.addEventListener('click', async ()=>{
-      const url = heroLink.href;
-      const title = heroOverlayTitle.textContent || 'OC-News';
-      try{
-        if (navigator.share) await navigator.share({ title, url });
-        else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
-      }catch{}
-    });
-    saveBtn?.addEventListener('click', ()=>{
-      if (!filteredItems.length) return;
-      const top = filteredItems[cycleIdx % filteredItems.length];
-      toggleSave(top);
-      saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
+    searchBtn?.addEventListener('click', openSearchOverlay);
+    searchCloseBtn?.addEventListener('click', closeSearchOverlay);
+    searchOverlay?.addEventListener('click', (e)=> {
+      if (e.target === searchOverlay || e.target.classList.contains('so-backdrop')) closeSearchOverlay();
     });
 
-    /* ===== Search Sheet ===== */
-    const openSearch = ()=>{
-      searchSheet.classList.remove('hidden');
-      requestAnimationFrame(()=>{
-        searchSheet.setAttribute('data-open','true');
-        searchSheet.style.pointerEvents = 'auto';
-        searchField?.focus();
-        searchField?.select();
-      });
-    };
-    const closeSearch = ()=>{
-      searchSheet.removeAttribute('data-open');
-      searchSheet.style.pointerEvents = 'none';
-      setTimeout(()=> searchSheet.classList.add('hidden'), 200);
-    };
-    const clearSearch = ()=>{
-      searchQuery = '';
-      if (searchField) searchField.value = '';
+    const syncSearch = (val)=>{
+      searchQuery = val || '';
       applyFilter();
     };
-
-    searchToggle?.addEventListener('click', openSearch);
-    searchBackdrop?.addEventListener('click', closeSearch);
-    searchClose?.addEventListener('click', closeSearch);
-    searchClear?.addEventListener('click', clearSearch);
-    searchField?.addEventListener('input', (e)=>{ searchQuery = e.target.value || ''; applyFilter(); });
+    searchInputOverlay?.addEventListener('input', (e)=> syncSearch(e.target.value));
 
     // Shortcuts
     window.addEventListener('keydown', (e)=>{
       if (e.key==='r' || e.key==='R'){ e.preventDefault(); refreshAll(); }
       if (e.key==='t' || e.key==='T'){ e.preventDefault(); cycleTheme(); }
       if (e.key==='w' || e.key==='W'){ e.preventDefault(); showWeather(); }
-      if (e.key==='Escape' && searchSheet.getAttribute('data-open')==='true'){ e.preventDefault(); closeSearch(); }
-      if ((e.key==='/' || (e.key.toLowerCase()==='k' && (e.metaKey||e.ctrlKey)))){ e.preventDefault(); openSearch(); }
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
+      if (e.key === '/') {
+        if (!searchOpen){ e.preventDefault(); openSearchOverlay(); }
+        else { /* already open */ }
+      }
+      if (e.key === 'Escape' && searchOpen){ e.preventDefault(); closeSearchOverlay(); }
       if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
     });
 
@@ -1412,17 +1288,11 @@
     function showNews(){
       newsMain.classList.remove('hidden');
       weatherMain.classList.add('hidden');
-      weatherTab?.classList.remove('active');
-      newsTab?.classList.add('active');
-      document.body.classList.add('hero-immersive');
       window.scrollTo({ top:0, behavior:'instant' });
     }
     async function showWeather(){
       newsMain.classList.add('hidden');
       weatherMain.classList.remove('hidden');
-      newsTab?.classList.remove('active');
-      weatherTab?.classList.add('active');
-      document.body.classList.remove('hero-immersive');
       const last = getWx();
       if (last?.lat && last?.lon){ ensureWeatherFor(last); }
       else{
@@ -1440,8 +1310,122 @@
     newsTab?.addEventListener('click', showNews);
     weatherTab?.addEventListener('click', showWeather);
 
+    /* ===== PRELOADER CYCLE ===== */
+    function preloadTextSequence(){
+      const line = document.getElementById('preloadLine');
+      const sub  = document.getElementById('preloadSub');
+      const phases = [
+        { line: 'OC-News', sub: '' },
+        { line: 'Open Source News. Without Limits.', sub: '' },
+        { line: 'The AI Workspace For Pros', sub: '' }
+      ];
+      let idx = 0;
+      const step = ()=>{
+        const p = phases[idx % phases.length];
+        line.style.opacity = 0;
+        setTimeout(()=>{
+          line.textContent = p.line;
+          sub.textContent  = p.sub;
+          sub.style.opacity = p.sub ? 1 : 0.001;
+          line.style.opacity = 1;
+        }, 260);
+        idx++;
+      };
+      // initial
+      line.style.opacity = 1;
+      sub.style.opacity = .001;
+      setTimeout(step, 900);
+      setInterval(step, 1600);
+    }
+
+    const hydrate = async ()=>{
+      updatedAt.textContent = 'Updating…';
+      const items = await loadFeeds(currentEdition);
+      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+      cycleIdx = 0;
+      applyFilter();
+      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
+      await renderGoogleTrends();
+    };
+
+    const hidePreloader = ()=>{
+      const pre = document.getElementById('preload');
+      if (pre) pre.style.display = 'none';
+      document.body.classList.remove('preloading');
+    };
+
+    const boot = async ()=>{
+      try{
+        // default edition & UI
+        currentEdition = DEFAULT_EDITION;
+        setMobileEditionUI();
+        const sel = document.getElementById('editionSelect');
+        if (sel) sel.value = DEFAULT_EDITION;
+
+        preloadTextSequence();
+        await hydrate();
+        await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
+      }catch(e){ console.error(e); }
+      finally{
+        hidePreloader();
+      }
+    };
+
+    const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
+      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
+      if (!imgs.length) return resolve();
+      let done = 0, finished = false;
+      const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
+      const onOne = ()=>{ done++; if (done >= imgs.length) finish(); };
+      imgs.forEach(im=>{
+        if (im.complete) onOne();
+        else {
+          im.addEventListener('load', onOne, { once:true });
+          im.addEventListener('error', onOne, { once:true });
+          try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
+        }
+      });
+      setTimeout(finish, timeoutMs);
+    });
+
+    const refreshAll = async ()=>{
+      if (PRELOAD_ON_REFRESH){
+        const pre = document.getElementById('preload');
+        pre.style.display = 'grid';
+        document.body.classList.add('preloading');
+      }
+      try{
+        await hydrate();
+        if (PRELOAD_ON_REFRESH){
+          await Promise.race([waitForHeroImages(4000), new Promise(res=> setTimeout(res, 600))]);
+          hidePreloader();
+        }
+      }catch(e){ console.error(e); hidePreloader(); }
+    };
+
+    // Controls
+    editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
+    $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
+    themeBtn?.addEventListener('click', cycleTheme);
+
+    shareBtn?.addEventListener('click', async ()=>{
+      const url = heroLink.href;
+      const title = heroOverlayTitle.textContent || 'OC-News';
+      try{
+        if (navigator.share) await navigator.share({ title, url });
+        else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
+      }catch{}
+    });
+
+    saveBtn?.addEventListener('click', ()=>{
+      if (!filteredItems.length) return;
+      const top = filteredItems[cycleIdx % filteredItems.length];
+      toggleSave(top);
+      saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
+    });
+
     // Start
-    const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
+    const updateHeaderAndBoot = ()=>{ setHeaderVar(); boot(); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndBoot);
     else updateHeaderAndBoot();
 
