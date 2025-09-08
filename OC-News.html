@@ -5,11 +5,11 @@
     OC-News — Apple-clean, pure white/black. No gradients.
 
     This build tweaks:
-    • HEADER: removed inline search + refresh; added magnifying-glass icon that opens an Apple-style search sheet.
-    • PRELOADER: cycles through 3 phases: "OC-News" → "Open Source News. Without Limits." → "The AI Workspace For Pros".
-    • HERO: small white title over the image; the below-image title/meta block is hidden (kept in DOM to avoid JS churn).
-    • SCROLL JITTER FIX: header no longer transforms in/out; sticky only; removed hero-immersive toggling.
-    • All features preserved (editions, Trends, Weather, bookmarks, hero carousel, etc.)
+    • HEADER: inline search + refresh removed. Added magnifying glass that opens Apple-style overlay search.
+    • PRELOADER: cycles phases — “OC-News” → “Open Source News.  Without Limits.” → “The AI Workspace For Pros”.
+    • HERO: removed below-image headline; small white title over image bottom instead.
+    • SCROLL JITTER: debounced sticky header + GPU hinting to eliminate flicker.
+    • All other features preserved (editions, Trends, Weather, bookmarks, hero carousel, theme, etc.)
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -87,7 +87,7 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Loader — Apple-style sheet with centered mark + spinner + text crossfade */
+    /* Loader — Apple-style sheet with centered mark + spinner + cycling text */
     #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg) }
     body.preloading{ overflow:hidden }
     .preload-wrap{ display:grid; gap:14px; place-items:center; text-align:center; padding:24px; color:var(--preload-text) }
@@ -97,7 +97,7 @@
     .preload-line{ font-weight:800; letter-spacing:-0.015em; font-size:clamp(18px,4.8vw,22px) }
     .preload-sub{ font-size:clamp(12px,3.2vw,14px); color:rgba(0,0,0,.66) }
 
-    /* Segmented control tweaks for small screens */
+    /* Segmented control */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
     .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; }
     .seg button.active{ background:var(--card-hover) }
@@ -111,34 +111,37 @@
     @media (min-width:1024px){ .hero-section-container{ padding-block:2rem } }
     #heroCard{ min-height:58svh; display:flex; flex-direction:column; overflow:hidden }
     .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0 }
-    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; will-change: scroll-position; }
+    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth }
     .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
     .hero-slide a{ position:absolute; inset:0; display:block }
     .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
     .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%); pointer-events:none }
-    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(0,0,0,0.00) 40%, rgba(0,0,0,.55) 90%) } /* keep white text readable */
-    .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:14px; display:grid; gap:4px; pointer-events:none }
-    .hero-overlay-text h2{ font-size:clamp(16px,3.2vw,24px); line-height:1.15; font-weight:800; color:#fff; text-shadow:0 2px 14px rgba(0,0,0,.55) }
-
+    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 40%, rgba(255,255,255,.65) 90%) }
+    .hero-overlay-text{ position:absolute; inset-inline:16px; bottom:16px; display:grid; gap:6px; pointer-events:none }
+    .hero-overlay-text h2{ font-size:clamp(16px, 3.6vw, 28px); line-height:1.12; font-weight:800; text-shadow:0 2px 14px rgba(0,0,0,.35); color:#fff }
+    html.light .hero-overlay-text h2{ text-shadow:0 2px 12px rgba(255,255,255,.55); color:#000 }
+    .hero-overlay-text .tag{ font-size:11px; color:rgba(255,255,255,.8) }
+    html.light .hero-overlay-text .tag{ color:rgba(0,0,0,.8) }
     .hero-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; padding:8px }
     .hero-nav button{ pointer-events:auto; border:1px solid var(--border); background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
-    html.light .hero-nav button{ background:rgba(0,0,0,.28); color:#fff }
+    html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
     .hero-dots{ position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px }
     .hero-dots span{ width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,.55) }
     .hero-dots span.active{ background:#fff }
+    html.light .hero-dots span{ background:rgba(0,0,0,.35) }
+    html.light .hero-dots span.active{ background:#000 }
 
-    /* Mobile hero (keep overlay title visible, hide below-image block) */
+    /* Mobile hero (title overlay only; no below-image headline) */
     @media (max-width: 639.98px){
       .hero-section-container{ padding:0!important }
       #heroCard{ padding:0!important; border:none!important; border-radius:0!important; box-shadow:none!important; }
       .hero-media{ border:none!important; border-radius:0!important; height:54svh; min-height:54svh }
-      .hero-nav{ display:none!important } /* arrows off on mobile */
       .hero-dots{ bottom:12px }
     }
 
-    /* Header (sticky, no transform to avoid jitter) */
-    header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:opacity .18s ease; }
-    /* removed hero-immersive transform rule to fix jitter */
+    /* Header behavior + anti-jitter */
+    body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-8px); opacity:.001; pointer-events:none }
+    header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease; will-change:transform,opacity; backface-visibility:hidden; transform:translateZ(0) }
 
     /* Tiles */
     .tile-img{ width:100%; height:11rem; object-fit:cover; border:1px solid var(--border); border-radius:12px }
@@ -154,25 +157,19 @@
     .wx-rail { display:flex; gap:8px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
     .wx-rail > div { scroll-snap-align:center; }
 
-    /* Search sheet (Apple-style) */
-    .search-sheet{ position:fixed; inset:0; z-index:60; display:grid; place-items:start center; padding: max(12px, calc(var(--header-h) + 12px)) 16px 16px; background:rgba(0,0,0,.42); backdrop-filter: blur(10px); opacity:0; pointer-events:none; transition:opacity .25s ease; }
-    .search-sheet.open{ opacity:1; pointer-events:auto; }
-    .search-panel{ width:min(780px, 96vw); background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:10px; transform:translateY(-8px); transition:transform .25s ease; }
-    .search-sheet.open .search-panel{ transform:translateY(0); }
-    .search-input{ width:100%; border:1px solid var(--border); background:transparent; border-radius:999px; padding:12px 40px 12px 40px; font-size:15px; outline:none; }
-    .search-icon{ position:absolute; left:14px; top:50%; transform:translateY(-50%); }
-    .search-clear{ position:absolute; right:12px; top:50%; transform:translateY(-50%); }
+    /* Search overlay */
+    #searchOverlay{ backdrop-filter: blur(6px); }
+    .search-card{ border-radius:16px }
   </style>
 </head>
-<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading">
-  <!-- Fullscreen Apple-style Preloader (logo + spinner + text crossfade sequence) -->
+<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
+  <!-- Fullscreen Apple-style Preloader (logo + spinner + cycling text) -->
   <div id="preload" aria-live="polite" aria-busy="true">
     <div class="preload-wrap">
       <img src="logo.svg" alt="OC-News" class="preload-logo" />
       <div class="preload-spinner"></div>
       <div id="preloadLine" class="preload-line">OC-News</div>
-      <div id="preloadSub" class="preload-sub" style="opacity:.001">Open Source News. Without Limits.</div>
-      <div id="preloadSub2" class="preload-sub" style="opacity:.001">The AI Workspace For Pros</div>
+      <div id="preloadSub" class="preload-sub" style="opacity:.001"></div>
     </div>
   </div>
 
@@ -193,8 +190,8 @@
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Editions + actions -->
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
+        <!-- Editions + Actions -->
+        <div class="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 justify-end">
           <!-- Mobile editions rail -->
           <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
             <button class="seg-btn" data-ed="ALL">All</button>
@@ -225,7 +222,7 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
           </button>
 
-          <!-- Theme -->
+          <!-- Theme toggle -->
           <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -233,23 +230,25 @@
             </span>
           </button>
 
-          <!-- Search (magnifying glass opens sheet) -->
-          <button id="searchOpenBtn" class="link-btn shrink-0" title="Search (/)">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <!-- Search trigger (magnifying glass) -->
+          <button id="searchBtn" class="link-btn shrink-0" title="Search ( / )">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Search Sheet -->
-  <div id="searchSheet" class="search-sheet" aria-hidden="true">
-    <div class="search-panel relative">
-      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="searchOverlayInput" class="search-input" placeholder="Search headlines… ( / to open, Esc to close )" />
-      <button id="searchClearBtn" class="search-clear link-btn" title="Clear">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
+  <!-- Apple-style search overlay -->
+  <div id="searchOverlay" class="fixed inset-0 z-[80] hidden">
+    <div id="searchBackdrop" class="absolute inset-0 bg-black/40" aria-hidden="true"></div>
+    <div class="relative mx-auto w-full max-w-2xl px-4 sm:px-6" style="margin-top:calc(var(--header-h) + 10px)">
+      <div class="card search-card p-2 sm:p-2.5 flex items-center gap-2">
+        <svg viewBox="0 0 24 24" width="18" height="18" class="text-[var(--sub)]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="searchBox" placeholder="Search headlines… ( / to open, Esc to close )" class="flex-1 bg-transparent outline-none text-sm sm:text-base py-2" />
+        <button id="searchClear" class="chip rounded px-2 py-1 text-[11px]">Clear</button>
+        <button id="searchCancel" class="text-sm text-[var(--sub)] px-2 py-1">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -270,22 +269,20 @@
             <div id="heroDots" class="hero-dots"></div>
             <div class="hero-gradient"></div>
             <div class="hero-overlay-text">
-              <div class="text-[11px] font-medium text-white/90">Top story</div>
+              <div class="tag">Top story</div>
               <h2 id="heroOverlayTitle">—</h2>
             </div>
           </figure>
 
-          <!-- Headline BELOW image (hidden to remove subtitle/jitter but kept for JS compatibility) -->
-          <div class="px-4 sm:px-0 hidden" id="heroBelow">
-            <h2 id="heroTitle" class="text-balance text-[clamp(22px,7.2vw,38px)] sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight mt-3 sm:mt-4">OC-News is waking up…</h2>
-            <div class="flex items-center gap-2 mt-2 sm:mt-3">
-              <span class="text-xs text-[var(--sub)]" id="heroMeta">Loading top story…</span>
-              <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
-            </div>
+          <!-- Below-image actions (title removed per request) -->
+          <div class="px-4 sm:px-0">
+            <h2 id="heroTitle" class="sr-only">OC-News is waking up…</h2>
+            <div class="sr-only" id="heroMeta">Loading top story…</div>
             <div class="mt-3 sm:mt-4 flex items-center gap-3">
               <a id="heroLink" href="#" target="_blank" rel="noopener" class="btn rounded-lg px-4 py-2 text-sm font-medium focus:ring-2 focus:ring-[var(--accent)]/30">Open Story</a>
               <button id="shareBtn" class="btn rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Share</button>
               <button id="saveBtn" class="btn rounded-lg px-3 py-2 text-sm" title="Save for later">Save</button>
+              <span id="sourceBadge" class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1">—</span>
               <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
             </div>
             <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
@@ -760,27 +757,30 @@
     const newsList  = $('#newsList');
     const ticker    = $('#ticker');
     const sourceBadge = $('#sourceBadge');
-    const preload   = $('#preload');
     const heroOverlayTitle = $('#heroOverlayTitle');
     const trendingRail = $('#trendingRail');
     const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty'); const gtTopTerm = $('#gtTopTerm');
 
     // Controls
     const editionSelect = $('#editionSelect');
-    const refreshBtn = $('#refreshBtn'); // removed from DOM; safe (null)
+    const refreshBtn = $('#refreshBtn');
     const themeBtn = $('#themeBtn');
-    const shareBtn = $('#shareBtn'); // hidden
-    const saveBtn  = $('#saveBtn');  // hidden
+    const shareBtn = $('#shareBtn');
+    const saveBtn  = $('#saveBtn');
+    const searchInput = $('#searchInput'); // (removed from UI)
+    const searchInputMobile = $('#searchInputMobile'); // (removed from UI)
     const prevTopBtn = $('#prevTopBtn');
     const nextTopBtn = $('#nextTopBtn');
-    const refreshBtnMobile = $('#refreshBtnMobile'); // removed from DOM; safe (null)
+    const refreshBtnMobile = $('#refreshBtnMobile');
     const weatherBtn = $('#weatherBtn'); const weatherBtnMobile = $('#weatherBtnMobile');
 
-    // Search sheet controls
-    const searchSheet = $('#searchSheet');
-    const searchOpenBtn = $('#searchOpenBtn');
-    const searchInput = $('#searchOverlayInput');
-    const searchClearBtn = $('#searchClearBtn');
+    // Search overlay controls
+    const searchBtn = $('#searchBtn');
+    const searchOverlay = $('#searchOverlay');
+    const searchBackdrop = $('#searchBackdrop');
+    const searchBox = $('#searchBox');
+    const searchCancel = $('#searchCancel');
+    const searchClear = $('#searchClear');
 
     const newsMain = $('#newsMain'); const weatherMain = $('#weatherMain');
     const newsTab = $('#newsTab'); const weatherTab = $('#weatherTab');
@@ -817,7 +817,6 @@
     };
 
     const renderTicker = (items)=>{
-      if (!ticker) return;
       const chips = (items.slice(0, 24).map(it=>{
         const src = it.source || hostname(it.link) || 'Source';
         const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -841,7 +840,7 @@
             ${imgHTML}
             <div class="hero-gradient"></div>
             <div class="hero-overlay-text">
-              <div class="text-[11px] font-medium text-white/90">${label} • ${timeAgo(it.pubDate)}</div>
+              <div class="tag">${label} • ${timeAgo(it.pubDate)}</div>
               <h2>${safeTitle}</h2>
             </div>
           </div>
@@ -855,11 +854,11 @@
       if(!filteredItems.length) return;
       const item = filteredItems[idx % filteredItems.length];
       const host = hostname(item.link);
-      if (heroTitle) heroTitle.textContent = item.title; // hidden block retained
-      if (heroOverlayTitle) heroOverlayTitle.textContent = item.title;
-      if (heroMeta)  heroMeta.textContent  = `${timeAgo(item.pubDate)} • ${item.source || host}`;
-      if (heroLink)  heroLink.href         = item.link;
-      if (sourceBadge) sourceBadge.textContent = host;
+      heroTitle.textContent = item.title; // kept for share() but hidden visually
+      heroOverlayTitle.textContent = item.title;
+      heroMeta.textContent  = `${timeAgo(item.pubDate)} • ${item.source || host}`;
+      heroLink.href         = item.link;
+      sourceBadge.textContent = host;
       const children = Array.from(heroDots.children);
       if (children.length){
         const dotIndex = Math.min(children.length-1, idx % children.length);
@@ -893,12 +892,12 @@
 
     const render = (items)=>{
       if(!items || !items.length){
-        if (heroTitle) heroTitle.textContent = 'No headlines available right now.';
-        if (heroOverlayTitle) heroOverlayTitle.textContent = 'No headlines available right now.';
-        if (heroMeta)  heroMeta.textContent  = '—';
-        if (heroLink) { heroLink.classList.add('pointer-events-none','opacity-60'); heroLink.removeAttribute('href'); }
-        if (sourceBadge) sourceBadge.textContent = '—';
-        newsList.innerHTML = ''; if (ticker) ticker.innerHTML = ''; heroTrack.innerHTML = ''; heroDots.innerHTML = '';
+        heroTitle.textContent = 'No headlines available right now.';
+        heroOverlayTitle.textContent = 'No headlines available right now.';
+        heroMeta.textContent  = '—';
+        heroLink.classList.add('pointer-events-none','opacity-60');
+        sourceBadge.textContent = '—';
+        newsList.innerHTML = ''; ticker.innerHTML = ''; heroTrack.innerHTML = ''; heroDots.innerHTML = '';
         trendingRail.innerHTML = '';
         return;
       }
@@ -906,7 +905,7 @@
 
       buildHeroSlides(items);
       setHeroMetaFromIndex(cycleIdx);
-      if (updatedAt) updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+      updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
       renderTicker(items);
 
       const tiles = items.slice(1, 13);
@@ -969,7 +968,7 @@
       setTheme(next);
     };
 
-    /* ===== GOOGLE TRENDS ===== */
+    /* ===== GOOGLE TRENDS (unchanged logic; adds Top term label) ===== */
     const tzMinutes = -new Date().getTimezoneOffset();
     const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
     const fetchGoogleTrendsDailyAPI = async (geo)=>{
@@ -1033,7 +1032,7 @@
       }
     };
 
-    /* ===== WEATHER (unchanged sources; Apple-clean layout) ===== */
+    /* ===== WEATHER (unchanged) ===== */
     const wxQuery = $('#wxQuery');
     const wxMyLocation = $('#wxMyLocation');
     const wxMeta = $('#wxMeta');
@@ -1121,7 +1120,7 @@
           const t = new Date(htimes[i]);
           if (t.getTime() < now) continue;
           const chip = document.createElement('div');
-          chip.className = 'wx-pill text-center min-w=[74px] sm:min-w-[74px]';
+          chip.className = 'wx-pill text-center min-w-[74px]';
           const hh = t.toLocaleTimeString([], { hour:'numeric' });
           const tt = j.hourly.temperature_2m[i];
           const pp = j.hourly.precipitation_probability[i];
@@ -1210,47 +1209,29 @@
     $('#prevTopBtn').addEventListener('click', prevHero);
     $('#nextTopBtn').addEventListener('click', nextHero);
 
-    // Header immersive behavior removed to fix jitter
+    // Header immersive behavior (anti-jitter with rAF + hysteresis)
     let heroIsVisible = true;
     const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
     heroObserver.observe(document.getElementById('heroCard'));
-    const startCycle = ()=>{
-      stopCycle();
-      cycleTimer = setInterval(()=>{
-        if (!heroIsVisible) return;
-        if (document.body.classList.contains('search-open')) return; // pause cycling while search is open
-        heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
-      }, 12000);
+
+    let imRAF = null; let lastImmersive = true;
+    const updateImmersiveHeader = ()=>{
+      const threshold = 12;
+      const nextImmersive = window.scrollY <= threshold;
+      if (nextImmersive !== lastImmersive){
+        lastImmersive = nextImmersive;
+        document.body.classList.toggle('hero-immersive', nextImmersive);
+      }
     };
-    const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
+    window.addEventListener('scroll', ()=>{
+      if (imRAF) return; imRAF = requestAnimationFrame(()=>{ imRAF = null; updateImmersiveHeader(); });
+    }, { passive:true });
 
-    // Preloader text sequence (3 phases)
-    function preloadTextSequence(){
-      const line = document.getElementById('preloadLine');
-      const sub  = document.getElementById('preloadSub');
-      const sub2 = document.getElementById('preloadSub2');
-
-      setTimeout(()=>{
-        line.classList.add('animate-fade-out');
-        setTimeout(()=>{
-          line.style.display = 'none';
-          sub.style.display = 'block';
-          sub.style.opacity = '0';
-          sub.classList.add('animate-fade-in');
-          // Next phase
-          setTimeout(()=>{
-            sub.classList.remove('animate-fade-in');
-            sub.classList.add('animate-fade-out');
-            setTimeout(()=>{
-              sub.style.display = 'none';
-              sub2.style.display = 'block';
-              sub2.style.opacity = '0';
-              sub2.classList.add('animate-fade-in');
-            }, 240);
-          }, 1000);
-        }, 260);
-      }, 600);
-    }
+    const heroInViewObserver = new IntersectionObserver((entries)=>{
+      const inView = entries[0]?.isIntersecting ?? true;
+      document.body.classList.toggle('hero-in-view', inView);
+    }, { root:null, threshold:0.6 });
+    heroInViewObserver.observe(document.getElementById('heroCard'));
 
     const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
       const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
@@ -1269,8 +1250,38 @@
       setTimeout(finish, timeoutMs);
     });
 
+    // Preloader: cycling text phases
+    function preloadTextSequence(){
+      const line = document.getElementById('preloadLine');
+      const sub  = document.getElementById('preloadSub');
+      const phases = [
+        'OC-News',
+        'Open Source News.  Without Limits.',
+        'The AI Workspace For Pros'
+      ];
+      let idx = 0;
+      sub.style.display = 'block';
+      sub.textContent = phases[0];
+      sub.style.opacity = '1';
+      line.style.display = 'none';
+      const step = ()=>{
+        idx = (idx + 1) % phases.length;
+        sub.classList.remove('animate-fade-in');
+        sub.classList.add('animate-fade-out');
+        setTimeout(()=>{
+          sub.textContent = phases[idx];
+          sub.classList.remove('animate-fade-out');
+          sub.classList.add('animate-fade-in');
+        }, 260);
+      };
+      // cycle a couple of times then stop naturally when boot hides preloader
+      setTimeout(step, 900);
+      setTimeout(step, 1800);
+      setTimeout(step, 2700);
+    }
+
     const hydrate = async ()=>{
-      if (updatedAt) updatedAt.textContent = 'Updating…';
+      updatedAt.textContent = 'Updating…';
       const items = await loadFeeds(currentEdition);
       cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
       cycleIdx = 0;
@@ -1298,6 +1309,7 @@
       }catch(e){ console.error(e); }
       finally{
         hidePreloader();
+        updateImmersiveHeader();
       }
     };
 
@@ -1319,21 +1331,18 @@
     // Controls
     editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
     $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
-    // refresh buttons removed visually; keyboard 'R' still works (below)
+    // refresh buttons removed from UI; keep keyboard shortcut below
     themeBtn?.addEventListener('click', cycleTheme);
 
-    // Share/Save (below-image controls hidden)
     shareBtn?.addEventListener('click', async ()=>{
-      const items = filteredItems;
-      if (!items.length) return;
-      const top = items[cycleIdx % items.length];
-      const url = top.link;
-      const title = top.title || 'OC-News';
+      const url = heroLink.href;
+      const title = heroTitle.textContent || 'OC-News';
       try{
         if (navigator.share) await navigator.share({ title, url });
         else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
       }catch{}
     });
+
     saveBtn?.addEventListener('click', ()=>{
       if (!filteredItems.length) return;
       const top = filteredItems[cycleIdx % filteredItems.length];
@@ -1341,32 +1350,52 @@
       saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
 
-    // Search sheet behavior
-    function openSearchSheet(){
-      searchSheet.classList.add('open');
-      document.body.classList.add('search-open');
-      searchSheet.setAttribute('aria-hidden','false');
-      setTimeout(()=> searchInput?.focus(), 10);
+    // Search overlay logic
+    function openSearch(){
+      searchOverlay.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+      setTimeout(()=> searchBox?.focus(), 0);
     }
-    function closeSearchSheet(){
-      searchSheet.classList.remove('open');
-      document.body.classList.remove('search-open');
-      searchSheet.setAttribute('aria-hidden','true');
+    function closeSearch(){
+      searchOverlay.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+      searchBox?.blur();
     }
-    searchOpenBtn?.addEventListener('click', openSearchSheet);
-    searchSheet?.addEventListener('click', (e)=>{ if (e.target === searchSheet) closeSearchSheet(); });
-    searchClearBtn?.addEventListener('click', ()=>{ searchQuery=''; if (searchInput){ searchInput.value=''; } applyFilter(); });
-    searchInput?.addEventListener('input', (e)=>{ searchQuery = e.target.value || ''; applyFilter(); });
+    searchBtn?.addEventListener('click', openSearch);
+    searchBackdrop?.addEventListener('click', closeSearch);
+    searchCancel?.addEventListener('click', closeSearch);
+    searchClear?.addEventListener('click', ()=>{ searchBox.value=''; syncSearch(''); searchBox.focus(); });
+
+    // Search (sync)
+    const syncSearch = (val)=>{
+      searchQuery = val || '';
+      applyFilter();
+    };
+    searchBox?.addEventListener('input', (e)=> syncSearch(e.target.value));
+
+    // Cycle timer for hero
+    const startCycle = ()=>{
+      stopCycle();
+      cycleTimer = setInterval(()=>{
+        if (!heroIsVisible) return;
+        if (document.activeElement === searchBox) return;
+        heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
+      }, 12000);
+    };
+    const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
 
     // Shortcuts
     window.addEventListener('keydown', (e)=>{
       if (e.key==='r' || e.key==='R'){ e.preventDefault(); refreshAll(); }
       if (e.key==='t' || e.key==='T'){ e.preventDefault(); cycleTheme(); }
       if (e.key==='w' || e.key==='W'){ e.preventDefault(); showWeather(); }
+      if (e.key==='Escape'){ if (!searchOverlay.classList.contains('hidden')) closeSearch(); }
+      if (e.key==='/'){
+        const isOpen = !searchOverlay.classList.contains('hidden');
+        if (!isOpen){ e.preventDefault(); openSearch(); }
+      }
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
-      if (e.key==='/'){ e.preventDefault(); openSearchSheet(); }
-      if (e.key==='Escape' && document.body.classList.contains('search-open')){ e.preventDefault(); closeSearchSheet(); }
       if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
     });
 
@@ -1389,6 +1418,7 @@
       weatherMain.classList.add('hidden');
       weatherTab?.classList.remove('active');
       newsTab?.classList.add('active');
+      document.body.classList.add('hero-immersive');
       window.scrollTo({ top:0, behavior:'instant' });
     }
     async function showWeather(){
@@ -1396,6 +1426,7 @@
       weatherMain.classList.remove('hidden');
       newsTab?.classList.remove('active');
       weatherTab?.classList.add('active');
+      document.body.classList.remove('hero-immersive');
       const last = getWx();
       if (last?.lat && last?.lon){ ensureWeatherFor(last); }
       else{
@@ -1414,7 +1445,7 @@
     weatherTab?.addEventListener('click', showWeather);
 
     // Start
-    const updateHeaderAndBoot = ()=>{ setHeaderVar(); boot(); };
+    const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndBoot);
     else updateHeaderAndBoot();
 
