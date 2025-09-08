@@ -5,11 +5,12 @@
   Apple-inspired, BUT simplified: pure backgrounds, crisp borders, tight type.
   Light/Dark/Auto theme, search, share, save, keyboard shortcuts. Logo at top-left links to index.html
 
-  NEW (this edit):
-  - Mobile “immersive” hero: edge-to-edge, full-screen swipeable images with ONLY the title overlay.
-    (Chips, desc, actions, ticker hidden on mobile; still visible on desktop.)
-  - Desktop hero unchanged: rich metadata, actions, ticker, and large layout.
-  - Keeps image resolver, brand fallbacks, sorting, editions, preloader, top loader, keyboard shortcuts, etc.
+  THIS REVISION:
+  • Fix: no more auto-jumping to the hero while reading the feed (cycle pauses when hero offscreen; horizontal scroll uses scrollTo on the track only, never page scroll; optional scroll position preservation on refresh).
+  • True Apple-like immersion: header + controls hidden at first; full-bleed, full-screen hero. Header elegantly reveals once you scroll.
+  • Buttons: Refresh/Theme are now text+icon only (no boxes, borders, or backgrounds).
+  • New edition: FINANCIAL — curated finance/markets feeds. Added everywhere (desktop select + mobile segmented).
+  • Kept: image resolver, brand fallbacks, sorting, editions, preloader, top loader, keyboard shortcuts, save/share, ticker, etc.
 -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" data-theme="auto">
@@ -103,6 +104,11 @@
     .btn:hover { background: var(--card-hover); }
     .hairline { height: 1px; background: var(--border); }
 
+    /* Text-only action buttons (Refresh, Theme) */
+    .link-btn { border: 0; background: transparent; padding: 6px 8px; font-size: 0.875rem; color: var(--sub); display: inline-flex; align-items: center; gap: 8px; border-radius: 8px; }
+    .link-btn:hover { color: var(--text); background: transparent; }
+    .link-btn:focus-visible { outline: 2px solid color-mix(in oklab, var(--accent) 40%, transparent); outline-offset: 2px; border-radius: 10px; }
+
     /* Header logo handling */
     .logo-img { height: var(--logo-size); width: auto; transition: filter .2s ease; }
     @media (min-width: 640px) { .logo-img { height: var(--logo-size-lg); } }
@@ -183,50 +189,31 @@
     html.light .hero-dots span { background: rgba(0,0,0,.35); }
     html.light .hero-dots span.active { background: #000; }
 
-    /* ===== Mobile immersive hero:
-       - Remove hero card chrome (padding, borders, radius, shadow)
-       - Full-bleed image under the header
-       - Only overlay title; hide chips/desc/actions/ticker/nav
-    ===== */
+    /* ===== Mobile immersive hero ===== */
     @media (max-width: 639.98px) {
-      /* Remove card look for immersive feel */
       #heroCard { 
-        padding: 0 !important; 
-        border: none !important; 
-        border-radius: 0 !important; 
-        box-shadow: none !important;
+        padding: 0 !important; border: none !important; border-radius: 0 !important; box-shadow: none !important;
         min-height: calc(100svh - var(--header-h));
       }
-      .hero-media { 
-        border: none !important; 
-        border-radius: 0 !important; 
-        height: calc(100svh - var(--header-h)); 
-        min-height: calc(100svh - var(--header-h));
-      }
-      /* Only keep the big title on top of the image */
-      .hero-top-meta,
-      #heroTitle,
-      #heroDesc,
-      #sourceBadge,
-      .hero-nav,
-      #heroLink,
-      #shareBtn,
-      #saveBtn,
-      #updatedAt,
-      #tickerWrap {
-        display: none !important;
-      }
+      .hero-media { border: none !important; border-radius: 0 !important; height: calc(100svh - var(--header-h)); min-height: calc(100svh - var(--header-h)); }
+      .hero-top-meta, #heroTitle, #heroDesc, #sourceBadge, .hero-nav, #heroLink, #shareBtn, #saveBtn, #updatedAt, #tickerWrap { display: none !important; }
       .hero-overlay-text { inset-inline: 16px; bottom: 24px; }
-      .hero-overlay-text > :not(h2) { display: none !important; } /* hide the little meta line */
+      .hero-overlay-text > :not(h2) { display: none !important; }
       .hero-overlay-text h2 { font-size: clamp(20px, 7vw, 28px); font-weight: 800; }
       .hero-dots { bottom: 14px; }
-      /* Make surrounding section edges align flush */
       .hero-section-container { padding-left: 0 !important; padding-right: 0 !important; }
     }
+
+    /* ===== Immersive-at-top state ===== */
+    body.hero-immersive header { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+    header { transition: transform .28s ease, opacity .28s ease; }
+    body.hero-immersive #heroCard { min-height: 100svh; }
+    body.hero-immersive .hero-media { height: 100svh; min-height: 100svh; }
+    body.hero-immersive .hero-nav { display: none; }
   </style>
 </head>
 
-<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading">
+<body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
   <!-- Fullscreen Preloader -->
   <div id="preload" aria-live="polite" aria-busy="true">
     <div class="flex flex-col items-center gap-4">
@@ -258,6 +245,7 @@
               <option value="CA">Canada</option>
               <option value="US">United States</option>
               <option value="GLOBAL">Global Mix</option>
+              <option value="FIN">Financial</option>
             </select>
           </div>
 
@@ -266,14 +254,19 @@
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
 
-          <button id="refreshBtn" class="btn rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-[var(--accent)]/30">Refresh</button>
+          <!-- Text-only actions -->
+          <button id="refreshBtn" class="link-btn" title="Refresh (R)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 10-3.9 7.4"/><path d="M22 12v6h-6"/></svg>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
 
-          <button id="themeBtn" class="btn rounded-lg px-2.5 py-1.5 text-sm focus:ring-2 focus:ring-[var(--accent)]/30" title="Toggle theme (T)">
-            <span id="themeIcon" class="inline-block align-middle">
+          <button id="themeBtn" class="link-btn" title="Toggle theme (T)">
+            <span id="themeIcon" class="inline-flex items-center">
               <!-- Sun/Moon auto-swapped in JS -->
               <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
               <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </span>
+            <span class="hidden sm:inline">Theme</span>
           </button>
         </div>
       </div>
@@ -287,6 +280,7 @@
           <button class="seg-btn" data-ed="GLOBAL">Global</button>
           <button class="seg-btn" data-ed="US">US</button>
           <button class="seg-btn" data-ed="CA">Canada</button>
+          <button class="seg-btn" data-ed="FIN">Financial</button>
         </div>
         <div class="flex-1"></div>
       </div>
@@ -386,7 +380,7 @@
 
       <!-- Footer -->
       <div class="mt-12 text-center text-xs text-[var(--sub)]">
-        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, Global News and more (via CORS-friendly proxies). Times are local.
+        Sources auto-selected from Google News, BBC, Reuters, CNN, AP, The Guardian, CBC, CTV, Al Jazeera, WSJ, CNBC, FT, MarketWatch and more (via CORS-friendly proxies). Times are local.
       </div>
     </div>
   </main>
@@ -395,7 +389,7 @@
     /* =========================
        CONFIG — tweak freely
        ========================= */
-    const DEFAULT_EDITION = 'CA'; // 'CA' | 'US' | 'GLOBAL'
+    const DEFAULT_EDITION = 'CA'; // 'CA' | 'US' | 'GLOBAL' | 'FIN'
     const MAX_ITEMS = 48;         // How many headlines to render
     const CYCLE_TOPS = true;      // If true, cycles hero every ~12s as well as manual swipe
     const SHOW_IMAGES = true;     // Try to parse images from RSS if available
@@ -448,6 +442,15 @@
         'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
         'https://www.cnbc.com/id/100003114/device/rss/rss.html',
         'https://www.wsj.com/xml/rss/3_7085.xml'
+      ],
+      FIN: [
+        // FINANCIAL: markets/business heavy
+        'https://feeds.reuters.com/reuters/businessNews',
+        'https://www.ft.com/markets?format=rss',
+        'https://feeds.a.dj.com/rss/RSSMarketsMain.xml', /* WSJ Markets */
+        'https://feeds.marketwatch.com/marketwatch/topstories/',
+        'https://www.cnbc.com/id/10001147/device/rss/rss.html', /* CNBC Investing */
+        'https://www.theguardian.com/business/markets/rss'
       ]
     };
 
@@ -475,7 +478,8 @@
       'ft.com': 'https://logo.clearbit.com/ft.com',
       'wsj.com': 'https://logo.clearbit.com/wsj.com',
       'npr.org': 'https://logo.clearbit.com/npr.org',
-      'theglobeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com'
+      'theglobeandmail.com': 'https://logo.clearbit.com/theglobeandmail.com',
+      'marketwatch.com': 'https://logo.clearbit.com/marketwatch.com'
     };
 
     /* =========================
@@ -560,11 +564,11 @@
         const items = [];
         const blocks = text.split(/<\/item>/i);
         for (const b of blocks) {
-          const t  = (b.match(/<title>([^<]+)<\/title>/i) || [,'' ])[1];
-          const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || [,'' ])[1]);
-          const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || [,'' ])[1];
-          const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || [,'' ])[1];
-          const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || [,'' ])[1];
+          const t  = (b.match(/<title>([^<]+)<\/title>/i) || ['', '' ])[1];
+          const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || ['', '' ])[1]);
+          const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || ['', '' ])[1];
+          const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || ['', '' ])[1];
+          const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || ['', '' ])[1];
           if (t && lk) items.push({title:t, link:lk, pubDate: pd?new Date(pd):new Date(), source: sc||hostname(lk), image: img||''});
         }
         return items;
@@ -653,7 +657,7 @@
           if (!src) continue;
           const w = parseInt(im.getAttribute('width')||'0',10);
           const h = parseInt(im.getAttribute('height')||'0',10);
-          if ((w>=300 || h>=200) || /[/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) {
+          if ((w>=300 || h>=200) || /[\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) {
             return src;
           }
         }
@@ -979,27 +983,30 @@
     // Mobile segmented edition UI
     const setMobileEditionUI = () => { $$('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ed === currentEdition)); };
 
-    // HERO sliding helpers
+    // HERO sliding helpers — IMPORTANT: only horizontal track scroll (never page scroll)
     const slideTo = (idx) => {
       const slides = Array.from(heroTrack.children);
       if (!slides.length) return;
-      const target = slides[Math.max(0, Math.min(slides.length-1, idx))];
-      target?.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-      cycleIdx = idx % filteredItems.length;
+      const clamped = Math.max(0, Math.min(slides.length-1, idx));
+      const target = slides[clamped];
+      if (!target) return;
+      // Horizontal scroll only (prevents jumping the page)
+      heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+      cycleIdx = clamped % Math.max(1, filteredItems.length);
       setHeroMetaFromIndex(cycleIdx);
     };
     const nextHero = () => slideTo((cycleIdx + 1) % Math.max(1, filteredItems.length));
     const prevHero = () => slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
 
     // Track active slide by scroll position
-    let scrollLock = false;
+    let heroTrackScrollLock = false;
     heroTrack.addEventListener('scroll', () => {
-      if (scrollLock) return;
+      if (heroTrackScrollLock) return;
       const slides = Array.from(heroTrack.children);
       let bestIdx = 0, bestDist = Infinity;
+      const viewportCenter = heroTrack.getBoundingClientRect().left + heroTrack.clientWidth / 2;
       slides.forEach((el,i) => {
         const rect = el.getBoundingClientRect();
-        const viewportCenter = window.innerWidth / 2;
         const slideCenter = rect.left + rect.width/2;
         const dist = Math.abs(slideCenter - viewportCenter);
         if (dist < bestDist) { bestDist = dist; bestIdx = i; }
@@ -1013,7 +1020,41 @@
     prevTopBtn.addEventListener('click', prevHero);
     nextTopBtn.addEventListener('click', nextHero);
 
+    // Visibility-driven auto-cycle: pause when hero offscreen to avoid page jumping
+    let heroIsVisible = true;
+    const heroObserver = new IntersectionObserver((entries) => {
+      heroIsVisible = entries[0]?.isIntersecting ?? true;
+    }, { root: null, threshold: 0.2 });
+    heroObserver.observe(document.getElementById('heroCard'));
+
+    const startCycle = () => {
+      stopCycle();
+      cycleTimer = setInterval(() => {
+        // Only auto-advance if hero is visible and user isn't typing
+        if (!heroIsVisible) return;
+        if (document.activeElement === searchInput || document.activeElement === searchInputMobile) return;
+        heroTrackScrollLock = true;
+        nextHero();
+        setTimeout(()=>{ heroTrackScrollLock = false; }, 400);
+      }, 12000);
+    };
+    const stopCycle = () => { if (cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
+
+    // Immersive header: hide at top, reveal on scroll
+    const updateImmersiveHeader = () => {
+      const threshold = 12; // px from top to reveal
+      if (window.scrollY <= threshold) {
+        document.body.classList.add('hero-immersive');
+      } else {
+        document.body.classList.remove('hero-immersive');
+      }
+    };
+    window.addEventListener('scroll', updateImmersiveHeader, { passive: true });
+
+    // Hydration with optional scroll preservation when user is reading below hero
     const hydrate = async () => {
+      const preserveY = window.scrollY;
+      const shouldPreserve = preserveY > (window.innerHeight * 0.7);
       try {
         topLoader.classList.remove('hidden');
         document.body.classList.add('cursor-progress');
@@ -1040,20 +1081,13 @@
         // Hide fullscreen preloader
         if (preload) preload.style.display = 'none';
         document.body.classList.remove('preloading');
+        // Preserve user reading position if they were below the hero
+        if (shouldPreserve) {
+          requestAnimationFrame(() => window.scrollTo({ top: preserveY, behavior: 'auto' }));
+        }
+        updateImmersiveHeader();
       }
     };
-
-    const startCycle = () => {
-      stopCycle();
-      cycleTimer = setInterval(() => {
-        // Only auto-advance if user isn't actively dragging (heuristic)
-        if (document.activeElement === searchInput || document.activeElement === searchInputMobile) return;
-        scrollLock = true;
-        nextHero();
-        setTimeout(()=>{ scrollLock = false; }, 400);
-      }, 12000);
-    };
-    const stopCycle = () => { if (cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
 
     // Events
     editionSelect.value = DEFAULT_EDITION;
@@ -1070,15 +1104,16 @@
 
     refreshBtn.addEventListener('click', hydrate);
 
-    shareBtn.addEventListener('click', async () => {
+    const shareBtnEl = shareBtn; // alias
+    shareBtnEl.addEventListener('click', async () => {
       const url = heroLink.href;
       const title = heroTitle.textContent || 'OC-News';
       try {
         if (navigator.share) await navigator.share({ title, url });
         else {
           await navigator.clipboard.writeText(url);
-          shareBtn.textContent = 'Copied';
-          setTimeout(() => shareBtn.textContent = 'Share', 1200);
+          shareBtnEl.textContent = 'Copied';
+          setTimeout(() => shareBtnEl.textContent = 'Share', 1200);
         }
       } catch {}
     });
@@ -1162,6 +1197,7 @@
     }, true);
 
     // First load
+    updateImmersiveHeader();
     hydrate();
   </script>
 </body>
