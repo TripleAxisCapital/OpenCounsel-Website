@@ -4,11 +4,12 @@
   <!--
     OC-News — Apple-clean, pure white/black. No gradients.
 
-    This build tweaks:
-    • MOBILE HEADER FIX: single compact row (logo + editions rail + search + Weather + refresh). No wrapping; scrollable chips; icons only.
-    • Micro-typography, paddings, and widths tuned to mirror Apple compact chrome.
-    • Preloader: centered black logo.svg + spinner → text crossfade: “OC-News” → “Open Source News.  Without Limts.”
-    • All features preserved (editions, search, refresh, theme, Trends, Weather, bookmarks, hero carousel, etc.)
+    This build includes:
+    • HEADER: Removed inline search + refresh buttons. Added magnifying-glass icon to open an Apple-style search sheet.
+    • PRELOADER: Cycles phrases — “OC-News” → “Open Source News. Without Limits.” → “The AI Workspace For Pros”.
+    • HERO (mobile): Removed below-image headline to prevent jitter; shows a small white title over the image instead.
+    • SCROLL JITTER: Higher threshold + GPU-friendly header; hero track tweaks.
+    • Everything else preserved (editions, theme toggle, trends, weather, bookmarks, hero carousel, etc.)
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -67,6 +68,8 @@
       --chip:rgba(0,0,0,0.035);--chip-border:rgba(0,0,0,0.08);
       --card-hover:rgba(0,0,0,0.045);
     }
+    html, body { overflow-x:hidden }
+    body { overscroll-behavior-y: none; }
     .text-balance{ text-wrap:balance }
     .no-scrollbar::-webkit-scrollbar{ display:none }
     .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
@@ -86,17 +89,17 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Loader — Apple-style sheet with centered mark + spinner + text crossfade */
+    /* Loader — Apple-style sheet with centered mark + spinner + cycling text */
     #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg) }
     body.preloading{ overflow:hidden }
     .preload-wrap{ display:grid; gap:14px; place-items:center; text-align:center; padding:24px; color:var(--preload-text) }
-    .preload-logo{ width:min(90px,22vw); height:auto; filter:none } /* force black logo.svg */
+    .preload-logo{ width:min(90px,22vw); height:auto; filter:none }
     .preload-spinner{ width:28px; height:28px; border-radius:999px; border:2px solid rgba(0,0,0,.15); border-top-color:#000; animation:spin 1s linear infinite }
     @keyframes spin{ to{ transform:rotate(360deg) } }
     .preload-line{ font-weight:800; letter-spacing:-0.015em; font-size:clamp(18px,4.8vw,22px) }
     .preload-sub{ font-size:clamp(12px,3.2vw,14px); color:rgba(0,0,0,.66) }
 
-    /* Segmented control tweaks for small screens */
+    /* Segmented control tweaks */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
     .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; }
     .seg button.active{ background:var(--card-hover) }
@@ -110,7 +113,7 @@
     @media (min-width:1024px){ .hero-section-container{ padding-block:2rem } }
     #heroCard{ min-height:58svh; display:flex; flex-direction:column; overflow:hidden }
     .hero-media{ position:relative; border-radius:calc(var(--radius) - 2px); overflow:hidden; border:1px solid var(--border); flex:1; min-height:0 }
-    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth }
+    .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scroll-behavior:smooth }
     .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
     .hero-slide a{ position:absolute; inset:0; display:block }
     .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
@@ -128,20 +131,29 @@
     html.light .hero-dots span{ background:rgba(0,0,0,.35) }
     html.light .hero-dots span.active{ background:#000 }
 
-    /* Mobile hero (headline below image) */
+    /* Mobile hero (SHOW overlay text; HIDE below-image headline) */
     @media (max-width: 639.98px){
       .hero-section-container{ padding:0!important }
       #heroCard{ padding:0!important; border:none!important; border-radius:0!important; box-shadow:none!important; }
       .hero-media{ border:none!important; border-radius:0!important; height:54svh; min-height:54svh }
-      .hero-overlay-text,.hero-nav{ display:none!important }
+      .hero-nav{ display:none!important }
+      /* Show small title over the image on mobile */
+      .hero-overlay-text{ display:grid!important; inset-inline:12px; bottom:12px }
+      .hero-overlay-text h2{ font-size:clamp(14px,4.4vw,18px); font-weight:700; line-height:1.2; color:#fff }
+      .hero-overlay-text .text-xs{ font-size:10px; }
       .hero-dots{ bottom:12px }
-      body.hero-in-view #heroTitle{ display:block!important }
+      /* Remove below-image headline to stop activation jitter */
+      #heroTitle{ display:none!important }
     }
 
-    /* Header behavior */
+    /* Header behavior + jitter smooth */
     body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
-    header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
-    body.hero-in-view #heroTitle{ display:none!important }
+    header{
+      position:sticky; top:0; z-index:40; background:var(--surface);
+      transition:transform .28s ease, opacity .28s ease;
+      will-change: transform, opacity; backface-visibility: hidden;
+    }
+    body.hero-in-view #heroTitle{ display:none!important } /* explicit */
 
     /* Tiles */
     .tile-img{ width:100%; height:11rem; object-fit:cover; border:1px solid var(--border); border-radius:12px }
@@ -156,16 +168,38 @@
     .wx-pill { border-radius:12px; padding:10px 12px; border:1px solid var(--border); background:var(--surface) }
     .wx-rail { display:flex; gap:8px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
     .wx-rail > div { scroll-snap-align:center; }
+
+    /* Search sheet (Apple-style) */
+    #searchSheet{
+      position:fixed; inset:0; z-index:70; display:none;
+      background:rgba(0,0,0,.35);
+      backdrop-filter: blur(14px);
+    }
+    #searchSheet[data-open="1"]{ display:block; }
+    .search-panel{
+      transform:translateY(-16px); opacity:0;
+      transition:transform .24s ease, opacity .24s ease;
+    }
+    #searchSheet[data-open="1"] .search-panel{
+      transform:translateY(0); opacity:1;
+    }
+    .search-input{
+      appearance:none; border:0; outline:none; background:transparent; width:100%;
+      font-size:16px; padding:10px 12px;
+    }
+    .search-card{
+      border:1px solid var(--border); background:var(--surface); border-radius:16px;
+    }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
-  <!-- Fullscreen Apple-style Preloader (logo + spinner + text crossfade) -->
+  <!-- Fullscreen Apple-style Preloader (logo + spinner + cycling text) -->
   <div id="preload" aria-live="polite" aria-busy="true">
     <div class="preload-wrap">
       <img src="logo.svg" alt="OC-News" class="preload-logo" />
       <div class="preload-spinner"></div>
       <div id="preloadLine" class="preload-line">OC-News</div>
-      <div id="preloadSub" class="preload-sub" style="opacity:.001">Open Source News.  Without Limts.</div>
+      <div id="preloadSub" class="preload-sub" style="opacity:.001">Open Source News. Without Limits.</div>
     </div>
   </div>
 
@@ -177,9 +211,9 @@
   <!-- Header -->
   <header class="border-b border-[var(--border)]">
     <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
-      <!-- Single-row layout across sizes; desktop reveals more controls -->
+      <!-- Single-row layout -->
       <div class="flex items-center gap-2 sm:gap-3 justify-between min-w-0 flex-nowrap">
-        <!-- Brand (always) -->
+        <!-- Brand -->
         <div class="flex items-center gap-2 min-w-0 shrink-0">
           <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
             <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
@@ -187,9 +221,9 @@
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Editions rail (mobile & desktop) + Search (all) + core actions -->
+        <!-- Editions + actions -->
         <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
-          <!-- Mobile editions rail (scrollable chips) -->
+          <!-- Mobile editions rail -->
           <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
@@ -210,16 +244,7 @@
             </select>
           </div>
 
-          <!-- Search (kept inline for all; compact width on mobile) -->
-          <div class="relative min-w-0 sm:min-w-[16rem] flex-1 max-w-[38vw] sm:max-w-none">
-            <input id="searchInput" placeholder="Search headlines… ( / )"
-                   class="hidden sm:block w-full btn rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
-            <input id="searchInputMobile" placeholder="Search… ( / )"
-                   class="sm:hidden w-[36vw] btn rounded-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
-            <kbd class="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
-          </div>
-
-          <!-- Quick actions (icons only on mobile) -->
+          <!-- Actions -->
           <button id="weatherBtn" class="hidden sm:inline-flex link-btn" title="Weather (W)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
             <span class="hidden md:inline">Weather</span>
@@ -228,14 +253,14 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
           </button>
 
-          <button id="refreshBtn" class="hidden sm:inline-flex link-btn" title="Refresh (R)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
-            <span class="hidden md:inline">Refresh</span>
-          </button>
-          <button id="refreshBtnMobile" class="sm:hidden link-btn shrink-0" title="Refresh (R)">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
+          <!-- Search trigger (magnifying glass) -->
+          <button id="searchBtn" class="link-btn shrink-0" title="Search ( / )">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path>
+            </svg>
           </button>
 
+          <!-- Theme -->
           <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -246,6 +271,23 @@
       </div>
     </div>
   </header>
+
+  <!-- SEARCH SHEET -->
+  <div id="searchSheet" aria-modal="true" role="dialog">
+    <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pt-6">
+      <div class="search-panel">
+        <div class="search-card p-2 flex items-center gap-2">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 ml-1">
+            <circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path>
+          </svg>
+          <input id="searchSheetInput" class="search-input text-[var(--text)] placeholder:text-[var(--sub)]" placeholder="Search headlines… ( / )" />
+          <kbd class="text-[10px] text-[var(--sub)] hidden sm:block">Esc</kbd>
+          <button id="searchSheetClose" class="link-btn ml-1">Cancel</button>
+        </div>
+        <div class="mt-2 text-xs text-white/80 dark:text-white/70">Type to filter. Press Esc to close.</div>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== NEWS (default page) ===== -->
   <main id="newsMain">
@@ -269,10 +311,10 @@
             </div>
           </figure>
 
-          <!-- Headline BELOW image -->
+          <!-- Headline BELOW image (title removed to avoid jitter; meta/buttons kept) -->
           <div class="px-4 sm:px-0">
-            <h2 id="heroTitle" class="text-balance text-[clamp(22px,7.2vw,38px)] sm:text-3xl lg:text-5xl font-extrabold leading-tight tracking-tight mt-3 sm:mt-4">OC-News is waking up…</h2>
-            <div class="flex items-center gap-2 mt-2 sm:mt-3">
+            <!-- Removed #heroTitle -->
+            <div class="flex items-center gap-2 mt-3 sm:mt-3">
               <span class="text-xs text-[var(--sub)]" id="heroMeta">Loading top story…</span>
               <span class="text-[10px] text-[var(--sub)] chip rounded px-2 py-1" id="sourceBadge">—</span>
             </div>
@@ -319,7 +361,7 @@
         </div>
         <div id="gtTopTerm" class="mb-3 text-sm text-[var(--sub)] hidden"></div>
         <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
-        <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
+        <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try again.</div>
       </div>
     </section>
   </main>
@@ -575,7 +617,7 @@
       }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
     };
 
-    /* ===== RSS + IMAGE RESOLUTION (unchanged) ===== */
+    /* ===== RSS + IMAGE RESOLUTION ===== */
     const parseRSS = (text)=>{
       const tryXML = ()=>{
         const dom = new DOMParser().parseFromString(text, 'text/xml');
@@ -745,7 +787,6 @@
     };
 
     /* ===== RENDER (NEWS) ===== */
-    const heroTitle = $('#heroTitle');
     const heroMeta  = $('#heroMeta');
     const heroLink  = $('#heroLink');
     const heroTrack = $('#heroTrack');
@@ -754,23 +795,24 @@
     const newsList  = $('#newsList');
     const ticker    = $('#ticker');
     const sourceBadge = $('#sourceBadge');
-    const preload   = $('#preload');
     const heroOverlayTitle = $('#heroOverlayTitle');
     const trendingRail = $('#trendingRail');
     const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty'); const gtTopTerm = $('#gtTopTerm');
 
     // Controls
     const editionSelect = $('#editionSelect');
-    const refreshBtn = $('#refreshBtn');
     const themeBtn = $('#themeBtn');
     const shareBtn = $('#shareBtn');
     const saveBtn  = $('#saveBtn');
-    const searchInput = $('#searchInput');
-    const searchInputMobile = $('#searchInputMobile');
     const prevTopBtn = $('#prevTopBtn');
     const nextTopBtn = $('#nextTopBtn');
-    const refreshBtnMobile = $('#refreshBtnMobile');
     const weatherBtn = $('#weatherBtn'); const weatherBtnMobile = $('#weatherBtnMobile');
+
+    // Search sheet controls
+    const searchBtn = $('#searchBtn');
+    const searchSheet = $('#searchSheet');
+    const searchSheetInput = $('#searchSheetInput');
+    const searchSheetClose = $('#searchSheetClose');
 
     const newsMain = $('#newsMain'); const weatherMain = $('#weatherMain');
     const newsTab = $('#newsTab'); const weatherTab = $('#weatherTab');
@@ -844,7 +886,6 @@
       if(!filteredItems.length) return;
       const item = filteredItems[idx % filteredItems.length];
       const host = hostname(item.link);
-      heroTitle.textContent = item.title;
       heroOverlayTitle.textContent = item.title;
       heroMeta.textContent  = `${timeAgo(item.pubDate)} • ${item.source || host}`;
       heroLink.href         = item.link;
@@ -882,7 +923,6 @@
 
     const render = (items)=>{
       if(!items || !items.length){
-        heroTitle.textContent = 'No headlines available right now.';
         heroOverlayTitle.textContent = 'No headlines available right now.';
         heroMeta.textContent  = '—';
         heroLink.classList.add('pointer-events-none','opacity-60');
@@ -1022,7 +1062,7 @@
       }
     };
 
-    /* ===== WEATHER (unchanged sources; Apple-clean layout) ===== */
+    /* ===== WEATHER (unchanged) ===== */
     const wxQuery = $('#wxQuery');
     const wxMyLocation = $('#wxMyLocation');
     const wxMeta = $('#wxMeta');
@@ -1199,7 +1239,7 @@
     $('#prevTopBtn').addEventListener('click', prevHero);
     $('#nextTopBtn').addEventListener('click', nextHero);
 
-    // Header immersive behavior
+    // Header immersive behavior (raised threshold to reduce jitter)
     let heroIsVisible = true;
     const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
     heroObserver.observe(document.getElementById('heroCard'));
@@ -1207,14 +1247,14 @@
       stopCycle();
       cycleTimer = setInterval(()=>{
         if (!heroIsVisible) return;
-        if (document.activeElement === searchInput || document.activeElement === searchInputMobile) return;
+        if (document.activeElement === searchSheetInput) return;
         heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
       }, 12000);
     };
     const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
 
     const updateImmersiveHeader = ()=>{
-      const threshold = 12;
+      const threshold = 96; // higher to avoid jitter flicker
       if (window.scrollY <= threshold) document.body.classList.add('hero-immersive');
       else document.body.classList.remove('hero-immersive');
     };
@@ -1243,20 +1283,27 @@
       setTimeout(finish, timeoutMs);
     });
 
-    // Boot + Preloader crossfade text
-    function preloadTextSequence(){
+    // PRELOADER: cycle phrases
+    let preloadCycler = null;
+    function startPreloadCycle(){
+      const phrases = ["OC-News","Open Source News. Without Limits.","The AI Workspace For Pros"];
       const line = document.getElementById('preloadLine');
       const sub  = document.getElementById('preloadSub');
-      // After 900ms, fade line out, show sub
-      setTimeout(()=>{
-        line.classList.add('animate-fade-out');
+      sub.style.display = 'none'; // we only use the main line now
+      let i = 0;
+      const step = ()=>{
+        line.textContent = phrases[i % phrases.length];
+        line.classList.remove('animate-fade-in','animate-fade-out');
+        void line.offsetWidth; // reflow to restart animation
+        line.classList.add('animate-fade-in');
         setTimeout(()=>{
-          line.style.display = 'none';
-          sub.style.opacity = '0';
-          sub.style.display = 'block';
-          sub.classList.add('animate-fade-in');
-        }, 260);
-      }, 900);
+          line.classList.remove('animate-fade-in');
+          line.classList.add('animate-fade-out');
+        }, 1200);
+        i++;
+      };
+      step();
+      preloadCycler = setInterval(step, 2000);
     }
 
     const hydrate = async ()=>{
@@ -1273,17 +1320,17 @@
       const pre = document.getElementById('preload');
       if (pre) pre.style.display = 'none';
       document.body.classList.remove('preloading');
+      if (preloadCycler){ clearInterval(preloadCycler); preloadCycler = null; }
     };
 
     const boot = async ()=>{
       try{
-        // default edition & UI
         currentEdition = DEFAULT_EDITION;
         setMobileEditionUI();
         const sel = document.getElementById('editionSelect');
         if (sel) sel.value = DEFAULT_EDITION;
 
-        preloadTextSequence();
+        startPreloadCycle();
         await hydrate();
         await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
       }catch(e){ console.error(e); }
@@ -1298,6 +1345,7 @@
         const pre = document.getElementById('preload');
         pre.style.display = 'grid';
         document.body.classList.add('preloading');
+        startPreloadCycle();
       }
       try{
         await hydrate();
@@ -1311,13 +1359,11 @@
     // Controls
     editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
     $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
-    refreshBtn?.addEventListener('click', refreshAll);
-    refreshBtnMobile?.addEventListener('click', refreshAll);
     themeBtn?.addEventListener('click', cycleTheme);
 
     shareBtn?.addEventListener('click', async ()=>{
       const url = heroLink.href;
-      const title = heroTitle.textContent || 'OC-News';
+      const title = heroOverlayTitle.textContent || 'OC-News';
       try{
         if (navigator.share) await navigator.share({ title, url });
         else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
@@ -1331,15 +1377,27 @@
       saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
     });
 
-    // Search (sync both inputs)
+    // SEARCH SHEET logic
+    function openSearchSheet(){
+      searchSheet.setAttribute('data-open','1');
+      document.body.classList.add('overflow-hidden');
+      setTimeout(()=> searchSheetInput?.focus(), 10);
+    }
+    function closeSearchSheet(){
+      searchSheet.removeAttribute('data-open');
+      document.body.classList.remove('overflow-hidden');
+    }
     const syncSearch = (val)=>{
       searchQuery = val || '';
-      if (searchInput && document.activeElement !== searchInput) searchInput.value = val;
-      if (searchInputMobile && document.activeElement !== searchInputMobile) searchInputMobile.value = val;
+      if (document.activeElement !== searchSheetInput) searchSheetInput.value = val;
       applyFilter();
     };
-    searchInput?.addEventListener('input', (e)=> syncSearch(e.target.value));
-    searchInputMobile?.addEventListener('input', (e)=> syncSearch(e.target.value));
+    searchBtn?.addEventListener('click', openSearchSheet);
+    searchSheetClose?.addEventListener('click', closeSearchSheet);
+    searchSheet.addEventListener('click', (e)=>{
+      if (e.target === searchSheet) closeSearchSheet();
+    });
+    searchSheetInput?.addEventListener('input', (e)=> syncSearch(e.target.value));
 
     // Shortcuts
     window.addEventListener('keydown', (e)=>{
@@ -1348,11 +1406,9 @@
       if (e.key==='w' || e.key==='W'){ e.preventDefault(); showWeather(); }
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
-      if (e.key==='/'){
-        const target = window.innerWidth < 640 ? searchInputMobile : searchInput;
-        if (document.activeElement !== target){ e.preventDefault(); target?.focus(); target?.select(); }
-      }
-      if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
+      if (e.key==='/'){ e.preventDefault(); openSearchSheet(); }
+      if (e.key==='Escape'){ if (searchSheet.getAttribute('data-open')==='1'){ e.preventDefault(); closeSearchSheet(); } }
+      if (e.key==='g' || e.key==='G'){ if (e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) } }
     });
 
     // Image fallbacks
