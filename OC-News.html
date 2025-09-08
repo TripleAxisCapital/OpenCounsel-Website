@@ -4,11 +4,10 @@
   <!--
     OC-News — Apple-clean, pure white/black.
 
-    What’s new:
-    • Header height reduced: editions + search on the SAME row (mobile & desktop).
-    • New "ALL" edition merges all feeds (de-duplicated).
-    • Google Trends: robust fetch (API + HTML fallback via proxies), plus “Most searched today” pill.
-    • Weather page: Apple-style cards. Auto-locates via Geolocation API with IP fallback; manual input accepts city/address/postal.
+    Mobile header fix:
+    • On mobile, header shows only: Logo (left), Editions segment, Search field, and Theme toggle.
+    • Removed mobile view switch + refresh button to keep layout clean and stable.
+    • Desktop header remains the same.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -175,6 +174,7 @@
   <header>
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-2">
       <div class="flex items-center justify-between gap-2">
+        <!-- Left: Logo -->
         <div class="flex items-center gap-3 min-w-0">
           <a href="#" class="shrink-0" aria-label="OC-News Home">
             <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
@@ -182,7 +182,7 @@
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Desktop: Editions + Search + View seg on same row -->
+        <!-- Desktop: editions + search + view seg + refresh + theme -->
         <div class="hidden sm:flex items-center gap-2 min-w-0">
           <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
           <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
@@ -207,6 +207,7 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
             <span class="hidden sm:inline">Refresh</span>
           </button>
+
           <button id="themeBtn" class="link-btn" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -216,25 +217,25 @@
           </button>
         </div>
 
-        <!-- Mobile: editions + search in one row + view seg -->
+        <!-- Mobile: editions + search + theme (clean + stable) -->
         <div class="sm:hidden flex items-center gap-2 w-full justify-end">
-          <div class="seg overflow-x-auto no-scrollbar max-w-[55vw]">
+          <!-- Editions -->
+          <div class="seg overflow-x-auto no-scrollbar max-w-[44vw] shrink-0">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
             <button class="seg-btn" data-ed="US">US</button>
             <button class="seg-btn" data-ed="CA">Canada</button>
             <button class="seg-btn" data-ed="FIN">Financial</button>
           </div>
+          <!-- Search -->
           <div class="relative flex-1 min-w-[36vw]">
             <input id="searchInputMobile" placeholder="Search… ( / )" class="w-full btn rounded-full px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" />
             <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">/</kbd>
           </div>
-          <div class="seg">
-            <button data-view="news" class="view-m active">News</button>
-            <button data-view="weather" class="view-m">Wx</button>
-          </div>
-          <button id="refreshBtnMobile" class="link-btn" title="Refresh (R)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3.22-6.86"/><path d="M21 3v7h-7"/></svg>
+          <!-- Theme -->
+          <button id="themeBtnMobile" class="link-btn shrink-0" title="Theme">
+            <svg id="sun2" class="size-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <svg id="moon2" class="size-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
           </button>
         </div>
       </div>
@@ -747,6 +748,7 @@
     const shareBtn = $('#shareBtn'); const saveBtn  = $('#saveBtn');
     const searchInput = $('#searchInput'); const searchInputMobile = $('#searchInputMobile');
     const prevTopBtn = $('#prevTopBtn'); const nextTopBtn = $('#nextTopBtn'); const refreshBtnMobile = $('#refreshBtnMobile');
+    const themeBtnMobile = $('#themeBtnMobile');
 
     const newsView = $('#newsView'); const weatherView = $('#weatherView');
 
@@ -909,6 +911,7 @@
 
     /* ===== THEME ===== */
     const sunIcon = document.getElementById('sun'); const moonIcon = document.getElementById('moon');
+    const sunIcon2 = document.getElementById('sun2'); const moonIcon2 = document.getElementById('moon2');
     const THEME_KEY = 'oc_theme';
     const resolveAutoTheme = ()=> window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     const setTheme = (mode)=>{
@@ -917,8 +920,8 @@
       document.documentElement.classList.toggle('light', final === 'light');
       document.documentElement.classList.toggle('dark',  final === 'dark');
       localStorage.setItem(THEME_KEY, mode);
-      sunIcon.classList.toggle('hidden', final !== 'light');
-      moonIcon.classList.toggle('hidden', final !== 'dark');
+      [sunIcon, sunIcon2].forEach(el=> el?.classList.toggle('hidden', final !== 'light'));
+      [moonIcon, moonIcon2].forEach(el=> el?.classList.toggle('hidden', final !== 'dark'));
     };
     const cycleTheme = ()=>{
       const cur = localStorage.getItem(THEME_KEY) || 'auto';
@@ -1307,8 +1310,9 @@
     editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
     $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; editionSelect && (editionSelect.value = currentEdition); setMobileEditionUI(); refreshAll(); }));
     refreshBtn?.addEventListener('click', refreshAll);
-    refreshBtnMobile?.addEventListener('click', refreshAll);
+    // no mobile refresh button (cleaner header)
     themeBtn?.addEventListener('click', cycleTheme);
+    themeBtnMobile?.addEventListener('click', cycleTheme);
 
     shareBtn?.addEventListener('click', async ()=>{
       const url = heroLink.href;
@@ -1369,7 +1373,6 @@
       // toggle active states on seg buttons
       $$('#viewSeg button').forEach(b=> b.classList.toggle('active', b.dataset.view === view));
       $$('.view-m').forEach(b=> b.classList.toggle('active', b.dataset.view === view));
-      if (view === 'weather'){ /* nothing extra; autoWeather already ran */ }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     };
     $$('#viewSeg button, .view-m').forEach(b=> b.addEventListener('click', ()=> switchView(b.dataset.view)));
