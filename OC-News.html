@@ -2,17 +2,14 @@
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
   <!--
-    OC-News — Apple-clean, pure white/black. No gradients.
+    OC-News — Apple-clean, pure white/black.
 
-    Edits in this pass:
-    • Google Trends: resilient fetch (API → HTML → RSS) + proper "Most searched today" via parsed traffic.
-    • Hero: bright-white headline with a local glass/blur patch behind text (keeps photo crisp everywhere else).
-    • Dots: Apple-minimal pills with spacing; unobtrusive and centered.
-    • Tiles layout: 1 large hero → 2 tall vertical cards → remaining horizontal full-width cards (image right, text left).
-    • Weather page header: only a News button (removed Weather/News segmented pair).
-    • Weather FX: subtle Apple-like sun/rain/snow/thunder/cloud effects on the current conditions card.
-
-    All other features preserved.
+    This pass:
+    • Hero: glass patch behind title (only under text), bright white text, minimal dots.
+    • Layout: 1 large hero → 2 tall vertical cards → remaining horizontal cards.
+    • Buttons: no outlines (no borders), hover is soft fill; custom focus-visible only.
+    • Weather header simplified; subtle Apple-like FX (sun/rain/snow/thunder/clouds).
+    • Google Trends: resilient API→HTML→RSS fallback; real top term.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -75,7 +72,6 @@
     .no-scrollbar::-webkit-scrollbar{ display:none }
     .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
 
-    /* Reduce scroll jitter */
     body{ overscroll-behavior: contain; }
     header{ backface-visibility:hidden; transform:translateZ(0); will-change:transform; }
 
@@ -85,12 +81,18 @@
     }
     .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
     .chip{ background:var(--chip); border:1px solid var(--chip-border) }
-    .btn{ background:transparent; border:1px solid var(--border) }
+
+    /* Buttons — no outlines/borders; soft hover fill; custom focus ring only */
+    .btn{ background:transparent; border:0; }
     .btn:hover{ background:var(--card-hover) }
+    .btn:focus{ outline:0 }
+    .btn:focus-visible{ box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent) 38%, transparent); border-radius:10px }
+
     .hairline{ height:1px; background:var(--border) }
     .link-btn{ border:0; background:transparent; padding:6px 8px; font-size:.875rem; color:var(--sub); display:inline-flex; align-items:center; gap:8px; border-radius:8px }
     .link-btn:hover{ color:var(--text) }
     .link-btn:focus-visible{ outline:2px solid color-mix(in oklab, var(--accent) 40%, transparent); outline-offset:2px; border-radius:10px }
+
     .logo-img{ height:var(--logo-size); width:auto; transition:filter .2s ease }
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
@@ -105,7 +107,7 @@
 
     /* Segmented control */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
-    .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; }
+    .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; border:0 }
     .seg button.active{ background:var(--card-hover) }
 
     /* Section lead */
@@ -122,10 +124,10 @@
     .hero-slide a{ position:absolute; inset:0; display:block }
     .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
 
-    /* Remove the old full-frame fog gradient */
+    /* Remove old global fog */
     .hero-gradient{ display:none !important }
 
-    /* New glass patch behind the text only (Apple-style) */
+    /* New glass patch behind the text only */
     .hero-overlay-text{
       position:absolute; inset-inline:16px; bottom:14px; display:grid; gap:6px; pointer-events:none; z-index:2;
     }
@@ -135,8 +137,7 @@
       padding:10px 12px;
       border-radius:14px;
       color:#fff;
-      background:
-        linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.55));
+      background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.55));
       backdrop-filter: blur(10px) saturate(1.15);
       -webkit-backdrop-filter: blur(10px) saturate(1.15);
       border:1px solid rgba(255,255,255,.14);
@@ -147,7 +148,7 @@
     .hero-overlay-text h2{ font-size:clamp(18px, 3.4vw, 28px); line-height:1.12; font-weight:800; color:#fff; letter-spacing:-.015em }
 
     .hero-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; padding:8px; z-index:3 }
-    .hero-nav button{ pointer-events:auto; border:1px solid var(--border); background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
+    .hero-nav button{ pointer-events:auto; border:0; background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
     html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
 
     /* Apple-minimal dots */
@@ -196,35 +197,26 @@
     }
     html.light #wxFx{ mix-blend-mode: normal; opacity:.6; }
 
-    /* Search sheet (Apple-style) */
+    /* Search sheet */
     #searchSheet{ position:fixed; inset-inline:0; top:var(--header-h); z-index:50; border-bottom:1px solid var(--border); background:color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(14px); }
-    .search-field{ width:100%; border:1px solid var(--border); border-radius:12px; background:transparent; padding:10px 36px 10px 34px; font-size:14px; }
+    .search-field{ width:100%; border:0; border-radius:12px; background:transparent; padding:10px 36px 10px 34px; font-size:14px; }
     .search-icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.7 }
     .search-kbd{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--sub) }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
-<!-- Fullscreen Apple-style Preloader (spinner + text only) -->
+<!-- Fullscreen Apple-style Preloader -->
 <div id="preload" aria-live="polite" aria-busy="true">
   <div class="preload-wrap">
     <div class="preload-spinner"></div>
-    <div
-      id="preloadLine"
-      class="preload-line"
-      style="font-weight:700; font-size:1.25rem; text-align:center; letter-spacing:-0.01em; margin-top:32px;"
-    >
+    <div id="preloadLine" class="preload-line" style="font-weight:700; font-size:1.25rem; text-align:center; letter-spacing:-0.01em; margin-top:32px;">
       OC-News
     </div>
   </div>
 </div>
 
 <style>
-  .preload-spinner {
-    width: 36px; height: 36px;
-    border: 3px solid rgba(0, 0, 0, 0.15);
-    border-top-color: #000; border-radius: 50%;
-    margin: 0 auto; animation: spin 1s linear infinite;
-  }
+  .preload-spinner { width: 36px; height: 36px; border: 3px solid rgba(0, 0, 0, 0.15); border-top-color: #000; border-radius: 50%; margin: 0 auto; animation: spin 1s linear infinite; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 
@@ -259,7 +251,7 @@
           <!-- Desktop edition select -->
           <div class="hidden sm:flex items-center gap-2 min-w-0">
             <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
-            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
+            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-0 bg-transparent">
               <option value="ALL">All</option>
               <option value="CA">Canada</option>
               <option value="US">United States</option>
@@ -326,7 +318,7 @@
             <!-- Slide-specific overlay titles inserted per-slide -->
           </figure>
 
-          <!-- Buttons + Ticker -->
+          <!-- Ticker -->
           <div class="px-4 sm:px-0">
             <div class="mt-3 sm:mt-4 flex items-center gap-3">
               <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
@@ -390,7 +382,7 @@
         <div class="card p-3 sm:p-4 mb-4">
           <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
             <div class="relative flex-1">
-              <input id="wxQuery" class="w-full btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" placeholder="City, address, or postal code…" />
+              <input id="wxQuery" class="w-full btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-0 bg-transparent" placeholder="City, address, or postal code…" />
               <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">Enter</kbd>
             </div>
             <button id="wxMyLocation" class="btn rounded-lg px-3 py-2 text-sm">Use my location</button>
@@ -447,7 +439,7 @@
     const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
     let sortMode = SORT_MODES.NEWEST;
 
-    /* ===== FEEDS (unchanged) ===== */
+    /* ===== FEEDS ===== */
     const FEEDS = {
       CA: [
         'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
@@ -532,7 +524,6 @@
     const proxyCandidates = (url) => ([
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`,
-      // Extra fallback proxy
       `https://r.jina.ai/http/https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
     ]);
 
@@ -626,7 +617,7 @@
       }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
     };
 
-    /* ===== RSS + IMAGE RESOLUTION (unchanged) ===== */
+    /* ===== RSS + IMAGE RESOLUTION ===== */
     const parseRSS = (text)=>{
       const tryXML = ()=>{
         const dom = new DOMParser().parseFromString(text, 'text/xml');
@@ -818,7 +809,7 @@
 
     // Route
     const newsMain = $('#newsMain'); const weatherMain = $('#weatherMain');
-    const newsTab = $('#newsTab'); const weatherTab = $('#weatherTab'); // may be null now
+    const newsTab = $('#newsTab'); const weatherTab = $('#weatherTab'); // may be null
 
     // For compatibility with existing filter code:
     const searchInput = searchField;
@@ -923,7 +914,7 @@
       }).join('');
     };
 
-    // ---------- NEW: Apple-style tile layout ----------
+    // ---------- Apple-style tile layout ----------
     const render = (items)=>{
       if(!items || !items.length){
         newsList.innerHTML = ''; ticker.innerHTML = ''; heroTrack.innerHTML = ''; heroDots.innerHTML = '';
@@ -1054,7 +1045,6 @@
       const days = JSON.parse(m[1]);
       return { default: { trendingSearchesDays: days } };
     };
-    // RSS fallback (last resort)
     const fetchGoogleTrendsDailyRSS = async (geo)=>{
       const url = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`;
       const text = await fetchWithProxies(url);
@@ -1062,7 +1052,6 @@
       const items = Array.from(dom.querySelectorAll('item')).slice(0, 10).map(it=>{
         const title = it.querySelector('title')?.textContent || 'Trending';
         const link = it.querySelector('link')?.textContent || '#';
-        // Traffic is not standardized in RSS, fake as 0 to keep position order
         return { title: { query: title }, formattedTraffic: '', articles: [{ title, url: link, source: hostname(link), image: '' }] };
       });
       const today = { date: new Date().toISOString().slice(0,10).replace(/-/g,''), formattedDate: new Date().toLocaleDateString(), trendingSearches: items };
@@ -1094,7 +1083,6 @@
         if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
         gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
 
-        // Pick true top term by max traffic (falls back to first if equal/empty)
         const sorted = day.trendingSearches.slice().sort((a,b)=> parseTraffic(b.formattedTraffic)-parseTraffic(a.formattedTraffic));
         const topTerm = sorted[0]?.title?.query || day.trendingSearches[0]?.title?.query || '';
         if (topTerm){ gtTopTerm.classList.remove('hidden'); gtTopTerm.textContent = `Most searched today: “${topTerm}”`; }
@@ -1134,7 +1122,7 @@
       }
     };
 
-    /* ===== WEATHER (unchanged data; added FX) ===== */
+    /* ===== WEATHER ===== */
     const wxQuery = $('#wxQuery');
     const wxMyLocation = $('#wxMyLocation');
     const wxMeta = $('#wxMeta');
@@ -1266,14 +1254,12 @@
       let t=0;
       const step = ()=>{
         ctx.clearRect(0,0,w,h);
-        // soft sun
         const cx = w-90, cy = 90, r = 40;
         const g = ctx.createRadialGradient(cx,cy,0,cx,cy,r*2.2);
         g.addColorStop(0,'rgba(255,215,120,0.9)');
         g.addColorStop(1,'rgba(255,215,120,0.0)');
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,r*2.2,0,Math.PI*2); ctx.fill();
 
-        // rays
         ctx.save();
         ctx.translate(cx,cy); ctx.rotate(t/180*Math.PI);
         ctx.strokeStyle = 'rgba(255,230,150,0.9)'; ctx.lineWidth = 2;
@@ -1289,7 +1275,6 @@
     };
     const startThunder = ()=>{
       wxFx.kind='thunder';
-      // combine rain + occasional flash
       startRain();
       const flash = ()=>{
         const ctx = wxFx.ctx, w = wxFx.canvas.clientWidth, h = wxFx.canvas.clientHeight;
@@ -1360,7 +1345,6 @@
         wxPrec.textContent = fmt(cur.precipitation,' mm');
         wxUV.textContent = fmt(cur.uv_index);
 
-        // FX
         ensureWxCanvas();
         renderWxFXForCode(cur.weather_code);
 
@@ -1433,7 +1417,6 @@
       if(!slides.length) return;
       const clamped = Math.max(0, Math.min(slides.length-1, idx));
       const target = slides[clamped];
-      if(!target) return;
       heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
       cycleIdx = clamped % Math.max(1, filteredItems.length);
       setHeroMetaFromIndex(cycleIdx);
@@ -1599,9 +1582,7 @@
     // Shortcuts
     window.addEventListener('keydown', (e)=>{
       if (e.key==='Escape'){ if (isSearchOpen){ e.preventDefault(); closeSearchSheet(); } }
-      if (e.key==='/' && !isSearchOpen){
-        e.preventDefault(); openSearchSheet();
-      }
+      if (e.key==='/'){ if (!isSearchOpen){ e.preventDefault(); openSearchSheet(); } }
       if (e.key==='ArrowRight') nextHero();
       if (e.key==='ArrowLeft')  prevHero();
       if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
