@@ -4,14 +4,12 @@
   <!--
     OC-News — Apple-clean, pure white/black. No gradients.
 
-    Edits in this pass:
-    • Google Trends: resilient fetch (API → HTML → RSS) + proper "Most searched today" via parsed traffic.
-    • HERO: single big rounded card (bright-white headline on local glass blur over the image).
-    • BELOW HERO: 2 tall vertical cards, then all remaining items as full-width horizontal cards.
-    • Weather page: shares the same card chrome; Apple-like FX kept.
-    • Dots: Apple-minimal pills with spacing; unobtrusive and centered.
-
-    All other features preserved.
+    This build tweaks (per your asks):
+    • GOOGLE TRENDS: API → HTML → RSS fallbacks + correct "most searched" by traffic.
+    • HERO: bright-white text over an Apple-style glass blur plate (text area only).
+    • DOTS: minimal iOS-style page control (pill active state, not crammed).
+    • WEATHER PAGE HEADER: remove segmented control; single "News" button.
+    • WEATHER FX: tasteful Apple-like sun/rain/snow/thunder/fog canvas effects.
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -55,17 +53,18 @@
       --radius:14px;
       --bg:#0b0b0c;--surface:#000000;--elev:rgba(255,255,255,0.04);
       --border:rgba(255,255,255,0.12);
-      --text:#f5f7fb;--sub:#a6acb8;--accent:#ff2d55;--live:#ff2d55; /* system red for "Top Stories" */
+      --text:#f5f7fb;--sub:#a6acb8;--accent:#356dff;--live:#ff3b30;
       --chip:rgba(255,255,255,0.06);--chip-border:rgba(255,255,255,0.12);
       --card-hover:rgba(255,255,255,0.06);
       --header-h:60px;
 
+      /* Preloader (force Apple-white sheet + black mark) */
       --preload-bg:#ffffff; --preload-text:#000000;
     }
     html.light{
       --bg:#ffffff;--surface:#ffffff;--elev:rgba(10,10,15,0.035);
       --border:rgba(5,13,38,0.10);
-      --text:#0b0b0e;--sub:#5a6274;--accent:#0b84ff;--live:#ff2d55;
+      --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
       --chip:rgba(0,0,0,0.035);--chip-border:rgba(0,0,0,0.08);
       --card-hover:rgba(0,0,0,0.045);
     }
@@ -73,6 +72,7 @@
     .no-scrollbar::-webkit-scrollbar{ display:none }
     .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none }
 
+    /* Reduce scroll jitter */
     body{ overscroll-behavior: contain; }
     header{ backface-visibility:hidden; transform:translateZ(0); will-change:transform; }
 
@@ -92,7 +92,7 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Loader */
+    /* Loader — Apple-style sheet with centered spinner + cycling text */
     #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg) }
     body.preloading{ overflow:hidden }
     .preload-wrap{ display:grid; gap:14px; place-items:center; text-align:center; padding:24px; color:var(--preload-text) }
@@ -100,7 +100,7 @@
     @keyframes spin{ to{ transform:rotate(360deg) } }
     .preload-line{ font-weight:800; letter-spacing:-0.015em; font-size:clamp(18px,4.8vw,22px) }
 
-    /* Segmented control */
+    /* Segmented control (kept for top header editions only) */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
     .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; }
     .seg button.active{ background:var(--card-hover) }
@@ -119,86 +119,66 @@
     .hero-slide a{ position:absolute; inset:0; display:block }
     .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
 
-    /* Remove the old full-frame fog gradient */
-    .hero-gradient{ display:none !important }
+    /* Subtle overall fade (kept very light) */
+    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.00) 55%, rgba(0,0,0,.22) 100%); pointer-events:none }
+    html.light .hero-gradient{ background:linear-gradient(180deg, rgba(255,255,255,0.00) 55%, rgba(255,255,255,.30) 100%) }
 
-    /* Local glass patch under hero text */
+    /* Text overlay with Apple glass behind ONLY the text block */
     .hero-overlay-text{
-      position:absolute; inset-inline:16px; bottom:14px; display:grid; gap:6px; pointer-events:none; z-index:2;
+      position:absolute; inset-inline:16px; bottom:16px; display:grid; gap:6px; pointer-events:none; color:#fff;
+      padding:8px 12px; border-radius:14px; isolation:isolate;
     }
-    .hero-glass{
-      display:inline-block;
-      max-width:min(92%, 860px);
-      padding:10px 12px;
-      border-radius:14px;
-      color:#fff;
-      background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.55));
-      backdrop-filter: blur(10px) saturate(1.15);
-      -webkit-backdrop-filter: blur(10px) saturate(1.15);
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow: 0 8px 24px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.10);
-      text-shadow: 0 2px 14px rgba(0,0,0,.45);
+    .hero-overlay-text .k{ font-size:10px; letter-spacing:.08em; text-transform:uppercase; opacity:.90; color:#fff }
+    .hero-overlay-text h2{ font-size:clamp(16px, 3vw, 22px); line-height:1.12; font-weight:800; color:#fff; text-shadow:0 2px 12px rgba(0,0,0,.45) }
+    .hero-overlay-text::before{
+      content:""; position:absolute; inset:-8px -10px; z-index:-1; border-radius:16px;
+      backdrop-filter: blur(12px) saturate(1.15);
+      -webkit-backdrop-filter: blur(12px) saturate(1.15);
+      background: color-mix(in oklab, #000 36%, transparent);
+      border:1px solid color-mix(in oklab, #fff 10%, transparent);
+      box-shadow: 0 6px 28px rgba(0,0,0,.28);
     }
-    .hero-overlay-text .k{ font-size:10px; letter-spacing:.08em; text-transform:uppercase; opacity:.9; color:#fff }
-    .hero-overlay-text h2{ font-size:clamp(18px, 3.4vw, 28px); line-height:1.12; font-weight:800; color:#fff; letter-spacing:-.015em }
+    html.light .hero-overlay-text::before{
+      background: color-mix(in oklab, #fff 55%, transparent);
+      border-color: color-mix(in oklab, #000 10%, transparent);
+      box-shadow: 0 6px 24px rgba(0,0,0,.10);
+    }
 
-    .hero-nav{ position:absolute; inset:0; display:flex; justify-content:space-between; align-items:center; pointer-events:none; padding:8px; z-index:3 }
-    .hero-nav button{ pointer-events:auto; border:1px solid var(--border); background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
-    html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
-
-    /* Apple-minimal dots */
+    /* Minimal iOS-style page control */
     .hero-dots{
       position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
-      display:flex; gap:10px; z-index:3; pointer-events:none;
+      display:flex; gap:8px; padding:4px 8px; border-radius:999px;
+      background:rgba(0,0,0,.20); backdrop-filter:blur(8px); border:1px solid var(--border);
     }
     .hero-dots span{
-      height:4px; width:10px; border-radius:999px;
-      background:rgba(255,255,255,.45);
-      border:1px solid rgba(255,255,255,.25);
-      opacity:.85; transition:width .25s ease, opacity .25s ease, background .25s ease;
-      backdrop-filter: blur(4px);
+      width:6px; height:6px; border-radius:999px; background:#fff; opacity:.48; transform:scale(.95);
+      transition:width .2s ease, opacity .2s ease, transform .2s ease;
     }
-    .hero-dots span.active{ width:18px; background:#fff; opacity:1; border-color:rgba(255,255,255,.5) }
-    html.light .hero-dots span{ background:rgba(0,0,0,.30); border-color:rgba(0,0,0,.18) }
-    html.light .hero-dots span.active{ background:#000; }
+    .hero-dots span.active{ width:16px; opacity:1; transform:scale(1) }
+    html.light .hero-dots{ background:rgba(255,255,255,.55) }
+    html.light .hero-dots span{ background:#000 }
 
-    /* Mobile hero */
+    /* Mobile hero (overlay stays visible; no below-image title) */
     @media (max-width: 639.98px){
       .hero-section-container{ padding:0!important }
       #heroCard{ padding:0!important; border:none!important; border-radius:0!important; box-shadow:none!important; }
       .hero-media{ border:none!important; border-radius:0!important; height:54svh; min-height:54svh }
       .hero-nav{ display:none!important }
-      .hero-dots{ bottom:14px }
+      .hero-dots{ bottom:12px }
     }
 
     /* Header behavior */
     body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
     header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
 
-    /* ------- Apple-style card layout under hero ------- */
-    /* Grid: 2 columns on ≥sm (like Apple), single column on mobile */
-    #newsList{ display:grid; grid-template-columns: 1fr; gap:.75rem }
-    @media (min-width:640px){ #newsList{ grid-template-columns: 1fr 1fr; gap:1rem } }
+    /* Tiles */
+    .tile-img{ width:100%; height:11rem; object-fit:cover; border:1px solid var(--border); border-radius:12px }
+    @media (min-width:640px){ .tile-img{ height:12rem } }
+    .rail{ display:flex; gap:12px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
+    .rail > article{ scroll-snap-align:center; flex:0 0 84%; max-width:84% }
+    @media (min-width:640px){ .rail > article{ flex:0 0 420px; max-width:420px } }
 
-    /* Tall vertical cards (first 2) */
-    .v-card .v-img{ width:100%; height:18rem; object-fit:cover; border:1px solid var(--border); border-radius:12px }
-    @media (min-width:640px){ .v-card .v-img{ height:20rem } }
-    .v-card h3{ font-size:clamp(16px,2.2vw,20px); line-height:1.15; font-weight:800; letter-spacing:-.012em }
-
-    /* Horizontal cards (rest) span full width (both columns) */
-    .h-card-item{ grid-column: 1 / -1; }
-    .h-card{ display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:stretch }
-    .h-card .h-img-wrap{ width:132px; height:100px; border:1px solid var(--border); border-radius:12px; overflow:hidden }
-    .h-card .h-img{ width:100%; height:100%; object-fit:cover }
-    @media (min-width:640px){
-      .h-card .h-img-wrap{ width:160px; height:120px }
-      .h-card h3{ font-size:18px }
-    }
-
-    /* Shared meta row */
-    .meta-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; color:var(--sub); font-size:11px; margin-bottom:4px }
-
-    /* Weather (shares card chrome) */
+    /* Weather layout */
     .wx-grid { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px }
     @media (min-width:640px){ .wx-grid{ grid-template-columns: repeat(4,minmax(0,1fr)); } }
     .wx-pill { border-radius:12px; padding:10px 12px; border:1px solid var(--border); background:var(--surface) }
@@ -206,11 +186,9 @@
     .wx-rail > div { scroll-snap-align:center; }
 
     /* Weather FX canvas */
-    #wxFx{
-      position:absolute; inset:0; pointer-events:none; z-index:0;
-      mix-blend-mode: screen; opacity:.7;
-    }
-    html.light #wxFx{ mix-blend-mode: normal; opacity:.6; }
+    .wx-fx-wrap{ position:relative }
+    .wx-fx-canvas{ position:absolute; inset:0; pointer-events:none; mix-blend-mode:soft-light; opacity:.7 }
+    @media (prefers-reduced-motion: reduce){ .wx-fx-canvas{ display:none!important } }
 
     /* Search sheet (Apple-style) */
     #searchSheet{ position:fixed; inset-inline:0; top:var(--header-h); z-index:50; border-bottom:1px solid var(--border); background:color-mix(in oklab, var(--surface) 92%, transparent); backdrop-filter: blur(14px); }
@@ -224,1136 +202,1093 @@
 <div id="preload" aria-live="polite" aria-busy="true">
   <div class="preload-wrap">
     <div class="preload-spinner"></div>
-    <div id="preloadLine" class="preload-line" style="font-weight:700; font-size:1.25rem; text-align:center; letter-spacing:-0.01em; margin-top:32px;">OC-News</div>
+    <div
+      id="preloadLine"
+      class="preload-line"
+      style="font-weight:700; font-size:1.25rem; text-align:center; letter-spacing:-0.01em; margin-top:32px;"
+    >
+      OC-News
+    </div>
   </div>
 </div>
 
-<style>
-  .preload-spinner {
-    width: 36px; height: 36px;
-    border: 3px solid rgba(0, 0, 0, 0.15);
-    border-top-color: #000; border-radius: 50%;
-    margin: 0 auto; animation: spin 1s linear infinite;
-  }
-  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-</style>
+<!-- Tiny top loader (kept for parity) -->
+<div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
+  <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
+</div>
 
-  <!-- Tiny top loader -->
-  <div id="topLoader" class="fixed inset-x-0 top-0 h-[2px] overflow-hidden z-[60] hidden">
-    <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
-  </div>
-
-  <!-- Header -->
-  <header class="border-b border-[var(--border)]">
-    <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
-      <div class="flex items-center gap-2 sm:gap-3 justify-between min-w-0 flex-nowrap">
-        <!-- Brand -->
-        <div class="flex items-center gap-2 min-w-0 shrink-0">
-          <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
-            <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
-          </a>
-          <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
-        </div>
-
-        <!-- Editions + Actions -->
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
-          <!-- Mobile editions rail -->
-          <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
-            <button class="seg-btn" data-ed="ALL">All</button>
-            <button class="seg-btn" data-ed="GLOBAL">Global</button>
-            <button class="seg-btn" data-ed="US">US</button>
-            <button class="seg-btn" data-ed="CA">Canada</button>
-            <button class="seg-btn" data-ed="FIN">Financial</button>
-          </div>
-
-          <!-- Desktop edition select -->
-          <div class="hidden sm:flex items-center gap-2 min-w-0">
-            <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
-            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
-              <option value="ALL">All</option>
-              <option value="CA">Canada</option>
-              <option value="US">United States</option>
-              <option value="GLOBAL">Global Mix</option>
-              <option value="FIN">Financial</option>
-            </select>
-          </div>
-
-          <!-- Actions: Weather • Search • Theme -->
-          <button id="weatherBtn" class="hidden sm:inline-flex link-btn" title="Weather (W)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
-            <span class="hidden md:inline">Weather</span>
-          </button>
-          <button id="weatherBtnMobile" class="sm:hidden link-btn shrink-0" title="Weather (W)">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
-          </button>
-
-          <!-- Search toggle -->
-          <button id="searchToggle" class="link-btn shrink-0" title="Search (/)">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          </button>
-
-          <!-- Theme -->
-          <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
-            <span id="themeIcon" class="inline-flex items-center">
-              <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-              <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
-            </span>
-          </button>
-        </div>
+<!-- Header -->
+<header class="border-b border-[var(--border)]">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
+    <div class="flex items-center gap-2 sm:gap-3 justify-between min-w-0 flex-nowrap">
+      <!-- Brand -->
+      <div class="flex items-center gap-2 min-w-0 shrink-0">
+        <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
+          <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
+        </a>
+        <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
       </div>
-    </div>
-  </header>
 
-  <!-- Apple-style Search Sheet -->
-  <div id="searchSheet" class="hidden">
-    <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3">
-      <div class="relative">
-        <span class="search-icon">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        </span>
-        <input id="searchField" class="search-field" placeholder="Search headlines…" autocomplete="off" />
-        <kbd class="search-kbd">Esc</kbd>
+      <!-- Editions + Actions -->
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
+        <!-- Mobile editions rail -->
+        <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
+          <button class="seg-btn" data-ed="ALL">All</button>
+          <button class="seg-btn" data-ed="GLOBAL">Global</button>
+          <button class="seg-btn" data-ed="US">US</button>
+          <button class="seg-btn" data-ed="CA">Canada</button>
+          <button class="seg-btn" data-ed="FIN">Financial</button>
+        </div>
+
+        <!-- Desktop edition select -->
+        <div class="hidden sm:flex items-center gap-2 min-w-0">
+          <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
+          <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent">
+            <option value="ALL">All</option>
+            <option value="CA">Canada</option>
+            <option value="US">United States</option>
+            <option value="GLOBAL">Global Mix</option>
+            <option value="FIN">Financial</option>
+          </select>
+        </div>
+
+        <!-- Actions: Weather • Search • Theme -->
+        <button id="weatherBtn" class="hidden sm:inline-flex link-btn" title="Weather (W)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
+          <span class="hidden md:inline">Weather</span>
+        </button>
+        <button id="weatherBtnMobile" class="sm:hidden link-btn shrink-0" title="Weather (W)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
+        </button>
+
+        <!-- Search toggle (opens sheet) -->
+        <button id="searchToggle" class="link-btn shrink-0" title="Search (/)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        </button>
+
+        <!-- Theme -->
+        <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
+          <span id="themeIcon" class="inline-flex items-center">
+            <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
+          </span>
+        </button>
       </div>
     </div>
   </div>
+</header>
 
-  <!-- ===== NEWS (default page) ===== -->
-  <main id="newsMain">
-    <!-- HERO + SECTION LEAD -->
-    <section class="relative">
-      <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 hero-section-container">
-        <div class="flex items-baseline justify-between">
-          <h1 class="section-lead mb-3 sm:mb-4">Top Stories</h1>
-          <span id="updatedAt" class="text-xs text-[var(--sub)] mb-3 sm:mb-4">—</span>
-        </div>
+<!-- Apple-style Search Sheet -->
+<div id="searchSheet" class="hidden">
+  <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3">
+    <div class="relative">
+      <span class="search-icon">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </span>
+      <input id="searchField" class="search-field" placeholder="Search headlines…" autocomplete="off" />
+      <kbd class="search-kbd">Esc</kbd>
+    </div>
+  </div>
+</div>
 
-        <div id="heroCard" class="card shadow-oc-soft p-0 relative overflow-hidden">
-          <figure id="heroMedia" class="hero-media bg-[var(--surface)]">
-            <div id="heroTrack" class="hero-track no-scrollbar"><!-- Slides injected --></div>
-            <div class="hero-nav">
-              <button id="prevTopBtn" aria-label="Previous top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg></button>
-              <button id="nextTopBtn" aria-label="Next top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg></button>
-            </div>
-            <div id="heroDots" class="hero-dots"></div>
-            <div class="hero-gradient"></div>
-            <!-- Slide-specific overlay titles inserted per-slide -->
-          </figure>
+<!-- ===== NEWS (default page) ===== -->
+<main id="newsMain">
+  <!-- HERO + SECTION LEAD -->
+  <section class="relative">
+    <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 hero-section-container">
+      <h1 class="section-lead mb-3 sm:mb-4">Breaking News</h1>
 
-          <!-- Ticker -->
-          <div class="px-4 sm:px-0 pb-3 sm:pb-4">
-            <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
-              <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
-            </div>
+      <div id="heroCard" class="card shadow-oc-soft p-0 relative overflow-hidden">
+        <figure id="heroMedia" class="hero-media bg-[var(--surface)]">
+          <div id="heroTrack" class="hero-track no-scrollbar"><!-- Slides injected --></div>
+          <div class="hero-nav">
+            <button id="prevTopBtn" aria-label="Previous top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <button id="nextTopBtn" aria-label="Next top"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
+          <div id="heroDots" class="hero-dots"></div>
+          <div class="hero-gradient"></div>
+          <!-- Slide-specific overlay titles are rendered per-slide -->
+        </figure>
+
+        <!-- Buttons + Ticker -->
+        <div class="px-4 sm:px-0">
+          <div class="mt-3 sm:mt-4 flex items-center gap-3">
+            <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
+          </div>
+          <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
+            <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- SUB TILES -->
-    <section class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-        <!-- Apple-like: grid of 2 tall vertical cards, then full-width horizontal cards -->
-        <ul id="newsList" class="gap-3 sm:gap-4"><!-- Populated by JS --></ul>
+  <!-- SUB TILES -->
+  <section class="relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+      <ul id="newsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- Populated by JS --></ul>
+    </div>
+    <div class="hairline"></div>
+  </section>
+
+  <!-- TRENDING -->
+  <section id="trendingSection" class="relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
+      <div class="flex items-center justify-between gap-3 mb-3">
+        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
+        <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
       </div>
-      <div class="hairline"></div>
-    </section>
+      <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
+    </div>
+    <div class="hairline"></div>
+  </section>
 
-    <!-- TRENDING -->
-    <section id="trendingSection" class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
-        <div class="flex items-center justify-between gap-3 mb-3">
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Trending — Most Read</h2>
-          <div class="text-xs text-[var(--sub)]" id="trendHint">Based on # of sources + recency</div>
-        </div>
-        <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
+  <!-- GOOGLE TRENDS -->
+  <section id="gtSection" class="relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between gap-3 mb-4">
+        <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
+        <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
       </div>
-      <div class="hairline"></div>
-    </section>
+      <div id="gtTopTerm" class="mb-3 text-sm text-[var(--sub)] hidden"></div>
+      <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
+      <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
+    </div>
+  </section>
+</main>
 
-    <!-- GOOGLE TRENDS -->
-    <section id="gtSection" class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
-          <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
-        </div>
-        <div id="gtTopTerm" class="mb-3 text-sm text-[var(--sub)] hidden"></div>
-        <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
-        <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
+<!-- ===== WEATHER (second page) ===== -->
+<main id="weatherMain" class="hidden">
+  <section class="relative">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <!-- Header row: title + single News button -->
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <h1 class="section-lead">Weather</h1>
+        <button id="backToNewsBtn" class="link-btn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          News
+        </button>
       </div>
-    </section>
-  </main>
 
-  <!-- ===== WEATHER (second page) ===== -->
-  <main id="weatherMain" class="hidden">
-    <section class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div class="flex items-center justify-between gap-3 mb-2">
-          <h1 class="section-lead">Weather</h1>
-          <!-- Simplified header: just a News button -->
-          <div class="seg">
-            <button id="newsTab" class="seg-btn">News</button>
+      <!-- Location controls -->
+      <div class="card p-3 sm:p-4 mb-4">
+        <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <div class="relative flex-1">
+            <input id="wxQuery" class="w-full btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" placeholder="City, address, or postal code…" />
+            <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">Enter</kbd>
           </div>
-        </div>
-
-        <!-- Location controls -->
-        <div class="card p-3 sm:p-4 mb-4">
-          <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
-            <div class="relative flex-1">
-              <input id="wxQuery" class="w-full btn rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]/30 bg-transparent" placeholder="City, address, or postal code…" />
-              <kbd class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[var(--sub)]">Enter</kbd>
-            </div>
-            <button id="wxMyLocation" class="btn rounded-lg px-3 py-2 text-sm">Use my location</button>
-            <div class="text-xs text-[var(--sub)]" id="wxMeta">—</div>
-          </div>
-        </div>
-
-        <!-- Current conditions (FX canvas will be injected here) -->
-        <div id="wxNowCard" class="card p-4 sm:p-6 mb-4 relative overflow-hidden">
-          <div class="flex items-end justify-between gap-4 relative z-10">
-            <div>
-              <div id="wxPlace" class="text-2xl sm:text-3xl font-extrabold tracking-tight">—</div>
-              <div id="wxDesc" class="text-sm text-[var(--sub)]">—</div>
-            </div>
-            <div class="text-right">
-              <div id="wxTemp" class="text-4xl sm:text-6xl font-extrabold leading-none">—°</div>
-              <div id="wxFeels" class="text-xs text-[var(--sub)]">Feels like —°</div>
-            </div>
-          </div>
-          <div class="mt-4 wx-grid relative z-10">
-            <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">Humidity</div><div id="wxHum" class="text-sm font-semibold">—%</div></div>
-            <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">Wind</div><div id="wxWind" class="text-sm font-semibold">— km/h</div></div>
-            <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">Precip</div><div id="wxPrec" class="text-sm font-semibold">— mm</div></div>
-            <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">UV</div><div id="wxUV" class="text-sm font-semibold">—</div></div>
-          </div>
-        </div>
-
-        <!-- Hourly -->
-        <div class="card p-4 sm:p-5 mb-4">
-          <div class="mb-2 text-sm font-semibold">Next 24 hours</div>
-          <div id="wxHourly" class="wx-rail no-scrollbar"><!-- chips --></div>
-        </div>
-
-        <!-- Daily -->
-        <div class="card p-4 sm:p-5">
-          <div class="mb-2 text-sm font-semibold">7-day forecast</div>
-          <div id="wxDaily" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"><!-- days --></div>
+          <button id="wxMyLocation" class="btn rounded-lg px-3 py-2 text-sm">Use my location</button>
+          <div class="text-xs text-[var(--sub)]" id="wxMeta">—</div>
         </div>
       </div>
-      <div class="hairline"></div>
-    </section>
-  </main>
 
-  <script>
-    /* ===== CONFIG ===== */
-    const DEFAULT_EDITION = 'CA';
-    const MAX_ITEMS = 64;
-    const CYCLE_TOPS = true;
-    const SHOW_IMAGES = true;
-    const HERO_SLIDES = 1;          // Single big hero card (Apple layout)
-    const DOT_COUNT = 6;
-    const PRELOAD_ON_REFRESH = true;
+      <!-- Current conditions (with FX canvas) -->
+      <div id="wxNowCard" class="card p-4 sm:p-6 mb-4 wx-fx-wrap">
+        <canvas id="wxFx" class="wx-fx-canvas"></canvas>
+        <div class="flex items-end justify-between gap-4">
+          <div>
+            <div id="wxPlace" class="text-2xl sm:text-3xl font-extrabold tracking-tight">—</div>
+            <div id="wxDesc" class="text-sm text-[var(--sub)]">—</div>
+          </div>
+          <div class="text-right">
+            <div id="wxTemp" class="text-4xl sm:text-6xl font-extrabold leading-none">—°</div>
+            <div id="wxFeels" class="text-xs text-[var(--sub)]">Feels like —°</div>
+          </div>
+        </div>
+        <div class="mt-4 wx-grid">
+          <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">Humidity</div><div id="wxHum" class="text-sm font-semibold">—%</div></div>
+          <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">Wind</div><div id="wxWind" class="text-sm font-semibold">— km/h</div></div>
+          <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">Precip</div><div id="wxPrec" class="text-sm font-semibold">— mm</div></div>
+          <div class="wx-pill"><div class="text-[11px] text-[var(--sub)]">UV</div><div id="wxUV" class="text-sm font-semibold">—</div></div>
+        </div>
+      </div>
 
-    const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
-    let sortMode = SORT_MODES.NEWEST;
+      <!-- Hourly -->
+      <div class="card p-4 sm:p-5 mb-4">
+        <div class="mb-2 text-sm font-semibold">Next 24 hours</div>
+        <div id="wxHourly" class="wx-rail no-scrollbar"><!-- chips --></div>
+      </div>
 
-    /* ===== FEEDS (unchanged) ===== */
-    const FEEDS = {
-      CA: [
-        'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
-        'https://feeds.bbci.co.uk/news/rss.xml',
-        'https://feeds.reuters.com/reuters/topNews',
-        'https://feeds.reuters.com/reuters/worldNews',
-        'https://rss.cnn.com/rss/cnn_topstories.rss',
-        'https://www.theguardian.com/world/rss',
-        'https://www.aljazeera.com/xml/rss/all.xml',
-        'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
-        'https://www.cbc.ca/cmlink/rss-topstories',
-        'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',
-        'https://globalnews.ca/feed/',
-        'https://www.nationalpost.com/feed/',
-        'https://feeds.reuters.com/reuters/businessNews',
-        'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-        'https://www.ft.com/world?format=rss',
-        'https://www.wsj.com/xml/rss/3_7085.xml',
-        'https://www.theglobeandmail.com/arc/outboundfeeds/rss/?outputType=xml',
-        'https://financialpost.com/feed/'
-      ],
-      US: [
-        'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
-        'https://feeds.bbci.co.uk/news/rss.xml',
-        'https://feeds.reuters.com/reuters/topNews',
-        'https://rss.cnn.com/rss/cnn_topstories.rss',
-        'https://www.theguardian.com/us-news/rss',
-        'https://www.aljazeera.com/xml/rss/all.xml',
-        'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
-        'https://www.npr.org/rss/rss.php?id=1001',
-        'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-        'https://www.wsj.com/xml/rss/3_7085.xml',
-        'https://feeds.reuters.com/reuters/businessNews',
-        'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
-        'https://feeds.marketwatch.com/marketwatch/topstories/',
-        'https://markets.businessinsider.com/rss/news',
-        'https://www.usatoday.com/rss/news/'
-      ],
-      GLOBAL: [
-        'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
-        'https://feeds.bbci.co.uk/news/rss.xml',
-        'https://feeds.reuters.com/reuters/topNews',
-        'https://feeds.reuters.com/reuters/worldNews',
-        'https://rss.cnn.com/rss/cnn_topstories.rss',
-        'https://www.theguardian.com/world/rss',
-        'https://www.aljazeera.com/xml/rss/all.xml',
-        'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
-        'https://www.cnbc.com/id/100003114/device/rss/rss.html',
-        'https://www.wsj.com/xml/rss/3_7085.xml'
-      ],
-      FIN: [
-        'https://feeds.reuters.com/reuters/businessNews',
-        'https://www.ft.com/markets?format=rss',
-        'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
-        'https://feeds.marketwatch.com/marketwatch/topstories/',
-        'https://www.cnbc.com/id/10001147/device/rss/rss.html',
-        'https://www.theguardian.com/business/markets/rss',
-        'http://finance.yahoo.com/rss/topstories',
-        'https://finance.yahoo.com/news/rssindex',
-        'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en',
-        'https://news.google.com/rss/search?q=stock%20market%20OR%20stocks%20OR%20%22S%26P%20500%22&hl=en-US&gl=US&ceid=US:en',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
-        'https://www.nasdaq.com/feed/rssoutbound?category=Investing',
-        'https://www.investing.com/rss/news.rss',
-        'https://www.investing.com/rss/news_285.rss',
-        'https://www.investing.com/rss/news_25.rss',
-        'https://feeds.bloomberg.com/markets/news.rss',
-        'https://www.economist.com/finance-and-economics/rss.xml',
-        'https://seekingalpha.com/feed.xml',
-        'https://news.google.com/rss/search?q=site%3Afinance.yahoo.com&hl=en-US&gl=US&ceid=US:en'
-      ]
+      <!-- Daily -->
+      <div class="card p-4 sm:p-5">
+        <div class="mb-2 text-sm font-semibold">7-day forecast</div>
+        <div id="wxDaily" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"><!-- days --></div>
+      </div>
+    </div>
+    <div class="hairline"></div>
+  </section>
+</main>
+
+<script>
+  /* ===== CONFIG ===== */
+  const DEFAULT_EDITION = 'CA';
+  const MAX_ITEMS = 64;
+  const CYCLE_TOPS = true;
+  const SHOW_IMAGES = true;
+  const HERO_SLIDES = 10;
+  const DOT_COUNT = 6;
+  const PRELOAD_ON_REFRESH = true;
+  const LOADER_MAX_WAIT_MS = 20000;
+
+  const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
+  let sortMode = SORT_MODES.NEWEST;
+
+  /* ===== FEEDS (unchanged) ===== */
+  const FEEDS = {
+    CA: [
+      'https://news.google.com/rss?hl=en-CA&gl=CA&ceid=CA:en',
+      'https://feeds.bbci.co.uk/news/rss.xml',
+      'https://feeds.reuters.com/reuters/topNews',
+      'https://feeds.reuters.com/reuters/worldNews',
+      'https://rss.cnn.com/rss/cnn_topstories.rss',
+      'https://www.theguardian.com/world/rss',
+      'https://www.aljazeera.com/xml/rss/all.xml',
+      'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
+      'https://www.cbc.ca/cmlink/rss-topstories',
+      'https://www.ctvnews.ca/rss/ctvnews-ca-top-stories-public-rss-1.822009',
+      'https://globalnews.ca/feed/',
+      'https://www.nationalpost.com/feed/',
+      'https://feeds.reuters.com/reuters/businessNews',
+      'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+      'https://www.ft.com/world?format=rss',
+      'https://www.wsj.com/xml/rss/3_7085.xml',
+      'https://www.theglobeandmail.com/arc/outboundfeeds/rss/?outputType=xml',
+      'https://financialpost.com/feed/'
+    ],
+    US: [
+      'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
+      'https://feeds.bbci.co.uk/news/rss.xml',
+      'https://feeds.reuters.com/reuters/topNews',
+      'https://rss.cnn.com/rss/cnn_topstories.rss',
+      'https://www.theguardian.com/us-news/rss',
+      'https://www.aljazeera.com/xml/rss/all.xml',
+      'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
+      'https://www.npr.org/rss/rss.php?id=1001',
+      'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+      'https://www.wsj.com/xml/rss/3_7085.xml',
+      'https://feeds.reuters.com/reuters/businessNews',
+      'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
+      'https://feeds.marketwatch.com/marketwatch/topstories/',
+      'https://markets.businessinsider.com/rss/news',
+      'https://www.usatoday.com/rss/news/'
+    ],
+    GLOBAL: [
+      'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
+      'https://feeds.bbci.co.uk/news/rss.xml',
+      'https://feeds.reuters.com/reuters/topNews',
+      'https://feeds.reuters.com/reuters/worldNews',
+      'https://rss.cnn.com/rss/cnn_topstories.rss',
+      'https://www.theguardian.com/world/rss',
+      'https://www.aljazeera.com/xml/rss/all.xml',
+      'https://apnews.com/hub/ap-top-news?utm_source=ap_rss&utm_medium=rss&utm_campaign=ap_top_news',
+      'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+      'https://www.wsj.com/xml/rss/3_7085.xml'
+    ],
+    FIN: [
+      'https://feeds.reuters.com/reuters/businessNews',
+      'https://www.ft.com/markets?format=rss',
+      'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
+      'https://feeds.marketwatch.com/marketwatch/topstories/',
+      'https://www.cnbc.com/id/10001147/device/rss/rss.html',
+      'https://www.theguardian.com/business/markets/rss',
+      'http://finance.yahoo.com/rss/topstories',
+      'https://finance.yahoo.com/news/rssindex',
+      'https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en-US&gl=US&ceid=US:en',
+      'https://news.google.com/rss/search?q=stock%20market%20OR%20stocks%20OR%20%22S%26P%20500%22&hl=en-US&gl=US&ceid=US:en',
+      'https://www.nasdaq.com/feed/rssoutbound?category=Markets',
+      'https://www.nasdaq.com/feed/rssoutbound?category=Investing',
+      'https://www.investing.com/rss/news.rss',
+      'https://www.investing.com/rss/news_285.rss',
+      'https://www.investing.com/rss/news_25.rss',
+      'https://feeds.bloomberg.com/markets/news.rss',
+      'https://www.economist.com/finance-and-economics/rss.xml',
+      'https://seekingalpha.com/feed.xml',
+      'https://news.google.com/rss/search?q=site%3Afinance.yahoo.com&hl=en-US&gl=US&ceid=US:en'
+    ]
+  };
+
+  const feedsFor = (ed) => {
+    if (ed === 'ALL') {
+      const merged = [].concat(...Object.values(FEEDS));
+      return Array.from(new Set(merged));
+    }
+    return FEEDS[ed] || FEEDS.GLOBAL;
+  };
+
+  const proxyCandidates = (url) => ([
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
+  ]);
+
+  const BRAND_HINTS = {
+    'news.google.com':'https://logo.clearbit.com/google.com',
+    'bbc.co.uk':'https://logo.clearbit.com/bbc.co.uk',
+    'bbc.com':'https://logo.clearbit.com/bbc.com',
+    'reuters.com':'https://logo.clearbit.com/reuters.com',
+    'cnn.com':'https://logo.clearbit.com/cnn.com',
+    'theguardian.com':'https://logo.clearbit.com/theguardian.com',
+    'aljazeera.com':'https://logo.clearbit.com/aljazeera.com',
+    'apnews.com':'https://logo.clearbit.com/apnews.com',
+    'cbc.ca':'https://logo.clearbit.com/cbc.ca',
+    'ctvnews.ca':'https://logo.clearbit.com/ctvnews.ca',
+    'globalnews.ca':'https://logo.clearbit.com/globalnews.ca',
+    'nationalpost.com':'https://logo.clearbit.com/nationalpost.com',
+    'cnbc.com':'https://logo.clearbit.com/cnbc.com',
+    'ft.com':'https://logo.clearbit.com/ft.com',
+    'wsj.com':'https://logo.clearbit.com/wsj.com',
+    'npr.org':'https://logo.clearbit.com/npr.org',
+    'theglobeandmail.com':'https://logo.clearbit.com/theglobeandmail.com',
+    'marketwatch.com':'https://logo.clearbit.com/marketwatch.com',
+    'finance.yahoo.com':'https://logo.clearbit.com/yahoo.com',
+    'nasdaq.com':'https://logo.clearbit.com/nasdaq.com',
+    'investing.com':'https://logo.clearbit.com/investing.com',
+    'bloomberg.com':'https://logo.clearbit.com/bloomberg.com',
+    'economist.com':'https://logo.clearbit.com/economist.com',
+    'seekingalpha.com':'https://logo.clearbit.com/seekingalpha.com',
+    'businessinsider.com':'https://logo.clearbit.com/businessinsider.com',
+    'usatoday.com':'https://logo.clearbit.com/usatoday.com'
+  };
+
+  /* ===== UTILS ===== */
+  const $ = (sel)=>document.querySelector(sel);
+  const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
+  const timeAgo = (d)=>{
+    const now = new Date();
+    const diff = Math.max(0, now - d);
+    const sec = Math.floor(diff/1000);
+    if (sec<45) return `${sec}s ago`;
+    const min = Math.floor(sec/60);
+    if (min<60) return `${min}m ago`;
+    const hr = Math.floor(min/60);
+    if (hr<24) return `${hr}h ago`;
+    const day = Math.floor(hr/24);
+    return `${day}d ago`;
+  };
+  const cleanLink = (url)=>{
+    try{
+      const u = new URL(url);
+      const wrapped = u.searchParams.get('url') || u.searchParams.get('u');
+      return wrapped ? decodeURIComponent(wrapped) : url;
+    }catch{ return url }
+  };
+  const hostname = (url)=>{ try{ return new URL(url).hostname.replace(/^www\./,'') } catch{ return '' } };
+  const absolutize = (src, base)=>{
+    try{
+      if(!src) return '';
+      if (src.startsWith('data:')) return '';
+      if (/^https?:\/\//i.test(src)) return src;
+      if (src.startsWith('//')) return (new URL(base)).protocol + src;
+      return new URL(src, base).toString();
+    }catch{ return src }
+  };
+  const normalizeTitle = (t)=> t.toLowerCase().replace(/[\W_]+/g,' ').trim();
+  const pick = (el, sel)=> el.querySelector(sel)?.getAttribute('content')?.trim() || el.querySelector(sel)?.textContent?.trim();
+  const getAttr = (el, sel, attr)=> el.querySelector(sel)?.getAttribute(attr);
+
+  const brandSources = (host)=>{
+    const base = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
+    return {
+      src: `${base}?size=512`,
+      srcset: `${base}?size=64 64w, ${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,
+      s2: `https://www.google.com/s2/favicons?domain=${host}&sz=256`
     };
+  };
+  const brandLogoHTML = (host, className = '', alt = '')=>{
+    const b = brandSources(host);
+    return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+  };
+  const letterTileHTML = (label='?', className='')=>`
+    <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
+      <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
+    </div>
+  `;
+  const upscaleImageUrl = (u)=>{
+    try{
+      let url = new URL(u);
+      ['w','width','maxwidth','px','param','imgw'].forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
+      return url.toString();
+    }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
+  };
 
-    const feedsFor = (ed) => {
-      if (ed === 'ALL') {
-        const merged = [].concat(...Object.values(FEEDS));
-        return Array.from(new Set(merged));
+  /* ===== RSS + IMAGE RESOLUTION (unchanged) ===== */
+  const parseRSS = (text)=>{
+    const tryXML = ()=>{
+      const dom = new DOMParser().parseFromString(text, 'text/xml');
+      return dom.querySelector('parsererror') ? null : dom;
+    };
+    const dom = tryXML();
+    if(!dom){
+      const items = [];
+      const blocks = text.split(/<\/item>/i);
+      for(const b of blocks){
+        const t  = (b.match(/<title>([^<]+)<\/title>/i) || ['', '' ])[1];
+        const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || ['', '' ])[1]);
+        const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || ['', '' ])[1];
+        const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || ['', '' ])[1];
+        const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || ['', '' ])[1];
+        if(t && lk) items.push({title:t, link:lk, pubDate: pd?new Date(pd):new Date(), source: sc||hostname(lk), image: img||''});
       }
-      return FEEDS[ed] || FEEDS.GLOBAL;
-    };
-
-    const proxyCandidates = (url) => ([
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`,
-      `https://r.jina.ai/http/https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
-    ]);
-
-    const BRAND_HINTS = {
-      'news.google.com':'https://logo.clearbit.com/google.com',
-      'bbc.co.uk':'https://logo.clearbit.com/bbc.co.uk',
-      'bbc.com':'https://logo.clearbit.com/bbc.com',
-      'reuters.com':'https://logo.clearbit.com/reuters.com',
-      'cnn.com':'https://logo.clearbit.com/cnn.com',
-      'theguardian.com':'https://logo.clearbit.com/theguardian.com',
-      'aljazeera.com':'https://logo.clearbit.com/aljazeera.com',
-      'apnews.com':'https://logo.clearbit.com/apnews.com',
-      'cbc.ca':'https://logo.clearbit.com/cbc.ca',
-      'ctvnews.ca':'https://logo.clearbit.com/ctvnews.ca',
-      'globalnews.ca':'https://logo.clearbit.com/globalnews.ca',
-      'nationalpost.com':'https://logo.clearbit.com/nationalpost.com',
-      'cnbc.com':'https://logo.clearbit.com/cnbc.com',
-      'ft.com':'https://logo.clearbit.com/ft.com',
-      'wsj.com':'https://logo.clearbit.com/wsj.com',
-      'npr.org':'https://logo.clearbit.com/npr.org',
-      'theglobeandmail.com':'https://logo.clearbit.com/theglobeandmail.com',
-      'marketwatch.com':'https://logo.clearbit.com/marketwatch.com',
-      'finance.yahoo.com':'https://logo.clearbit.com/yahoo.com',
-      'nasdaq.com':'https://logo.clearbit.com/nasdaq.com',
-      'investing.com':'https://logo.clearbit.com/investing.com',
-      'bloomberg.com':'https://logo.clearbit.com/bloomberg.com',
-      'economist.com':'https://logo.clearbit.com/economist.com',
-      'seekingalpha.com':'https://logo.clearbit.com/seekingalpha.com',
-      'businessinsider.com':'https://logo.clearbit.com/businessinsider.com',
-      'usatoday.com':'https://logo.clearbit.com/usatoday.com'
-    };
-
-    /* ===== UTILS ===== */
-    const $ = (sel)=>document.querySelector(sel);
-    const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
-    const timeAgo = (d)=>{
-      const now = new Date();
-      const diff = Math.max(0, now - d);
-      const sec = Math.floor(diff/1000);
-      if (sec<45) return `${sec}s ago`;
-      const min = Math.floor(sec/60);
-      if (min<60) return `${min}m ago`;
-      const hr = Math.floor(min/60);
-      if (hr<24) return `${hr}h ago`;
-      const day = Math.floor(hr/24);
-      return `${day}d ago`;
-    };
-    const cleanLink = (url)=>{
-      try{
-        const u = new URL(url);
-        const wrapped = u.searchParams.get('url') || u.searchParams.get('u');
-        return wrapped ? decodeURIComponent(wrapped) : url;
-      }catch{ return url }
-    };
-    const hostname = (url)=>{ try{ return new URL(url).hostname.replace(/^www\./,'') } catch{ return '' } };
-    const absolutize = (src, base)=>{
-      try{
-        if(!src) return '';
-        if (src.startsWith('data:')) return '';
-        if (/^https?:\/\//i.test(src)) return src;
-        if (src.startsWith('//')) return (new URL(base)).protocol + src;
-        return new URL(src, base).toString();
-      }catch{ return src }
-    };
-    const normalizeTitle = (t)=> t.toLowerCase().replace(/[\W_]+/g,' ').trim();
-    const pick = (el, sel)=> el.querySelector(sel)?.getAttribute('content')?.trim() || el.querySelector(sel)?.textContent?.trim();
-    const getAttr = (el, sel, attr)=> el.querySelector(sel)?.getAttribute(attr);
-
-    const brandSources = (host)=>{
-      const base = BRAND_HINTS[host] || `https://logo.clearbit.com/${host}`;
-      return {
-        src: `${base}?size=512`,
-        srcset: `${base}?size=64 64w, ${base}?size=128 128w, ${base}?size=256 256w, ${base}?size=512 512w`,
-        s2: `https://www.google.com/s2/favicons?domain=${host}&sz=256`
-      };
-    };
-    const brandLogoHTML = (host, className = '', alt = '')=>{
-      const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
-    };
-    const letterTileHTML = (label='?', className='')=>`
-      <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
-        <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
-      </div>
-    `;
-    const upscaleImageUrl = (u)=>{
-      try{
-        let url = new URL(u);
-        ['w','width','maxwidth','px','param','imgw'].forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
-        return url.toString();
-      }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
-    };
-
-    /* ===== RSS + IMAGE RESOLUTION (unchanged) ===== */
-    const parseRSS = (text)=>{
-      const tryXML = ()=>{
-        const dom = new DOMParser().parseFromString(text, 'text/xml');
-        return dom.querySelector('parsererror') ? null : dom;
-      };
-      const dom = tryXML();
-      if(!dom){
-        const items = [];
-        const blocks = text.split(/<\/item>/i);
-        for(const b of blocks){
-          const t  = (b.match(/<title>([^<]+)<\/title>/i) || ['', '' ])[1];
-          const lk = cleanLink((b.match(/<link>([^<]+)<\/link>/i) || ['', '' ])[1]);
-          const pd = (b.match(/<pubDate>([^<]+)<\/pubDate>/i) || ['', '' ])[1];
-          const sc = (b.match(/<source[^>]*>([^<]+)<\/source>/i) || ['', '' ])[1];
-          const img = (b.match(/<media:content[^>]*url="([^"]+)"/i) || b.match(/<enclosure[^>]*url="([^"]+)"/i) || ['', '' ])[1];
-          if(t && lk) items.push({title:t, link:lk, pubDate: pd?new Date(pd):new Date(), source: sc||hostname(lk), image: img||''});
-        }
-        return items;
-      }else{
-        const items = [];
-        dom.querySelectorAll('item').forEach(it=>{
-          const title = pick(it,'title') || '';
-          let link = pick(it,'link') || '';
-          link = cleanLink(link);
-          const pub  = pick(it,'pubDate') || '';
-          const src  = pick(it,'source') || '';
-          const img1 = getAttr(it,'media\\:content','url');
-          const img2 = getAttr(it,'enclosure','url');
-          items.push({ title, link, pubDate: pub ? new Date(pub) : new Date(), source: src || hostname(link), image: img1 || img2 || '' });
-        });
-        return items;
-      }
-    };
-
-    const fetchWithProxies = async (url)=>{
-      for (const prox of proxyCandidates(url)){
-        try{
-          const res = await fetch(prox, { cache: 'no-store' });
-          if(!res.ok) continue;
-          const text = await res.text();
-          if(text && text.length > 40) return text;
-        }catch(_){ }
-      }
-      throw new Error('All proxies failed for ' + url);
-    };
-
-    const IMG_CACHE = new Map();
-    const resolving = new Set();
-
-    const tryFindOgImage = (html, baseUrl)=>{
-      try{
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const tryMeta = (sel)=> absolutize(pick(doc, sel), baseUrl);
-        const cands = [
-          'meta[property="og:image:secure_url"]',
-          'meta[property="og:image:url"]',
-          'meta[property="og:image"]',
-          'meta[name="og:image"]',
-          'meta[name="twitter:image:src"]',
-          'meta[name="twitter:image"]'
-        ];
-        for(const sel of cands){
-          const u = tryMeta(sel); if(u) return u;
-        }
-        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
-        for(const s of scripts){
-          try{
-            const data = JSON.parse(s.textContent.trim());
-            const collect = (obj)=>{
-              if(!obj) return null;
-              if(typeof obj === 'string') return absolutize(obj, baseUrl);
-              if(Array.isArray(obj)){
-                for(const it of obj){ const inner = collect(it); if(inner) return inner; }
-              }else if(typeof obj === 'object'){
-                if(obj.image) return collect(obj.image);
-                if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
-                if(obj.logo) return collect(obj.logo);
-              }
-              return null;
-            };
-            const found = collect(data); if(found) return found;
-          }catch{}
-        }
-        const imgs = Array.from(doc.querySelectorAll('img'));
-        for(const im of imgs){
-          const src = absolutize(im.getAttribute('src') || im.getAttribute('data-src') || '', baseUrl);
-          if(!src) continue;
-          const w = parseInt(im.getAttribute('width')||'0',10);
-          const h = parseInt(im.getAttribute('height')||'0',10);
-          if ((w>=300 || h>=200) || /[\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) return src;
-        }
-      }catch{}
-      return '';
-    };
-
-    const resolveArticleImage = async (url)=>{
-      if(!url) return '';
-      if(IMG_CACHE.has(url)) return IMG_CACHE.get(url);
-      if(resolving.has(url)) return '';
-      resolving.add(url);
-      try{
-        const html = await fetchWithProxies(url);
-        const img = tryFindOgImage(html, url) || '';
-        const better = img ? upscaleImageUrl(img) : '';
-        IMG_CACHE.set(url, better);
-        return better;
-      }catch{
-        IMG_CACHE.set(url, '');
-        return '';
-      }finally{ resolving.delete(url) }
-    };
-
-    const improveImagesFor = async (items, limit=12)=>{
-      const targets = items.filter(it=>!it.image).slice(0, limit);
-      let updated = false;
-      await Promise.all(targets.map(async (it)=>{
-        const best = await resolveArticleImage(it.link);
-        if(best){ it.image = best; updated = true; }
-      }));
-      if(updated){ applyFilter(); }
-    };
-
-    const loadFeeds = async (editionKey)=>{
-      const feeds = feedsFor(editionKey);
-      const all = [];
-      await Promise.allSettled(
-        feeds.map(async (f)=>{
-          try{
-            const text = await fetchWithProxies(f);
-            const items = parseRSS(text);
-            all.push(...items);
-          }catch(_){ }
-        })
-      );
-      const seen = new Map(); // normTitle -> { item, count }
-      for(const it of all){
-        const key = normalizeTitle(it.title);
-        if(!key) continue;
-        const prev = seen.get(key);
-        if(!prev){ seen.set(key, { item: it, count: 1 }); }
-        else{
-          if (it.pubDate && prev.item.pubDate && it.pubDate > prev.item.pubDate) prev.item = it;
-          prev.count++;
-        }
-      }
-      let uniq = Array.from(seen.values()).map(({item, count})=> ({...item, trendCount: count}));
-      const now = Date.now();
-      uniq.forEach(u=>{
-        const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
-        u._score = (u.trendCount||1) * (1/ageMin);
-        if (u.image) u.image = upscaleImageUrl(u.image);
+      return items;
+    }else{
+      const items = [];
+      dom.querySelectorAll('item').forEach(it=>{
+        const title = pick(it,'title') || '';
+        let link = pick(it,'link') || '';
+        link = cleanLink(link);
+        const pub  = pick(it,'pubDate') || '';
+        const src  = pick(it,'source') || '';
+        const img1 = getAttr(it,'media\\:content','url');
+        const img2 = getAttr(it,'enclosure','url');
+        items.push({ title, link, pubDate: pub ? new Date(pub) : new Date(), source: src || hostname(link), image: img1 || img2 || '' });
       });
-      uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
-      return uniq.slice(0, MAX_ITEMS);
-    };
+      return items;
+    }
+  };
 
-    /* ===== BOOKMARKS ===== */
-    const SAVED_KEY = 'oc_news_saved';
-    const getSaved = ()=>{ try{ return JSON.parse(localStorage.getItem(SAVED_KEY)||'[]') }catch{ return [] } };
-    const setSaved = (arr)=> localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0,200)));
-    const isSaved = (link)=> getSaved().some(x=>x.link===link);
-    const toggleSave = (item)=>{
-      const cur = getSaved();
-      const idx = cur.findIndex(x=>x.link===item.link);
-      if(idx>=0){ cur.splice(idx,1) } else { cur.unshift({ ...item, savedAt: Date.now() }) }
-      setSaved(cur);
-    };
+  const fetchWithProxies = async (url)=>{
+    for (const prox of proxyCandidates(url)){
+      try{
+        const res = await fetch(prox, { cache: 'no-store' });
+        if(!res.ok) continue;
+        const text = await res.text();
+        if(text && text.length > 40) return text;
+      }catch(_){ }
+    }
+    throw new Error('All proxies failed for ' + url);
+  };
 
-    /* ===== RENDER (NEWS) ===== */
-    const heroTrack = $('#heroTrack');
-    const heroDots  = $('#heroDots');
-    const updatedAt = $('#updatedAt');
-    const newsList  = $('#newsList');
-    const ticker    = $('#ticker');
-    const trendingRail = $('#trendingRail');
-    const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty'); const gtTopTerm = $('#gtTopTerm');
+  const IMG_CACHE = new Map();
+  const resolving = new Set();
 
-    // Controls
-    const editionSelect = $('#editionSelect');
-    const themeBtn = $('#themeBtn');
-    const prevTopBtn = $('#prevTopBtn');
-    const nextTopBtn = $('#nextTopBtn');
-    const weatherBtn = $('#weatherBtn'); const weatherBtnMobile = $('#weatherBtnMobile');
+  const tryFindOgImage = (html, baseUrl)=>{
+    try{
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const tryMeta = (sel)=> absolutize(pick(doc, sel), baseUrl);
+      const cands = [
+        'meta[property="og:image:secure_url"]',
+        'meta[property="og:image:url"]',
+        'meta[property="og:image"]',
+        'meta[name="og:image"]',
+        'meta[name="twitter:image:src"]',
+        'meta[name="twitter:image"]'
+      ];
+      for(const sel of cands){
+        const u = tryMeta(sel); if(u) return u;
+      }
+      const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+      for(const s of scripts){
+        try{
+          const data = JSON.parse(s.textContent.trim());
+          const collect = (obj)=>{
+            if(!obj) return null;
+            if(typeof obj === 'string') return absolutize(obj, baseUrl);
+            if(Array.isArray(obj)){
+              for(const it of obj){ const inner = collect(it); if(inner) return inner; }
+            }else if(typeof obj === 'object'){
+              if(obj.image) return collect(obj.image);
+              if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
+              if(obj.logo) return collect(obj.logo);
+            }
+            return null;
+          };
+          const found = collect(data); if(found) return found;
+        }catch{}
+      }
+      const imgs = Array.from(doc.querySelectorAll('img'));
+      for(const im of imgs){
+        const src = absolutize(im.getAttribute('src') || im.getAttribute('data-src') || '', baseUrl);
+        if(!src) continue;
+        const w = parseInt(im.getAttribute('width')||'0',10);
+        const h = parseInt(im.getAttribute('height')||'0',10);
+        if ((w>=300 || h>=200) || /[\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) return src;
+      }
+    }catch{}
+    return '';
+  };
 
-    // Search controls
-    const searchToggle = $('#searchToggle');
-    const searchSheet  = $('#searchSheet');
-    const searchField  = $('#searchField');
+  const resolveArticleImage = async (url)=>{
+    if(!url) return '';
+    if(IMG_CACHE.has(url)) return IMG_CACHE.get(url);
+    if(resolving.has(url)) return '';
+    resolving.add(url);
+    try{
+      const html = await fetchWithProxies(url);
+      const img = tryFindOgImage(html, url) || '';
+      const better = img ? upscaleImageUrl(img) : '';
+      IMG_CACHE.set(url, better);
+      return better;
+    }catch{
+      IMG_CACHE.set(url, '');
+      return '';
+    }finally{ resolving.delete(url) }
+  };
 
-    // Route
-    const newsMain = $('#newsMain'); const weatherMain = $('#weatherMain');
-    const newsTab = $('#newsTab'); const weatherTab = $('#weatherTab'); // may be null now
+  const improveImagesFor = async (items, limit=12)=>{
+    const targets = items.filter(it=>!it.image).slice(0, limit);
+    let updated = false;
+    await Promise.all(targets.map(async (it)=>{
+      const best = await resolveArticleImage(it.link);
+      if(best){ it.image = best; updated = true; }
+    }));
+    if(updated){ applyFilter(); }
+  };
 
-    // For compatibility with existing filter code:
-    const searchInput = searchField;
-    const searchInputMobile = searchField;
-
-    let searchQuery = '';
-    let showingSaved = false;
-    let currentEdition = DEFAULT_EDITION;
-    let cacheItems = [];
-    let filteredItems = [];
-    let cycleIdx = 0;
-    let cycleTimer = null;
-
-    const applySort = ()=>{
-      const arr = filteredItems.slice();
-      if (sortMode === SORT_MODES.NEWEST) arr.sort((a,b)=>(b.pubDate||0)-(a.pubDate||0));
-      else if (sortMode === SORT_MODES.OLDEST) arr.sort((a,b)=>(a.pubDate||0)-(b.pubDate||0));
-      else if (sortMode === SORT_MODES.SOURCE) arr.sort((a,b)=>(a.source||hostname(a.link)||'').localeCompare(b.source||hostname(b.link)||''));
-      filteredItems = arr;
-    };
-
-    const applyFilter = ()=>{
-      const needle = searchQuery.toLowerCase().trim();
-      const base = showingSaved ? getSaved() : cacheItems;
-      if(!needle){ filteredItems = base.slice(); }
+  const loadFeeds = async (editionKey)=>{
+    const feeds = feedsFor(editionKey);
+    const all = [];
+    await Promise.allSettled(
+      feeds.map(async (f)=>{
+        try{
+          const text = await fetchWithProxies(f);
+          const items = parseRSS(text);
+          all.push(...items);
+        }catch(_){ }
+      })
+    );
+    const seen = new Map(); // normTitle -> { item, count }
+    for(const it of all){
+      const key = normalizeTitle(it.title);
+      if(!key) continue;
+      const prev = seen.get(key);
+      if(!prev){ seen.set(key, { item: it, count: 1 }); }
       else{
-        filteredItems = base.filter(it =>
-          it.title?.toLowerCase().includes(needle) ||
-          (it.source || '').toLowerCase().includes(needle) ||
-          hostname(it.link).toLowerCase().includes(needle)
-        );
+        if (it.pubDate && prev.item.pubDate && it.pubDate > prev.item.pubDate) prev.item = it;
+        prev.count++;
       }
-      applySort();
-      render(filteredItems);
-    };
+    }
+    let uniq = Array.from(seen.values()).map(({item, count})=> ({...item, trendCount: count}));
+    const now = Date.now();
+    uniq.forEach(u=>{
+      const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
+      u._score = (u.trendCount||1) * (1/ageMin);
+      if (u.image) u.image = upscaleImageUrl(u.image);
+    });
+    uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
+    return uniq.slice(0, MAX_ITEMS);
+  };
 
-    const renderTicker = (items)=>{
-      const chips = (items.slice(0, 24).map(it=>{
-        const src = it.source || hostname(it.link) || 'Source';
-        const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}: ${safe}</span>`;
-      }).join('')) || '';
-      ticker.innerHTML = chips + chips;
-    };
+  /* ===== BOOKMARKS ===== */
+  const SAVED_KEY = 'oc_news_saved';
+  const getSaved = ()=>{ try{ return JSON.parse(localStorage.getItem(SAVED_KEY)||'[]') }catch{ return [] } };
+  const setSaved = (arr)=> localStorage.setItem(SAVED_KEY, JSON.stringify(arr.slice(0,200)));
+  const isSaved = (link)=> getSaved().some(x=>x.link===link);
+  const toggleSave = (item)=>{
+    const cur = getSaved();
+    const idx = cur.findIndex(x=>x.link===item.link);
+    if(idx>=0){ cur.splice(idx,1) } else { cur.unshift({ ...item, savedAt: Date.now() }) }
+    setSaved(cur);
+  };
 
-    const buildHeroSlides = (items)=>{
-      const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
-      heroTrack.innerHTML = list.map((it, idx)=>{
-        const host = hostname(it.link) || 'news.google.com';
-        const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
-        const label= it.source || host;
-        const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
-        const imgHTML = src ? `<img ${high} decoding="async" src="${src}" alt="${label}">` : brandLogoHTML(host, '', label);
-        const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `
-          <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
-            <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
-            ${imgHTML}
-            <div class="hero-overlay-text">
-              <div class="hero-glass">
-                <div class="k">${label} • ${timeAgo(it.pubDate)}</div>
-                <h2>${safeTitle}</h2>
-              </div>
-            </div>
+  /* ===== RENDER (NEWS) ===== */
+  const heroTrack = $('#heroTrack');
+  const heroDots  = $('#heroDots');
+  const updatedAt = $('#updatedAt');
+  const newsList  = $('#newsList');
+  const ticker    = $('#ticker');
+  const trendingRail = $('#trendingRail');
+  const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty'); const gtTopTerm = $('#gtTopTerm');
+
+  // Controls
+  const editionSelect = $('#editionSelect');
+  const themeBtn = $('#themeBtn');
+  const shareBtn = $('#shareBtn');
+  const saveBtn  = $('#saveBtn');
+  const prevTopBtn = $('#prevTopBtn');
+  const nextTopBtn = $('#nextTopBtn');
+  const weatherBtn = $('#weatherBtn'); const weatherBtnMobile = $('#weatherBtnMobile');
+
+  // Search controls (new sheet)
+  const searchToggle = $('#searchToggle');
+  const searchSheet  = $('#searchSheet');
+  const searchField  = $('#searchField');
+
+  // Route
+  const newsMain = $('#newsMain'); const weatherMain = $('#weatherMain');
+  const backToNewsBtn = $('#backToNewsBtn');
+
+  // For compatibility with existing filter code:
+  const searchInput = searchField;
+  const searchInputMobile = searchField;
+
+  let searchQuery = '';
+  let showingSaved = false;
+  let currentEdition = DEFAULT_EDITION;
+  let cacheItems = [];
+  let filteredItems = [];
+  let cycleIdx = 0;
+  let cycleTimer = null;
+
+  const applySort = ()=>{
+    const arr = filteredItems.slice();
+    if (sortMode === SORT_MODES.NEWEST) arr.sort((a,b)=>(b.pubDate||0)-(a.pubDate||0));
+    else if (sortMode === SORT_MODES.OLDEST) arr.sort((a,b)=>(a.pubDate||0)-(b.pubDate||0));
+    else if (sortMode === SORT_MODES.SOURCE) arr.sort((a,b)=>(a.source||hostname(a.link)||'').localeCompare(b.source||hostname(b.link)||''));
+    filteredItems = arr;
+  };
+
+  const applyFilter = ()=>{
+    const needle = searchQuery.toLowerCase().trim();
+    const base = showingSaved ? getSaved() : cacheItems;
+    if(!needle){ filteredItems = base.slice(); }
+    else{
+      filteredItems = base.filter(it =>
+        it.title?.toLowerCase().includes(needle) ||
+        (it.source || '').toLowerCase().includes(needle) ||
+        hostname(it.link).toLowerCase().includes(needle)
+      );
+    }
+    applySort();
+    render(filteredItems);
+  };
+
+  const renderTicker = (items)=>{
+    const chips = (items.slice(0, 24).map(it=>{
+      const src = it.source || hostname(it.link) || 'Source';
+      const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}: ${safe}</span>`;
+    }).join('')) || '';
+    ticker.innerHTML = chips + chips;
+  };
+
+  const buildHeroSlides = (items)=>{
+    const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
+    heroTrack.innerHTML = list.map((it, idx)=>{
+      const host = hostname(it.link) || 'news.google.com';
+      const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
+      const label= it.source || host;
+      const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
+      const imgHTML = src ? `<img ${high} decoding="async" src="${src}" alt="${label}">` : brandLogoHTML(host, '', label);
+      const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `
+        <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
+          <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
+          ${imgHTML}
+          <div class="hero-gradient"></div>
+          <div class="hero-overlay-text">
+            <div class="k">${label} • ${timeAgo(it.pubDate)}</div>
+            <h2>${safeTitle}</h2>
           </div>
-        `;
-      }).join('');
-      const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
-      heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
-    };
+        </div>
+      `;
+    }).join('');
+    const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
+    heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
+  };
 
-    const setHeroMetaFromIndex = (idx)=>{
-      if(!filteredItems.length) return;
-      const children = Array.from(heroDots.children);
-      if (children.length){
-        const dotIndex = Math.min(children.length-1, idx % children.length);
-        children.forEach((d,i)=>d.classList.toggle('active', i===dotIndex));
-      }
-    };
+  const setHeroMetaFromIndex = (idx)=>{
+    if(!filteredItems.length) return;
+    const children = Array.from(heroDots.children);
+    if (children.length){
+      const dotIndex = Math.min(children.length-1, idx % children.length);
+      children.forEach((d,i)=>d.classList.toggle('active', i===dotIndex));
+    }
+    const link = $('#heroLink');
+    if (link && filteredItems[idx]) link.href = filteredItems[idx].link;
+  };
 
-    const renderTrending = (items)=>{
-      if(!items.length){ trendingRail.innerHTML = ''; return; }
-      const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
-      trendingRail.innerHTML = top.map(it=>{
-        const host = hostname(it.link);
-        const srcHTML = it.image
-          ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${host}" alt="">`
-          : brandLogoHTML(host,'w-full h-44 object-contain rounded-md border border-[var(--border)]', it.source||host);
-        const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `
+  const renderTrending = (items)=>{
+    if(!items.length){ trendingRail.innerHTML = ''; return; }
+    const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
+    trendingRail.innerHTML = top.map(it=>{
+      const host = hostname(it.link);
+      const srcHTML = it.image
+        ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md border border-[var(--border)] brand-fb" data-host="${host}" alt="">`
+        : brandLogoHTML(host,'w-full h-44 object-contain rounded-md border border-[var(--border)]', it.source||host);
+      const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `
+        <article class="card p-3 sm:p-4">
+          <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${srcHTML}</a>
+          <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
+            <span>${timeAgo(it.pubDate)}</span>
+            <span>${it.source || host}</span>
+          </div>
+          <a href="${it.link}" target="_blank" rel="noopener" class="block">
+            <h3 class="text-sm sm:text-base font-semibold leading-snug hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
+          </a>
+        </article>
+      `;
+    }).join('');
+  };
+
+  const render = (items)=>{
+    if(!items || !items.length){
+      const link = $('#heroLink');
+      if (link){ link.classList.add('pointer-events-none','opacity-60'); link.href = '#'; }
+      newsList.innerHTML = ''; ticker.innerHTML = ''; heroTrack.innerHTML = ''; heroDots.innerHTML = '';
+      trendingRail.innerHTML = '';
+      return;
+    }
+    if (cycleIdx >= items.length) cycleIdx = 0;
+
+    buildHeroSlides(items);
+    setHeroMetaFromIndex(cycleIdx);
+    updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+    renderTicker(items);
+
+    const tiles = items.slice(1, 13);
+    newsList.innerHTML = tiles.map(it=>{
+      const src = it.source || hostname(it.link) || 'Source';
+      const when = timeAgo(it.pubDate);
+      const host = hostname(it.link);
+      const saved = isSaved(it.link);
+      const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const imgHTML = (SHOW_IMAGES && it.image)
+        ? `<img src="${upscaleImageUrl(it.image)}" alt="" class="tile-img brand-fb" data-host="${host}">`
+        : brandLogoHTML(host, 'tile-img object-contain', src);
+      return `
+        <li>
           <article class="card p-3 sm:p-4">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${srcHTML}</a>
+            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-lg overflow-hidden">${imgHTML}</a>
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-              <span>${timeAgo(it.pubDate)}</span>
-              <span>${it.source || host}</span>
+              <span>${src}</span><span>${when}</span>
             </div>
             <a href="${it.link}" target="_blank" rel="noopener" class="block">
               <h3 class="text-sm sm:text-base font-semibold leading-snug hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
             </a>
+            <div class="mt-3">
+              <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
+            </div>
+          </article>
+        </li>
+      `;
+    }).join('');
+
+    $$('.saveBtn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const raw = decodeURIComponent(e.currentTarget.getAttribute('data-save')||'%7B%7D');
+        try{ toggleSave(JSON.parse(raw)); applyFilter(); }catch{}
+      });
+    });
+
+    renderTrending(items);
+    improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
+    improveImagesFor(items.slice(HERO_SLIDES), 18);
+  };
+
+  /* ===== THEME ===== */
+  const sunIcon = document.getElementById('sun');
+  const moonIcon = document.getElementById('moon');
+  const THEME_KEY = 'oc_theme';
+  const resolveAutoTheme = ()=> window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  const setTheme = (mode)=>{
+    document.documentElement.dataset.theme = mode;
+    const final = (mode === 'auto') ? resolveAutoTheme() : mode;
+    document.documentElement.classList.toggle('light', final === 'light');
+    document.documentElement.classList.toggle('dark',  final === 'dark');
+    localStorage.setItem(THEME_KEY, mode);
+    sunIcon.classList.toggle('hidden', final !== 'light');
+    moonIcon.classList.toggle('hidden', final !== 'dark');
+  };
+  const cycleTheme = ()=>{
+    const cur = localStorage.getItem(THEME_KEY) || 'auto';
+    const next = cur === 'auto' ? 'dark' : (cur === 'dark' ? 'light' : 'auto');
+    setTheme(next);
+  };
+
+  /* ===== GOOGLE TRENDS (hardened + correct top term) ===== */
+  const tzMinutes = -new Date().getTimezoneOffset();
+  const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
+
+  const fetchGoogleTrendsDailyAPI = async (geo)=>{
+    const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
+    const raw = await fetchWithProxies(url);
+    const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
+    return JSON.parse(jsonText);
+  };
+  const fetchGoogleTrendsDailyHTMLFallback = async (geo)=>{
+    const url = `https://trends.google.com/trendingsearches/daily?geo=${geo}`;
+    const html = await fetchWithProxies(url);
+    const m = html.match(/"trendingSearchesDays"\s*:\s*(\[[\s\S]*?\])\s*,\s*"/);
+    if (!m) throw new Error('Trends HTML structure not found');
+    const days = JSON.parse(m[1]);
+    return { default: { trendingSearchesDays: days } };
+  };
+  const fetchGoogleTrendsDailyRSSFallback = async (geo)=>{
+    const url = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`;
+    const raw = await fetchWithProxies(url);
+    const dom = new DOMParser().parseFromString(raw, 'text/xml');
+    const channelDate = dom.querySelector('rss > channel > pubDate')?.textContent || '';
+    const items = Array.from(dom.querySelectorAll('item')).map(it=>{
+      const query = it.querySelector('title')?.textContent || 'Trending';
+      const approx = it.querySelector('ht\\:approx_traffic')?.textContent || '';
+      const news = it.querySelector('ht\\:news_item');
+      const artTitle = news?.querySelector('ht\\:news_item_title')?.textContent || query;
+      const artSource= news?.querySelector('ht\\:news_item_source')?.textContent || 'Google';
+      const artUrl   = news?.querySelector('ht\\:news_item_url')?.textContent || '#';
+      const imageUrl = news?.querySelector('ht\\:news_item_snippet')?.textContent?.match(/https?:\/\/\S+\.(?:jpg|png|webp)/i)?.[0] || '';
+      return {
+        title: { query },
+        formattedTraffic: approx,
+        articles: [{ title: artTitle, source: artSource, url: artUrl, image: imageUrl ? { imageUrl } : null }].filter(Boolean)
+      };
+    });
+    return { default: { trendingSearchesDays: [{ date: channelDate, formattedDate: channelDate, trendingSearches: items }] } };
+  };
+  const fetchGoogleTrendsDaily = async (geo)=>{
+    try{ return await fetchGoogleTrendsDailyAPI(geo); }
+    catch(_){ try{ return await fetchGoogleTrendsDailyHTMLFallback(geo); }
+      catch(__){ return await fetchGoogleTrendsDailyRSSFallback(geo); } }
+  };
+  const parseTrafficNumber = (s)=>{
+    if(!s) return 0;
+    const clean = s.replace(/[+,]/g,'').trim();
+    const m = clean.match(/([\d.]+)\s*([kKmMbB]?)/);
+    if(!m) return 0;
+    let n = parseFloat(m[1]);
+    const suf = (m[2]||'').toLowerCase();
+    if (suf==='k') n*=1e3; else if (suf==='m') n*=1e6; else if (suf==='b') n*=1e9;
+    return isFinite(n) ? n : 0;
+  };
+  const renderGoogleTrends = async ()=>{
+    try{
+      const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
+      const day = data?.default?.trendingSearchesDays?.[0];
+      if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
+
+      gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
+
+      const ranked = day.trendingSearches.slice().sort((a,b)=>{
+        return parseTrafficNumber(b.formattedTraffic || '') - parseTrafficNumber(a.formattedTraffic || '');
+      });
+      const top = ranked[0] || day.trendingSearches[0];
+      const topTerm = top?.title?.query || '';
+      if (topTerm){ gtTopTerm.classList.remove('hidden'); gtTopTerm.textContent = `Most searched today: “${topTerm}”`; }
+
+      const cards = day.trendingSearches.slice(0, 9).map(ts=>{
+        const query = ts.title?.query || 'Trending';
+        const traffic = ts.formattedTraffic || '';
+        const art = (ts.articles||[])[0] || {};
+        const link = art.url || '#';
+        const host = hostname(link) || 'google.com';
+        const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
+        const img = image ? `<img src="${upscaleImageUrl(image)}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
+                          : brandLogoHTML(host,'w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
+        const source = art.source || host || 'Google';
+        const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
+        return `
+          <article class="card p-3 sm:p-4">
+            <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${img}</a>
+            <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
+              ${trafficTag}
+              <span>${source}</span>
+            </div>
+            <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
+            <div class="mt-1 text-[11px] text-[var(--sub)]">${query}</div>
           </article>
         `;
       }).join('');
-    };
+      gtGrid.innerHTML = cards;
+      gtEmpty.classList.add('hidden');
+    }catch(err){
+      console.error('Trends error:', err);
+      gtGrid.innerHTML = '';
+      gtMeta.textContent = '—';
+      gtTopTerm.classList.add('hidden');
+      gtEmpty.classList.remove('hidden');
+    }
+  };
 
-    // ---------- Apple-style list beneath hero ----------
-    const verticalCardHTML = (it)=>{
-      const src = it.source || hostname(it.link) || 'Source';
-      const when = timeAgo(it.pubDate);
-      const host = hostname(it.link);
-      const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const imgHTML = (SHOW_IMAGES && it.image)
-        ? `<img src="${upscaleImageUrl(it.image)}" alt="" class="v-img brand-fb" data-host="${host}">`
-        : brandLogoHTML(host, 'v-img object-contain', src);
-      const saved = isSaved(it.link);
-      return `
-        <li class="v-card">
-          <article class="card overflow-hidden">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block">${imgHTML}</a>
-            <div class="p-3 sm:p-4">
-              <div class="meta-row"><span>${src}</span><span>${when}</span></div>
-              <a href="${it.link}" target="_blank" rel="noopener"><h3>${safeTitle}</h3></a>
-              <div class="mt-3">
-                <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
-              </div>
-            </div>
-          </article>
-        </li>
-      `;
-    };
+  /* ===== WEATHER (unchanged sources + FX) ===== */
+  const wxQuery = $('#wxQuery');
+  const wxMyLocation = $('#wxMyLocation');
+  const wxMeta = $('#wxMeta');
+  const wxPlace = $('#wxPlace');
+  const wxDesc = $('#wxDesc');
+  const wxTemp = $('#wxTemp');
+  const wxFeels = $('#wxFeels');
+  const wxHum = $('#wxHum');
+  const wxWind = $('#wxWind');
+  const wxPrec = $('#wxPrec');
+  const wxUV = $('#wxUV');
+  const wxHourly = $('#wxHourly');
+  const wxDaily = $('#wxDaily');
+  const wxFxCanvas = $('#wxFx');
 
-    const horizontalCardHTML = (it)=>{
-      const src = it.source || hostname(it.link) || 'Source';
-      const when = timeAgo(it.pubDate);
-      const host = hostname(it.link);
-      const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const imgHTML = (SHOW_IMAGES && it.image)
-        ? `<img src="${upscaleImageUrl(it.image)}" alt="" class="h-img brand-fb" data-host="${host}">`
-        : brandLogoHTML(host, 'h-img object-contain', src);
-      const saved = isSaved(it.link);
-      return `
-        <li class="h-card-item">
-          <article class="card p-3 sm:p-4 h-card">
-            <div class="min-w-0">
-              <div class="meta-row"><span>${src}</span><span>${when}</span></div>
-              <a href="${it.link}" target="_blank" rel="noopener" class="block">
-                <h3 class="text-[17px] sm:text-[18px] font-semibold leading-snug">${safeTitle}</h3>
-              </a>
-              <div class="mt-3">
-                <button data-save='${encodeURIComponent(JSON.stringify(it))}' data-link="${it.link}" class="saveBtn text-[11px] chip rounded px-2 py-1">${saved ? 'Saved' : 'Save'}</button>
-              </div>
-            </div>
-            <a href="${it.link}" target="_blank" rel="noopener" class="h-img-wrap rounded-lg overflow-hidden">
-              ${imgHTML}
-            </a>
-          </article>
-        </li>
-      `;
-    };
+  const WX_STORE = 'oc_wx_last';
+  const saveWx = (obj)=> localStorage.setItem(WX_STORE, JSON.stringify(obj||{}));
+  const getWx = ()=>{ try{ return JSON.parse(localStorage.getItem(WX_STORE)||'{}') }catch{ return {} } };
 
-    const render = (items)=>{
-      if(!items || !items.length){
-        newsList.innerHTML = ''; ticker.innerHTML = ''; heroTrack.innerHTML = ''; heroDots.innerHTML = '';
-        trendingRail.innerHTML = '';
-        return;
+  const fmt = (n,unit='')=> (Number.isFinite(n) ? `${Math.round(n)}${unit}` : '—');
+  const degToDir = (deg)=>{
+    if(!Number.isFinite(deg)) return '—';
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(deg/22.5)%16];
+  };
+
+  const wxCodeToText = (code)=>{
+    const map = {
+      0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+      45:'Fog',48:'Depositing rime fog',
+      51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',
+      61:'Light rain',63:'Rain',65:'Heavy rain',
+      66:'Freezing rain',67:'Heavy freezing rain',
+      71:'Light snow',73:'Snow',75:'Heavy snow',
+      80:'Rain showers',81:'Rain showers',82:'Violent rain showers',
+      85:'Snow showers',86:'Snow showers',
+      95:'Thunderstorm',96:'Thunderstorm',99:'Severe thunderstorm'
+    };
+    return map[code] || '—';
+  };
+
+  const geocode = async (q)=>{
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`;
+    const res = await fetch(url, { cache:'no-store' });
+    if(!res.ok) throw new Error('Geocoding failed');
+    const j = await res.json();
+    const r = j.results?.[0];
+    if(!r) throw new Error('Place not found');
+    return { name: `${r.name}${r.admin1?`, ${r.admin1}`:''}${r.country?`, ${r.country}`:''}`, lat:r.latitude, lon:r.longitude };
+  };
+
+  const fetchForecast = async ({ lat, lon })=>{
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    const params = {
+      latitude: lat, longitude: lon, current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,uv_index',
+      hourly: 'temperature_2m,precipitation_probability,weather_code',
+      daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,uv_index_max,weather_code',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+    };
+    Object.entries(params).forEach(([k,v])=> url.searchParams.set(k, v));
+    const res = await fetch(url, { cache:'no-store' });
+    if(!res.ok) throw new Error('Forecast failed');
+    return res.json();
+  };
+
+  // Weather FX
+  let wxFxRAF = null, wxFxMode = 'none';
+  const resizeWxFx = ()=>{
+    const card = $('#wxNowCard');
+    if(!wxFxCanvas || !card) return;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    wxFxCanvas.width  = Math.floor(card.clientWidth * dpr);
+    wxFxCanvas.height = Math.floor(card.clientHeight * dpr);
+    wxFxCanvas.style.width = card.clientWidth + 'px';
+    wxFxCanvas.style.height = card.clientHeight + 'px';
+  };
+  const startWxFx = (mode)=>{
+    wxFxMode = mode;
+    cancelAnimationFrame(wxFxRAF);
+    const ctx = wxFxCanvas?.getContext?.('2d', { alpha:true });
+    if(!ctx || !wxFxCanvas) return;
+
+    const W = ()=>wxFxCanvas.width, H = ()=>wxFxCanvas.height;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    let t0 = performance.now();
+
+    // Particles
+    const drops = Array.from({length: Math.round((W()*H())/(20000))}, ()=>({
+      x: Math.random()*W(), y: -Math.random()*H(), v: 2 + Math.random()*3, l: 8 + Math.random()*14
+    }));
+    const flakes = Array.from({length: Math.round((W()*H())/(45000))}, ()=>({
+      x: Math.random()*W(), y: Math.random()*H(), r: 1*dpr + Math.random()*1.5*dpr, v: .4 + Math.random()*1.3
+    }));
+    const clouds = Array.from({length: 6}, ()=>({ x: Math.random()*W(), y: H()*0.12 + Math.random()*H()*0.18, w: 120*dpr+Math.random()*220*dpr, h: 40*dpr+Math.random()*60*dpr, v: .12 + Math.random()*.25 }));
+
+    function sun(ctx, t){
+      const cx = W()*0.78, cy = H()*0.25, R = 38*dpr;
+      const g = ctx.createRadialGradient(cx,cy,0, cx,cy,R*3);
+      g.addColorStop(0,'rgba(255,215,100,.75)');
+      g.addColorStop(1,'rgba(255,215,100,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,R*2.5,0,Math.PI*2); ctx.fill();
+
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate((t/4000)% (Math.PI*2));
+      ctx.strokeStyle = 'rgba(255,220,130,.9)'; ctx.lineWidth = 2*dpr;
+      for(let i=0;i<12;i++){
+        ctx.rotate(Math.PI/6);
+        ctx.beginPath(); ctx.moveTo(R,0); ctx.lineTo(R*1.6,0); ctx.stroke();
       }
-      if (cycleIdx >= items.length) cycleIdx = 0;
+      ctx.restore();
 
-      buildHeroSlides(items);
-      setHeroMetaFromIndex(cycleIdx);
-      updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
-      renderTicker(items);
-
-      const vPair = items.slice(1, 3);
-      const rest = items.slice(3, 18);
-
-      const html =
-        vPair.map(verticalCardHTML).join('') +
-        rest.map(horizontalCardHTML).join('');
-
-      newsList.innerHTML = html;
-
-      $$('.saveBtn').forEach(btn=>{
-        btn.addEventListener('click', (e)=>{
-          const raw = decodeURIComponent(e.currentTarget.getAttribute('data-save')||'%7B%7D');
-          try{ toggleSave(JSON.parse(raw)); applyFilter(); }catch{}
-        });
-      });
-
-      renderTrending(items);
-      improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
-      improveImagesFor(items.slice(HERO_SLIDES), 18);
-    };
-
-    /* ===== THEME ===== */
-    const sunIcon = document.getElementById('sun');
-    const moonIcon = document.getElementById('moon');
-    const THEME_KEY = 'oc_theme';
-    const resolveAutoTheme = ()=> window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    const setTheme = (mode)=>{
-      document.documentElement.dataset.theme = mode;
-      const final = (mode === 'auto') ? resolveAutoTheme() : mode;
-      document.documentElement.classList.toggle('light', final === 'light');
-      document.documentElement.classList.toggle('dark',  final === 'dark');
-      localStorage.setItem(THEME_KEY, mode);
-      sunIcon.classList.toggle('hidden', final !== 'light');
-      moonIcon.classList.toggle('hidden', final !== 'dark');
-    };
-    const cycleTheme = ()=>{
-      const cur = localStorage.getItem(THEME_KEY) || 'auto';
-      const next = cur === 'auto' ? 'dark' : (cur === 'dark' ? 'light' : 'auto');
-      setTheme(next);
-    };
-
-    /* ===== GOOGLE TRENDS (fixed) ===== */
-    const tzMinutes = -new Date().getTimezoneOffset();
-    const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
-
-    const fetchGoogleTrendsDailyAPI = async (geo)=>{
-      const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
-      const raw = await fetchWithProxies(url);
-      const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
-      return JSON.parse(jsonText);
-    };
-    const fetchGoogleTrendsDailyHTMLFallback = async (geo)=>{
-      const url = `https://trends.google.com/trendingsearches/daily?geo=${geo}`;
-      const html = await fetchWithProxies(url);
-      const m = html.match(/"trendingSearchesDays"\s*:\s*(\[[\s\S]*?\])\s*,\s*"/);
-      if (!m) throw new Error('Trends HTML structure not found');
-      const days = JSON.parse(m[1]);
-      return { default: { trendingSearchesDays: days } };
-    };
-    const fetchGoogleTrendsDailyRSS = async (geo)=>{
-      const url = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`;
-      const text = await fetchWithProxies(url);
-      const dom = new DOMParser().parseFromString(text, 'text/xml');
-      const items = Array.from(dom.querySelectorAll('item')).slice(0, 10).map(it=>{
-        const title = it.querySelector('title')?.textContent || 'Trending';
-        const link = it.querySelector('link')?.textContent || '#';
-        return { title: { query: title }, formattedTraffic: '', articles: [{ title, url: link, source: hostname(link), image: '' }] };
-      });
-      const today = { date: new Date().toISOString().slice(0,10).replace(/-/g,''), formattedDate: new Date().toLocaleDateString(), trendingSearches: items };
-      return { default: { trendingSearchesDays: [today] } };
-    };
-
-    const fetchGoogleTrendsDaily = async (geo)=>{
-      try{ return await fetchGoogleTrendsDailyAPI(geo); }
-      catch(_){ try{ return await fetchGoogleTrendsDailyHTMLFallback(geo); }
-      catch(_2){ return await fetchGoogleTrendsDailyRSS(geo); } }
-    };
-
-    const parseTraffic = (s)=>{
-      if(!s) return 0;
-      const m = String(s).replace(/[+,]/g,'').trim().match(/([\d.]+)\s*([KMB])?/i);
-      if(!m) return 0;
-      const n = parseFloat(m[1]);
-      const unit = (m[2]||'').toUpperCase();
-      if (unit==='K') return n*1e3;
-      if (unit==='M') return n*1e6;
-      if (unit==='B') return n*1e9;
-      return n||0;
-    };
-
-    const renderGoogleTrends = async ()=>{
-      try{
-        const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
-        const day = data?.default?.trendingSearchesDays?.[0];
-        if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
-        gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
-
-        const sorted = day.trendingSearches.slice().sort((a,b)=> parseTraffic(b.formattedTraffic)-parseTraffic(a.formattedTraffic));
-        const topTerm = sorted[0]?.title?.query || day.trendingSearches[0]?.title?.query || '';
-        if (topTerm){ gtTopTerm.classList.remove('hidden'); gtTopTerm.textContent = `Most searched today: “${topTerm}”`; }
-
-        const cards = day.trendingSearches.slice(0, 9).map(ts=>{
-          const query = ts.title?.query || 'Trending';
-          const traffic = ts.formattedTraffic || '';
-          const art = (ts.articles||[])[0] || {};
-          const link = art.url || '#';
-          const host = hostname(link) || 'google.com';
-          const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
-          const img = image ? `<img src="${upscaleImageUrl(image)}" alt="" class="w-full h-40 object-cover rounded-md border border-[var(--border)]">`
-                            : brandLogoHTML(host,'w-full h-40 object-contain rounded-md border border-[var(--border)]', query);
-          const source = art.source || host || 'Google';
-          const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
-          return `
-            <article class="card p-3 sm:p-4">
-              <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${img}</a>
-              <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-                ${trafficTag}
-                <span>${source}</span>
-              </div>
-              <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
-              <div class="mt-1 text-[11px] text-[var(--sub)]">${query}</div>
-            </article>
-          `;
-        }).join('');
-        gtGrid.innerHTML = cards;
-        gtEmpty.classList.add('hidden');
-      }catch(err){
-        console.error('Trends error:', err);
-        gtGrid.innerHTML = '';
-        gtMeta.textContent = '—';
-        gtTopTerm.classList.add('hidden');
-        gtEmpty.classList.remove('hidden');
+      ctx.fillStyle = 'rgba(255,230,160,1)'; ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2); ctx.fill();
+    }
+    function rain(ctx){
+      ctx.strokeStyle='rgba(180,200,255,.75)'; ctx.lineWidth = 1*dpr; ctx.lineCap='round';
+      for(const p of drops){
+        ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+3*dpr,p.y+p.l); ctx.stroke();
+        p.x += 0.8*dpr; p.y += p.v*dpr;
+        if(p.y > H()+20*dpr) { p.y = -10*dpr; p.x = Math.random()*W(); }
       }
-    };
-
-    /* ===== WEATHER (data + FX) ===== */
-    const wxQuery = $('#wxQuery');
-    const wxMyLocation = $('#wxMyLocation');
-    const wxMeta = $('#wxMeta');
-    const wxPlace = $('#wxPlace');
-    const wxDesc = $('#wxDesc');
-    const wxTemp = $('#wxTemp');
-    const wxFeels = $('#wxFeels');
-    const wxHum = $('#wxHum');
-    const wxWind = $('#wxWind');
-    const wxPrec = $('#wxPrec');
-    const wxUV = $('#wxUV');
-    const wxHourly = $('#wxHourly');
-    const wxDaily = $('#wxDaily');
-
-    const WX_STORE = 'oc_wx_last';
-    const saveWx = (obj)=> localStorage.setItem(WX_STORE, JSON.stringify(obj||{}));
-    const getWx = ()=>{ try{ return JSON.parse(localStorage.getItem(WX_STORE)||'{}') }catch{ return {} } };
-
-    const fmt = (n,unit='')=> (Number.isFinite(n) ? `${Math.round(n)}${unit}` : '—');
-    const degToDir = (deg)=>{
-      if(!Number.isFinite(deg)) return '—';
-      const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-      return dirs[Math.round(deg/22.5)%16];
-    };
-
-    const wxCodeToText = (code)=>{
-      const map = {
-        0:'Clear',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
-        45:'Fog',48:'Depositing rime fog',
-        51:'Light drizzle',53:'Drizzle',55:'Dense drizzle',
-        61:'Light rain',63:'Rain',65:'Heavy rain',
-        66:'Freezing rain',67:'Heavy freezing rain',
-        71:'Light snow',73:'Snow',75:'Heavy snow',
-        80:'Rain showers',81:'Rain showers',82:'Violent rain showers',
-        85:'Snow showers',86:'Snow showers',
-        95:'Thunderstorm',96:'Thunderstorm',99:'Severe thunderstorm'
-      };
-      return map[code] || '—';
-    };
-
-    const geocode = async (q)=>{
-      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en&format=json`;
-      const res = await fetch(url, { cache:'no-store' });
-      if(!res.ok) throw new Error('Geocoding failed');
-      const j = await res.json();
-      const r = j.results?.[0];
-      if(!r) throw new Error('Place not found');
-      return { name: `${r.name}${r.admin1?`, ${r.admin1}`:''}${r.country?`, ${r.country}`:''}`, lat:r.latitude, lon:r.longitude };
-    };
-
-    const fetchForecast = async ({ lat, lon })=>{
-      const url = new URL('https://api.open-meteo.com/v1/forecast');
-      const params = {
-        latitude: lat, longitude: lon, current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_direction_10m,uv_index',
-        hourly: 'temperature_2m,precipitation_probability,weather_code',
-        daily: 'temperature_2m_max,temperature_2m_min,precipitation_sum,uv_index_max,weather_code',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-      };
-      Object.entries(params).forEach(([k,v])=> url.searchParams.set(k, v));
-      const res = await fetch(url, { cache:'no-store' });
-      if(!res.ok) throw new Error('Forecast failed');
-      return res.json();
-    };
-
-    // --- Apple-like Weather FX ---
-    let wxFx = { canvas:null, ctx:null, raf:0, kind:null, particles:[] };
-    const ensureWxCanvas = ()=>{
-      const card = document.getElementById('wxNowCard');
-      let c = document.getElementById('wxFx');
-      if(!c){
-        c = document.createElement('canvas');
-        c.id = 'wxFx';
-        card.prepend(c);
+    }
+    function snow(ctx){
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      for(const f of flakes){
+        ctx.beginPath(); ctx.arc(f.x,f.y,f.r,0,Math.PI*2); ctx.fill();
+        f.y += f.v; f.x += Math.sin((f.y+f.r)/40)*0.5;
+        if(f.y > H()+5){ f.y = -5; f.x = Math.random()*W(); }
       }
-      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio||1));
-      const rect = card.getBoundingClientRect();
-      c.width = Math.floor(rect.width*dpr);
-      c.height = Math.floor((rect.height)*dpr);
-      c.style.width = rect.width+'px';
-      c.style.height = rect.height+'px';
-      wxFx.canvas = c; wxFx.ctx = c.getContext('2d'); wxFx.ctx.setTransform(dpr,0,0,dpr,0,0);
-    };
-    const stopWxFx = ()=>{ if(wxFx.raf) cancelAnimationFrame(wxFx.raf); wxFx.raf=0; wxFx.particles=[]; wxFx.kind=null; if(wxFx.ctx){ wxFx.ctx.clearRect(0,0,wxFx.canvas.width,wxFx.canvas.height); } };
-
-    const startRain = ()=>{
-      wxFx.kind='rain'; wxFx.particles = Array.from({length: 160}, ()=> ({
-        x: Math.random()*wxFx.canvas.clientWidth, y: Math.random()*wxFx.canvas.clientHeight,
-        l: 8+Math.random()*14, v: 2+Math.random()*3
-      }));
-      const step = ()=>{
-        const w = wxFx.canvas.clientWidth, h = wxFx.canvas.clientHeight, ctx = wxFx.ctx;
-        ctx.clearRect(0,0,w,h);
-        ctx.strokeStyle = 'rgba(180,200,255,0.55)';
-        ctx.lineWidth = 1.2;
+    }
+    function cloudLayer(ctx, t){
+      ctx.fillStyle = 'rgba(255,255,255,.12)';
+      clouds.forEach(c=>{
         ctx.beginPath();
-        for(const p of wxFx.particles){
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(p.x-3, p.y+p.l);
-          p.x -= 1.6; p.y += p.v+3;
-          if (p.y > h || p.x < -10){ p.x = Math.random()*w+20; p.y = -20; }
-        }
-        ctx.stroke();
-        wxFx.raf = requestAnimationFrame(step);
-      };
-      step();
-    };
-    const startSnow = ()=>{
-      wxFx.kind='snow'; wxFx.particles = Array.from({length: 120}, ()=> ({
-        x: Math.random()*wxFx.canvas.clientWidth, y: Math.random()*wxFx.canvas.clientHeight,
-        r: 1+Math.random()*2.8, v: .4+Math.random()*1.2, drift: (Math.random()-.5)*0.6
-      }));
-      const step = ()=>{
-        const w = wxFx.canvas.clientWidth, h = wxFx.canvas.clientHeight, ctx = wxFx.ctx;
-        ctx.clearRect(0,0,w,h);
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        for(const p of wxFx.particles){
-          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-          p.x += p.drift; p.y += p.v;
-          if (p.y > h){ p.y = -10; p.x = Math.random()*w; }
-          if (p.x < -10) p.x = w+10; if (p.x > w+10) p.x = -10;
-        }
-        wxFx.raf = requestAnimationFrame(step);
-      };
-      step();
-    };
-    const startSun = ()=>{
-      wxFx.kind='sun';
-      const ctx = wxFx.ctx, w = wxFx.canvas.clientWidth, h = wxFx.canvas.clientHeight;
-      let t=0;
-      const step = ()=>{
-        ctx.clearRect(0,0,w,h);
-        const cx = w-90, cy = 90, r = 40;
-        const g = ctx.createRadialGradient(cx,cy,0,cx,cy,r*2.2);
-        g.addColorStop(0,'rgba(255,215,120,0.9)');
-        g.addColorStop(1,'rgba(255,215,120,0.0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,r*2.2,0,Math.PI*2); ctx.fill();
+        // simple pill cloud
+        ctx.ellipse(c.x, c.y, c.w, c.h, 0, 0, Math.PI*2);
+        ctx.fill();
+        c.x += c.v;
+        if(c.x - c.w > W()+60) c.x = -60;
+      });
+    }
+    function thunder(ctx, t){
+      if (Math.floor(t/900) % 12 === 0){ // occasional flash
+        ctx.fillStyle='rgba(255,255,255,.08)';
+        ctx.fillRect(0,0,W(),H());
+      }
+    }
 
-        ctx.save();
-        ctx.translate(cx,cy); ctx.rotate(t/180*Math.PI);
-        ctx.strokeStyle = 'rgba(255,230,150,0.9)'; ctx.lineWidth = 2;
-        for(let i=0;i<12;i++){
-          ctx.rotate(Math.PI/6);
-          ctx.beginPath(); ctx.moveTo(r+6,0); ctx.lineTo(r+22,0); ctx.stroke();
-        }
-        ctx.restore();
-        t += .6;
-        wxFx.raf = requestAnimationFrame(step);
-      };
-      step();
-    };
-    const startThunder = ()=>{
-      wxFx.kind='thunder';
-      startRain();
-      const flash = ()=>{
-        const ctx2 = wxFx.ctx, w = wxFx.canvas.clientWidth, h = wxFx.canvas.clientHeight;
-        if (Math.random() < 0.06){
-          ctx2.save();
-          ctx2.fillStyle = 'rgba(255,255,255,0.25)';
-          ctx2.fillRect(0,0,w,h);
-          ctx2.restore();
-          setTimeout(()=>{}, 80);
-        }
-        setTimeout(flash, 350+Math.random()*1200);
-      };
-      flash();
-    };
-    const startClouds = ()=>{
-      wxFx.kind='clouds';
-      wxFx.particles = Array.from({length: 14}, ()=> ({
-        x: Math.random()*wxFx.canvas.clientWidth,
-        y: 20 + Math.random()*90,
-        r: 30 + Math.random()*60,
-        v: .12 + Math.random()*.25,
-        a: .08 + Math.random()*.10
-      }));
-      const step = ()=>{
-        const w = wxFx.canvas.clientWidth, h = wxFx.canvas.clientHeight, ctx = wxFx.ctx;
-        ctx.clearRect(0,0,w,h);
-        for(const p of wxFx.particles){
-          const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
-          g.addColorStop(0,`rgba(210,220,235,${p.a})`);
-          g.addColorStop(1,'rgba(210,220,235,0)');
-          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-          p.x += p.v; if (p.x - p.r > w+40){ p.x = -p.r-40; p.y = 20 + Math.random()*110; }
-        }
-        wxFx.raf = requestAnimationFrame(step);
-      };
-      step();
-    };
+    function frame(now){
+      const dt = now - t0; t0 = now;
+      ctx.clearRect(0,0,W(),H());
 
-    const renderWxFXForCode = (code)=>{
-      stopWxFx();
-      ensureWxCanvas();
-      if ([61,63,65,80,81,82,66,67].includes(code)) { startRain(); return; }
-      if ([71,73,75,85,86].includes(code)) { startSnow(); return; }
-      if ([95,96,99].includes(code)) { startThunder(); return; }
-      if ([0,1].includes(code)) { startSun(); return; }
-      if ([2,3,45,48].includes(code)) { startClouds(); return; }
-    };
-    window.addEventListener('resize', ()=>{ if(wxFx.canvas){ ensureWxCanvas(); if (wxFx.kind) renderWxFXForCode(wxFx.kind); } });
+      if (wxFxMode === 'sun'){
+        sun(ctx, now);
+        cloudLayer(ctx, now);
+      }else if (wxFxMode === 'rain'){
+        cloudLayer(ctx, now);
+        rain(ctx);
+      }else if (wxFxMode === 'snow'){
+        cloudLayer(ctx, now);
+        snow(ctx);
+      }else if (wxFxMode === 'thunder'){
+        cloudLayer(ctx, now);
+        rain(ctx);
+        thunder(ctx, now);
+      }else if (wxFxMode === 'fog' || wxFxMode === 'clouds'){
+        cloudLayer(ctx, now);
+      }
+      wxFxRAF = requestAnimationFrame(frame);
+    }
+    frame(performance.now());
+  };
+  const chooseFxFromCode = (code)=>{
+    if (code===0) return 'sun';
+    if ([1,2,3].includes(code)) return 'clouds';
+    if ([45,48].includes(code)) return 'fog';
+    if ([61,63,65,80,81,82,66,67].includes(code)) return 'rain';
+    if ([71,73,75,85,86].includes(code)) return 'snow';
+    if ([95,96,99].includes(code)) return 'thunder';
+    return 'none';
+  };
 
-    const fetchPlaceAndForecast = async (place)=>{
+  const loadWeather = async (place)=>{
+    try{
+      wxMeta.textContent = 'Loading…';
       const j = await fetchForecast(place);
       const cur = j.current;
       const name = place.name || `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`;
 
       wxPlace.textContent = name;
       wxDesc.textContent = wxCodeToText(cur.weather_code);
-      wxTemp.textContent = `${Math.round(cur.temperature_2m)}°`;
-      wxFeels.textContent = `Feels like ${Math.round(cur.apparent_temperature)}°`;
-      wxHum.textContent = `${Math.round(cur.relative_humidity_2m)}%`;
-      wxWind.textContent = `${Math.round(cur.wind_speed_10m)} km/h ${degToDir(cur.wind_direction_10m)}`;
-      wxPrec.textContent = `${Math.round(cur.precipitation)} mm`;
-      wxUV.textContent = Number.isFinite(cur.uv_index) ? Math.round(cur.uv_index) : '—';
+      wxTemp.textContent = fmt(cur.temperature_2m,'°');
+      wxFeels.textContent = `Feels like ${fmt(cur.apparent_temperature,'°')}`;
+      wxHum.textContent = fmt(cur.relative_humidity_2m,'%');
+      wxWind.textContent = `${fmt(cur.wind_speed_10m)} km/h ${degToDir(cur.wind_direction_10m)}`;
+      wxPrec.textContent = fmt(cur.precipitation,' mm');
+      wxUV.textContent = fmt(cur.uv_index);
 
-      ensureWxCanvas();
-      renderWxFXForCode(cur.weather_code);
+      // Effects
+      resizeWxFx();
+      startWxFx(chooseFxFromCode(cur.weather_code));
 
       wxHourly.innerHTML = '';
       const now = Date.now();
@@ -1365,7 +1300,7 @@
         const hh = t.toLocaleTimeString([], { hour:'numeric' });
         const tt = j.hourly.temperature_2m[i];
         const pp = j.hourly.precipitation_probability[i];
-        chip.innerHTML = `<div class="text-[11px] text-[var(--sub)]">${hh}</div><div class="text-sm font-semibold">${Math.round(tt)}°</div><div class="text-[11px]">${Number.isFinite(pp)?pp:0}%</div>`;
+        chip.innerHTML = `<div class="text-[11px] text-[var(--sub)]">${hh}</div><div class="text-sm font-semibold">${fmt(tt,'°')}</div><div class="text=[11px]">${Number.isFinite(pp)?pp:0}%</div>`;
         wxHourly.appendChild(chip);
       }
 
@@ -1381,266 +1316,303 @@
             <div class="text-sm font-semibold">${w}</div>
           </div>
           <div class="text-right">
-            <div class="text-sm font-semibold">${Math.round(j.daily.temperature_2m_max[i])}° / ${Math.round(j.daily.temperature_2m_min[i])}°</div>
-            <div class="text-[11px] text-[var(--sub)]">${Math.round(j.daily.precipitation_sum[i])} mm • UV ${Math.round(j.daily.uv_index_max[i])}</div>
+            <div class="text-sm font-semibold">${fmt(j.daily.temperature_2m_max[i],'°')} / ${fmt(j.daily.temperature_2m_min[i],'°')}</div>
+            <div class="text-[11px] text-[var(--sub)]">${fmt(j.daily.precipitation_sum[i],' mm')} • UV ${fmt(j.daily.uv_index_max[i])}</div>
           </div>
         `;
         wxDaily.appendChild(el);
       }
       wxMeta.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
-    };
-
-    const resolveMyLocation = ()=> new Promise((resolve,reject)=>{
-      if(!('geolocation' in navigator)) return reject(new Error('No geolocation'));
-      navigator.geolocation.getCurrentPosition(
-        ({ coords })=> resolve({ lat: coords.latitude, lon: coords.longitude }),
-        (err)=> reject(err),
-        { enableHighAccuracy:false, timeout: 8000, maximumAge: 600000 }
-      );
-    });
-
-    const ensureWeatherFor = async (placeLike)=>{
-      let place = placeLike;
-      if (!place.name){ place.name = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`; }
-      localStorage.setItem('oc_wx_last', JSON.stringify(place));
-      await fetchPlaceAndForecast(place);
-    };
-
-    /* ===== NAV / BOOTSTRAP ===== */
-    const headerEl = document.querySelector('header');
-    const setHeaderVar = ()=> document.documentElement.style.setProperty('--header-h', (headerEl?.offsetHeight || 60)+'px');
-    setHeaderVar();
-    window.addEventListener('resize', setHeaderVar);
-
-    const setMobileEditionUI = ()=> { $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition)); };
-
-    // Slides
-    const slideTo = (idx)=>{
-      const slides = Array.from(heroTrack.children);
-      if(!slides.length) return;
-      const clamped = Math.max(0, Math.min(slides.length-1, idx));
-      const target = slides[clamped];
-      if(!target) return;
-      heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
-      cycleIdx = clamped % Math.max(1, filteredItems.length);
-      setHeroMetaFromIndex(cycleIdx);
-    };
-    const nextHero = ()=> slideTo((cycleIdx + 1) % Math.max(1, filteredItems.length));
-    const prevHero = ()=> slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
-
-    let heroTrackScrollLock = false;
-    heroTrack.addEventListener('scroll', ()=>{
-      if (heroTrackScrollLock) return;
-      const slides = Array.from(heroTrack.children);
-      let bestIdx = 0, bestDist = Infinity;
-      const viewportCenter = heroTrack.getBoundingClientRect().left + heroTrack.clientWidth / 2;
-      slides.forEach((el,i)=>{
-        const rect = el.getBoundingClientRect();
-        const slideCenter = rect.left + rect.width/2;
-        const dist = Math.abs(slideCenter - viewportCenter);
-        if (dist < bestDist){ bestDist = dist; bestIdx = i; }
-      });
-      if (bestIdx !== cycleIdx){ cycleIdx = bestIdx % Math.max(1, filteredItems.length); setHeroMetaFromIndex(cycleIdx); }
-    }, { passive:true });
-
-    $('#prevTopBtn').addEventListener('click', prevHero);
-    $('#nextTopBtn').addEventListener('click', nextHero);
-
-    // Header immersive behavior
-    let heroIsVisible = true;
-    const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
-    heroObserver.observe(document.getElementById('heroCard'));
-    const startCycle = ()=>{
-      stopCycle();
-      cycleTimer = setInterval(()=>{
-        if (!heroIsVisible) return;
-        if (document.activeElement === searchField) return;
-        heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
-      }, 12000);
-    };
-    const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
-
-    const updateImmersiveHeader = ()=>{
-      const threshold = 24;
-      if (window.scrollY <= threshold) document.body.classList.add('hero-immersive');
-      else document.body.classList.remove('hero-immersive');
-    };
-    window.addEventListener('scroll', updateImmersiveHeader, { passive:true });
-
-    const heroInViewObserver = new IntersectionObserver((entries)=>{
-      const inView = entries[0]?.isIntersecting ?? true;
-      document.body.classList.toggle('hero-in-view', inView);
-    }, { root:null, threshold:0.6 });
-    heroInViewObserver.observe(document.getElementById('heroCard'));
-
-    const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
-      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
-      if (!imgs.length) return resolve();
-      let done = 0, finished = false;
-      const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
-      const onOne = ()=>{ done++; if (done >= imgs.length) finish(); };
-      imgs.forEach(im=>{
-        if (im.complete) onOne();
-        else {
-          im.addEventListener('load', onOne, { once:true });
-          im.addEventListener('error', onOne, { once:true });
-          try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
-        }
-      });
-      setTimeout(finish, timeoutMs);
-    });
-
-    // Preloader cycling text
-    function preloadCycle(){
-      const line = document.getElementById('preloadLine');
-      const phrases = [
-        'OC-News',
-        'Open Source News.  Without Limits.',
-        'The AI Workspace For Pros.'
-      ];
-      let ix = 0;
-      const tick = ()=>{
-        line.classList.remove('animate-fade-in');
-        line.classList.add('animate-fade-out');
-        setTimeout(()=>{
-          ix = (ix + 1) % phrases.length;
-          line.textContent = phrases[ix];
-          line.classList.remove('animate-fade-out');
-          line.classList.add('animate-fade-in');
-        }, 240);
-      };
-      line.classList.add('animate-fade-in');
-      return setInterval(tick, 2100);
+    }catch(e){
+      console.error(e);
+      wxMeta.textContent = 'Could not load weather.';
     }
+  };
 
-    const hydrate = async ()=>{
-      updatedAt.textContent = 'Updating…';
-      const items = await loadFeeds(currentEdition);
-      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
-      cycleIdx = 0;
-      applyFilter();
-      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-      await renderGoogleTrends();
-    };
+  const resolveMyLocation = ()=> new Promise((resolve,reject)=>{
+    if(!('geolocation' in navigator)) return reject(new Error('No geolocation'));
+    navigator.geolocation.getCurrentPosition(
+      ({ coords })=> resolve({ lat: coords.latitude, lon: coords.longitude }),
+      (err)=> reject(err),
+      { enableHighAccuracy:false, timeout: 8000, maximumAge: 600000 }
+    );
+  });
 
-    const hidePreloader = ()=>{
-      const pre = document.getElementById('preload');
-      if (pre) pre.style.display = 'none';
-      document.body.classList.remove('preloading');
-    };
+  const ensureWeatherFor = async (placeLike)=>{
+    let place = placeLike;
+    if (!place.name){ place.name = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`; }
+    saveWx(place);
+    await loadWeather(place);
+  };
 
-    const boot = async ()=>{
-      let cycleTimerId;
-      try{
-        currentEdition = DEFAULT_EDITION;
-        setMobileEditionUI();
-        const sel = document.getElementById('editionSelect');
-        if (sel) sel.value = DEFAULT_EDITION;
+  /* ===== NAV / BOOTSTRAP ===== */
+  const headerEl = document.querySelector('header');
+  const setHeaderVar = ()=> document.documentElement.style.setProperty('--header-h', (headerEl?.offsetHeight || 60)+'px');
+  setHeaderVar();
+  window.addEventListener('resize', ()=>{ setHeaderVar(); resizeWxFx(); });
 
-        cycleTimerId = preloadCycle();
-        await hydrate();
-        await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
-      }catch(e){ console.error(e); }
-      finally{
-        if (cycleTimerId) clearInterval(cycleTimerId);
-        hidePreloader();
-        updateImmersiveHeader();
+  const setMobileEditionUI = ()=> { $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition)); };
+
+  // Slides
+  const slideTo = (idx)=>{
+    const slides = Array.from(heroTrack.children);
+    if(!slides.length) return;
+    const clamped = Math.max(0, Math.min(slides.length-1, idx));
+    const target = slides[clamped];
+    if(!target) return;
+    heroTrack.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
+    cycleIdx = clamped % Math.max(1, filteredItems.length);
+    setHeroMetaFromIndex(cycleIdx);
+  };
+  const nextHero = ()=> slideTo((cycleIdx + 1) % Math.max(1, filteredItems.length));
+  const prevHero = ()=> slideTo((cycleIdx - 1 + Math.max(1, filteredItems.length)) % Math.max(1, filteredItems.length));
+
+  let heroTrackScrollLock = false;
+  heroTrack.addEventListener('scroll', ()=>{
+    if (heroTrackScrollLock) return;
+    const slides = Array.from(heroTrack.children);
+    let bestIdx = 0, bestDist = Infinity;
+    const viewportCenter = heroTrack.getBoundingClientRect().left + heroTrack.clientWidth / 2;
+    slides.forEach((el,i)=>{
+      const rect = el.getBoundingClientRect();
+      const slideCenter = rect.left + rect.width/2;
+      const dist = Math.abs(slideCenter - viewportCenter);
+      if (dist < bestDist){ bestDist = dist; bestIdx = i; }
+    });
+    if (bestIdx !== cycleIdx){ cycleIdx = bestIdx % Math.max(1, filteredItems.length); setHeroMetaFromIndex(cycleIdx); }
+  }, { passive:true });
+
+  $('#prevTopBtn').addEventListener('click', prevHero);
+  $('#nextTopBtn').addEventListener('click', nextHero);
+
+  // Header immersive behavior (safer threshold to reduce jitter)
+  let heroIsVisible = true;
+  const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
+  heroObserver.observe(document.getElementById('heroCard'));
+  const startCycle = ()=>{
+    stopCycle();
+    cycleTimer = setInterval(()=>{
+      if (!heroIsVisible) return;
+      if (document.activeElement === searchField) return;
+      heroTrackScrollLock = true; nextHero(); setTimeout(()=>{ heroTrackScrollLock = false }, 400);
+    }, 12000);
+  };
+  const stopCycle = ()=>{ if(cycleTimer) clearInterval(cycleTimer); cycleTimer = null; };
+
+  const updateImmersiveHeader = ()=>{
+    const threshold = 24; // slightly higher to avoid quick toggles
+    if (window.scrollY <= threshold) document.body.classList.add('hero-immersive');
+    else document.body.classList.remove('hero-immersive');
+  };
+  window.addEventListener('scroll', updateImmersiveHeader, { passive:true });
+
+  const heroInViewObserver = new IntersectionObserver((entries)=>{
+    const inView = entries[0]?.isIntersecting ?? true;
+    document.body.classList.toggle('hero-in-view', inView);
+  }, { root:null, threshold:0.6 });
+  heroInViewObserver.observe(document.getElementById('heroCard'));
+
+  const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
+    const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
+    if (!imgs.length) return resolve();
+    let done = 0, finished = false;
+    const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
+    const onOne = ()=>{ done++; if (done >= imgs.length) finish(); };
+    imgs.forEach(im=>{
+      if (im.complete) onOne();
+      else {
+        im.addEventListener('load', onOne, { once:true });
+        im.addEventListener('error', onOne, { once:true });
+        try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
       }
-    };
-
-    const refreshAll = async ()=>{
-      try{ await hydrate(); }catch(e){ console.error(e); hidePreloader(); }
-    };
-
-    // Controls
-    editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
-    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
-    themeBtn?.addEventListener('click', cycleTheme);
-
-    // Search (sheet)
-    let isSearchOpen = false;
-    function openSearchSheet(){
-      if (isSearchOpen) return;
-      searchSheet.classList.remove('hidden');
-      isSearchOpen = true;
-      setTimeout(()=>{ searchField?.focus(); searchField?.select(); }, 0);
-    }
-    function closeSearchSheet(){
-      if (!isSearchOpen) return;
-      searchSheet.classList.add('hidden');
-      isSearchOpen = false;
-    }
-    searchToggle?.addEventListener('click', ()=>{ isSearchOpen ? closeSearchSheet() : openSearchSheet(); });
-
-    const syncSearch = (val)=>{
-      searchQuery = val || '';
-      if (document.activeElement !== searchField) searchField.value = val;
-      applyFilter();
-    };
-    searchField?.addEventListener('input', (e)=> syncSearch(e.target.value));
-
-    // Shortcuts
-    window.addEventListener('keydown', (e)=>{
-      if (e.key==='Escape'){ if (isSearchOpen){ e.preventDefault(); closeSearchSheet(); } }
-      if (e.key==='/' && !isSearchOpen){ e.preventDefault(); openSearchSheet(); }
-      if (e.key==='ArrowRight') nextHero();
-      if (e.key==='ArrowLeft')  prevHero();
-      if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
     });
+    setTimeout(finish, timeoutMs);
+  });
 
-    // Image fallbacks
-    const handleImgError = (img)=>{
-      const alt1 = img.dataset.alt1;
-      const host = img.dataset.host || '';
-      if (alt1 && img.src !== alt1){ img.src = alt1; img.dataset.alt1=''; return; }
-      const parent = img.parentElement;
-      if (parent){ parent.innerHTML = letterTileHTML((host || 'SRC'), img.className); }
+  // Preloader cycling text
+  function preloadCycle(){
+    const line = document.getElementById('preloadLine');
+    const phrases = [
+      'OC-News',
+      'Open Source News.  Without Limits.',
+      'The AI Workspace For Pros.'
+    ];
+    let ix = 0;
+    const tick = ()=>{
+      line.classList.remove('animate-fade-in');
+      line.classList.add('animate-fade-out');
+      setTimeout(()=>{
+        ix = (ix + 1) % phrases.length;
+        line.textContent = phrases[ix];
+        line.classList.remove('animate-fade-out');
+        line.classList.add('animate-fade-in');
+      }, 240);
     };
-    document.addEventListener('error', (e)=>{
-      const t = e.target;
-      if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
-    }, true);
+    line.classList.add('animate-fade-in');
+    return setInterval(tick, 2100);
+  }
 
-    // Page routing: News / Weather
-    function showNews(){
-      newsMain.classList.remove('hidden');
-      weatherMain.classList.add('hidden');
-      newsTab?.classList.add('active');
-      document.body.classList.add('hero-immersive');
-      window.scrollTo({ top:0, behavior:'instant' });
+  const hydrate = async ()=>{
+    updatedAt.textContent = 'Updating…';
+    const items = await loadFeeds(currentEdition);
+    cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+    cycleIdx = 0;
+    applyFilter();
+    if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
+    await renderGoogleTrends();
+  };
+
+  const hidePreloader = ()=>{
+    const pre = document.getElementById('preload');
+    if (pre) pre.style.display = 'none';
+    document.body.classList.remove('preloading');
+  };
+
+  const boot = async ()=>{
+    let cycleTimerId;
+    try{
+      // default edition & UI
+      currentEdition = DEFAULT_EDITION;
+      setMobileEditionUI();
+      const sel = document.getElementById('editionSelect');
+      if (sel) sel.value = DEFAULT_EDITION;
+
+      cycleTimerId = preloadCycle();
+      await hydrate();
+      await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
+    }catch(e){ console.error(e); }
+    finally{
+      if (cycleTimerId) clearInterval(cycleTimerId);
+      hidePreloader();
+      updateImmersiveHeader();
     }
-    async function showWeather(){
-      newsMain.classList.add('hidden');
-      weatherMain.classList.remove('hidden');
-      newsTab?.classList.remove('active');
-      document.body.classList.remove('hero-immersive');
-      const last = getWx();
+  };
+
+  const refreshAll = async ()=>{
+    if (PRELOAD_ON_REFRESH){
+      const pre = document.getElementById('preload');
+      pre.style.display = 'grid';
+      document.body.classList.add('preloading');
+    }
+    try{
+      await hydrate();
+      if (PRELOAD_ON_REFRESH){
+        await Promise.race([waitForHeroImages(4000), new Promise(res=> setTimeout(res, 600))]);
+        hidePreloader();
+      }
+    }catch(e){ console.error(e); hidePreloader(); }
+  };
+
+  // Controls
+  editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
+  $$('.seg-btn').forEach(b=> b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
+  themeBtn?.addEventListener('click', cycleTheme);
+
+  // Share / Save
+  shareBtn?.addEventListener('click', async ()=>{
+    const url = ($('#heroLink')?.href) || location.href;
+    const title = 'OC-News';
+    try{
+      if (navigator.share) await navigator.share({ title, url });
+      else { await navigator.clipboard.writeText(url); shareBtn.textContent = 'Copied'; setTimeout(()=> shareBtn.textContent='Share', 1200); }
+    }catch{}
+  });
+
+  saveBtn?.addEventListener('click', ()=>{
+    if (!filteredItems.length) return;
+    const top = filteredItems[cycleIdx % filteredItems.length];
+    toggleSave(top);
+    saveBtn.textContent = isSaved(top.link) ? 'Saved' : 'Save';
+  });
+
+  // Search (new sheet)
+  let isSearchOpen = false;
+  function openSearchSheet(){
+    if (isSearchOpen) return;
+    searchSheet.classList.remove('hidden');
+    isSearchOpen = true;
+    setTimeout(()=>{ searchField?.focus(); searchField?.select(); }, 0);
+  }
+  function closeSearchSheet(){
+    if (!isSearchOpen) return;
+    searchSheet.classList.add('hidden');
+    isSearchOpen = false;
+  }
+  searchToggle?.addEventListener('click', ()=>{
+    if (isSearchOpen) closeSearchSheet(); else openSearchSheet();
+  });
+
+  const syncSearch = (val)=>{
+    searchQuery = val || '';
+    if (document.activeElement !== searchField) searchField.value = val;
+    applyFilter();
+  };
+  searchField?.addEventListener('input', (e)=> syncSearch(e.target.value));
+
+  // Shortcuts
+  window.addEventListener('keydown', (e)=>{
+    if (e.key==='Escape'){ if (isSearchOpen){ e.preventDefault(); closeSearchSheet(); } }
+    if (e.key==='/' && !isSearchOpen){
+      e.preventDefault(); openSearchSheet();
+    }
+    if (e.key==='ArrowRight') nextHero();
+    if (e.key==='ArrowLeft')  prevHero();
+    if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
+  });
+
+  // Image fallbacks
+  const handleImgError = (img)=>{
+    const alt1 = img.dataset.alt1;
+    const host = img.dataset.host || '';
+    if (alt1 && img.src !== alt1){ img.src = alt1; img.dataset.alt1=''; return; }
+    const parent = img.parentElement;
+    if (parent){ parent.innerHTML = letterTileHTML((host || 'SRC'), img.className); }
+  };
+  document.addEventListener('error', (e)=>{
+    const t = e.target;
+    if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
+  }, true);
+
+  // Page routing: News / Weather
+  function showNews(){
+    newsMain.classList.remove('hidden');
+    weatherMain.classList.add('hidden');
+    document.body.classList.add('hero-immersive');
+    window.scrollTo({ top:0, behavior:'instant' });
+  }
+  async function showWeather(){
+    newsMain.classList.add('hidden');
+    weatherMain.classList.remove('hidden');
+    document.body.classList.remove('hero-immersive');
+    const last = getWx();
+    if (last?.lat && last?.lon){ ensureWeatherFor(last); }
+    else{
       try{
-        if (last?.lat && last?.lon){ await ensureWeatherFor(last); }
-        else{
-          const pos = await resolveMyLocation();
-          await ensureWeatherFor({ name:'My Location', lat: pos.lat, lon: pos.lon });
-        }
+        const pos = await resolveMyLocation();
+        await ensureWeatherFor({ name:'My Location', lat: pos.lat, lon: pos.lon });
       }catch{
         await ensureWeatherFor({ name:'Vancouver, CA', lat:49.2827, lon:-123.1207 });
       }
-      window.scrollTo({ top:0, behavior:'instant' });
     }
-    weatherBtn?.addEventListener('click', showWeather);
-    weatherBtnMobile?.addEventListener('click', showWeather);
-    newsTab?.addEventListener('click', showNews);
-    weatherTab?.addEventListener('click', showWeather);
+    window.scrollTo({ top:0, behavior:'instant' });
+  }
+  weatherBtn?.addEventListener('click', showWeather);
+  weatherBtnMobile?.addEventListener('click', showWeather);
+  backToNewsBtn?.addEventListener('click', showNews);
 
-    // Start
-    const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndBoot);
-    else updateHeaderAndBoot();
+  // Start
+  const updateHeaderAndBoot = ()=>{ setHeaderVar(); updateImmersiveHeader(); boot(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', updateHeaderAndBoot);
+  else updateHeaderAndBoot();
 
-    // Theme init + auto follow
-    const THEME_INIT = localStorage.getItem('oc_theme') || 'auto';
-    setTheme(THEME_INIT);
-    window.matchMedia && window.matchMedia('(prefers-color-scheme: light)')
-      .addEventListener('change', ()=>{ if ((localStorage.getItem('oc_theme') || 'auto') === 'auto') setTheme('auto') });
-  </script>
+  // Theme init + auto follow
+  const THEME_INIT = localStorage.getItem('oc_theme') || 'auto';
+  setTheme(THEME_INIT);
+  window.matchMedia && window.matchMedia('(prefers-color-scheme: light)')
+    .addEventListener('change', ()=>{ if ((localStorage.getItem('oc_theme') || 'auto') === 'auto') setTheme('auto') });
+
+  // Resize FX canvas on layout
+  new ResizeObserver(()=> resizeWxFx()).observe(document.getElementById('wxNowCard'));
+</script>
 </body>
 </html>
