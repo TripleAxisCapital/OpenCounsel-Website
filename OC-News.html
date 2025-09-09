@@ -4,10 +4,10 @@
   <!--
     OC-News — Apple-clean, pure white/black.
 
-    This pass (per request):
-    • Remove ALL outlines/borders around bubbles, images, date badge, cards, seg control, etc.
-    • Remove side-scrolling headlines (ticker under hero) without breaking features.
-    • Add publisher logo beside the article URL/host (hero meta, vertical cards, horizontal cards, Trending).
+    This pass:
+    • Removed all outlines/borders on bubbles/images/date/etc. (CSS overrides, no features lost)
+    • Removed side-scrolling headlines ticker under hero
+    • Added outlet logo + host beside article URL across hero/cards/trending/Trends
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -78,11 +78,11 @@
       .hero-track{ scroll-behavior:auto!important }
     }
 
-    /* Base components */
+    /* Base surfaces */
     .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
     .chip{ background:var(--chip); border:1px solid var(--chip-border) }
 
-    /* Buttons — no outlines/borders; soft hover fill; custom focus ring only (overridden below per request) */
+    /* Buttons — no outlines/borders; soft hover fill; custom focus ring only */
     .btn{ background:transparent; border:0; }
     .btn:hover{ background:var(--card-hover) }
     .btn:focus{ outline:0 }
@@ -204,39 +204,24 @@
     .search-icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.7 }
     .search-kbd{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--sub) }
 
-    /* ---------------------------
-       HARD OUTLINE/BORDER REMOVAL
-       --------------------------- */
-    /* Hide side-scrolling headlines (ticker) completely */
-    #tickerWrap { display: none !important; }
-    #ticker { animation: none !important; }
-
-    /* Remove borders/outline around chips/bubbles, images, date, cards, seg control, etc */
+    /* ========= NO-OUTLINE SWEEP (per request) ========= */
+    *:focus{ outline: none !important; }
     .card,
     .chip,
-    .seg,
-    .seg button,
     .hero-media,
     .tile-img,
     .wx-pill,
-    img.brand-fb,
-    #todayBadge,
-    .hero-nav button,
-    .link-btn,
-    .btn,
-    select,
-    input,
-    textarea {
-      border: 0 !important;
-      outline: 0 !important;
-    }
-    .link-btn:focus-visible,
-    .btn:focus-visible,
-    select:focus-visible,
-    input:focus-visible,
-    textarea:focus-visible { outline: none !important; box-shadow: none !important; }
-
-    /* Keep hairline separators intact */
+    .date-badge,
+    .brand-fb { border: 0 !important; }
+    /* Kill Tailwind border utilities where present */
+    .border { border-width: 0 !important; }
+    .border-\[var\(--border\)\] { border-color: transparent !important; border-width: 0 !important; }
+    /* Segmented control frame softer, no outline */
+    .seg{ border: 0 !important; }
+    /* Dots: remove pill border for extra minimalism */
+    .hero-dots span{ border: 0 !important; }
+    /* Hide the side-scrolling headline ticker entirely */
+    #tickerWrap{ display: none !important; }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
@@ -359,13 +344,13 @@
             <!-- Slide-specific overlay titles inserted per-slide -->
           </figure>
 
-          <!-- Ticker (hidden by CSS per request) -->
+          <!-- Ticker (removed/hidden by request) -->
           <div class="px-4 sm:px-0">
             <div class="mt-3 sm:mt-4 flex items-center gap-3">
               <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
             </div>
             <div id="tickerWrap" class="mt-4 sm:mt-6 overflow-hidden">
-              <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap animate-ticker will-change-transform"></div>
+              <div id="ticker" class="flex gap-2 min-w-[200%] whitespace-nowrap"></div>
             </div>
           </div>
         </div>
@@ -645,6 +630,16 @@
       const b = brandSources(host);
       return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
+    /* Small inline badge + host link for meta rows */
+    const brandBadgeHTML = (host, size=14)=>{
+      const b = brandSources(host);
+      return `<img src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
+    };
+    const hostLinkHTML = (url)=>{
+      const h = hostname(url) || 'source';
+      return `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:underline decoration-[var(--accent)]/40 underline-offset-4 text-[var(--sub)]">${brandBadgeHTML(h,14)}<span>${h}</span></a>`;
+    };
+
     const letterTileHTML = (label='?', className='')=>`
       <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
         <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
@@ -895,34 +890,24 @@
       render(filteredItems);
     };
 
-    const renderTicker = (items)=>{
-      const chips = (items.slice(0, 24).map(it=>{
-        const src = it.source || hostname(it.link) || 'Source';
-        const safe = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<span class="chip rounded-full px-2.5 py-1 text-[11px] mr-2">${src}: ${safe}</span>`;
-      }).join('')) || '';
-      ticker.innerHTML = chips + chips;
-    };
+    /* Ticker removed; keep function benign */
+    const renderTicker = (_items)=>{ /* intentionally no-op; #tickerWrap is hidden */ };
 
     const buildHeroSlides = (items)=>{
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
         const host = hostname(it.link) || 'news.google.com';
         const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
-        const label= it.source || host;
-        const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
-        const imgHTML = src ? `<img ${high} decoding="async" src="${src}" alt="${label}">` : brandLogoHTML(host, '', label);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-        const logoSmall = brandLogoHTML(host,'inline-block h-3 w-3 rounded-sm mr-1 align-[-2px]','');
-
+        const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
+        const imgHTML = src ? `<img ${high} decoding="async" src="${src}" alt="${host}">` : brandLogoHTML(host, '', host);
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
             ${imgHTML}
             <div class="hero-overlay-text">
               <div class="hero-glass">
-                <div class="k"><span class="inline-flex items-center gap-1">${logoSmall}<span>${label}</span> • ${timeAgo(it.pubDate)}</span></div>
+                <div class="k inline-flex items-center gap-2">${brandBadgeHTML(host,12)}<span>${host}</span> • ${timeAgo(it.pubDate)}</div>
                 <h2>${safeTitle}</h2>
               </div>
             </div>
@@ -951,15 +936,12 @@
           ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" alt="">`
           : brandLogoHTML(host,'w-full h-44 object-contain rounded-md', it.source||host);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const logoSmall = brandLogoHTML(host,'inline-block h-3 w-3 rounded-sm align-[-2px]','');
         return `
           <article class="card p-3 sm:p-4">
             <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${srcHTML}</a>
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-              <a href="${it.link}" target="_blank" rel="noopener" class="inline-flex items-center gap-1">
-                ${logoSmall}<span>${host}</span>
-              </a>
               <span>${timeAgo(it.pubDate)}</span>
+              ${hostLinkHTML(it.link)}
             </div>
             <a href="${it.link}" target="_blank" rel="noopener" class="block">
               <h3 class="text-sm sm:text-base font-semibold leading-snug hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
@@ -981,13 +963,12 @@
       buildHeroSlides(items);
       setHeroMetaFromIndex(cycleIdx);
       updatedAt.textContent = `Updated ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
-      renderTicker(items); // stays harmless; container is hidden by CSS
+      renderTicker(items);
 
       const tiles = items.slice(1, 20);
 
       let html = '';
       tiles.forEach((it, idx)=>{
-        const src = it.source || hostname(it.link) || 'Source';
         const when = timeAgo(it.pubDate);
         const host = hostname(it.link);
         const saved = isSaved(it.link);
@@ -995,12 +976,10 @@
         const imgSrc = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
         const vertical = idx < 2;
 
-        const logoSmall = brandLogoHTML(host,'inline-block h-3 w-3 rounded-sm mr-1 align-[-2px]','');
-
         if (vertical){
           const imgHTML = imgSrc
             ? `<img src="${imgSrc}" alt="" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}">`
-            : brandLogoHTML(host, 'tile-img w-full h-[300px] sm:h-[360px] object-contain', src);
+            : brandLogoHTML(host, 'tile-img w-full h-[300px] sm:h-[360px] object-contain', host);
 
           html += `
             <li class="col-span-1">
@@ -1008,10 +987,7 @@
                 <a href="${it.link}" target="_blank" rel="noopener" class="block">${imgHTML}</a>
                 <div class="p-3 sm:p-4">
                   <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-                    <a href="${it.link}" target="_blank" rel="noopener" class="inline-flex items-center gap-1">
-                      ${logoSmall}<span>${host}</span>
-                    </a>
-                    <span>${when}</span>
+                    ${hostLinkHTML(it.link)}<span>${when}</span>
                   </div>
                   <a href="${it.link}" target="_blank" rel="noopener" class="block">
                     <h3 class="text-base sm:text-lg font-extrabold leading-snug text-balance hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
@@ -1027,17 +1003,14 @@
           // Horizontal full-width card (image on right)
           const imgHTML = imgSrc
             ? `<img src="${imgSrc}" alt="" class="w-full h-full object-cover brand-fb" data-host="${host}">`
-            : brandLogoHTML(host, 'w-full h-full object-contain', src);
+            : brandLogoHTML(host, 'w-full h-full object-contain', host);
 
           html += `
             <li class="col-span-2">
               <article class="card p-3 sm:p-4 flex items-stretch gap-3 sm:gap-4">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-                    <a href="${it.link}" target="_blank" rel="noopener" class="inline-flex items-center gap-1">
-                      ${logoSmall}<span>${host}</span>
-                    </a>
-                    <span>${when}</span>
+                    ${hostLinkHTML(it.link)}<span>${when}</span>
                   </div>
                   <a href="${it.link}" target="_blank" rel="noopener" class="block">
                     <h3 class="text-[17px] sm:text-xl font-extrabold leading-snug text-balance hover:underline decoration-[var(--accent)]/60 underline-offset-4">${safeTitle}</h3>
@@ -1157,20 +1130,16 @@
           const link = art.url || '#';
           const host = hostname(link) || 'google.com';
           const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
-          const img = image ? `<img src="${upscaleImageUrl(image)}" alt="" class="w-full h-40 object-cover rounded-md">`
+          const img = image ? `<img src="${upscaleImageUrl(image)}" alt="" class="w-full h-40 object-cover rounded-md brand-fb">`
                             : brandLogoHTML(host,'w-full h-40 object-contain rounded-md', query);
-          const source = art.source || host || 'Google';
           const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
           const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
-          const logoSmall = brandLogoHTML(host,'inline-block h-3 w-3 rounded-sm align-[-2px]','');
           return `
             <article class="card p-3 sm:p-4">
               <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${img}</a>
               <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
                 ${trafficTag}
-                <a href="${link}" target="_blank" rel="noopener" class="inline-flex items-center gap-1">
-                  ${logoSmall}<span>${host}</span>
-                </a>
+                ${hostLinkHTML(link)}
               </div>
               <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
               <div class="mt-1 text-[11px] text-[var(--sub)]">${query}</div>
