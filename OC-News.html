@@ -2,14 +2,13 @@
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
   <!--
-    OC-News — Apple-clean, pure white cards on slightly grey page.
+    OC-News — Apple-clean, pure white/black.
 
     This pass:
-    • LIGHT THEME: page bg slightly grey (#f2f2f7), cards pure white (#fff)
-    • Removed media-brand logo fallbacks in image slots (hero, tiles, trending)
-    • Added elegant Apple-style "No Image Found" placeholders + runtime fallback
-    • Kept all features (feeds, trends, weather, hero, save, theme, search)
-    • Preserved no-outline styling from prior pass
+    • Cards: pure white in light mode; page background slightly greyer (Apple-like)
+    • No outlines anywhere (kept from prior pass)
+    • Never use outlet logos in large image slots; use Apple-style "No Image Found" placeholder
+    • Image resolver: broader OG/Twitter/JSON-LD/link[rel=image_src] heuristics
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -62,9 +61,9 @@
       --preload-bg:#ffffff; --preload-text:#000000;
     }
     html.light{
-      /* Slightly greyer page bg; pure white surfaces */
-      --bg:#f2f2f7;          /* iOS-like grouped background */
-      --surface:#ffffff;     /* cards stay pure white */
+      /* Page background slightly grey (Apple vibe), cards stay pure white */
+      --bg:#f5f6f8;              /* <— main backdrop */
+      --surface:#ffffff;         /* <— cards */
       --elev:rgba(10,10,15,0.035);
       --border:rgba(5,13,38,0.10);
       --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
@@ -83,7 +82,7 @@
       .hero-track{ scroll-behavior:auto!important }
     }
 
-    /* Base surfaces */
+    /* Base surfaces — pure white cards in light mode */
     .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
     .chip{ background:var(--chip); border:1px solid var(--chip-border) }
 
@@ -209,7 +208,7 @@
     .search-icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:.7 }
     .search-kbd{ position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--sub) }
 
-    /* ========= NO-OUTLINE SWEEP (per request) ========= */
+    /* ========= NO-OUTLINE SWEEP (kept) ========= */
     *:focus{ outline: none !important; }
     .card,
     .chip,
@@ -218,19 +217,29 @@
     .wx-pill,
     .date-badge,
     .brand-fb { border: 0 !important; }
-    /* Kill Tailwind border utilities where present */
     .border { border-width: 0 !important; }
     .border-\[var\(--border\)\] { border-color: transparent !important; border-width: 0 !important; }
-    /* Segmented control frame softer, no outline */
     .seg{ border: 0 !important; }
-    /* Dots: remove pill border for extra minimalism */
     .hero-dots span{ border: 0 !important; }
-    /* Hide the side-scrolling headline ticker entirely */
     #tickerWrap{ display: none !important; }
+    #heroCard{ border: 0 !important; }
+    #heroCard .hero-media{ border: 0 !important; }
 
-    /* >>> Hero card special-case override (wins over mobile #heroCard border) <<< */
-    #heroCard{ border: 0 !important; }            /* removes thin outline under "Updated" */
-    #heroCard .hero-media{ border: 0 !important; }/* ensure media never re-adds a border */
+    /* ===== Apple-style "No Image Found" placeholder ===== */
+    .noimg{
+      width:100%; height:100%;
+      display:grid; place-items:center; text-align:center;
+      border-radius:12px;
+      background: linear-gradient(180deg,#f0f2f5,#e9ecf1);
+      color:#717985;
+      font-weight:600; letter-spacing:.02em;
+      user-select:none;
+    }
+    .noimg > span{ font-size:12px; }
+    .dark .noimg{
+      background:#14161a;
+      color:#a8b0bb;
+    }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
@@ -353,7 +362,7 @@
             <!-- Slide-specific overlay titles inserted per-slide -->
           </figure>
 
-          <!-- Ticker (removed/hidden by request) -->
+          <!-- Ticker (hidden) -->
           <div class="px-4 sm:px-0">
             <div class="mt-3 sm:mt-4 flex items-center gap-3">
               <span id="updatedAt" class="ml-auto text-xs text-[var(--sub)]">—</span>
@@ -649,17 +658,8 @@
       return `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:underline decoration-[var(--accent)]/40 underline-offset-4 text-[var(--sub)]">${brandBadgeHTML(h,14)}<span>${h}</span></a>`;
     };
 
-    /* NEW — Apple-style placeholders (no brand logos in big slots) */
-    const noImageTileHTML = (className='')=>`
-      <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
-        <span class="text-xs sm:text-sm font-semibold text-[var(--sub)]">No Image Found</span>
-      </div>
-    `;
-    const noImageHeroHTML = ()=>`
-      <div class="w-full h-full grid place-items-center bg-[linear-gradient(135deg,rgba(12,12,14,1)_0%,rgba(38,38,46,1)_100%)]">
-        <span class="text-sm sm:text-base font-semibold text-white/85">No Image Found</span>
-      </div>
-    `;
+    /* Apple-style placeholder (never show logos in big slots) */
+    const noImageHTML = (className='')=>`<div class="noimg ${className.replace(/object-\S+/g,'')}" aria-label="No image available"><span>No Image Found</span></div>`;
 
     const letterTileHTML = (label='?', className='')=>`
       <div class="w-full h-full grid place-items-center bg-[var(--surface)] ${className}">
@@ -734,10 +734,16 @@
           'meta[property="og:image"]',
           'meta[name="og:image"]',
           'meta[name="twitter:image:src"]',
-          'meta[name="twitter:image"]'
+          'meta[name="twitter:image"]',
+          'meta[itemprop="image"]'
         ];
         for(const sel of cands){
           const u = tryMeta(sel); if(u) return u;
+        }
+        const linkImg = doc.querySelector('link[rel="image_src"]');
+        if (linkImg){
+          const href = linkImg.getAttribute('href');
+          const u = absolutize(href, baseUrl); if (u) return u;
         }
         const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
         for(const s of scripts){
@@ -749,6 +755,7 @@
               if(Array.isArray(obj)){
                 for(const it of obj){ const inner = collect(it); if(inner) return inner; }
               }else if(typeof obj === 'object'){
+                if(obj.url && typeof obj.url === 'string' && /(\.jpe?g|\.png|\.webp|\.gif)(\?|$)/i.test(obj.url)) return absolutize(obj.url, baseUrl);
                 if(obj.image) return collect(obj.image);
                 if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
                 if(obj.logo) return collect(obj.logo);
@@ -911,8 +918,8 @@
       render(filteredItems);
     };
 
-    /* Ticker removed; keep function benign */
-    const renderTicker = (_items)=>{ /* intentionally no-op; #tickerWrap is hidden */ };
+    /* Ticker kept benign */
+    const renderTicker = (_items)=>{ /* no-op; #tickerWrap hidden */ };
 
     const buildHeroSlides = (items)=>{
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
@@ -921,12 +928,13 @@
         const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
-        const imgHTML = src ? `<img ${high} decoding="async" src="${src}" alt="${host}" class="news-img">`
-                            : noImageHeroHTML();
+        const mediaHTML = src
+          ? `<img ${high} decoding="async" src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`
+          : noImageHTML('');
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
-            ${imgHTML}
+            ${mediaHTML}
             <div class="hero-overlay-text">
               <div class="hero-glass">
                 <div class="k inline-flex items-center gap-2">${brandBadgeHTML(host,12)}<span>${host}</span> • ${timeAgo(it.pubDate)}</div>
@@ -955,8 +963,8 @@
       trendingRail.innerHTML = top.map(it=>{
         const host = hostname(it.link);
         const srcHTML = it.image
-          ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md news-img" data-host="${host}" alt="">`
-          : noImageTileHTML('w-full h-44 rounded-md');
+          ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content" alt="">`
+          : noImageHTML('w-full h-44 rounded-md');
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
           <article class="card p-3 sm:p-4">
@@ -999,13 +1007,13 @@
         const vertical = idx < 2;
 
         if (vertical){
-          const imgHTML = imgSrc
-            ? `<img src="${imgSrc}" alt="" class="tile-img w-full h-[300px] sm:h-[360px] object-cover news-img" data-host="${host}">`
-            : noImageTileHTML('tile-img w-full h-[300px] sm:h-[360px]');
+          const media = imgSrc
+            ? `<img src="${imgSrc}" alt="${safeTitle}" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}" data-kind="content">`
+            : noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
           html += `
             <li class="col-span-1">
               <article class="card overflow-hidden">
-                <a href="${it.link}" target="_blank" rel="noopener" class="block">${imgHTML}</a>
+                <a href="${it.link}" target="_blank" rel="noopener" class="block">${media}</a>
                 <div class="p-3 sm:p-4">
                   <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
                     ${hostLinkHTML(it.link)}<span>${when}</span>
@@ -1022,9 +1030,9 @@
           `;
         } else {
           // Horizontal full-width card (image on right)
-          const imgHTML = imgSrc
-            ? `<img src="${imgSrc}" alt="" class="w-full h-full object-cover news-img" data-host="${host}">`
-            : noImageTileHTML('w-full h-full rounded-xl overflow-hidden');
+          const media = imgSrc
+            ? `<img src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
+            : noImageHTML('w-full h-full');
           html += `
             <li class="col-span-2">
               <article class="card p-3 sm:p-4 flex items-stretch gap-3 sm:gap-4">
@@ -1040,7 +1048,7 @@
                   </div>
                 </div>
                 <a href="${it.link}" target="_blank" rel="noopener" class="shrink-0 w-[44%] sm:w-[300px] aspect-[16/10] rounded-xl overflow-hidden">
-                  ${imgHTML}
+                  ${media}
                 </a>
               </article>
             </li>
@@ -1150,13 +1158,14 @@
           const link = art.url || '#';
           const host = hostname(link) || 'google.com';
           const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
-          const img = image ? `<img src="${upscaleImageUrl(image)}" alt="" class="w-full h-40 object-cover rounded-md news-img">`
-                            : noImageTileHTML('w-full h-40 rounded-md');
+          const media = image
+              ? `<img src="${upscaleImageUrl(image)}" alt="${query}" class="w-full h-40 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content">`
+              : noImageHTML('w-full h-40 rounded-md');
           const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
           const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
           return `
             <article class="card p-3 sm:p-4">
-              <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${img}</a>
+              <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${media}</a>
               <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
                 ${trafficTag}
                 ${hostLinkHTML(link)}
@@ -1451,11 +1460,11 @@
       );
     });
 
-    const ensureWeatherFor = async (place)=>{
-      let placeObj = place;
-      if (!placeObj.name){ placeObj.name = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`; }
-      saveWx(placeObj);
-      await loadWeather(placeObj);
+    const ensureWeatherFor = async (placeLike)=>{
+      let place = placeLike;
+      if (!place.name){ place.name = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`; }
+      saveWx(place);
+      await loadWeather(place);
     };
 
     /* ===== NAV / BOOTSTRAP ===== */
@@ -1643,17 +1652,25 @@
       if ((e.key==='g' || e.key==='G') && e.metaKey){ window.scrollTo({ top:0, behavior:'smooth' }) }
     });
 
-    // Image fallbacks — replace any failed image with Apple-style "No Image Found"
+    // Image fallbacks — never swap big areas for logos; use Apple "No Image Found"
     const handleImgError = (img)=>{
-      const parent = img.parentElement;
-      const inHero = !!img.closest('.hero-slide');
-      if (parent){
-        parent.innerHTML = inHero ? noImageHeroHTML() : noImageTileHTML(parent.className?.includes('aspect') ? 'w-full h-full rounded-xl overflow-hidden' : 'w-full h-full');
+      const kind = img.dataset.kind || 'badge';
+      if (kind !== 'content'){
+        // For tiny host badges: try alt1 favicon, then letter tile
+        const alt1 = img.dataset.alt1;
+        const host = img.dataset.host || '';
+        if (alt1 && img.src !== alt1){ img.src = alt1; img.dataset.alt1=''; return; }
+        const parent = img.parentElement;
+        if (parent){ img.insertAdjacentHTML('afterend', letterTileHTML((host || 'SRC'), img.className)); img.remove(); }
+        return;
       }
+      // Content images (hero/tiles/trending/trends): replace with clean placeholder
+      img.insertAdjacentHTML('afterend', noImageHTML(img.className));
+      img.remove();
     };
     document.addEventListener('error', (e)=>{
       const t = e.target;
-      if (t && t.tagName==='IMG' && (t.classList.contains('news-img') || t.classList.contains('brand-fb'))) handleImgError(t);
+      if (t && t.tagName==='IMG' && t.classList.contains('brand-fb')) handleImgError(t);
     }, true);
 
     // Page routing: News / Weather
