@@ -4,14 +4,11 @@
   <!--
     OC-News — Apple-clean, pure white/black.
 
-    This pass:
-    • Added major feeds (NYTimes, Bloomberg top) across editions
-    • Removed Search UI + magnifier + all search logic (kept Saved filter logic intact)
-    • Weather: ultra-cinematic Apple-style animations (aurora, lens flare, tilt/parallax, reveal)
-    • Hero carousel dots: placed below glass, tight Apple-like pills, always visible
-    • Cards: pure white in light mode; page background slightly greyer (Apple-like)
-    • No outlines anywhere
-    • Image resolver: broader OG/Twitter/JSON-LD/link[rel=image_src] heuristics
+    Perf pass:
+    • Fast-boot: cache-first render + priority feeds, background hydrate rest
+    • Short fetch timeouts + lean proxy order
+    • Cap hero wait, preloader hard deadline, idle heavy tasks
+    • Trends deferred after first paint
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -19,8 +16,10 @@
   <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -75,14 +74,11 @@
       --chip:rgba(255,255,255,0.06);--chip-border:rgba(255,255,255,0.12);
       --card-hover:rgba(255,255,255,0.06);
       --header-h:60px;
-
-      /* Preloader (force Apple-white sheet + black mark) */
       --preload-bg:#ffffff; --preload-text:#000000;
     }
     html.light{
-      /* Page background slightly grey (Apple vibe), cards stay pure white */
-      --bg:#f5f6f8;              /* <— main backdrop */
-      --surface:#ffffff;         /* <— cards */
+      --bg:#f5f6f8;
+      --surface:#ffffff;
       --elev:rgba(10,10,15,0.035);
       --border:rgba(5,13,38,0.10);
       --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
@@ -103,11 +99,9 @@
       #wxNowCard{ transform:none !important }
     }
 
-    /* Base surfaces — pure white cards in light mode */
     .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
     .chip{ background:var(--chip); border:1px solid var(--chip-border) }
 
-    /* Buttons — no outlines/borders; soft hover fill; custom focus ring only */
     .btn{ background:transparent; border:0; }
     .btn:hover{ background:var(--card-hover) }
     .btn:focus{ outline:0 }
@@ -122,7 +116,6 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Loader — Apple-style sheet */
     #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg) }
     body.preloading{ overflow:hidden }
     .preload-wrap{ display:grid; gap:14px; place-items:center; text-align:center; padding:24px; color:var(--preload-text) }
@@ -130,16 +123,13 @@
     @keyframes spin{ to{ transform:rotate(360deg) } }
     .preload-line{ font-weight:800; letter-spacing:-0.015em; font-size:clamp(18px,4.8vw,22px) }
 
-    /* Segmented control */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
     .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; border:0 }
     .seg button.active{ background:var(--card-hover) }
 
-    /* Section lead */
     .section-lead{ font-weight:800; letter-spacing:-0.02em; font-size:clamp(28px,8vw,48px); color:var(--live); }
     .date-badge{ font-weight:600; letter-spacing:.02em; }
 
-    /* Hero */
     .hero-section-container{ padding-block:1.1rem }
     @media (min-width:640px){ .hero-section-container{ padding-block:1.6rem } }
     @media (min-width:1024px){ .hero-section-container{ padding-block:2rem } }
@@ -150,10 +140,8 @@
     .hero-slide a{ position:absolute; inset:0; display:block }
     .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
 
-    /* Remove old global fog */
     .hero-gradient{ display:none !important }
 
-    /* New glass patch behind the text only — lifted up to make room for dots */
     .hero-overlay-text{
       position:absolute; inset-inline:16px; bottom:58px; display:grid; gap:8px; pointer-events:none; z-index:2;
     }
@@ -177,7 +165,6 @@
     .hero-nav button{ pointer-events:auto; border:0; background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
     html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
 
-    /* Apple-minimal dots — placed below the glass patch */
     .hero-dots{
       position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
       display:flex; gap:8px; z-index:3; pointer-events:none;
@@ -192,7 +179,6 @@
     html.light .hero-dots span{ background:rgba(0,0,0,.26) }
     html.light .hero-dots span.active{ background:#000; }
 
-    /* Mobile hero */
     @media (max-width: 639.98px){
       .hero-section-container{ padding-inline:1rem !important; padding-block:1rem !important; }
       #heroCard{ padding:0!important; border:1px solid var(--border)!important; border-radius:var(--radius)!important; box-shadow:var(--oc-soft)!important; }
@@ -202,21 +188,17 @@
       .hero-dots{ bottom:14px }
     }
 
-    /* Header behavior */
     body.hero-immersive header{ position:fixed!important; top:0; left:0; right:0; transform:translateY(-100%); opacity:0; pointer-events:none }
     header{ position:sticky; top:0; z-index:40; background:var(--surface); transition:transform .28s ease, opacity .28s ease }
 
-    /* Generic media helper */
     .tile-img{ width:100%; object-fit:cover; border:1px solid var(--border); border-radius:12px }
 
-    /* Weather — layout */
     .wx-grid { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:10px }
     @media (min-width:640px){ .wx-grid{ grid-template-columns: repeat(4,minmax(0,1fr)); } }
     .wx-pill { border-radius:12px; padding:10px 12px; border:1px solid var(--border); background:var(--surface) }
     .wx-rail { display:flex; gap:8px; overflow:auto; scroll-snap-type:x mandatory; padding-block:4px }
     .wx-rail > div { scroll-snap-align:center; }
 
-    /* Weather — cinematic background & shine */
     #wxNowCard{
       transform-style: preserve-3d;
       transition: transform .35s ease, box-shadow .35s ease;
@@ -244,14 +226,12 @@
       z-index:1; pointer-events:none; opacity:.35;
     }
 
-    /* Weather FX canvas */
     #wxFx{
       position:absolute; inset:0; pointer-events:none; z-index:0;
       mix-blend-mode: screen; opacity:.7;
     }
     html.light #wxFx{ mix-blend-mode: normal; opacity:.6; }
 
-    /* ========= NO-OUTLINE SWEEP ========= */
     *:focus{ outline: none !important; }
     .card,
     .chip,
@@ -268,7 +248,6 @@
     #heroCard{ border: 0 !important; }
     #heroCard .hero-media{ border: 0 !important; }
 
-    /* ===== Apple-style "No Image Found" placeholder ===== */
     .noimg{
       width:100%; height:100%;
       display:grid; place-items:center; text-align:center;
@@ -402,7 +381,6 @@
     <!-- SUB TILES -->
     <section class="relative">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-2">
-        <!-- Two tall vertical cards, then full-width rows -->
         <ul id="newsList" class="grid grid-cols-2 gap-3 sm:gap-4 auto-rows-auto"><!-- Populated by JS --></ul>
       </div>
       <div class="hairline"></div>
@@ -494,14 +472,21 @@
   </main>
 
   <script>
-    /* ===== CONFIG ===== */
+    /* ===== CONFIG (perf-tuned) ===== */
     const DEFAULT_EDITION = 'CA';
     const MAX_ITEMS = 64;
     const CYCLE_TOPS = true;
     const SHOW_IMAGES = true;
-    const HERO_SLIDES = 10;
+    const HERO_SLIDES = 6; // fewer slides -> faster hero init
     const DOT_COUNT = 6;
     const PRELOAD_ON_REFRESH = true;
+
+    // Perf knobs
+    const FAST_FEED_FIRST = 8;          // priority feeds batch
+    const FETCH_TIMEOUT_MS = 1600;      // per-proxy timeout
+    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 min warm cache
+    const INITIAL_IMAGE_IMPROVE_LIMIT = 4; // light pass before idle
+    const MAX_BOOT_MS = 3000;           // hard preloader cutoff
 
     const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
     let sortMode = SORT_MODES.NEWEST;
@@ -596,10 +581,10 @@
       return FEEDS[ed] || FEEDS.GLOBAL;
     };
 
+    // Lean proxy set (fast → fallback), with short per-proxy timeout
     const proxyCandidates = (url) => ([
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`,
-      `https://r.jina.ai/http/https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
     ]);
 
     const BRAND_HINTS = {
@@ -689,7 +674,6 @@
       return `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 hover:underline decoration-[var(--accent)]/40 underline-offset-4 text-[var(--sub)]">${brandBadgeHTML(h,14)}<span>${h}</span></a>`;
     };
 
-    /* Apple-style placeholder (never show logos in big slots) */
     const noImageHTML = (className='')=>`<div class="noimg ${className.replace(/object-\S+/g,'')}" aria-label="No image available"><span>No Image Found</span></div>`;
 
     const letterTileHTML = (label='?', className='')=>`
@@ -740,14 +724,25 @@
       }
     };
 
+    const withTimeout = (p, ms) => {
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort('timeout'), ms);
+      return p(ctrl.signal).finally(()=>clearTimeout(t));
+    };
+
     const fetchWithProxies = async (url)=>{
+      const tryFetch = async (proxyUrl, signal) => {
+        const res = await fetch(proxyUrl, { cache: 'no-store', signal });
+        if(!res.ok) throw new Error('bad status');
+        const text = await res.text();
+        if(!text || text.length < 40) throw new Error('short');
+        return text;
+      };
       for (const prox of proxyCandidates(url)){
         try{
-          const res = await fetch(prox, { cache: 'no-store' });
-          if(!res.ok) continue;
-          const text = await res.text();
-          if(text && text.length > 40) return text;
-        }catch(_){ }
+          const txt = await withTimeout((signal)=>tryFetch(prox, signal), FETCH_TIMEOUT_MS);
+          return txt;
+        }catch(_){ /* next proxy */ }
       }
       throw new Error('All proxies failed for ' + url);
     };
@@ -827,6 +822,7 @@
 
     const improveImagesFor = async (items, limit=12)=>{
       const targets = items.filter(it=>!it.image).slice(0, limit);
+      if(!targets.length) return;
       let updated = false;
       await Promise.all(targets.map(async (it)=>{
         const best = await resolveArticleImage(it.link);
@@ -835,21 +831,30 @@
       if(updated){ applyFilter(); }
     };
 
-    const loadFeeds = async (editionKey)=>{
-      const feeds = feedsFor(editionKey);
-      const all = [];
-      await Promise.allSettled(
-        feeds.map(async (f)=>{
-          try{
-            const text = await fetchWithProxies(f);
-            const items = parseRSS(text);
-            all.push(...items);
-          }catch(_){ }
-        })
-      );
-      const seen = new Map(); // normTitle -> { item, count }
+    // Cache helpers
+    const CACHE_KEY = (ed)=> `oc_news_cache_${ed}`;
+    const loadCache = (ed)=>{
+      try{
+        const raw = localStorage.getItem(CACHE_KEY(ed));
+        if(!raw) return null;
+        const { t, items } = JSON.parse(raw);
+        if (!t || !Array.isArray(items)) return null;
+        if ((Date.now() - t) > CACHE_TTL_MS) return null;
+        // revive dates
+        items.forEach(it=>{ if (it.pubDate && !(it.pubDate instanceof Date)) it.pubDate = new Date(it.pubDate); });
+        return items;
+      }catch{ return null; }
+    };
+    const saveCache = (ed, items)=>{
+      try{
+        localStorage.setItem(CACHE_KEY(ed), JSON.stringify({ t: Date.now(), items: items.slice(0, MAX_ITEMS) }));
+      }catch{}
+    };
+
+    const dedupeAndScore = (all)=>{
+      const seen = new Map();
       for(const it of all){
-        const key = normalizeTitle(it.title);
+        const key = normalizeTitle(it.title||'');
         if(!key) continue;
         const prev = seen.get(key);
         if(!prev){ seen.set(key, { item: it, count: 1 }); }
@@ -858,15 +863,32 @@
           prev.count++;
         }
       }
-      let uniq = Array.from(seen.values()).map(({item, count})=> ({...item, trendCount: count}));
       const now = Date.now();
-      uniq.forEach(u=>{
+      let uniq = Array.from(seen.values()).map(({item, count})=>{
+        const u = { ...item, trendCount: count };
         const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
         u._score = (u.trendCount||1) * (1/ageMin);
         if (u.image) u.image = upscaleImageUrl(u.image);
+        return u;
       });
       uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
       return uniq.slice(0, MAX_ITEMS);
+    };
+
+    const loadFeeds = async (editionKey, fast=false)=>{
+      const feeds = feedsFor(editionKey);
+      const batch = fast ? feeds.slice(0, Math.min(FAST_FEED_FIRST, feeds.length)) : feeds;
+      const all = [];
+      await Promise.allSettled(
+        batch.map(async (f)=>{
+          try{
+            const text = await fetchWithProxies(f);
+            const items = parseRSS(text);
+            all.push(...items);
+          }catch(_){ /* ignore slow/fail */ }
+        })
+      );
+      return dedupeAndScore(all);
     };
 
     /* ===== BOOKMARKS ===== */
@@ -1041,7 +1063,6 @@
             </li>
           `;
         } else {
-          // Horizontal full-width card (image on right)
           const media = imgSrc
             ? `<img src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
             : noImageHTML('w-full h-full');
@@ -1078,8 +1099,11 @@
       });
 
       renderTrending(items);
-      improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
-      improveImagesFor(items.slice(HERO_SLIDES), 18);
+
+      // Light image improvement up-front, heavier pass when idle
+      improveImagesFor(items.slice(0, HERO_SLIDES), INITIAL_IMAGE_IMPROVE_LIMIT).then(()=>{});
+      const idleImprove = ()=> improveImagesFor(items.slice(HERO_SLIDES), 18);
+      (window.requestIdleCallback ? requestIdleCallback(idleImprove) : setTimeout(idleImprove, 1200));
     };
     // ---------- END tile layout ----------
 
@@ -1103,7 +1127,7 @@
       setTheme(next);
     };
 
-    /* ===== GOOGLE TRENDS (fixed) ===== */
+    /* ===== GOOGLE TRENDS (unchanged, invoked after paint) ===== */
     const tzMinutes = -new Date().getTimezoneOffset();
     const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
 
@@ -1198,7 +1222,7 @@
       }
     };
 
-    /* ===== WEATHER ===== */
+    /* ===== WEATHER (unchanged features) ===== */
     const wxQuery = $('#wxQuery');
     const wxMyLocation = $('#wxMyLocation');
     const wxMeta = $('#wxMeta');
@@ -1263,7 +1287,7 @@
       return res.json();
     };
 
-    // --- Apple-like Weather FX (canvas + tilt + reveals) ---
+    // Weather FX (unchanged)
     let wxFx = { canvas:null, ctx:null, raf:0, kind:null, particles:[] };
     const ensureWxCanvas = ()=>{
       const card = document.getElementById('wxNowCard');
@@ -1336,7 +1360,6 @@
         g.addColorStop(1,'rgba(255,215,120,0.0)');
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx,cy,r*2.2,0,Math.PI*2); ctx.fill();
 
-        // Rays
         ctx.save();
         ctx.translate(cx,cy); ctx.rotate(t/180*Math.PI);
         ctx.strokeStyle = 'rgba(255,230,150,0.9)'; ctx.lineWidth = 2;
@@ -1346,7 +1369,6 @@
         }
         ctx.restore();
 
-        // Subtle bokeh
         ctx.globalAlpha = 0.08;
         for (let i=0;i<10;i++){
           const bx = (i*83 + t*1.7) % (w+200) - 100;
@@ -1414,7 +1436,6 @@
     };
     window.addEventListener('resize', ()=>{ if(wxFx.canvas){ ensureWxCanvas(); if (wxFx.kind) renderWxFXForCode(wxFx.kind); } });
 
-    // Tilt/parallax on weather card
     let tiltBound = false;
     function bindWxTilt(){
       if (tiltBound) return; tiltBound = true;
@@ -1422,8 +1443,8 @@
       card.addEventListener('pointermove', (e)=>{
         const r = card.getBoundingClientRect();
         const cx = r.left + r.width/2, cy = r.top + r.height/2;
-        const dx = (e.clientX - cx)/r.width;   // -0.5..0.5
-        const dy = (e.clientY - cy)/r.height;  // -0.5..0.5
+        const dx = (e.clientX - cx)/r.width;
+        const dy = (e.clientY - cy)/r.height;
         const rx = (-dy * 4).toFixed(2);
         const ry = ( dx * 6).toFixed(2);
         card.style.transform = `perspective(900px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
@@ -1435,7 +1456,6 @@
       });
     }
 
-    // Reveal helper
     function revealWxBits(){
       ['#wxPlace','#wxDesc','#wxTemp','#wxFeels'].forEach(sel=>{
         const el = document.querySelector(sel); if (el){ el.style.willChange='transform,opacity'; el.classList.add('animate-reveal-up'); }
@@ -1520,7 +1540,7 @@
       await loadWeather(place);
     };
 
-    /* ===== NAV / BOOTSTRAP ===== */
+    /* ===== NAV / BOOTSTRAP (fast-boot) ===== */
     const headerEl = document.querySelector('header');
     const setHeaderVar = ()=> document.documentElement.style.setProperty('--header-h', (headerEl?.offsetHeight || 60)+'px');
     setHeaderVar();
@@ -1528,7 +1548,6 @@
 
     const setMobileEditionUI = ()=> { $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition)); };
 
-    // Slides
     const slideTo = (idx)=>{
       const slides = Array.from(heroTrack.children);
       if(!slides.length) return;
@@ -1559,7 +1578,6 @@
     $('#prevTopBtn').addEventListener('click', prevHero);
     $('#nextTopBtn').addEventListener('click', nextHero);
 
-    // Header immersive behavior
     let heroIsVisible = true;
     const heroObserver = new IntersectionObserver((entries)=>{ heroIsVisible = entries[0]?.isIntersecting ?? true }, { root:null, threshold:0.2 });
     heroObserver.observe(document.getElementById('heroCard'));
@@ -1585,8 +1603,8 @@
     }, { root:null, threshold:0.6 });
     heroInViewObserver.observe(document.getElementById('heroCard'));
 
-    const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
-      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
+    const waitForHeroImages = (timeoutMs = 1200)=> new Promise(resolve=>{
+      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 2);
       if (!imgs.length) return resolve();
       let done = 0, finished = false;
       const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
@@ -1625,24 +1643,58 @@
       return setInterval(tick, 2100);
     }
 
-    const hydrate = async ()=>{
-      updatedAt.textContent = 'Updating…';
-      const items = await loadFeeds(currentEdition);
-      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
-      cycleIdx = 0;
-      applyFilter();
-      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-      await renderGoogleTrends();
-    };
-
     const hidePreloader = ()=>{
       const pre = document.getElementById('preload');
       if (pre) pre.style.display = 'none';
       document.body.classList.remove('preloading');
     };
 
+    const hydrate = async ()=>{
+      updatedAt.textContent = 'Updating…';
+
+      // 1) Instant cache render if warm
+      const cached = loadCache(currentEdition);
+      if (cached && cached.length){
+        cacheItems = cached;
+        applyFilter();
+      }
+
+      // 2) Fast network batch (priority feeds)
+      let items = [];
+      try{
+        items = await loadFeeds(currentEdition, true);
+      }catch(e){ console.error(e); }
+      if (!items.length && !cached){
+        items = [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+      }
+      cacheItems = items;
+      applyFilter();
+
+      if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
+
+      // 3) Progressive full hydrate in background; save cache if improved
+      (async (edSnapshot)=>{
+        try{
+          const full = await loadFeeds(edSnapshot, false);
+          if (currentEdition !== edSnapshot) return; // user switched editions
+          if (full.length > cacheItems.length){
+            cacheItems = full;
+            saveCache(edSnapshot, cacheItems);
+            applyFilter();
+          } else if (!cached) {
+            saveCache(edSnapshot, cacheItems);
+          }
+        }catch(e){ /* silent */ }
+      })(currentEdition);
+
+      // 4) Defer trends after first paint
+      const deferTrends = ()=> renderGoogleTrends();
+      (window.requestIdleCallback ? requestIdleCallback(deferTrends) : setTimeout(deferTrends, 500));
+    };
+
     const boot = async ()=>{
       let cycleTimerId;
+      const hardCut = setTimeout(hidePreloader, MAX_BOOT_MS); // ensure 3s cutoff
       try{
         currentEdition = DEFAULT_EDITION;
         setMobileEditionUI();
@@ -1651,10 +1703,11 @@
 
         cycleTimerId = preloadCycle();
         await hydrate();
-        await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
+        await Promise.race([waitForHeroImages(1200), new Promise(res=> setTimeout(res, 500))]);
       }catch(e){ console.error(e); }
       finally{
         if (cycleTimerId) clearInterval(cycleTimerId);
+        clearTimeout(hardCut);
         hidePreloader();
         updateImmersiveHeader();
       }
@@ -1671,11 +1724,10 @@
     $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
     themeBtn?.addEventListener('click', cycleTheme);
 
-    // Image fallbacks — never swap big areas for logos; use Apple "No Image Found"
+    // Image fallbacks
     const handleImgError = (img)=>{
       const kind = img.dataset.kind || 'badge';
       if (kind !== 'content'){
-        // For tiny host badges: try alt1 favicon, then letter tile
         const alt1 = img.dataset.alt1;
         const host = img.dataset.host || '';
         if (alt1 && img.src !== alt1){ img.src = alt1; img.dataset.alt1=''; return; }
@@ -1683,7 +1735,6 @@
         if (parent){ img.insertAdjacentHTML('afterend', letterTileHTML((host || 'SRC'), img.className)); img.remove(); }
         return;
       }
-      // Content images (hero/tiles/trending/trends): replace with clean placeholder
       img.insertAdjacentHTML('afterend', noImageHTML(img.className));
       img.remove();
     };
@@ -1734,16 +1785,15 @@
       .addEventListener('change', ()=>{ if ((localStorage.getItem('oc_theme') || 'auto') === 'auto') setTheme('auto') });
 
     /* ====== SIMPLE WEATHER INPUT HANDLERS ====== */
-    wxQuery?.addEventListener('keydown', async (e)=>{
-      if (e.key === 'Enter'){
-        const q = wxQuery.value.trim();
-        if (!q) return;
-        try{
-          const g = await geocode(q);
-          await ensureWeatherFor(g);
-        }catch{ wxMeta.textContent = 'Location not found.'; }
-      }
-    });
+    const wxEnter = async ()=>{
+      const q = wxQuery.value.trim();
+      if (!q) return;
+      try{
+        const g = await geocode(q);
+        await ensureWeatherFor(g);
+      }catch{ wxMeta.textContent = 'Location not found.'; }
+    };
+    wxQuery?.addEventListener('keydown', (e)=>{ if (e.key === 'Enter') wxEnter(); });
     wxMyLocation?.addEventListener('click', async ()=>{
       try{
         const pos = await resolveMyLocation();
