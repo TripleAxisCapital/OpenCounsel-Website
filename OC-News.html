@@ -2,19 +2,15 @@
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
   <!--
-    OC-News — Apple-clean, pure white/black.
+    OC-News — Apple-clean, pure white/black. (Performance pass)
 
-    This pass (speed + header polish):
-    • Removed Google Trends section + code entirely
-    • Header restructured into a 3-column grid (brand • centered editions • actions)
-    • Desktop editions now a centered segmented control; mobile rail remains
-    • Much faster image loading:
-        – Real lazy loader with IntersectionObserver (data-src → src)
-        – Only first hero slide eager/high priority; others lazy/deferred
-        – Aggressive timeouts on feed/proxy fetches
-        – Deferred/limited article image resolution (hero only)
-        – Shorter preloader wait; boot renders ASAP
-    • Kept all existing features (News, Trending, Weather, Theme, Saved)
+    What changed (keeping all features except Google Trends, which is removed):
+    • Header: editions are now centered, evenly spaced, Apple-tight segmented controls (desktop + mobile)
+    • Image speed: strict lazy-loading + async decoding + fetchpriority hints; only hero #1 is eager
+    • Progressive feed loading: render fast from a primary subset, then quietly merge the rest
+    • Image resolver: concurrency-limited + idle-scheduled (no more huge first-paint stalls)
+    • Content-visibility on heavy cards to skip offscreen work
+    • Preconnect to frequent hosts (proxies, logos, weather) for faster handshakes
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -22,8 +18,23 @@
   <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+
+  <!-- Performance hints -->
+  <link rel="preconnect" href="https://r.jina.ai" crossorigin>
+  <link rel="preconnect" href="https://api.allorigins.win" crossorigin>
+  <link rel="preconnect" href="https://logo.clearbit.com" crossorigin>
+  <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+  <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin>
+  <link rel="dns-prefetch" href="https://r.jina.ai">
+  <link rel="dns-prefetch" href="https://api.allorigins.win">
+  <link rel="dns-prefetch" href="https://logo.clearbit.com">
+  <link rel="dns-prefetch" href="https://api.open-meteo.com">
+  <link rel="dns-prefetch" href="https://geocoding-api.open-meteo.com">
+
+  <!-- Fonts (kept) -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -83,7 +94,6 @@
       --preload-bg:#ffffff; --preload-text:#000000;
     }
     html.light{
-      /* Page background slightly grey (Apple vibe), cards stay pure white */
       --bg:#f5f6f8;
       --surface:#ffffff;
       --elev:rgba(10,10,15,0.035);
@@ -107,7 +117,15 @@
     }
 
     /* Base surfaces — pure white cards in light mode */
-    .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
+    .card{
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+
+      /* skip work offscreen for speed */
+      content-visibility:auto;
+      contain-intrinsic-size: 600px;
+    }
     .chip{ background:var(--chip); border:1px solid var(--chip-border) }
 
     /* Buttons — no outlines/borders; soft hover fill; custom focus ring only */
@@ -135,7 +153,7 @@
 
     /* Segmented control */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
-    .seg button{ padding:6px 10px; border-radius:999px; font-size:12px; line-height:1; border:0 }
+    .seg button{ padding:7px 12px; border-radius:999px; font-size:12px; line-height:1; border:0 }
     .seg button.active{ background:var(--card-hover) }
 
     /* Section lead */
@@ -309,11 +327,10 @@
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
 
-  <!-- Header -->
+  <!-- ================= HEADER (editions centered) ================= -->
   <header class="border-b border-[var(--border)]">
-    <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
-      <!-- 3-column grid: brand | centered editions | actions -->
-      <div class="grid grid-cols-3 items-center min-w-0">
+    <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
+      <div class="grid items-center grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 min-w-0">
         <!-- Brand (left) -->
         <div class="flex items-center gap-2 min-w-0">
           <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
@@ -323,37 +340,19 @@
         </div>
 
         <!-- Editions (center) -->
-        <div class="justify-self-center min-w-0">
-          <!-- Desktop centered segmented control -->
-          <div class="hidden sm:flex items-center justify-center">
-            <div class="seg flex-nowrap">
-              <button class="seg-btn" data-ed="ALL">All</button>
-              <button class="seg-btn" data-ed="GLOBAL">Global</button>
-              <button class="seg-btn" data-ed="US">US</button>
-              <button class="seg-btn" data-ed="CA">Canada</button>
-              <button class="seg-btn" data-ed="FIN">Financial</button>
-            </div>
-          </div>
-          <!-- Mobile editions rail -->
-          <div class="seg overflow-x-auto no-scrollbar max-w-[70vw] sm:hidden flex-nowrap mx-auto">
+        <nav class="hidden sm:flex items-center justify-center">
+          <div class="seg">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
             <button class="seg-btn" data-ed="US">US</button>
             <button class="seg-btn" data-ed="CA">Canada</button>
             <button class="seg-btn" data-ed="FIN">Financial</button>
           </div>
-          <!-- Keep the select in DOM (hidden) for compatibility -->
-          <select id="editionSelect" class="sr-only absolute -left-[9999px]" aria-hidden="true" tabindex="-1">
-            <option value="ALL">All</option>
-            <option value="CA">Canada</option>
-            <option value="US">United States</option>
-            <option value="GLOBAL">Global Mix</option>
-            <option value="FIN">Financial</option>
-          </select>
-        </div>
+        </nav>
 
         <!-- Actions (right) -->
-        <div class="flex items-center gap-2 sm:gap-3 justify-self-end">
+        <div class="flex items-center gap-1.5 sm:gap-2 justify-end min-w-0">
+          <!-- Weather -->
           <button id="weatherBtn" class="hidden sm:inline-flex link-btn" title="Weather (W)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
             <span class="hidden md:inline">Weather</span>
@@ -361,12 +360,25 @@
           <button id="weatherBtnMobile" class="sm:hidden link-btn shrink-0" title="Weather (W)">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
           </button>
+
+          <!-- Theme -->
           <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
               <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </span>
           </button>
+        </div>
+      </div>
+
+      <!-- Mobile editions rail (centered) -->
+      <div class="sm:hidden mt-2 flex justify-center">
+        <div class="seg overflow-x-auto no-scrollbar px-1">
+          <button class="seg-btn" data-ed="ALL">All</button>
+          <button class="seg-btn" data-ed="GLOBAL">Global</button>
+          <button class="seg-btn" data-ed="US">US</button>
+          <button class="seg-btn" data-ed="CA">Canada</button>
+          <button class="seg-btn" data-ed="FIN">Financial</button>
         </div>
       </div>
     </div>
@@ -418,7 +430,7 @@
       <div class="hairline"></div>
     </section>
 
-    <!-- TRENDING -->
+    <!-- TRENDING (kept) -->
     <section id="trendingSection" class="relative">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
         <div class="flex items-center justify-between gap-3 mb-3">
@@ -496,7 +508,7 @@
     const MAX_ITEMS = 64;
     const CYCLE_TOPS = true;
     const SHOW_IMAGES = true;
-    const HERO_SLIDES = 8;                // slightly fewer for speed
+    const HERO_SLIDES = 10;
     const DOT_COUNT = 6;
     const PRELOAD_ON_REFRESH = true;
 
@@ -593,17 +605,11 @@
       return FEEDS[ed] || FEEDS.GLOBAL;
     };
 
-    // Prefer fast proxies; set per-request timeout
     const proxyCandidates = (url) => ([
       `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-      `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
+      `https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`,
+      `https://r.jina.ai/http/https://r.jina.ai/http/${url.replace(/^https?:\/\//,'')}`
     ]);
-    const fetchWithTimeout = (resource, options = {})=>{
-      const { timeout = 6500, ...rest } = options;
-      const controller = new AbortController();
-      const id = setTimeout(()=> controller.abort(), timeout);
-      return fetch(resource, { ...rest, signal: controller.signal }).finally(()=> clearTimeout(id));
-    };
 
     const BRAND_HINTS = {
       'news.google.com':'https://logo.clearbit.com/google.com',
@@ -681,11 +687,11 @@
     };
     const brandLogoHTML = (host, className = '', alt = '')=>{
       const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+      return `<img loading="lazy" decoding="async" fetchpriority="low" src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
     const brandBadgeHTML = (host, size=14)=>{
       const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
+      return `<img loading="lazy" decoding="async" fetchpriority="low" src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
     };
     const hostLinkHTML = (url)=>{
       const h = hostname(url) || 'source';
@@ -707,21 +713,6 @@
         return url.toString();
       }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
     };
-
-    /* ===== LAZY IMAGE LOADER ===== */
-    const lazyObserver = new IntersectionObserver((entries)=>{
-      for (const entry of entries){
-        if (!entry.isIntersecting) continue;
-        const img = entry.target;
-        const src = img.getAttribute('data-src');
-        if (src){
-          img.src = src;
-          img.removeAttribute('data-src');
-        }
-        lazyObserver.unobserve(img);
-      }
-    }, { rootMargin: '200px 0px', threshold: 0.01 });
-    const hydrateLazyImages = (root=document)=> root.querySelectorAll('img[data-src]').forEach(im=> lazyObserver.observe(im));
 
     /* ===== RSS + IMAGE RESOLUTION ===== */
     const parseRSS = (text)=>{
@@ -761,7 +752,7 @@
     const fetchWithProxies = async (url)=>{
       for (const prox of proxyCandidates(url)){
         try{
-          const res = await fetchWithTimeout(prox, { cache: 'no-store', timeout: 6500 });
+          const res = await fetch(prox, { cache: 'no-store' });
           if(!res.ok) continue;
           const text = await res.text();
           if(text && text.length > 40) return text;
@@ -843,19 +834,37 @@
       }finally{ resolving.delete(url) }
     };
 
-    // Limit "improve images" to hero only (massively faster)
-    const improveImagesFor = async (items, limit=6)=>{
+    // ---- Concurrency-limited, idle-scheduled image improvements ----
+    const MAX_IMG_RESOLVE_CONCURRENCY = 2;
+    const ric = window.requestIdleCallback || (cb=> setTimeout(()=>cb({timeRemaining:()=>50, didTimeout:true}), 1));
+    async function pMapLimit(list, limit, worker){
+      const ret = []; let i = 0; const running = new Set();
+      async function runOne(idx){
+        const p = (async()=> worker(list[idx], idx))().finally(()=> running.delete(p));
+        running.add(p);
+        ret[idx] = await p;
+      }
+      while (i < list.length){
+        while (running.size < limit && i < list.length){ await runOne(i++); }
+        if (running.size >= limit) await Promise.race([...running]);
+      }
+      if (running.size) await Promise.all([...running]);
+      return ret;
+    }
+    const improveImagesFor = async (items, limit=12)=>{
       const targets = items.filter(it=>!it.image).slice(0, limit);
+      if (!targets.length) return;
+      await new Promise(res=> ric(res)); // wait for idle
       let updated = false;
-      await Promise.all(targets.map(async (it)=>{
+      await pMapLimit(targets, MAX_IMG_RESOLVE_CONCURRENCY, async (it)=>{
         const best = await resolveArticleImage(it.link);
         if(best){ it.image = best; updated = true; }
-      }));
+      });
       if(updated){ applyFilter(); }
     };
 
-    const loadFeeds = async (editionKey)=>{
-      const feeds = feedsFor(editionKey);
+    // ---- Progressive feed loading (fast first paint) ----
+    const fetchFeeds = async (feeds)=>{
       const all = [];
       await Promise.allSettled(
         feeds.map(async (f)=>{
@@ -866,8 +875,12 @@
           }catch(_){ }
         })
       );
+      return all;
+    };
+
+    const dedupeScoreSort = (allItems)=>{
       const seen = new Map(); // normTitle -> { item, count }
-      for(const it of all){
+      for(const it of allItems){
         const key = normalizeTitle(it.title);
         if(!key) continue;
         const prev = seen.get(key);
@@ -909,7 +922,6 @@
     const trendingRail = $('#trendingRail');
 
     // Controls
-    const editionSelect = $('#editionSelect');
     const themeBtn = $('#themeBtn');
     const prevTopBtn = $('#prevTopBtn');
     const nextTopBtn = $('#nextTopBtn');
@@ -957,18 +969,14 @@
         const host = hostname(it.link) || 'news.google.com';
         const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-        // First slide: eager + high priority; others: lazy via data-src
-        const imgHTML = src
-          ? (idx === 0
-              ? `<img fetchpriority="high" decoding="async" loading="eager" referrerpolicy="no-referrer" src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`
-              : `<img decoding="async" loading="lazy" referrerpolicy="no-referrer" data-src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`)
+        const priority = idx === 0 ? 'fetchpriority="high" loading="eager" decoding="async" sizes="100vw"' : 'loading="lazy" decoding="async" fetchpriority="low" sizes="100vw"';
+        const mediaHTML = src
+          ? `<img ${priority} src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`
           : noImageHTML('');
-
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
-            ${imgHTML}
+            ${mediaHTML}
             <div class="hero-overlay-text">
               <div class="hero-glass">
                 <div class="k inline-flex items-center gap-2">${brandBadgeHTML(host,12)}<span>${host}</span> • ${timeAgo(it.pubDate)}</div>
@@ -978,8 +986,6 @@
           </div>
         `;
       }).join('');
-      hydrateLazyImages(heroTrack);
-
       const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
       heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
     };
@@ -998,14 +1004,13 @@
       const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
       trendingRail.innerHTML = top.map(it=>{
         const host = hostname(it.link);
-        const src = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
-        const media = src
-          ? `<img decoding="async" loading="lazy" referrerpolicy="no-referrer" data-src="${src}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content" alt="">`
+        const srcHTML = it.image
+          ? `<img loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width:640px) 100vw, 33vw" src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content" alt="">`
           : noImageHTML('w-full h-44 rounded-md');
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
           <article class="card p-3 sm:p-4">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${media}</a>
+            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${srcHTML}</a>
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
               <span>${timeAgo(it.pubDate)}</span>
               ${hostLinkHTML(it.link)}
@@ -1016,7 +1021,6 @@
           </article>
         `;
       }).join('');
-      hydrateLazyImages(trendingRail);
     };
 
     // ---------- Apple-style tile layout ----------
@@ -1046,7 +1050,7 @@
 
         if (vertical){
           const media = imgSrc
-            ? `<img decoding="async" loading="lazy" referrerpolicy="no-referrer" data-src="${imgSrc}" alt="${safeTitle}" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}" data-kind="content">`
+            ? `<img loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width:640px) 100vw, 50vw" src="${imgSrc}" alt="${safeTitle}" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}" data-kind="content">`
             : noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
           html += `
             <li class="col-span-1">
@@ -1069,7 +1073,7 @@
         } else {
           // Horizontal full-width card (image on right)
           const media = imgSrc
-            ? `<img decoding="async" loading="lazy" referrerpolicy="no-referrer" data-src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
+            ? `<img loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width:640px) 100vw, 33vw" src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
             : noImageHTML('w-full h-full');
           html += `
             <li class="col-span-2">
@@ -1095,7 +1099,6 @@
       });
 
       newsList.innerHTML = html;
-      hydrateLazyImages(newsList);
 
       $$('.saveBtn').forEach(btn=>{
         btn.addEventListener('click', (e)=>{
@@ -1105,8 +1108,9 @@
       });
 
       renderTrending(items);
-      // Only improve hero (deferred) to avoid heavy page fetch storms
-      (window.requestIdleCallback || window.setTimeout)(()=> improveImagesFor(items.slice(0, HERO_SLIDES), Math.min(HERO_SLIDES, 6)), 400);
+      // Improve only what matters first, then the rest when idle
+      improveImagesFor(items.slice(0, Math.min(HERO_SLIDES, 8)), 8).then(()=>{});
+      ric(()=> improveImagesFor(items.slice(HERO_SLIDES), 12));
     };
     // ---------- END tile layout ----------
 
@@ -1445,11 +1449,11 @@
       );
     });
 
-    const ensureWeatherFor = async (placeLike)=>{
-      let place = placeLike;
-      if (!place.name){ place.name = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`; }
-      saveWx(place);
-      await loadWeather(place);
+    const ensureWeatherFor = async (place)=>{
+      let p = place;
+      if (!p.name){ p.name = `${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}`; }
+      saveWx(p);
+      await loadWeather(p);
     };
 
     /* ===== NAV / BOOTSTRAP ===== */
@@ -1458,11 +1462,7 @@
     setHeaderVar();
     window.addEventListener('resize', setHeaderVar);
 
-    const setEditionUI = ()=>{
-      $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition));
-      const sel = document.getElementById('editionSelect');
-      if (sel) sel.value = currentEdition;
-    };
+    const setMobileEditionUI = ()=> { $$('.seg-btn').forEach(b=> b.classList.toggle('active', b.dataset.ed === currentEdition)); };
 
     // Slides
     const slideTo = (idx)=>{
@@ -1521,19 +1521,21 @@
     }, { root:null, threshold:0.6 });
     heroInViewObserver.observe(document.getElementById('heroCard'));
 
-    // Wait only for first hero image or tiny timeout — faster first paint
-    const waitForHeroImages = (timeoutMs = 3000)=> new Promise(resolve=>{
-      const first = heroTrack.querySelector('img');
-      if (!first) return resolve();
-      let done = false;
-      const finish = ()=>{ if(!done){ done = true; resolve(); } };
-      if (first.complete) finish();
-      else{
-        first.addEventListener('load', finish, { once:true });
-        first.addEventListener('error', finish, { once:true });
-        try{ first.decode?.().then(finish).catch(()=>{}); }catch{}
-      }
-      setTimeout(finish, timeoutMs);
+    const waitForHeroImages = (timeoutMs = 5000)=> new Promise(resolve=>{
+      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 1); // only first hero for speed
+      if (!imgs.length) return resolve();
+      let done = 0, finished = false;
+      const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
+      const onOne = ()=>{ done++; if (done >= imgs.length) finish(); };
+      imgs.forEach(im=>{
+        if (im.complete) onOne();
+        else {
+          im.addEventListener('load', onOne, { once:true });
+          im.addEventListener('error', onOne, { once:true });
+          try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
+        }
+      });
+      setTimeout(finish, Math.min(1200, timeoutMs)); // don't block
     });
 
     // Preloader cycling text
@@ -1559,14 +1561,28 @@
       return setInterval(tick, 2100);
     }
 
+    // Progressive hydrate: fast subset, then merge rest
     const hydrate = async ()=>{
       updatedAt.textContent = 'Updating…';
-      const items = await loadFeeds(currentEdition);
-      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+      const all = feedsFor(currentEdition);
+      const primary = all.slice(0, 8);
+      const rest = all.slice(8);
+
+      const firstBatch = await fetchFeeds(primary);
+      cacheItems = dedupeScoreSort(firstBatch);
       cycleIdx = 0;
       applyFilter();
       if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-      // (Google Trends removed)
+
+      // Quietly fetch and merge the rest when idle
+      ric(async ()=>{
+        try{
+          const more = await fetchFeeds(rest);
+          const merged = dedupeScoreSort(firstBatch.concat(more));
+          cacheItems = merged;
+          applyFilter();
+        }catch(_){}
+      });
     };
 
     const hidePreloader = ()=>{
@@ -1579,13 +1595,11 @@
       let cycleTimerId;
       try{
         currentEdition = DEFAULT_EDITION;
-        setEditionUI();
-        const sel = document.getElementById('editionSelect');
-        if (sel) sel.value = DEFAULT_EDITION;
+        setMobileEditionUI();
 
         cycleTimerId = preloadCycle();
         await hydrate();
-        await Promise.race([waitForHeroImages(3000), new Promise(res=> setTimeout(res, 500))]);
+        await Promise.race([waitForHeroImages(5000), new Promise(res=> setTimeout(res, 700))]);
       }catch(e){ console.error(e); }
       finally{
         if (cycleTimerId) clearInterval(cycleTimerId);
@@ -1600,9 +1614,13 @@
       }catch(e){ console.error(e); hidePreloader(); }
     };
 
-    // Edition controls
-    editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setEditionUI(); refreshAll(); });
-    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; setEditionUI(); refreshAll(); }));
+    // Edition controls (segmented buttons both desktop + mobile)
+    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{
+      currentEdition = b.dataset.ed;
+      setMobileEditionUI();
+      refreshAll();
+    }));
+
     themeBtn?.addEventListener('click', cycleTheme);
 
     // Image fallbacks — never swap big areas for logos; use Apple "No Image Found"
