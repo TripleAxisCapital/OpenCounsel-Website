@@ -2,15 +2,16 @@
 <html lang="en" class="scroll-smooth" data-theme="auto">
 <head>
   <!--
-    OC-News — Apple-clean, pure white/black. (Performance pass)
+    OC-News — Apple-clean, pure white/black.
 
-    What changed (keeping all features except Google Trends, which is removed):
-    • Header: editions are now centered, evenly spaced, Apple-tight segmented controls (desktop + mobile)
-    • Image speed: strict lazy-loading + async decoding + fetchpriority hints; only hero #1 is eager
-    • Progressive feed loading: render fast from a primary subset, then quietly merge the rest
-    • Image resolver: concurrency-limited + idle-scheduled (no more huge first-paint stalls)
-    • Content-visibility on heavy cards to skip offscreen work
-    • Preconnect to frequent hosts (proxies, logos, weather) for faster handshakes
+    This pass:
+    • Added major feeds (NYTimes, Bloomberg top) across editions
+    • Removed Search UI + magnifier + all search logic (kept Saved filter logic intact)
+    • Weather: ultra-cinematic Apple-style animations (aurora, lens flare, tilt/parallax, reveal)
+    • Hero carousel dots: placed below glass, tight Apple-like pills, always visible
+    • Cards: pure white in light mode; page background slightly greyer (Apple-like)
+    • No outlines anywhere
+    • Image resolver: broader OG/Twitter/JSON-LD/link[rel=image_src] heuristics
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -18,23 +19,8 @@
   <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
-
-  <!-- Performance hints -->
-  <link rel="preconnect" href="https://r.jina.ai" crossorigin>
-  <link rel="preconnect" href="https://api.allorigins.win" crossorigin>
-  <link rel="preconnect" href="https://logo.clearbit.com" crossorigin>
-  <link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
-  <link rel="preconnect" href="https://geocoding-api.open-meteo.com" crossorigin>
-  <link rel="dns-prefetch" href="https://r.jina.ai">
-  <link rel="dns-prefetch" href="https://api.allorigins.win">
-  <link rel="dns-prefetch" href="https://logo.clearbit.com">
-  <link rel="dns-prefetch" href="https://api.open-meteo.com">
-  <link rel="dns-prefetch" href="https://geocoding-api.open-meteo.com">
-
-  <!-- Fonts (kept) -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -94,8 +80,9 @@
       --preload-bg:#ffffff; --preload-text:#000000;
     }
     html.light{
-      --bg:#f5f6f8;
-      --surface:#ffffff;
+      /* Page background slightly grey (Apple vibe), cards stay pure white */
+      --bg:#f5f6f8;              /* <— main backdrop */
+      --surface:#ffffff;         /* <— cards */
       --elev:rgba(10,10,15,0.035);
       --border:rgba(5,13,38,0.10);
       --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
@@ -117,15 +104,7 @@
     }
 
     /* Base surfaces — pure white cards in light mode */
-    .card{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-
-      /* skip work offscreen for speed */
-      content-visibility:auto;
-      contain-intrinsic-size: 600px;
-    }
+    .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius) }
     .chip{ background:var(--chip); border:1px solid var(--chip-border) }
 
     /* Buttons — no outlines/borders; soft hover fill; custom focus ring only */
@@ -153,7 +132,7 @@
 
     /* Segmented control */
     .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
-    .seg button{ padding:7px 12px; border-radius:999px; font-size:12px; line-height:1; border:0 }
+    .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; border:0 }
     .seg button.active{ background:var(--card-hover) }
 
     /* Section lead */
@@ -327,32 +306,42 @@
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
 
-  <!-- ================= HEADER (editions centered) ================= -->
+  <!-- Header -->
   <header class="border-b border-[var(--border)]">
     <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
-      <div class="grid items-center grid-cols-[1fr_auto_1fr] gap-2 sm:gap-3 min-w-0">
-        <!-- Brand (left) -->
-        <div class="flex items-center gap-2 min-w-0">
+      <div class="flex items-center gap-2 sm:gap-3 justify-between min-w-0 flex-nowrap">
+        <!-- Brand -->
+        <div class="flex items-center gap-2 min-w-0 shrink-0">
           <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
             <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
           </a>
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Editions (center) -->
-        <nav class="hidden sm:flex items-center justify-center">
-          <div class="seg">
+        <!-- Editions + Actions -->
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
+          <!-- Mobile editions rail -->
+          <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
             <button class="seg-btn" data-ed="US">US</button>
             <button class="seg-btn" data-ed="CA">Canada</button>
             <button class="seg-btn" data-ed="FIN">Financial</button>
           </div>
-        </nav>
 
-        <!-- Actions (right) -->
-        <div class="flex items-center gap-1.5 sm:gap-2 justify-end min-w-0">
-          <!-- Weather -->
+          <!-- Desktop edition select -->
+          <div class="hidden sm:flex items-center gap-2 min-w-0">
+            <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
+            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-0 bg-transparent">
+              <option value="ALL">All</option>
+              <option value="CA">Canada</option>
+              <option value="US">United States</option>
+              <option value="GLOBAL">Global Mix</option>
+              <option value="FIN">Financial</option>
+            </select>
+          </div>
+
+          <!-- Actions: Weather • Theme (Search removed) -->
           <button id="weatherBtn" class="hidden sm:inline-flex link-btn" title="Weather (W)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
             <span class="hidden md:inline">Weather</span>
@@ -368,17 +357,6 @@
               <svg id="moon" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>
             </span>
           </button>
-        </div>
-      </div>
-
-      <!-- Mobile editions rail (centered) -->
-      <div class="sm:hidden mt-2 flex justify-center">
-        <div class="seg overflow-x-auto no-scrollbar px-1">
-          <button class="seg-btn" data-ed="ALL">All</button>
-          <button class="seg-btn" data-ed="GLOBAL">Global</button>
-          <button class="seg-btn" data-ed="US">US</button>
-          <button class="seg-btn" data-ed="CA">Canada</button>
-          <button class="seg-btn" data-ed="FIN">Financial</button>
         </div>
       </div>
     </div>
@@ -430,7 +408,7 @@
       <div class="hairline"></div>
     </section>
 
-    <!-- TRENDING (kept) -->
+    <!-- TRENDING -->
     <section id="trendingSection" class="relative">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:py-8">
         <div class="flex items-center justify-between gap-3 mb-3">
@@ -440,6 +418,19 @@
         <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
       </div>
       <div class="hairline"></div>
+    </section>
+
+    <!-- GOOGLE TRENDS -->
+    <section id="gtSection" class="relative">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
+          <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
+        </div>
+        <div id="gtTopTerm" class="mb-3 text-sm text-[var(--sub)] hidden"></div>
+        <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
+        <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
+      </div>
     </section>
   </main>
 
@@ -687,11 +678,11 @@
     };
     const brandLogoHTML = (host, className = '', alt = '')=>{
       const b = brandSources(host);
-      return `<img loading="lazy" decoding="async" fetchpriority="low" src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
     const brandBadgeHTML = (host, size=14)=>{
       const b = brandSources(host);
-      return `<img loading="lazy" decoding="async" fetchpriority="low" src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
+      return `<img src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
     };
     const hostLinkHTML = (url)=>{
       const h = hostname(url) || 'source';
@@ -834,37 +825,18 @@
       }finally{ resolving.delete(url) }
     };
 
-    // ---- Concurrency-limited, idle-scheduled image improvements ----
-    const MAX_IMG_RESOLVE_CONCURRENCY = 2;
-    const ric = window.requestIdleCallback || (cb=> setTimeout(()=>cb({timeRemaining:()=>50, didTimeout:true}), 1));
-    async function pMapLimit(list, limit, worker){
-      const ret = []; let i = 0; const running = new Set();
-      async function runOne(idx){
-        const p = (async()=> worker(list[idx], idx))().finally(()=> running.delete(p));
-        running.add(p);
-        ret[idx] = await p;
-      }
-      while (i < list.length){
-        while (running.size < limit && i < list.length){ await runOne(i++); }
-        if (running.size >= limit) await Promise.race([...running]);
-      }
-      if (running.size) await Promise.all([...running]);
-      return ret;
-    }
     const improveImagesFor = async (items, limit=12)=>{
       const targets = items.filter(it=>!it.image).slice(0, limit);
-      if (!targets.length) return;
-      await new Promise(res=> ric(res)); // wait for idle
       let updated = false;
-      await pMapLimit(targets, MAX_IMG_RESOLVE_CONCURRENCY, async (it)=>{
+      await Promise.all(targets.map(async (it)=>{
         const best = await resolveArticleImage(it.link);
         if(best){ it.image = best; updated = true; }
-      });
+      }));
       if(updated){ applyFilter(); }
     };
 
-    // ---- Progressive feed loading (fast first paint) ----
-    const fetchFeeds = async (feeds)=>{
+    const loadFeeds = async (editionKey)=>{
+      const feeds = feedsFor(editionKey);
       const all = [];
       await Promise.allSettled(
         feeds.map(async (f)=>{
@@ -875,12 +847,8 @@
           }catch(_){ }
         })
       );
-      return all;
-    };
-
-    const dedupeScoreSort = (allItems)=>{
       const seen = new Map(); // normTitle -> { item, count }
-      for(const it of allItems){
+      for(const it of all){
         const key = normalizeTitle(it.title);
         if(!key) continue;
         const prev = seen.get(key);
@@ -920,8 +888,10 @@
     const newsList  = $('#newsList');
     const ticker    = $('#ticker');
     const trendingRail = $('#trendingRail');
+    const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty'); const gtTopTerm = $('#gtTopTerm');
 
     // Controls
+    const editionSelect = $('#editionSelect');
     const themeBtn = $('#themeBtn');
     const prevTopBtn = $('#prevTopBtn');
     const nextTopBtn = $('#nextTopBtn');
@@ -969,9 +939,9 @@
         const host = hostname(it.link) || 'news.google.com';
         const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const priority = idx === 0 ? 'fetchpriority="high" loading="eager" decoding="async" sizes="100vw"' : 'loading="lazy" decoding="async" fetchpriority="low" sizes="100vw"';
+        const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
         const mediaHTML = src
-          ? `<img ${priority} src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`
+          ? `<img ${high} decoding="async" src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`
           : noImageHTML('');
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
@@ -1005,7 +975,7 @@
       trendingRail.innerHTML = top.map(it=>{
         const host = hostname(it.link);
         const srcHTML = it.image
-          ? `<img loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width:640px) 100vw, 33vw" src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content" alt="">`
+          ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content" alt="">`
           : noImageHTML('w-full h-44 rounded-md');
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         return `
@@ -1050,7 +1020,7 @@
 
         if (vertical){
           const media = imgSrc
-            ? `<img loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width:640px) 100vw, 50vw" src="${imgSrc}" alt="${safeTitle}" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}" data-kind="content">`
+            ? `<img src="${imgSrc}" alt="${safeTitle}" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}" data-kind="content">`
             : noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
           html += `
             <li class="col-span-1">
@@ -1073,7 +1043,7 @@
         } else {
           // Horizontal full-width card (image on right)
           const media = imgSrc
-            ? `<img loading="lazy" decoding="async" fetchpriority="low" sizes="(max-width:640px) 100vw, 33vw" src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
+            ? `<img src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
             : noImageHTML('w-full h-full');
           html += `
             <li class="col-span-2">
@@ -1108,9 +1078,8 @@
       });
 
       renderTrending(items);
-      // Improve only what matters first, then the rest when idle
-      improveImagesFor(items.slice(0, Math.min(HERO_SLIDES, 8)), 8).then(()=>{});
-      ric(()=> improveImagesFor(items.slice(HERO_SLIDES), 12));
+      improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
+      improveImagesFor(items.slice(HERO_SLIDES), 18);
     };
     // ---------- END tile layout ----------
 
@@ -1132,6 +1101,101 @@
       const cur = localStorage.getItem(THEME_KEY) || 'auto';
       const next = cur === 'auto' ? 'dark' : (cur === 'dark' ? 'light' : 'auto');
       setTheme(next);
+    };
+
+    /* ===== GOOGLE TRENDS (fixed) ===== */
+    const tzMinutes = -new Date().getTimezoneOffset();
+    const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
+
+    const fetchGoogleTrendsDailyAPI = async (geo)=>{
+      const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
+      const raw = await fetchWithProxies(url);
+      const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
+      return JSON.parse(jsonText);
+    };
+    const fetchGoogleTrendsDailyHTMLFallback = async (geo)=>{
+      const url = `https://trends.google.com/trendingsearches/daily?geo=${geo}`;
+      const html = await fetchWithProxies(url);
+      const m = html.match(/"trendingSearchesDays"\s*:\s*(\[[\s\S]*?\])\s*,\s*"/);
+      if (!m) throw new Error('Trends HTML structure not found');
+      const days = JSON.parse(m[1]);
+      return { default: { trendingSearchesDays: days } };
+    };
+    const fetchGoogleTrendsDailyRSS = async (geo)=>{
+      const url = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`;
+      const text = await fetchWithProxies(url);
+      const dom = new DOMParser().parseFromString(text, 'text/xml');
+      const items = Array.from(dom.querySelectorAll('item')).slice(0, 10).map(it=>{
+        const title = it.querySelector('title')?.textContent || 'Trending';
+        const link = it.querySelector('link')?.textContent || '#';
+        return { title: { query: title }, formattedTraffic: '', articles: [{ title, url: link, source: hostname(link), image: '' }] };
+      });
+      const today = { date: new Date().toISOString().slice(0,10).replace(/-/g,''), formattedDate: new Date().toLocaleDateString(), trendingSearches: items };
+      return { default: { trendingSearchesDays: [today] } };
+    };
+
+    const fetchGoogleTrendsDaily = async (geo)=>{
+      try{ return await fetchGoogleTrendsDailyAPI(geo); }
+      catch(_){ try{ return await fetchGoogleTrendsDailyHTMLFallback(geo); }
+      catch(_2){ return await fetchGoogleTrendsDailyRSS(geo); } }
+    };
+
+    const parseTraffic = (s)=>{
+      if(!s) return 0;
+      const m = String(s).replace(/[+,]/g,'').trim().match(/([\d.]+)\s*([KMB])?/i);
+      if(!m) return 0;
+      const n = parseFloat(m[1]);
+      const unit = (m[2]||'').toUpperCase();
+      if (unit==='K') return n*1e3;
+      if (unit==='M') return n*1e6;
+      if (unit==='B') return n*1e9;
+      return n||0;
+    };
+
+    const renderGoogleTrends = async ()=>{
+      try{
+        const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
+        const day = data?.default?.trendingSearchesDays?.[0];
+        if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
+        gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
+
+        const sorted = day.trendingSearches.slice().sort((a,b)=> parseTraffic(b.formattedTraffic)-parseTraffic(a.formattedTraffic));
+        const topTerm = sorted[0]?.title?.query || day.trendingSearches[0]?.title?.query || '';
+        if (topTerm){ gtTopTerm.classList.remove('hidden'); gtTopTerm.textContent = `Most searched today: “${topTerm}”`; }
+
+        const cards = day.trendingSearches.slice(0, 9).map(ts=>{
+          const query = ts.title?.query || 'Trending';
+          const traffic = ts.formattedTraffic || '';
+          const art = (ts.articles||[])[0] || {};
+          const link = art.url || '#';
+          const host = hostname(link) || 'google.com';
+          const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
+          const media = image
+              ? `<img src="${upscaleImageUrl(image)}" alt="${query}" class="w-full h-40 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content">`
+              : noImageHTML('w-full h-40 rounded-md');
+          const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
+          return `
+            <article class="card p-3 sm:p-4">
+              <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${media}</a>
+              <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
+                ${trafficTag}
+                ${hostLinkHTML(link)}
+              </div>
+              <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
+              <div class="mt-1 text-[11px] text-[var(--sub)]">${query}</div>
+            </article>
+          `;
+        }).join('');
+        gtGrid.innerHTML = cards;
+        gtEmpty.classList.add('hidden');
+      }catch(err){
+        console.error('Trends error:', err);
+        gtGrid.innerHTML = '';
+        gtMeta.textContent = '—';
+        gtTopTerm.classList.add('hidden');
+        gtEmpty.classList.remove('hidden');
+      }
     };
 
     /* ===== WEATHER ===== */
@@ -1449,11 +1513,11 @@
       );
     });
 
-    const ensureWeatherFor = async (place)=>{
-      let p = place;
-      if (!p.name){ p.name = `${p.lat.toFixed(3)}, ${p.lon.toFixed(3)}`; }
-      saveWx(p);
-      await loadWeather(p);
+    const ensureWeatherFor = async (placeLike)=>{
+      let place = placeLike;
+      if (!place.name){ place.name = `${place.lat.toFixed(3)}, ${place.lon.toFixed(3)}`; }
+      saveWx(place);
+      await loadWeather(place);
     };
 
     /* ===== NAV / BOOTSTRAP ===== */
@@ -1521,8 +1585,8 @@
     }, { root:null, threshold:0.6 });
     heroInViewObserver.observe(document.getElementById('heroCard'));
 
-    const waitForHeroImages = (timeoutMs = 5000)=> new Promise(resolve=>{
-      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 1); // only first hero for speed
+    const waitForHeroImages = (timeoutMs = 6000)=> new Promise(resolve=>{
+      const imgs = Array.from(heroTrack.querySelectorAll('img')).slice(0, 3);
       if (!imgs.length) return resolve();
       let done = 0, finished = false;
       const finish = ()=>{ if(!finished){ finished = true; resolve(); } };
@@ -1535,7 +1599,7 @@
           try{ im.decode?.().then(onOne).catch(()=>{}); }catch{}
         }
       });
-      setTimeout(finish, Math.min(1200, timeoutMs)); // don't block
+      setTimeout(finish, timeoutMs);
     });
 
     // Preloader cycling text
@@ -1561,28 +1625,14 @@
       return setInterval(tick, 2100);
     }
 
-    // Progressive hydrate: fast subset, then merge rest
     const hydrate = async ()=>{
       updatedAt.textContent = 'Updating…';
-      const all = feedsFor(currentEdition);
-      const primary = all.slice(0, 8);
-      const rest = all.slice(8);
-
-      const firstBatch = await fetchFeeds(primary);
-      cacheItems = dedupeScoreSort(firstBatch);
+      const items = await loadFeeds(currentEdition);
+      cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
       cycleIdx = 0;
       applyFilter();
       if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-
-      // Quietly fetch and merge the rest when idle
-      ric(async ()=>{
-        try{
-          const more = await fetchFeeds(rest);
-          const merged = dedupeScoreSort(firstBatch.concat(more));
-          cacheItems = merged;
-          applyFilter();
-        }catch(_){}
-      });
+      await renderGoogleTrends();
     };
 
     const hidePreloader = ()=>{
@@ -1596,10 +1646,12 @@
       try{
         currentEdition = DEFAULT_EDITION;
         setMobileEditionUI();
+        const sel = document.getElementById('editionSelect');
+        if (sel) sel.value = DEFAULT_EDITION;
 
         cycleTimerId = preloadCycle();
         await hydrate();
-        await Promise.race([waitForHeroImages(5000), new Promise(res=> setTimeout(res, 700))]);
+        await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
       }catch(e){ console.error(e); }
       finally{
         if (cycleTimerId) clearInterval(cycleTimerId);
@@ -1614,13 +1666,9 @@
       }catch(e){ console.error(e); hidePreloader(); }
     };
 
-    // Edition controls (segmented buttons both desktop + mobile)
-    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{
-      currentEdition = b.dataset.ed;
-      setMobileEditionUI();
-      refreshAll();
-    }));
-
+    // Controls
+    editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
+    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
     themeBtn?.addEventListener('click', cycleTheme);
 
     // Image fallbacks — never swap big areas for logos; use Apple "No Image Found"
@@ -1635,7 +1683,7 @@
         if (parent){ img.insertAdjacentHTML('afterend', letterTileHTML((host || 'SRC'), img.className)); img.remove(); }
         return;
       }
-      // Content images (hero/tiles/trending): replace with clean placeholder
+      // Content images (hero/tiles/trending/trends): replace with clean placeholder
       img.insertAdjacentHTML('afterend', noImageHTML(img.className));
       img.remove();
     };
