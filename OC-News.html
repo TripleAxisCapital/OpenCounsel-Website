@@ -4,14 +4,15 @@
   <!--
     OC-News — Apple-clean, pure white/black.
 
-    This pass:
-    • Added major feeds (NYTimes, Bloomberg top) across editions
-    • Removed Search UI + magnifier + all search logic (kept Saved filter logic intact)
-    • Weather: ultra-cinematic Apple-style animations (aurora, lens flare, tilt/parallax, reveal)
-    • Hero carousel dots: placed below glass, tight Apple-like pills, always visible
-    • Cards: pure white in light mode; page background slightly greyer (Apple-like)
-    • No outlines anywhere
-    • Image resolver: broader OG/Twitter/JSON-LD/link[rel=image_src] heuristics
+    This pass (perf + polish):
+    • Removed Google Trends section + all related logic
+    • Apple-style centered Editions segmented control (desktop & mobile) with perfect spacing
+    • Image pipeline overhaul for speed:
+        - Responsive proxy (wsrv.nl) → modern WebP, smart widths (srcset/sizes)
+        - Lazy loading via IntersectionObserver (zero-jank, content-visibility)
+        - Priority for first hero image only (LCP)
+    • Content-visibility for offscreen cards (CLS-safe)
+    • Kept all existing features: feeds, hero, trending, saves, weather (with cinematic FX), theme, preloader
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -19,8 +20,19 @@
   <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Preconnects (feeds + image proxy) -->
+  <link rel="preconnect" href="https://r.jina.ai" crossorigin>
+  <link rel="preconnect" href="https://api.allorigins.win" crossorigin>
+  <link rel="preconnect" href="https://wsrv.nl" crossorigin>
+  <link rel="dns-prefetch" href="//wsrv.nl">
+  <link rel="dns-prefetch" href="//r.jina.ai">
+  <link rel="dns-prefetch" href="//api.allorigins.win">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -65,6 +77,7 @@
       }
     }
   </script>
+
   <style>
     :root{
       --logo-size:34px;--logo-size-lg:40px;
@@ -122,7 +135,7 @@
     @media (min-width:640px){ .logo-img{ height:var(--logo-size-lg) } }
     .dark .logo-img{ filter:invert(1) brightness(1.08) }
 
-    /* Loader — Apple-style sheet */
+    /* Preloader — Apple sheet */
     #preload{ position:fixed; inset:0; z-index:70; display:grid; place-items:center; background:var(--preload-bg) }
     body.preloading{ overflow:hidden }
     .preload-wrap{ display:grid; gap:14px; place-items:center; text-align:center; padding:24px; color:var(--preload-text) }
@@ -130,10 +143,11 @@
     @keyframes spin{ to{ transform:rotate(360deg) } }
     .preload-line{ font-weight:800; letter-spacing:-0.015em; font-size:clamp(18px,4.8vw,22px) }
 
-    /* Segmented control */
-    .seg{ display:inline-flex; border:1px solid var(--border); border-radius:999px; padding:2px; background:var(--surface); white-space:nowrap }
-    .seg button{ padding:5px 8px; border-radius:999px; font-size:11px; line-height:1; border:0 }
+    /* Segmented control — centered & spaced like Apple */
+    .seg{ display:inline-flex; align-items:center; border:1px solid var(--border); border-radius:999px; padding:3px; background:var(--surface); white-space:nowrap; gap:2px }
+    .seg button{ padding:7px 12px; border-radius:999px; font-size:12px; line-height:1; border:0; font-weight:600; letter-spacing:.01em }
     .seg button.active{ background:var(--card-hover) }
+    @media (min-width:640px){ .seg button{ padding:8px 14px; font-size:12px } }
 
     /* Section lead */
     .section-lead{ font-weight:800; letter-spacing:-0.02em; font-size:clamp(28px,8vw,48px); color:var(--live); }
@@ -153,7 +167,7 @@
     /* Remove old global fog */
     .hero-gradient{ display:none !important }
 
-    /* New glass patch behind the text only — lifted up to make room for dots */
+    /* Glass behind text */
     .hero-overlay-text{
       position:absolute; inset-inline:16px; bottom:58px; display:grid; gap:8px; pointer-events:none; z-index:2;
     }
@@ -177,7 +191,7 @@
     .hero-nav button{ pointer-events:auto; border:0; background:rgba(0,0,0,.28); backdrop-filter:blur(6px); color:#fff; width:40px; height:40px; border-radius:999px; display:grid; place-items:center }
     html.light .hero-nav button{ background:rgba(255,255,255,.65); color:#000 }
 
-    /* Apple-minimal dots — placed below the glass patch */
+    /* Apple-minimal dots */
     .hero-dots{
       position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
       display:flex; gap:8px; z-index:3; pointer-events:none;
@@ -283,6 +297,9 @@
       background:#14161a;
       color:#a8b0bb;
     }
+
+    /* Performance: offscreen layout isolation */
+    .cv-auto{ content-visibility:auto; contain-intrinsic-size: 700px 400px; }
   </style>
 </head>
 <body class="bg-[var(--bg)] text-[var(--text)] antialiased selection:bg-[var(--accent)]/20 selection:text-[var(--text)] preloading hero-immersive">
@@ -306,42 +323,31 @@
     <div class="h-full w-1/3 bg-[var(--accent)] animate-progress"></div>
   </div>
 
-  <!-- Header -->
+  <!-- Header (brand • centered editions • actions) -->
   <header class="border-b border-[var(--border)]">
     <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-2">
-      <div class="flex items-center gap-2 sm:gap-3 justify-between min-w-0 flex-nowrap">
+      <div class="grid grid-cols-[auto_1fr_auto] items-center gap-2 sm:gap-3">
         <!-- Brand -->
-        <div class="flex items-center gap-2 min-w-0 shrink-0">
+        <div class="flex items-center gap-2 min-w-0">
           <a href="index.html" class="shrink-0" aria-label="OpenCounsel Home">
             <img src="logo.svg" alt="OpenCounsel" class="logo-img" />
           </a>
           <div class="hidden sm:block text-sm text-[var(--sub)] truncate">The AI Workspace. Without Limits.</div>
         </div>
 
-        <!-- Editions + Actions -->
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 justify-end">
-          <!-- Mobile editions rail -->
-          <div class="seg overflow-x-auto no-scrollbar max-w-[46vw] sm:hidden flex-nowrap shrink">
+        <!-- Editions — perfectly centered, evenly spaced, Apple-tight -->
+        <nav class="flex justify-center">
+          <div class="seg overflow-x-auto no-scrollbar max-w-full">
             <button class="seg-btn" data-ed="ALL">All</button>
             <button class="seg-btn" data-ed="GLOBAL">Global</button>
             <button class="seg-btn" data-ed="US">US</button>
             <button class="seg-btn" data-ed="CA">Canada</button>
             <button class="seg-btn" data-ed="FIN">Financial</button>
           </div>
+        </nav>
 
-          <!-- Desktop edition select -->
-          <div class="hidden sm:flex items-center gap-2 min-w-0">
-            <span class="hidden md:inline text-sm text-[var(--sub)]">Edition:</span>
-            <select id="editionSelect" class="btn text-sm rounded-lg px-2.5 py-1.5 outline-none focus:ring-0 bg-transparent">
-              <option value="ALL">All</option>
-              <option value="CA">Canada</option>
-              <option value="US">United States</option>
-              <option value="GLOBAL">Global Mix</option>
-              <option value="FIN">Financial</option>
-            </select>
-          </div>
-
-          <!-- Actions: Weather • Theme (Search removed) -->
+        <!-- Actions: Weather • Theme -->
+        <div class="flex items-center justify-end gap-1.5 sm:gap-2">
           <button id="weatherBtn" class="hidden sm:inline-flex link-btn" title="Weather (W)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
             <span class="hidden md:inline">Weather</span>
@@ -350,7 +356,6 @@
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15a4 4 0 0 0 4 4h11a3 3 0 0 0 0-6h-1"/><path d="M16 7a4 4 0 0 0-7.9 1"/></svg>
           </button>
 
-          <!-- Theme -->
           <button id="themeBtn" class="link-btn shrink-0" title="Toggle theme (T)">
             <span id="themeIcon" class="inline-flex items-center">
               <svg id="sun" class="size-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4" /><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -418,19 +423,6 @@
         <div id="trendingRail" class="rail no-scrollbar"><!-- trending cards injected --></div>
       </div>
       <div class="hairline"></div>
-    </section>
-
-    <!-- GOOGLE TRENDS -->
-    <section id="gtSection" class="relative">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex items-center justify-between gap-3 mb-4">
-          <h2 class="text-lg sm:text-xl font-semibold tracking-tight">Today’s Google Trends</h2>
-          <div class="text-xs text-[var(--sub)]" id="gtMeta">—</div>
-        </div>
-        <div id="gtTopTerm" class="mb-3 text-sm text-[var(--sub)] hidden"></div>
-        <div id="gtGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4"><!-- trend cards injected --></div>
-        <div id="gtEmpty" class="hidden text-xs text-[var(--sub)] mt-2">Couldn’t fetch Google Trends right now. Try Refresh.</div>
-      </div>
     </section>
   </main>
 
@@ -678,11 +670,11 @@
     };
     const brandLogoHTML = (host, className = '', alt = '')=>{
       const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+      return `<img loading="lazy" decoding="async" src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
     const brandBadgeHTML = (host, size=14)=>{
       const b = brandSources(host);
-      return `<img src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
+      return `<img loading="lazy" decoding="async" src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
     };
     const hostLinkHTML = (url)=>{
       const h = hostname(url) || 'source';
@@ -704,6 +696,36 @@
         return url.toString();
       }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
     };
+
+    /* ===== IMAGE PIPELINE (fast) ===== */
+    const IMG_PROXY = 'https://wsrv.nl';
+    const proxyImage = (u,w=1280)=> `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${w}&output=webp`;
+    const makeSrcset = (u,widths=[360,540,720,960,1200,1440,1800])=> widths.map(w=>`${proxyImage(u,w)} ${w}w`).join(', ');
+    const prepareImage = (u)=> {
+      const src = upscaleImageUrl(u);
+      return { src: proxyImage(src, 1200), srcset: makeSrcset(src) };
+    };
+
+    let lazyObs=null;
+    function setupLazyObserver(){
+      if(!('IntersectionObserver' in window)) return;
+      lazyObs = new IntersectionObserver((entries)=>{
+        entries.forEach(entry=>{
+          if(entry.isIntersecting){
+            const img = entry.target;
+            if (img.dataset.src){ img.src = img.dataset.src; }
+            if (img.dataset.srcset){ img.srcset = img.dataset.srcset; }
+            img.loading = 'lazy'; img.decoding = 'async';
+            img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
+            lazyObs.unobserve(img);
+          }
+        });
+      }, { rootMargin:'300px 0px' });
+    }
+    function observeAllLazy(root=document){
+      if (!lazyObs) return;
+      root.querySelectorAll('img.lazy-img').forEach(im=> lazyObs.observe(im));
+    }
 
     /* ===== RSS + IMAGE RESOLUTION ===== */
     const parseRSS = (text)=>{
@@ -888,10 +910,8 @@
     const newsList  = $('#newsList');
     const ticker    = $('#ticker');
     const trendingRail = $('#trendingRail');
-    const gtGrid = $('#gtGrid'); const gtMeta = $('#gtMeta'); const gtEmpty = $('#gtEmpty'); const gtTopTerm = $('#gtTopTerm');
 
     // Controls
-    const editionSelect = $('#editionSelect');
     const themeBtn = $('#themeBtn');
     const prevTopBtn = $('#prevTopBtn');
     const nextTopBtn = $('#nextTopBtn');
@@ -937,12 +957,20 @@
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
         const host = hostname(it.link) || 'news.google.com';
-        const src  = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
+        const src  = (SHOW_IMAGES && it.image) ? it.image : '';
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const high = idx === 0 ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"';
-        const mediaHTML = src
-          ? `<img ${high} decoding="async" src="${src}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`
-          : noImageHTML('');
+        let mediaHTML='';
+        if (src){
+          const prep = prepareImage(src);
+          if (idx === 0){
+            // First hero → priority for LCP
+            mediaHTML = `<img fetchpriority="high" loading="eager" decoding="async" src="${prep.src}" srcset="${prep.srcset}" sizes="100vw" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`;
+          } else {
+            mediaHTML = `<img class="brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async" data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="100vw" alt="${safeTitle}" data-host="${host}" data-kind="content">`;
+          }
+        } else {
+          mediaHTML = noImageHTML('');
+        }
         return `
           <div class="hero-slide" data-index="${idx}" data-link="${it.link}">
             <a href="${it.link}" target="_blank" rel="noopener" aria-label="${safeTitle}"></a>
@@ -958,6 +986,8 @@
       }).join('');
       const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
       heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
+      // Observe lazy hero images (except first)
+      observeAllLazy(heroTrack);
     };
 
     const setHeroMetaFromIndex = (idx)=>{
@@ -974,13 +1004,20 @@
       const top = items.slice().sort((a,b)=> (b.trendCount - a.trendCount) || ((b.pubDate||0)-(a.pubDate||0))).slice(0,12);
       trendingRail.innerHTML = top.map(it=>{
         const host = hostname(it.link);
-        const srcHTML = it.image
-          ? `<img src="${upscaleImageUrl(it.image)}" class="w-full h-44 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content" alt="">`
-          : noImageHTML('w-full h-44 rounded-md');
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        let media = '';
+        if (it.image){
+          const prep = prepareImage(it.image);
+          media =
+            `<img class="w-full h-44 object-cover rounded-md brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
+                  data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 33vw"
+                  data-host="${host}" data-kind="content" alt="${safeTitle}">`;
+        } else {
+          media = noImageHTML('w-full h-44 rounded-md');
+        }
         return `
-          <article class="card p-3 sm:p-4">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${srcHTML}</a>
+          <article class="card p-3 sm:p-4 cv-auto">
+            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${media}</a>
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
               <span>${timeAgo(it.pubDate)}</span>
               ${hostLinkHTML(it.link)}
@@ -991,6 +1028,7 @@
           </article>
         `;
       }).join('');
+      observeAllLazy(trendingRail);
     };
 
     // ---------- Apple-style tile layout ----------
@@ -1015,16 +1053,21 @@
         const host = hostname(it.link);
         const saved = isSaved(it.link);
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const imgSrc = (SHOW_IMAGES && it.image) ? upscaleImageUrl(it.image) : '';
         const vertical = idx < 2;
 
         if (vertical){
-          const media = imgSrc
-            ? `<img src="${imgSrc}" alt="${safeTitle}" class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb" data-host="${host}" data-kind="content">`
-            : noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
+          let media = '';
+          if (SHOW_IMAGES && it.image){
+            const prep = prepareImage(it.image);
+            media = `<img class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
+                        data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 50vw"
+                        data-host="${host}" data-kind="content" alt="${safeTitle}">`;
+          } else {
+            media = noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
+          }
           html += `
             <li class="col-span-1">
-              <article class="card overflow-hidden">
+              <article class="card overflow-hidden cv-auto">
                 <a href="${it.link}" target="_blank" rel="noopener" class="block">${media}</a>
                 <div class="p-3 sm:p-4">
                   <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
@@ -1041,13 +1084,18 @@
             </li>
           `;
         } else {
-          // Horizontal full-width card (image on right)
-          const media = imgSrc
-            ? `<img src="${imgSrc}" alt="${safeTitle}" class="w-full h-full object-cover brand-fb" data-host="${host}" data-kind="content">`
-            : noImageHTML('w-full h-full');
+          let media = '';
+          if (SHOW_IMAGES && it.image){
+            const prep = prepareImage(it.image);
+            media = `<img class="w-full h-full object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
+                        data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 44vw"
+                        data-host="${host}" data-kind="content" alt="${safeTitle}">`;
+          } else {
+            media = noImageHTML('w-full h-full');
+          }
           html += `
             <li class="col-span-2">
-              <article class="card p-3 sm:p-4 flex items-stretch gap-3 sm:gap-4">
+              <article class="card p-3 sm:p-4 flex items-stretch gap-3 sm:gap-4 cv-auto">
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
                     ${hostLinkHTML(it.link)}<span>${when}</span>
@@ -1078,8 +1126,16 @@
       });
 
       renderTrending(items);
-      improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
-      improveImagesFor(items.slice(HERO_SLIDES), 18);
+
+      // Defer image improvement to idle time
+      const ridle = window.requestIdleCallback || ((fn)=> setTimeout(fn, 180));
+      ridle(()=> {
+        improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
+        improveImagesFor(items.slice(HERO_SLIDES), 18);
+      });
+
+      // Observe new lazy images
+      observeAllLazy(newsList);
     };
     // ---------- END tile layout ----------
 
@@ -1101,101 +1157,6 @@
       const cur = localStorage.getItem(THEME_KEY) || 'auto';
       const next = cur === 'auto' ? 'dark' : (cur === 'dark' ? 'light' : 'auto');
       setTheme(next);
-    };
-
-    /* ===== GOOGLE TRENDS (fixed) ===== */
-    const tzMinutes = -new Date().getTimezoneOffset();
-    const trendsGeoForEdition = (ed)=> (ed === 'CA') ? 'CA' : 'US';
-
-    const fetchGoogleTrendsDailyAPI = async (geo)=>{
-      const url = `https://trends.google.com/trends/api/dailytrends?hl=en-US&tz=${tzMinutes}&geo=${geo}`;
-      const raw = await fetchWithProxies(url);
-      const jsonText = raw.replace(/^\)\]\}',?/, '').trim();
-      return JSON.parse(jsonText);
-    };
-    const fetchGoogleTrendsDailyHTMLFallback = async (geo)=>{
-      const url = `https://trends.google.com/trendingsearches/daily?geo=${geo}`;
-      const html = await fetchWithProxies(url);
-      const m = html.match(/"trendingSearchesDays"\s*:\s*(\[[\s\S]*?\])\s*,\s*"/);
-      if (!m) throw new Error('Trends HTML structure not found');
-      const days = JSON.parse(m[1]);
-      return { default: { trendingSearchesDays: days } };
-    };
-    const fetchGoogleTrendsDailyRSS = async (geo)=>{
-      const url = `https://trends.google.com/trends/trendingsearches/daily/rss?geo=${geo}`;
-      const text = await fetchWithProxies(url);
-      const dom = new DOMParser().parseFromString(text, 'text/xml');
-      const items = Array.from(dom.querySelectorAll('item')).slice(0, 10).map(it=>{
-        const title = it.querySelector('title')?.textContent || 'Trending';
-        const link = it.querySelector('link')?.textContent || '#';
-        return { title: { query: title }, formattedTraffic: '', articles: [{ title, url: link, source: hostname(link), image: '' }] };
-      });
-      const today = { date: new Date().toISOString().slice(0,10).replace(/-/g,''), formattedDate: new Date().toLocaleDateString(), trendingSearches: items };
-      return { default: { trendingSearchesDays: [today] } };
-    };
-
-    const fetchGoogleTrendsDaily = async (geo)=>{
-      try{ return await fetchGoogleTrendsDailyAPI(geo); }
-      catch(_){ try{ return await fetchGoogleTrendsDailyHTMLFallback(geo); }
-      catch(_2){ return await fetchGoogleTrendsDailyRSS(geo); } }
-    };
-
-    const parseTraffic = (s)=>{
-      if(!s) return 0;
-      const m = String(s).replace(/[+,]/g,'').trim().match(/([\d.]+)\s*([KMB])?/i);
-      if(!m) return 0;
-      const n = parseFloat(m[1]);
-      const unit = (m[2]||'').toUpperCase();
-      if (unit==='K') return n*1e3;
-      if (unit==='M') return n*1e6;
-      if (unit==='B') return n*1e9;
-      return n||0;
-    };
-
-    const renderGoogleTrends = async ()=>{
-      try{
-        const data = await fetchGoogleTrendsDaily(trendsGeoForEdition(currentEdition));
-        const day = data?.default?.trendingSearchesDays?.[0];
-        if(!day || !day.trendingSearches?.length) throw new Error('Empty trends');
-        gtMeta.textContent = `${day.date || 'Today'}${day.formattedDate ? ' • ' + day.formattedDate : ''}`.trim();
-
-        const sorted = day.trendingSearches.slice().sort((a,b)=> parseTraffic(b.formattedTraffic)-parseTraffic(a.formattedTraffic));
-        const topTerm = sorted[0]?.title?.query || day.trendingSearches[0]?.title?.query || '';
-        if (topTerm){ gtTopTerm.classList.remove('hidden'); gtTopTerm.textContent = `Most searched today: “${topTerm}”`; }
-
-        const cards = day.trendingSearches.slice(0, 9).map(ts=>{
-          const query = ts.title?.query || 'Trending';
-          const traffic = ts.formattedTraffic || '';
-          const art = (ts.articles||[])[0] || {};
-          const link = art.url || '#';
-          const host = hostname(link) || 'google.com';
-          const image = (ts.image && ts.image.imageUrl) || (art.image && art.image.imageUrl) || '';
-          const media = image
-              ? `<img src="${upscaleImageUrl(image)}" alt="${query}" class="w-full h-40 object-cover rounded-md brand-fb" data-host="${host}" data-kind="content">`
-              : noImageHTML('w-full h-40 rounded-md');
-          const title = (art.title || query).replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          const trafficTag = traffic ? `<span class="chip rounded px-2 py-1">↗ ${traffic}</span>` : '';
-          return `
-            <article class="card p-3 sm:p-4">
-              <a href="${link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${media}</a>
-              <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
-                ${trafficTag}
-                ${hostLinkHTML(link)}
-              </div>
-              <h3 class="text-sm sm:text-base font-semibold leading-snug">${title}</h3>
-              <div class="mt-1 text-[11px] text-[var(--sub)]">${query}</div>
-            </article>
-          `;
-        }).join('');
-        gtGrid.innerHTML = cards;
-        gtEmpty.classList.add('hidden');
-      }catch(err){
-        console.error('Trends error:', err);
-        gtGrid.innerHTML = '';
-        gtMeta.textContent = '—';
-        gtTopTerm.classList.add('hidden');
-        gtEmpty.classList.remove('hidden');
-      }
     };
 
     /* ===== WEATHER ===== */
@@ -1632,7 +1593,6 @@
       cycleIdx = 0;
       applyFilter();
       if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
-      await renderGoogleTrends();
     };
 
     const hidePreloader = ()=>{
@@ -1646,8 +1606,8 @@
       try{
         currentEdition = DEFAULT_EDITION;
         setMobileEditionUI();
-        const sel = document.getElementById('editionSelect');
-        if (sel) sel.value = DEFAULT_EDITION;
+
+        setupLazyObserver();
 
         cycleTimerId = preloadCycle();
         await hydrate();
@@ -1667,8 +1627,7 @@
     };
 
     // Controls
-    editionSelect?.addEventListener('change', ()=>{ currentEdition = editionSelect.value; setMobileEditionUI(); refreshAll(); });
-    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; const sel=document.getElementById('editionSelect'); if (sel) sel.value = currentEdition; setMobileEditionUI(); refreshAll(); }));
+    $$('.seg-btn').forEach(b=> b.dataset.ed && b.addEventListener('click', ()=>{ currentEdition = b.dataset.ed; setMobileEditionUI(); refreshAll(); }));
     themeBtn?.addEventListener('click', cycleTheme);
 
     // Image fallbacks — never swap big areas for logos; use Apple "No Image Found"
@@ -1683,7 +1642,7 @@
         if (parent){ img.insertAdjacentHTML('afterend', letterTileHTML((host || 'SRC'), img.className)); img.remove(); }
         return;
       }
-      // Content images (hero/tiles/trending/trends): replace with clean placeholder
+      // Content images (hero/tiles/trending): replace with clean placeholder
       img.insertAdjacentHTML('afterend', noImageHTML(img.className));
       img.remove();
     };
