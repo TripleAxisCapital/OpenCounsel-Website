@@ -1,30 +1,25 @@
-<!--
-  OC Home — Production build (demo-chat removed)
-  Notes for editors:
-  - Search for "EDITABLE KNOBS" to find common tweak points (timings, text, colors).
-  - All sections keep their original structure; only the chat-demo feature was removed.
--->
-
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
   <!-- ───── OpenCounsel.ca (www): SEO + Favicon ───── -->
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>OC — The AI Workspace. Without Limits.</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="The AI Workspace. Without Limits. Private, polished, and powerful.">
   <link rel="canonical" href="https://www.opencounsel.ca/">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <link rel="sitemap" type="application/xml" href="https://www.opencounsel.ca/sitemap.xml">
-  <meta name="theme-color" content="#0B1B2B">
-  <!-- Favicon(s) -->
-  <link rel="icon" type="image/png" href="OClogo.png">
+
+  <!-- Favicon: single, modern SVG -->
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any">
+
   <!-- Internationalization -->
   <link rel="alternate" href="https://www.opencounsel.ca/" hreflang="x-default">
   <link rel="alternate" href="https://www.opencounsel.ca/en/" hreflang="en">
 
-  <!-- Performance -->
+  <!-- Performance & UX -->
+  <meta http-equiv="x-dns-prefetch-control" content="on">
+  <meta name="theme-color" content="#0B1B2B">
   <link rel="preconnect" href="https://cdn.opencounsel.ca" crossorigin>
   <link rel="dns-prefetch" href="//cdn.opencounsel.ca">
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
@@ -41,7 +36,7 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
-  <!-- Twitter -->
+  <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@OpenCounselAI">
   <meta name="twitter:title" content="OC — The AI Workspace. Without Limits.">
@@ -51,27 +46,27 @@
   <!-- Structured Data -->
   <script type="application/ld+json">
   {
-    "@context": "https://schema.org",
-    "@graph": [
+    "@context":"https://schema.org",
+    "@graph":[
       {
-        "@type": "Organization",
-        "name": "OC",
-        "url": "https://www.opencounsel.ca/",
-        "logo": "https://www.opencounsel.ca/icons/logo1.svg",
-        "sameAs": [
+        "@type":"Organization",
+        "name":"OC",
+        "url":"https://www.opencounsel.ca/",
+        "logo":"https://www.opencounsel.ca/icons/logo1.svg",
+        "sameAs":[
           "https://x.com/OpenCounselAI",
           "https://www.linkedin.com/company/opencounsel",
           "https://github.com/opencounsel"
         ]
       },
       {
-        "@type": "WebSite",
-        "url": "https://www.opencounsel.ca/",
-        "name": "OC",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://www.opencounsel.ca/search?q={query}",
-          "query-input": "required name=query"
+        "@type":"WebSite",
+        "url":"https://www.opencounsel.ca/",
+        "name":"OC",
+        "potentialAction":{
+          "@type":"SearchAction",
+          "target":"https://www.opencounsel.ca/search?q={query}",
+          "query-input":"required name=query"
         }
       }
     ]
@@ -80,7 +75,6 @@
 
   <!-- Pretty URL (client-side mask) -->
   <script>
-    // Maps /index.html → /Home (clean URL in address bar without reload)
     window.OC = { base:"", slug:"Home", file:"/index.html" };
     (function(L,C){try{
       var B=C.base||"", S="/"+(C.slug||"home"), F=C.file||"/index.html";
@@ -90,7 +84,7 @@
     }catch(_){}})(location, window.OC);
   </script>
 
-  <!-- Hero Logo glow master toggle (EDITABLE KNOB: set true to enable bloom) -->
+  <!-- Hero Logo Glow Toggle (single switch; default: disabled) -->
   <script>
     window.OC_ENABLE_HERO_LOGO_GLOW = false;
     (function(d){
@@ -98,7 +92,7 @@
     })(document);
   </script>
 
-  <!-- OS detection for CTA icon/label -->
+  <!-- OS detect (shared by CTA + icon) -->
   <script>
     (function(){
       try{
@@ -111,14 +105,14 @@
     })();
   </script>
 
-  <!-- iOS/Standalone -->
+  <!-- iOS/Standalone (PWA polish) -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="OC">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/manifest.webmanifest">
 
-  <!-- Fonts + Icons + Tailwind -->
+  <!-- Fonts & UI libs -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -130,261 +124,210 @@
         extend: {
           fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
           colors: { oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' } },
-          boxShadow: {
-            card:'0 6px 30px rgba(16,24,40,0.08)',
-            glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)'
-          }
+          boxShadow: { card:'0 6px 30px rgba(16,24,40,0.08)', glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)' }
         }
       }
     }
   </script>
 
-  <!-- Site CSS (kept lean; demo-chat CSS removed) -->
+  <!-- === Core styles (chat demo removed) === -->
   <style>
     :root{
-      --pad-mobile-x:24px; --pad-desktop-x:32px;
-      --hamburger-inset:13px; --header-radius:28px;
+      --pad-mobile-x:24px; --pad-desktop-x:32px; --hamburger-inset:13px;
+      --header-radius:28px;
+      --header-pad-left-mobile:calc(var(--pad-mobile-x) + 12px);
+      --header-pad-right-mobile:calc(var(--pad-mobile-x) + 12px);
+      --header-pad-left-desktop:calc(var(--pad-desktop-x) + 16px);
+      --header-pad-right-desktop:calc(var(--pad-desktop-x) + 16px);
 
-      /* Scroll-blur (content) */
+      /* Scroll blur for content */
       --scroll-blur-start:16px; --scroll-blur-end:0px;
       --scroll-blur-duration:1100ms; --scroll-blur-ease:cubic-bezier(.16,1,.3,1);
       --scroll-blur-opacity-start:.65; --scroll-blur-opacity-end:1; --scroll-blur-translate:8px;
 
       /* Card glass blur */
-      --card-blur-start:12px; --card-blur-end:0px;
-      --card-blur-duration:900ms; --card-blur-ease:cubic-bezier(.16,1,.3,1);
+      --card-blur-start:12px; --card-blur-end:0px; --card-blur-duration:900ms; --card-blur-ease:cubic-bezier(.16,1,.3,1);
 
-      /* Brand gradient defaults */
+      /* Gradients + hero controls */
       --from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;
       --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
+      --logo-width:64px; --logo-height:64px;
+      --hamburger-color:#afafaf;
 
-      /* Hero shine controls */
+      /* Hero shine */
       --hero-shine-duration:5.5s; --hero-shine-ease:linear; --hero-shine-angle:90deg;
       --hero-shine-base:#e6e6e6; --hero-shine-peak:#ffffff; --hero-shine-softness:3.5%;
       --hero-shine-bg-size-x:260%; --hero-shine-direction:reverse;
-
-      --logo-width:64px; --logo-height:64px;
-      --hamburger-color:#afafaf;
     }
-    #home{ --hero-logo-size:clamp(250px,75vw,500px); }
 
-    html, body { max-width:100%; overflow-x:clip!important; }
-    @supports not (overflow-x: clip) { html, body { overflow-x:hidden!important; } }
-    .section-clip{ position:relative; overflow-x:clip; }
-    .oc-container{ padding-inline: var(--pad-mobile-x); }
-    @media (min-width:1024px){ .oc-container{ padding-inline: var(--pad-desktop-x); } }
-    ::selection{ background:#5B8CFF; color:#fff; }
+    html,body{max-width:100%;overflow-x:clip!important}
+    @supports not (overflow-x:clip){html,body{overflow-x:hidden!important}}
+    .section-clip{position:relative;overflow-x:clip}
+    .oc-container{padding-left:var(--pad-mobile-x);padding-right:var(--pad-mobile-x)}
+    @media (min-width:1024px){.oc-container{padding-left:var(--pad-desktop-x);padding-right:var(--pad-desktop-x)}}
+    ::selection{background:#5B8CFF;color:#fff}
 
     @media (prefers-reduced-motion:no-preference){
-      .reveal{ opacity:0; transform:translateY(18px) scale(.98); transition:opacity .6s ease, transform .6s ease; }
-      .reveal.in{ opacity:1; transform:none; }
-      .tilt{ transition: transform .25s ease; }
-      .tilt:hover{ transform: translateY(-2px) scale(1.01); }
+      .reveal{opacity:0;transform:translateY(18px) scale(.98);transition:opacity .6s ease,transform .6s ease}
+      .reveal.in{opacity:1;transform:translateY(0) scale(1)}
+      .tilt{transition:transform .25s ease}
+      .tilt:hover{transform:translateY(-2px) scale(1.01)}
     }
 
-    @keyframes logoIntro{ from{transform:translateY(6px) scale(.92); opacity:0} to{transform:none; opacity:1} }
-    @keyframes gradientShift{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes logoIntro{from{transform:translateY(6px) scale(.92);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+    @keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
-    .g-grad, .grad-anim{
-      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
-      background-size:300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite; will-change:background-position;
-    }
-    .logo-anim{
-      display:inline-block; width:var(--logo-width); height:var(--logo-height);
-      background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size:300% 300%;
-      animation: logoIntro 800ms ease-out forwards, gradientShift 16s ease-in-out infinite;
-      -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain;
-    }
-    .grad-text{
-      background: linear-gradient(var(--angle,135deg), var(--from,#0a1f44cc), var(--via,#0b3d3dcc), var(--to,#064420cc));
-      background-size:300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
-      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
-    }
+    #home{--from:#0B1B2Bcc;--via:#0E6F5Ccc;--to:#00CFFFcc;--speed:16s;--angle:135deg;--hero-logo-size:clamp(250px,75vw,500px)}
+    #edge{--from:#0B1B2Bcc;--via:#0E6F5Ccc;--to:#0B1B2Bcc;--speed:16s;--angle:135deg}
+    #features{--from:#0B1B2Bcc;--via:#0E6F5Ccc;--to:#0B1B2Bcc;--speed:16s;--angle:135deg}
+
+    .g-grad,.grad-anim{background:linear-gradient(var(--angle,135deg),var(--from,#0a1f44cc),var(--via,#0b3d3dcc),var(--to,#064420cc));background-size:300% 300%;animation:gradientShift var(--speed,16s) ease-in-out infinite;will-change:background-position}
+    .animated-gradient{background-size:300% 300%;animation:gradientShift 16s ease-in-out infinite;will-change:background-position}
+    .logo-anim{display:inline-block;width:var(--logo-width);height:var(--logo-height);background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to));background-size:300% 300%;animation:logoIntro 800ms ease-out forwards,gradientShift 16s ease-in-out infinite;-webkit-mask:url('logo.svg') no-repeat center/contain;mask:url('logo.svg') no-repeat center/contain}
+
+    .grad-text{background:linear-gradient(var(--angle,135deg),var(--from,#0a1f44cc),var(--via,#0b3d3dcc),var(--to,#064420cc));background-size:300% 300%;animation:gradientShift var(--speed,16s) ease-in-out infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
     @keyframes gradientShiftRight{0%{background-position:0% 50%}100%{background-position:100% 50%}}
     @keyframes gradientShiftLeft{0%{background-position:100% 50%}100%{background-position:0% 50%}}
-    .grad-move-right{ animation: gradientShiftRight var(--speed,16s) linear infinite!important; }
-    .grad-move-left{  animation: gradientShiftLeft  var(--speed,16s) linear infinite!important; }
+    .grad-move-right{animation:gradientShiftRight var(--speed,16s) linear infinite!important}
+    .grad-move-left{animation:gradientShiftLeft var(--speed,16s) linear infinite!important}
 
-    .mobile-menu{ backdrop-filter: blur(8px); }
+    .mobile-menu{backdrop-filter:blur(8px)}
+    .hamburger{width:32px;height:28px;display:inline-flex;flex-direction:column;justify-content:center;gap:6px}
+    .hamburger span{height:3px;width:100%;border-radius:9999px;background:var(--hamburger-color,#000);transition:transform .4s ease,opacity .2s ease,background-color .2s ease}
+    #hamburgerBtn.is-active .hamburger span:nth-child(1){transform:translateY(9px) rotate(45deg)}
+    #hamburgerBtn.is-active .hamburger span:nth-child(2){opacity:0}
+    #hamburgerBtn.is-active .hamburger span:nth-child(3){transform:translateY(-9px) rotate(-45deg)}
+    #hamburgerBtn{display:flex;align-items:center;justify-content:center;height:56px;padding:0;margin-right:var(--hamburger-inset)}
+    @media (min-width:768px){#hamburgerBtn{display:none!important}#mobileMenu{display:none!important}}
 
-    .hamburger{ width:32px; height:28px; display:inline-flex; flex-direction:column; justify-content:center; gap:6px; }
-    .hamburger span{ height:3px; width:100%; border-radius:9999px; background:var(--hamburger-color); transition: transform .4s ease, opacity .2s ease; }
-    #hamburgerBtn.is-active .hamburger span:nth-child(1){ transform: translateY(9px) rotate(45deg); }
-    #hamburgerBtn.is-active .hamburger span:nth-child(2){ opacity:0; }
-    #hamburgerBtn.is-active .hamburger span:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
-    #hamburgerBtn{ display:flex; align-items:center; justify-content:center; height:56px; margin-right:var(--hamburger-inset); }
-    @media (min-width:768px){ #hamburgerBtn{ display:none!important; } #mobileMenu{ display:none!important; } }
+    .rows-equal{grid-auto-rows:1fr}
+    .grid-stretch>*{height:100%}
+    .card-glass{display:flex;flex-direction:column;height:100%}
 
-    .rows-equal{ grid-auto-rows:1fr; }
-    .grid-stretch > *{ height:100%; }
-    .card-glass{ display:flex; flex-direction:column; height:100%; }
+    @media (min-width:1280px){.mission-wrap{max-width:980px}}
+    @media (min-width:1536px){.mission-wrap{max-width:1040px}}
 
-    /* Page-start blur veil */
-    .page-blur{ position:fixed; inset:0; -webkit-backdrop-filter:blur(28px); backdrop-filter:blur(28px); background:rgba(255,255,255,.28); z-index:9999; pointer-events:none; transition:backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
-    .page-blur.hide{ -webkit-backdrop-filter:blur(0); backdrop-filter:blur(0); background:transparent; opacity:0; }
-    @media (prefers-reduced-motion:reduce){ .page-blur{ transition:none; } }
+    /* Page-start blur overlay */
+    .page-blur{position:fixed;inset:0;backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);background:rgba(255,255,255,.28);z-index:9999;pointer-events:none;transition:backdrop-filter 2s cubic-bezier(.2,.8,.2,1),background-color 2s cubic-bezier(.2,.8,.2,1),opacity 2s cubic-bezier(.2,.8,.2,1)}
+    .page-blur.hide{backdrop-filter:blur(0);-webkit-backdrop-filter:blur(0);background:transparent;opacity:0}
+    @media (prefers-reduced-motion:reduce){.page-blur{transition:none}}
 
     /* Mobile slide-in menu */
-    #mobileMenu{ position:fixed; inset:0; z-index:60; display:none; pointer-events:none; }
-    #mobileMenu .menu-scrim{ position:absolute; inset:0; background:rgba(255,255,255,0.92); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); opacity:0; transition:opacity 2s ease, -webkit-backdrop-filter 2s ease, backdrop-filter 2s ease; }
-    #mobileMenu .menu-panel{
-      position:absolute; top:0; left:0; height:100%; width:min(88vw,420px); background:#fff; border-right:1px solid rgba(0,0,0,.06);
-      box-shadow:0 24px 60px rgba(0,0,0,.12); transform:translateX(-100%); opacity:.98; filter:blur(12px);
-      transition: transform .5s cubic-bezier(.22,.9,.22,1), filter 1s ease .1s; display:flex; flex-direction:column; padding:18px 20px;
-    }
-    #mobileMenu.active{ display:block; pointer-events:auto; }
-    #mobileMenu.active .menu-scrim{ opacity:1; -webkit-backdrop-filter:blur(0); backdrop-filter:blur(0); }
-    #mobileMenu.active .menu-panel{ transform:none; filter:blur(0); }
-    .drawer-head{ display:flex; align-items:center; justify-content:space-between; padding-bottom:6px; }
-    .drawer-title{ font-weight:700; letter-spacing:-.01em; background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to));
-      background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; }
-    .drawer-close{ display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06); background:rgba(255,255,255,.8); transition:background .2s ease, transform .2s ease; }
-    .drawer-close:hover{ background:#fff; transform:translateY(-1px); }
-    .drawer-nav a:not(.drawer-cta){ display:block; padding:14px 2px; font-weight:700; font-size:clamp(18px,4.4vw,20px); line-height:1.2;
-      background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to)); background-size:300% 300%; animation:gradientShift 16s ease-in-out infinite;
-      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; transition:transform .18s ease, opacity .18s ease; }
-    .drawer-nav a:hover{ transform:translateY(-1px); opacity:.95; }
-    .drawer-sep{ height:1px; background:linear-gradient(90deg,transparent,rgba(0,0,0,.08),transparent); margin:8px 0 6px; }
-    .drawer-cta{ display:inline-flex!important; align-items:center; justify-content:center; width:100%; text-align:center; position:relative; color:#fff!important; background-clip:border-box!important; overflow:hidden; }
+    #mobileMenu{position:fixed;inset:0;z-index:60;display:none;pointer-events:none}
+    #mobileMenu .menu-scrim{position:absolute;inset:0;background:rgba(255,255,255,0.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);opacity:0;transition:opacity 2s ease,backdrop-filter 2s ease,-webkit-backdrop-filter 2s ease}
+    #mobileMenu .menu-panel{position:absolute;top:0;left:0;height:100%;width:min(88vw,420px);background:#fff;border-right:1px solid rgba(0,0,0,.06);box-shadow:0 24px 60px rgba(0,0,0,.12);transform:translateX(-100%);opacity:.98;filter:blur(12px);transition:transform .5s cubic-bezier(.22,.9,.22,1),filter 1s ease .1s;display:flex;flex-direction:column;padding:18px 20px}
+    #mobileMenu.active{display:block;pointer-events:auto}
+    #mobileMenu.active .menu-scrim{opacity:1;-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0)}
+    #mobileMenu.active .menu-panel{transform:translateX(0);filter:blur(0)}
 
-    /* Scroll-fade on content inside cards */
-    .scroll-fade{ isolation:isolate; }
-    .scroll-fade > *{
-      filter: blur(var(--scroll-blur-start)); opacity: var(--scroll-blur-opacity-start); transform: translateY(var(--scroll-blur-translate));
-      transition: filter var(--scroll-blur-duration) var(--scroll-blur-ease), opacity var(--scroll-blur-duration) var(--scroll-blur-ease), transform var(--scroll-blur-duration) var(--scroll-blur-ease);
-      will-change: filter, opacity, transform;
-    }
-    .scroll-fade.in-view > *{ filter:none; opacity:var(--scroll-blur-opacity-end); transform:none; }
+    .drawer-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:6px}
+    .drawer-title{font-weight:700;letter-spacing:-.01em;background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to));background-size:300% 300%;animation:gradientShift 16s ease-in-out infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-size:20px}
+    .drawer-close{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid rgba(0,0,0,.06);background:rgba(255,255,255,.8);transition:background .2s ease,transform .2s ease}
+    .drawer-close:hover{background:#fff;transform:translateY(-1px)}
+    .drawer-nav a:not(.drawer-cta){display:block;padding:14px 2px;font-weight:700;font-size:clamp(18px,4.4vw,20px);line-height:1.2;background:linear-gradient(135deg,var(--grad-from),var(--grad-via),var(--grad-to));background-size:300% 300%;animation:gradientShift 16s ease-in-out infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;transition:transform .18s ease,opacity .18s ease}
+    .drawer-nav a:hover{transform:translateY(-1px);opacity:.95}
+    .drawer-sep{height:1px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.08),transparent);margin:8px 0 6px}
+    .drawer-cta{display:inline-flex!important;align-items:center;justify-content:center;width:100%;text-align:center;position:relative;color:#fff!important;-webkit-text-fill-color:#fff!important;background-clip:border-box!important;-webkit-background-clip:border-box!important;overflow:hidden}
+    .drawer-cta>span{z-index:0!important}
 
-    /* Card glass blur smooth-in */
-    .scroll-fade.card-glass{ -webkit-backdrop-filter: blur(var(--card-blur-start))!important; backdrop-filter: blur(var(--card-blur-start))!important;
-      transition: -webkit-backdrop-filter var(--card-blur-duration) var(--card-blur-ease), backdrop-filter var(--card-blur-duration) var(--card-blur-ease); }
-    .scroll-fade.in-view.card-glass{ -webkit-backdrop-filter: blur(var(--card-blur-end))!important; backdrop-filter: blur(var(--card-blur-end))!important; }
+    /* Scroll fade-in for card content */
+    .scroll-fade{isolation:isolate}
+    .scroll-fade>*{filter:blur(var(--scroll-blur-start));opacity:var(--scroll-blur-opacity-start);transform:translateY(var(--scroll-blur-translate));transition:filter var(--scroll-blur-duration) var(--scroll-blur-ease),opacity var(--scroll-blur-duration) var(--scroll-blur-ease),transform var(--scroll-blur-duration) var(--scroll-blur-ease);will-change:filter,opacity,transform;backface-visibility:hidden;transform:translateZ(0)}
+    .scroll-fade.in-view>*{filter:blur(var(--scroll-blur-end));opacity:var(--scroll-blur-opacity-end);transform:translateY(0)}
+    .scroll-fade.card-glass{-webkit-backdrop-filter:blur(var(--card-blur-start))!important;backdrop-filter:blur(var(--card-blur-start))!important;transition:-webkit-backdrop-filter var(--card-blur-duration) var(--card-blur-ease),backdrop-filter var(--card-blur-duration) var(--card-blur-ease)}
+    .scroll-fade.in-view.card-glass{-webkit-backdrop-filter:blur(var(--card-blur-end))!important;backdrop-filter:blur(var(--card-blur-end))!important}
 
-    .LargeAniLogo{ display:inline-block; width:var(--logo-size,72px); height:var(--logo-size,72px); }
-    @supports (font-variation-settings: "wght" 500) {
-      .nav-link{ font-variation-settings:"wght" 520; transition: font-variation-settings 260ms ease, letter-spacing 260ms ease, transform 260ms ease; }
-      .nav-link:hover{ font-variation-settings:"wght" 700; letter-spacing:.01em; transform:translateY(-.5px) scale(1.02); }
+    .LargeAniLogo{display:inline-block;width:var(--logo-size,72px);height:var(--logo-size,72px)}
+    @supports (font-variation-settings:"wght" 500){
+      .nav-link{font-variation-settings:"wght" 520;transition:font-variation-settings 260ms ease,letter-spacing 260ms ease,transform 260ms ease}
+      .nav-link:hover{font-variation-settings:"wght" 700;letter-spacing:.01em;transform:translateY(-.5px) scale(1.02)}
     }
-    @media (prefers-reduced-motion:reduce){ .nav-link{ transition:none; } }
+    @media (prefers-reduced-motion:reduce){.nav-link{transition:none}}
 
-    /* Header: full → floating pill on scroll */
-    .oc-header{ background:#fff; padding-block:0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
-    .oc-header .header-bar{ background:transparent; border:0; border-radius:0; box-shadow:none; transition: border-color .36s ease, background-color .36s ease, border-radius .36s cubic-bezier(.2,.8,.2,1), box-shadow .36s ease, -webkit-backdrop-filter .36s ease, backdrop-filter .36s ease; }
-    .oc-header.is-float{ background:transparent; padding-top:.75rem; padding-bottom:.25rem; }
-    @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
-    .oc-header.is-float .header-bar{
-      background: rgba(255,255,255,.96); border-radius: var(--header-radius);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    }
+    /* Header: full → floating pill */
+    .oc-header{background:#fff;padding-top:0;padding-bottom:0;transition:padding .36s cubic-bezier(.2,.8,.2,1),background-color .36s ease}
+    .oc-header .header-bar{background:transparent;border:0;border-radius:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;transition:border-color .36s ease,background-color .36s ease,border-radius .36s cubic-bezier(.2,.8,.2,1),box-shadow .36s ease,-webkit-backdrop-filter .36s ease,backdrop-filter .36s ease,transform .36s ease}
+    .oc-header.is-float{background:transparent;padding-top:.75rem;padding-bottom:.25rem}
+    @media (min-width:768px){.oc-header.is-float{padding-top:1rem}}
+    .oc-header.is-float .header-bar{background:rgba(255,255,255,.96);border:0;border-radius:var(--header-radius);box-shadow:0 1px 0 rgba(0,0,0,0.06),0 10px 30px -6px rgba(0,0,0,0.18);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 
     /* Hero logo + shimmer */
-    .hero-logo-wrap{ position:relative; display:inline-block; }
-    .hero-logo-white{
-      display:inline-block; width:var(--hero-logo-size); height:var(--hero-logo-size); background:#fff;
-      -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain;
-      opacity:0; filter:blur(8px); transform:translateY(6px) scale(.985);
-      animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; position:relative; z-index:1; vertical-align:middle;
-    }
-    .no-hero-glow .hero-logo-white{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
-    @keyframes heroLogoReveal{ 0%{opacity:0; filter:blur(8px); transform:translateY(6px) scale(.985)} 60%{opacity:1; filter:blur(1.5px); transform:none} 100%{opacity:1; filter:none; transform:none} }
-    #home .hero-title{ will-change:opacity,transform; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+    .hero-logo-wrap{position:relative;display:inline-block}
+    .hero-logo-white{display:inline-block;width:var(--hero-logo-size,clamp(140px,45vw,400px));height:var(--hero-logo-size,clamp(140px,45vw,400px));background:#fff;-webkit-mask-image:url('logo.svg');-webkit-mask-repeat:no-repeat;-webkit-mask-position:center;-webkit-mask-size:contain;mask-image:url('logo.svg');mask-repeat:no-repeat;mask-position:center;mask-size:contain;opacity:0;filter:blur(8px);transform:translateY(6px) scale(.985);animation:heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards;will-change:opacity,transform,filter;position:relative;z-index:1;vertical-align:middle}
+    .no-hero-glow .hero-logo-white{animation:none!important;opacity:1!important;filter:none!important;transform:none!important}
+    @keyframes heroLogoReveal{0%{opacity:0;filter:blur(8px);transform:translateY(6px) scale(.985)}60%{opacity:1;filter:blur(1.5px);transform:translateY(0) scale(1)}100%{opacity:1;filter:blur(0);transform:translateY(0) scale(1)}}
+    @media (prefers-reduced-motion:reduce){.hero-logo-white{animation:none!important;opacity:1;filter:none;transform:none}}
+    #home .hero-title{will-change:opacity,transform;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    #home .hero-line1 .seg-fullshine{position:relative;background-image:linear-gradient(var(--hero-shine-angle,90deg),rgba(255,255,255,0) 0,rgba(255,255,255,0) calc(50% - var(--hero-shine-softness,3.5%)),rgba(255,255,255,0.98) 50%,rgba(255,255,255,0) calc(50% + var(--hero-shine-softness,3.5%)),rgba(255,255,255,0) 100%),linear-gradient(var(--hero-shine-base,#e6e6e6),var(--hero-shine-base,#e6e6e6));background-size:var(--hero-shine-bg-size-x,240%) 100%,100% 100%;background-repeat:no-repeat;background-position:-150% 0,0 0;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:heroShine var(--hero-shine-duration,5.5s) var(--hero-shine-ease,linear) infinite;animation-direction:var(--hero-shine-direction,normal);will-change:background-position}
+    @keyframes heroShine{0%{background-position:-150% 0,0 0}100%{background-position:150% 0,0 0}}
+    @media (prefers-reduced-motion:reduce){#home .hero-line1 .seg-fullshine{animation:none;-webkit-text-fill-color:#fff;color:#fff;background:none}}
+    #home .hero-line1,#home .hero-line2{display:block}
+    .hero-logo-glow{--glow-c1:rgba(0,207,255,.40);--glow-c2:rgba(14,111,92,.28);--glow-opacity:.55;--glow-blur:30px;position:absolute;inset:-16%;border-radius:9999px;background:radial-gradient(60% 60% at 50% 40%,var(--glow-c1),rgba(0,0,0,0) 70%),radial-gradient(55% 55% at 40% 60%,var(--glow-c2),rgba(0,0,0,0) 70%);filter:blur(var(--glow-blur));opacity:0;z-index:0;pointer-events:none;animation:heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards}
+    .hero-logo-glow.glow-pulse{animation:heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards,heroGlowPulse var(--glow-pulse-dur,6s) ease-in-out infinite 1.1s}
+    @keyframes heroGlowReveal{0%{opacity:0;filter:blur(40px)}60%{opacity:var(--glow-opacity);filter:blur(16px)}100%{opacity:var(--glow-opacity);filter:blur(var(--glow-blur))}}
+    @keyframes heroGlowPulse{0%,100%{transform:scale(1);filter:blur(var(--glow-blur));opacity:var(--glow-opacity)}50%{transform:scale(1.03);filter:blur(calc(var(--glow-blur) + 6px));opacity:calc(var(--glow-opacity) + .05)}}
+    @media (prefers-reduced-motion:reduce){.hero-logo-glow,.hero-logo-glow.glow-pulse{animation:none!important;opacity:var(--glow-opacity)}}
 
-    /* Optional background glow behind hero mark (enabled via OC_ENABLE_HERO_LOGO_GLOW) */
-    .hero-logo-glow{ position:absolute; inset:-16%; border-radius:9999px; opacity:0; z-index:0; pointer-events:none; }
-    .hero-logo-glow.glow-pulse{ animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards, heroGlowPulse 6s ease-in-out infinite 1.1s; }
-    @keyframes heroGlowReveal{0%{opacity:0; filter:blur(40px)}60%{opacity:.55; filter:blur(16px)}100%{opacity:.55; filter:blur(30px)}}
-    @keyframes heroGlowPulse{0%,100%{transform:none; filter:blur(30px); opacity:.55}50%{transform:scale(1.03); filter:blur(36px); opacity:.60}}
+    .hero-cta-fade{opacity:0;transform:translateY(8px);transition:opacity .66s cubic-bezier(.22,.8,.22,1),transform .66s cubic-bezier(.22,.8,.22,1);will-change:opacity,transform}
+    .hero-cta-fade.cta-visible{opacity:1;transform:translateY(0)}
+    #home .hero-sub1{margin-top:1px!important}
+    @media (min-width:768px){#home .hero-sub1{margin-top:3px!important}}
+    .hero-caret{display:inline-block;height:1em;vertical-align:-0.12em;margin-left:.05em;border-right:var(--caret-w,2px) solid var(--caret-color,rgba(255,255,255,.9));animation:heroBlink var(--caret-blink,900ms) steps(1) infinite;pointer-events:none}
+    @keyframes heroBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
 
-    /* Hero shimmer line */
-    #home .hero-line1 .seg-fullshine{
-      position:relative;
-      background-image:
-        linear-gradient(var(--hero-shine-angle), rgba(255,255,255,0) 0%, rgba(255,255,255,0) calc(50% - var(--hero-shine-softness)), rgba(255,255,255,.98) 50%, rgba(255,255,255,0) calc(50% + var(--hero-shine-softness)), rgba(255,255,255,0) 100%),
-        linear-gradient(var(--hero-shine-base), var(--hero-shine-base));
-      background-size: var(--hero-shine-bg-size-x) 100%, 100% 100%;
-      background-repeat:no-repeat; background-position:-150% 0, 0 0;
-      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;
-      animation: heroShine var(--hero-shine-duration) var(--hero-shine-ease) infinite; animation-direction: var(--hero-shine-direction);
-      will-change: background-position;
-    }
-    @keyframes heroShine{ 0%{background-position:-150% 0, 0 0} 100%{background-position:150% 0, 0 0} }
-    @media (prefers-reduced-motion:reduce){ #home .hero-line1 .seg-fullshine{ animation:none; -webkit-text-fill-color:#fff; color:#fff; background:none; } }
+    /* Hero height exact fit */
+    #home .hero-card{height:calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px));min-height:calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px))}
+    @media (min-width:1024px){#home .hero-card{height:calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px))!important;min-height:calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px))!important}}
 
-    /* Hero caret */
-    .hero-caret{ display:inline-block; height:1em; vertical-align:-0.12em; margin-left:.05em; border-right:var(--caret-w,2px) solid var(--caret-color,rgba(255,255,255,.9)); animation: heroBlink var(--caret-blink,900ms) steps(1) infinite; }
-    #home .hero-sub1{ margin-top:1px!important; } @media (min-width:768px){ #home .hero-sub1{ margin-top:3px!important; } }
-    @keyframes heroBlink{ 0%,49%{opacity:1} 50%,100%{opacity:0} }
-
-    /* Hero CTA fade-in */
-    .hero-cta-fade{ opacity:0; transform:translateY(8px); transition:opacity .66s cubic-bezier(.22,.8,.22,1), transform .66s cubic-bezier(.22,.8,.22,1); }
-    .hero-cta-fade.cta-visible{ opacity:1; transform:none; }
-
-    /* Hero height lock to avoid cropping under sticky header */
-    #home .hero-card{ height: calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px)); min-height: calc(100svh - var(--header-h,56px) - var(--gap-mobile,24px)); }
-    @media (min-width:1024px){
-      #home .hero-card{ height: calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px)) !important; min-height: calc(100svh - var(--header-h,56px) - var(--gap-desktop,24px)) !important; }
-    }
-
-    /* Brands */
-    .brand-logo{ height:clamp(28px,3.2vw,44px); width:auto; object-fit:contain; filter:grayscale(1); opacity:.78; transition: filter .28s ease, opacity .28s ease, transform .28s ease; will-change: transform, filter, opacity; image-rendering: -webkit-optimize-contrast; }
-    .brand-logo:hover{ filter:none; opacity:1; transform: translateY(-2px) scale(1.02); }
-    .brand-note{ font-size:11px; color:#6b7280; }
+    /* Brand logos */
+    .brand-logo{height:clamp(28px,3.2vw,44px);width:auto;object-fit:contain;filter:grayscale(1);opacity:.78;transition:filter .28s ease,opacity .28s ease,transform .28s ease;will-change:transform,filter,opacity;image-rendering:-webkit-optimize-contrast}
+    .brand-logo:hover{filter:grayscale(0);opacity:1;transform:translateY(-2px) scale(1.02)}
+    .brand-note{font-size:11px;color:#6b7280}
   </style>
 
-  <!-- Bold only rotating words in sly-4 -->
   <style id="oc-hero-bold-rotator">
-    .hero-sub1 .hero-word{ font-weight:800; }
+    .hero-sub1 .hero-word { font-weight: 800; }
   </style>
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased">
-  <!-- Page-start blur veil -->
+  <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- Tiny spacer to separate header from viewport edge -->
+  <!-- Drop-in spacer to avoid jump -->
   <div aria-hidden="true" style="height:12px;"></div>
 
-  <!-- HEADER (becomes floating pill after small scroll) -->
+  <!-- ===== HEADER ===== -->
   <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white">
     <div class="header-bar relative mx-auto max-w-[1200px] oc-container h-[3.25rem] md:h-14 flex items-center justify-between px-3 md:px-4">
       <div class="flex items-center gap-3">
-        <a href="index.html" class="inline-flex items-center" aria-label="OC home">
-          <span class="logo-anim" role="img" aria-label="OC"></span>
-        </a>
+        <a href="index.html" class="inline-flex items-center" aria-label="OC home"><span class="logo-anim" role="img" aria-label="OC"></span></a>
       </div>
 
-      <!-- Center nav -->
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
         <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="cores.html">Cores</a>
         <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="OC-News.html">OC-News</a>
       </nav>
 
-      <!-- Right side: Download + hamburger -->
       <div class="flex items-center gap-2">
         <a href="download.html" class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0 g-grad grad-anim" style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;" aria-label="Download" title="Download">
-          <i class="ph ph-download text-base" aria-hidden="true"></i>
-          <span>Download</span>
+          <i class="ph ph-download text-base" aria-hidden="true"></i><span>Download</span>
         </a>
-        <button id="hamburgerBtn" class="md:hidden rounded-xl bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <button id="hamburgerBtn" class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
           <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
         </button>
       </div>
     </div>
 
-    <!-- Mobile drawer -->
+    <!-- MOBILE MENU -->
     <div id="mobileMenu" aria-hidden="true">
       <div class="menu-scrim"></div>
       <aside class="menu-panel">
         <div class="drawer-head">
           <a href="index.html" class="drawer-title">OC</a>
           <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>
         <nav class="drawer-nav mt-2">
@@ -400,21 +343,30 @@
     </div>
   </header>
 
-  <!-- Spacer for sticky header (mobile already handled in hero rules) -->
+  <!-- spacer matching header -->
   <div aria-hidden="true" style="height:12px;"></div>
 
-  <!-- HERO -->
+  <!-- Header float mode -->
+  <script>
+    (function(){
+      try{
+        var header=document.getElementById('siteHeader'); if(!header) return;
+        var THRESH=8;
+        var onScroll=function(){
+          var y=window.scrollY||document.documentElement.scrollTop||0;
+          header.classList.toggle('is-float', y>THRESH);
+        };
+        onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+      }catch(_){}
+    })();
+  </script>
+
+  <!-- ===== HERO ===== -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
-    <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border
-                h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
-                lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
-                flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]">
+    <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border border-oc-line box-border h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))] lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))] flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]">
       <div class="flex flex-col items-center max-w-2xl">
         <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">OC</span>
-
-        <!-- Tagline (typed) -->
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
-
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html" class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 g-grad grad-anim" style="--from:#0E6F5Ccc; --via:#178D74cc; --to:#A0E4D4cc; --speed:16s; --angle:135deg;" aria-label="Download">
             <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-70" style="background: radial-gradient(60% 60% at 50% 50%, rgba(0,207,255,.35), rgba(0,0,0,0));"></span>
@@ -424,18 +376,71 @@
         </div>
       </div>
 
-      <!-- Animated Down Arrow (custom element; defined in JS below) -->
       <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s"></oc-down-arrow>
     </div>
   </section>
 
-  <!-- ====== Landing sections below (unchanged content) ====== -->
+  <!-- Measure actual header height -->
+  <script>
+    (function(){
+      const pick=()=>document.querySelector('header,#siteHeader,.site-header,nav[role="navigation"],.oc-nav');
+      const set=()=>{const el=pick(); const h=el?el.getBoundingClientRect().height:56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px');};
+      set(); addEventListener('resize', set, {passive:true}); addEventListener('orientationchange', set, {passive:true});
+      const el=pick(); if(el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
+    })();
+  </script>
 
-  <!-- “Private. Polished. Powerful.” headline -->
+  <!-- Arrow reveal controller -->
+  <script>
+    (() => {
+      const ARROW_AFTER_CTA_MS = 40;
+      const arrow = document.getElementById('heroArrow');
+      const ctaBtn = document.getElementById('heroCtaBtn');
+      const ctaTxt = document.querySelector('#home .hero-cta-text');
+      if (!arrow || !ctaBtn) return;
+      const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const reveal = () => { arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
+
+      document.addEventListener('oc:cta-text-done', () => { if (prefersReduced) reveal(); else setTimeout(reveal, ARROW_AFTER_CTA_MS); }, { once:true });
+
+      const onCtaInView = () => {
+        if (prefersReduced) { reveal(); return; }
+        if (!ctaTxt) { setTimeout(reveal, 10); return; }
+        let lastChange = Date.now();
+        const mo = new MutationObserver(() => { lastChange = Date.now(); });
+        mo.observe(ctaTxt, { childList:true, characterData:true, subtree:true });
+        const checkStable = () => { const idleMs = Date.now() - lastChange; if ((ctaTxt.textContent||'').trim() && idleMs > 10) { mo.disconnect(); reveal(); return true; } return false; };
+        const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+        setTimeout(() => { try{ mo.disconnect(); }catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
+      };
+
+      const io = new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting){ onCtaInView(); io.disconnect(); break; } }, { threshold:0.35 });
+      io.observe(ctaBtn);
+    })();
+  </script>
+
+  <!-- OS-aware CTA label & icon (uses window.OC_OS) -->
+  <script>
+    (() => {
+      const elBtn = document.getElementById('heroCtaBtn');
+      const elIcon = document.getElementById('heroCtaIcon');
+      const elTxt = document.querySelector('#home .hero-cta-text');
+      if (!elBtn || !elTxt) return;
+
+      const os = (window.OC_OS || 'other').toLowerCase();
+      const label = os === 'windows' ? 'Get for Windows' : (os === 'mac' ? 'Get for Mac' : 'Download');
+      elTxt.textContent = label; elBtn.setAttribute('aria-label', label); elBtn.setAttribute('title', label);
+      if (elIcon){ elIcon.className = os==='windows' ? 'ph ph-microsoft-logo text-xl' : 'ph ph-apple-logo text-xl'; elIcon.setAttribute('aria-hidden','true'); }
+      setTimeout(() => { document.dispatchEvent(new CustomEvent('oc:cta-text-done')); }, 0);
+    })();
+  </script>
+
+  <!-- ===== Section: Private. Polished. Powerful. (sly-4) ===== -->
   <section id="sly-4" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
     <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
-      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
+      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
+      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
     </div>
     <div class="w-full py-24 md:py-32">
       <div class="mx-auto max-w-[900px] text-center">
@@ -450,32 +455,48 @@
     </div>
   </section>
 
-  <!-- Vision card -->
+  <!-- ===== Mission/Vision ===== -->
   <section class="section-clip relative mx-auto max-w-[1200px] px-6 md:px-8 pb-0 bg-white">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-0 h-72 w-[38rem] -translate-x-1/2 rounded-full blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, rgba(99,102,241,.25), rgba(99,102,241,0) 70%);"></div>
+      <div class="absolute right-[-10%] bottom-[-10%] h-80 w-80 rounded-full blur-2xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(16,185,129,.18), rgba(16,185,129,0) 70%);"></div>
+      <div class="absolute left-[-8%] bottom-[-6%] h-72 w-72 rounded-full blur-2xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(244,114,182,.18), rgba(244,114,182,0) 70%);"></div>
+    </div>
     <div class="absolute inset-0 z-0 bg-white"></div>
+
     <div class="mission-wrap relative z-10 mx-auto max-w-[900px] rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
       <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Vision</div>
       <h2 class="mt-4 text-center text-3xl md:text-4xl font-semibold tracking-tight text-neutral-900">Build. Think. Decide. Without limits.</h2>
       <p class="mx-auto mt-4 max-w-[650px] text-center text-lg leading-relaxed text-neutral-700">OC is your uncensored workspace—private by default, polished end-to-end, and powerful on-device. Research, create, and ship with nothing in the way.</p>
       <div class="mx-auto mt-8 h-px w-20 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
+
       <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 rows-equal grid-stretch">
-        <!-- Three small feature cards (kept as-is) -->
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3"><svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg><p class="font-semibold text-neutral-900">Master</p></div>
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3m0 0l6 3-6 3-6-3 6-3Zm0 6v9m-5 0h10" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-semibold text-neutral-900">Master</p>
+          </div>
           <p class="mt-2 text-sm text-neutral-600">Instant clarity for essays, projects, and market analysis.</p>
           <div class="mt-auto"></div>
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3"><svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg><p class="font-semibold text-neutral-900">Create</p></div>
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l7 4v5c0 4.5-3.1 8.6-7 9-3.9-.4-7-4.5-7-9V7l7-4z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-semibold text-neutral-900">Create</p>
+          </div>
           <p class="mt-2 text-sm text-neutral-600">From startup ideas to corporate strategy — guided with precision.</p>
           <div class="mt-auto"></div>
         </div>
         <div class="rounded-2xl border border-neutral-200 bg-white p-5 flex flex-col">
-          <div class="flex items-center gap-3"><svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg><p class="font-semibold text-neutral-900">Life</p></div>
+          <div class="flex items-center gap-3">
+            <svg class="h-6 w-6 text-neutral-900" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 12l2 2 4-4M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <p class="font-semibold text-neutral-900">Life</p>
+          </div>
           <p class="mt-2 text-sm text-neutral-600">Navigate contracts, cases, and life’s biggest decisions with ease.</p>
           <div class="mt-auto"></div>
         </div>
       </div>
+
       <div class="mt-10 flex items-center justify-center gap-3">
         <a href="download.html" class="inline-flex items-center rounded-2xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white hover:opacity-90">Get OC</a>
         <a href="#learn-more" class="inline-flex items-center rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-medium text-neutral-900 hover:bg-neutral-50">Learn more</a>
@@ -485,7 +506,7 @@
 
   <div aria-hidden="true" style="height:52px;"></div>
 
-  <!-- BRANDS -->
+  <!-- ===== BRANDS ===== -->
   <section id="brands" class="mx-auto max-w-[1200px] oc-container reveal">
     <div class="mission-wrap relative z-10 mx-auto max-w-[980px] mb-1 rounded-3xl border border-black/5 bg-white/70 p-8 md:p-12 shadow-[0_10px_30px_rgba(0,0,0,0.06)] backdrop-blur">
       <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/60 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-600">Foundation</div>
@@ -496,45 +517,251 @@
       <ul class="mt-8 grid grid-cols-1 sm:grid-cols-3 items-center justify-items-center gap-8">
         <li class="flex items-center justify-center"><img data-oc-brand="google" alt="Google" class="brand-logo h-12 sm:h-16 md:h-20 xl:h-20 w-auto object-contain" /></li>
         <li class="flex items-center justify-center"><img data-oc-brand="openai" alt="OpenAI" class="brand-logo h-12 sm:h-16 md:h-20 xl:h-20 w-auto object-contain" /></li>
-        <li class="flex items-center justify-center"><img data-oc-brand="meta"   alt="Meta"   class="brand-logo h-12 sm:h-16 md:h-20 xl:h-20 w-auto object-contain" /></li>
+        <li class="flex items-center justify-center"><img data-oc-brand="meta" alt="Meta" class="brand-logo h-12 sm:h-16 md:h-20 xl:h-20 w-auto object-contain" /></li>
       </ul>
+
       <div class="mt-6 text-center brand-note">Logos are trademarks of their respective owners. Used here for identification only.</div>
     </div>
   </section>
 
-  <!-- OC CORES (unchanged content) -->
+  <!-- ===== OC CORES ===== -->
   <section id="oc-cores" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
-    <!-- header + three cards + explorer CTA (same as original) -->
-    <!-- … (kept verbatim from your code) … -->
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-[-5rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.20), rgba(160,228,212,0) 70%);"></div>
+      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
+    </div>
+
+    <div class="w-full pt-20 md:pt-28 pb-6 text-center">
+      <div class="mx-auto w-fit rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-700">OC Cores</div>
+      <h2 class="mt-4 text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight grad-text grad-move-left" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;">Meet the Cores</h2>
+      <p class="mx-auto mt-4 max-w-[780px] text-[15px] leading-relaxed text-neutral-600">
+        OC-Core, OC-Research-Core, and OC-Coach-Core work together like a product family. Each Core is focused, updatable, and designed to feel native on your device. New Cores ship regularly—and there’s a dedicated
+        <button id="ocCoresOpenBtnTop" class="underline decoration-neutral-300 underline-offset-4 hover:text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-oc-accent rounded-sm">Cores Library</button>
+        to explore them all.
+      </p>
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-3 rows-equal grid-stretch">
+      <article class="relative overflow-hidden rounded-2xl g-grad grad-anim text-white border border-white/15 shadow-[0_16px_54px_rgba(0,0,0,.18)] backdrop-blur-xl scroll-fade card-glass sheen tilt p-6 md:p-7">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph ph-cpu text-white text-[20px]" aria-hidden="true"></i></div>
+          <h3 class="text-xl font-semibold tracking-tight">OC-Core</h3>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-white/85">Your default brain: general reasoning, planning, and drafting powered by OC’s local stack.</p>
+        <ul class="mt-4 space-y-2 text-sm text-white/85">
+          <li class="flex items-start gap-2"><i class="ph ph-lightning text-[18px] mt-[2px]" aria-hidden></i><span>Fast on-device context & structured outputs.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-files text-[18px] mt-[2px]" aria-hidden></i><span>Writes briefs, emails, and docs with export-ready formatting.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-shield-check text-[18px] mt-[2px]" aria-hidden></i><span>Private by design — no cloud send.</span></li>
+        </ul>
+      </article>
+
+      <article class="rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-[0_10px_30px_rgba(0,0,0,.06)] scroll-fade tilt">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center"><i class="ph ph-magnifying-glass text-[20px]" aria-hidden="true"></i></div>
+          <h3 class="text-xl font-semibold tracking-tight text-neutral-900">OC-Research-Core</h3>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-neutral-700">Verifiable research: crawls sources, ranks evidence, and returns linked, deduped summaries.</p>
+        <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+          <li class="flex items-start gap-2"><i class="ph ph-quotes text-[18px] mt-[2px]" aria-hidden></i><span>Quote capture with line-level references.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-list-checks text-[18px] mt-[2px]" aria-hidden></i><span>Evidence ranking & conflict resolution.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-link text-[18px] mt-[2px]" aria-hidden></i><span>One-tap audit trail to originals.</span></li>
+        </ul>
+      </article>
+
+      <article class="rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-[0_10px_30px_rgba(0,0,0,.06)] scroll-fade tilt">
+        <div class="flex items-center gap-3">
+          <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center"><i class="ph ph-compass-tool text-[20px]" aria-hidden="true"></i></div>
+          <h3 class="text-xl font-semibold tracking-tight text-neutral-900">OC-Coach-Core</h3>
+        </div>
+        <p class="mt-3 text-sm leading-relaxed text-neutral-700">Structured coaching for goals, habits, and decisions — with weekly reviews and action plans.</p>
+        <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+          <li class="flex items-start gap-2"><i class="ph ph-target text-[18px] mt-[2px]" aria-hidden></i><span>Clear objectives, milestones, and checkpoints.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-graph text-[18px] mt-[2px]" aria-hidden></i><span>Progress feedback loops and nudges.</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-lock text-[18px] mt-[2px]" aria-hidden></i><span>Private, local-first coaching data.</span></li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="mt-10 md:mt-12 scroll-fade">
+      <article class="relative isolate overflow-hidden rounded-2xl border border-black/10 bg-white/70 backdrop-blur shadow-[0_16px_44px_rgba(0,0,0,.08)] px-6 py-6 md:px-8 md:py-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+          <div class="min-w-0">
+            <div class="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-neutral-700">Core Explorer</div>
+            <h3 class="mt-3 text-xl md:text-2xl font-semibold tracking-tight text-neutral-900">Explore every Core — and what’s coming next.</h3>
+            <p class="mt-2 max-w-[780px] text-[15px] leading-6 text-neutral-700">Browse capabilities, changelogs, and roadmaps. New task-specific Cores are in active development (e.g., Code-Core, Design-Core, Finance-Core), and update seamlessly inside OC.</p>
+          </div>
+          <div class="shrink-0">
+            <a href="cores.html" class="relative inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 g-grad grad-anim" style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;">
+              <i class="ph ph-grid-four text-[18px]" aria-hidden="true"></i><span>Explore Cores</span>
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <p class="mt-4 text-center text-xs text-neutral-500">Updates ship continuously. Core behavior may evolve with versioned releases.</p>
   </section>
 
-  <!-- “Built. For. Real. Work.” headline -->
+  <!-- Local styles for OC-cores sheen -->
+  <style>
+    #oc-cores .tilt{transition:transform .25s ease,box-shadow .25s ease}
+    @media (hover:hover){#oc-cores .tilt:hover{transform:translateY(-2px) scale(1.01)}}
+    #oc-cores .sheen{position:relative;isolation:isolate}
+    #oc-cores .sheen::before{content:"";position:absolute;inset:-8%;background:linear-gradient(120deg,transparent 35%,rgba(255,255,255,.24) 50%,transparent 65%);transform:translateX(-120%) skewX(-12deg);transition:transform .9s cubic-bezier(.16,1,.3,1);pointer-events:none;z-index:0}
+    @media (hover:hover){#oc-cores .sheen:hover::before{transform:translateX(120%) skewX(-12deg)}}
+    @media (prefers-reduced-motion:reduce){#oc-cores .tilt,#oc-cores .sheen::before{transition:none!important}}
+    #oc-cores .grid-stretch>*{height:100%}
+    #oc-cores .rows-equal{grid-auto-rows:1fr}
+  </style>
+
+  <!-- Ensure reveal fallback when IO unsupported -->
+  <script>
+    (function(){
+      try{
+        const root=document.getElementById('oc-cores'); if(!root) return;
+        if (!('IntersectionObserver' in window)){ root.classList.add('in'); root.querySelectorAll('.scroll-fade').forEach(el=>el.classList.add('in-view')); }
+      }catch(_){}
+    })();
+  </script>
+
+  <!-- ===== Built. For. Real. Work. (sly) ===== -->
   <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
-    <!-- … (kept verbatim from your code) … -->
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, rgba(160,228,212,.22), rgba(160,228,212,0) 70%);"></div>
+      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(0,207,255,.14), rgba(0,207,255,0) 70%);"></div>
+    </div>
+    <div class="w-full py-24 md:py-32">
+      <div class="mx-auto max-w-[900px] text-center">
+        <h2 class="sly-title text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">
+          <span class="inline-block">Built.</span>
+          <span class="inline-block opacity-90">For.</span>
+          <span class="inline-block opacity-90">Real.</span>
+          <span class="inline-block opacity-90">Work.</span>
+        </h2>
+        <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
+        <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] grad-text grad-move-left" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">Without Limits</p>
+      </div>
+    </div>
   </section>
 
-  <!-- (REMOVED) LIVE CHAT DEMO SECTION -->
-  <!-- The entire chat-demo HTML block and templates were removed by request. -->
-
-  <!-- Limitless / Features / Brand Strip / Download CTA (kept) -->
+  <!-- ===== Limitless (sly-2) ===== -->
   <section id="sly-2" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal" style="background-color:#fff;">
-    <!-- … (kept verbatim from your code) … -->
+    <div class="absolute inset-0 -z-20 bg-white"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background:radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.60), rgba(255,255,255,0) 70%);"></div>
+      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background:radial-gradient(55% 55% at 50% 50%, rgba(255,255,255,.50), rgba(255,255,255,0) 70%);"></div>
+    </div>
+    <div class="w-full py-24 md:py-32">
+      <div class="mx-auto max-w-[900px] text-center">
+        <h2 class="sly-title text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight"><span class="inline-block">Limitless</span></h2>
+        <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-neutral-300 to-transparent"></div>
+        <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] grad-text grad-move-left" style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:90deg;">For Outliers</p>
+      </div>
+    </div>
   </section>
 
+  <!-- ===== Features ===== -->
   <section id="features" class="section-clip relative isolate mx-auto max-w-[1200px] oc-container reveal px-6 md:px-8">
-    <!-- … (kept verbatim from your code) … -->
+    <div class="absolute inset-0 -z-10 bg-white"></div>
+    <article class="relative overflow-hidden rounded-[28px] border border-white/15 g-grad grad-anim backdrop-blur-xl card-glass shadow-[0_16px_54px_rgba(0,0,0,.14)]">
+      <div class="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-white/10"></div>
+      <div class="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
+
+      <header class="px-8 md:px-12 pt-10 md:pt-12 text-center">
+        <div class="mx-auto w-fit rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-medium tracking-wide text-white/80">Features</div>
+        <h2 class="mt-4 text-2xl md:text-3xl font-semibold tracking-tight text-white">The limitless workspace—on your device.</h2>
+        <p class="mx-auto mt-2 max-w-[760px] text-[15px] leading-6 text-white/80">OC is private, polished, and powerful—blending local AI with verifiable research, drafting, and export.</p>
+      </header>
+
+      <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+        <div class="p-8 md:p-10">
+          <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph ph-lock text-white text-[20px]"></i></div>
+            <div><h3 class="font-semibold text-white tracking-tight">Private by Design</h3><p class="mt-2 text-sm leading-relaxed text-white/80">On-device models and search. No cloud send. Your work never leaves your hands.</p></div>
+          </div>
+        </div>
+        <div class="p-8 md:p-10">
+          <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph-light ph-magnifying-glass text-white text-[20px]"></i></div>
+            <div><h3 class="font-semibold text-white tracking-tight">Built for Research</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Ask in plain language. Get linked case law, statutes, and summaries you can trust.</p></div>
+          </div>
+        </div>
+        <div class="p-8 md:p-10">
+          <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph ph-brain text-white text-[20px]"></i></div>
+            <div><h3 class="font-semibold text-white tracking-tight">Robust Knowledge</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Curated sources and guardrails minimize hallucinations and surface what matters.</p></div>
+          </div>
+        </div>
+        <div class="p-8 md:p-10">
+          <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph ph-shield-check text-white text-[20px]"></i></div>
+            <div><h3 class="font-semibold text-white tracking-tight">Verifiable Outputs</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Every answer cites its sources. Tap to inspect methods, links, and quotes.</p></div>
+          </div>
+        </div>
+        <div class="p-8 md:p-10">
+          <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph ph-plug-charging text-white text-[20px]"></i></div>
+            <div><h3 class="font-semibold text-white tracking-tight">Custom Databases</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Bring your own casebooks, contracts, PDFs—securely indexed for instant recall.</p></div>
+          </div>
+        </div>
+        <div class="p-8 md:p-10">
+          <div class="flex items-start gap-4"><div class="h-11 w-11 shrink-0 rounded-2xl bg-white/12 ring-1 ring-white/25 flex items-center justify-center"><i class="ph ph-database text-white text-[20px]"></i></div>
+            <div><h3 class="font-semibold text-white tracking-tight">Your Local Library</h3><p class="mt-2 text-sm leading-relaxed text-white/80">Drag-and-drop files. Semantic search across everything—fast and offline.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-8 md:px-12 pb-8 md:pb-12 pt-4 border-t border-white/10">
+        <ul class="flex flex-wrap justify-center gap-2">
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">Offline</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">Semantic Search</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">RAG</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">Citations</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">Drafting</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">PDF / DOCX Export</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">Notepad & Prompt Faves</li>
+          <li class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/85">Local Databases</li>
+        </ul>
+      </div>
+    </article>
   </section>
 
+  <!-- Brand strip -->
   <section class="oc-brand-strip mx-auto max-w-[1200px] px-6 py-10 mt-12 mb-12">
-    <!-- … (kept verbatim from your code) … -->
+    <p class="mb-6 text-center text-[11px] leading-none tracking-[.24em] uppercase text-neutral-600">Built on the platforms you trust</p>
+    <ul class="grid grid-cols-3 items-center justify-items-center gap-10 md:gap-12" aria-label="Technology foundations">
+      <li><img data-oc-brand="google" alt="Google" class="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-0 transition-opacity duration-500 filter grayscale contrast-125 brightness-95 hover:grayscale-0 hover:brightness-100" /></li>
+      <li><img data-oc-brand="openai" alt="OpenAI" class="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-0 transition-opacity duration-500 filter grayscale contrast-125 brightness-95 hover:grayscale-0 hover:brightness-100" /></li>
+      <li><img data-oc-brand="meta" alt="Meta" class="h-10 md:h-12 lg:h-14 w-auto object-contain opacity-0 transition-opacity duration-500 filter grayscale contrast-125 brightness-95 hover:grayscale-0 hover:brightness-100" /></li>
+    </ul>
   </section>
 
-  <!-- DOWNLOAD CTA -->
+  <!-- Tiny brand logo auto-loader (kept) -->
+  <script>
+    (() => {
+      const srcMap = { google:'/assets/brands/google.svg', openai:'/assets/brands/openai.svg', meta:'/assets/brands/meta.svg' };
+      document.querySelectorAll('img[data-oc-brand]').forEach(img => {
+        const key=(img.getAttribute('data-oc-brand')||'').toLowerCase();
+        const fadeIn=()=>requestAnimationFrame(()=>img.style.opacity='0.9');
+        if (!img.getAttribute('src') && srcMap[key]) img.src = srcMap[key];
+        if (img.complete) fadeIn(); else img.addEventListener('load', fadeIn, { once:true });
+      });
+    })();
+  </script>
+
+  <!-- ===== DOWNLOAD CTA ===== -->
   <section id="download" class="section-clip mx-auto max-w-[1200px] oc-container mt-12 reveal">
-    <!-- … (kept verbatim from your code) … -->
+    <div class="scroll-fade g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
+      <div class="p-8 md:p-12 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-semibold text-white">Get OC</h2>
+          <p class="mt-2 text-white/80 max-w-xl">The limitless workspace for outliers.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50"><i class="ph ph-apple-logo"></i> Download for macOS</a>
+          <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-windows-logo"></i> Download for Windows</a>
+          <a href="download.html" class="btn inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40"><i class="ph ph-linux-logo"></i> Linux (AppImage)</a>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <!-- FOOTER -->
+  <!-- ===== FOOTER ===== -->
   <footer>
     <div class="mx-auto max-w-[1200px] oc-container py-12 flex items-center flex-col gap-6 text-oc-ink/60 text-sm">
       <div class="text-center"><span class="font-semibold text-black">OC</span> © <span id="yr"></span> OC</div>
@@ -547,444 +774,205 @@
     </div>
   </footer>
 
-  <!-- ===== Scripts (order matters) ===== -->
-
-  <!-- Header float-on-scroll -->
+  <!-- ===== JS: page utilities + animations (chat demo removed) ===== -->
   <script>
-    (function(){
-      try{
-        var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
-        if(!header) return;
-        var THRESH = 8;
-        function onScroll(){
-          var y = window.scrollY || document.documentElement.scrollTop || 0;
-          if (y > THRESH) header.classList.add('is-float'); else header.classList.remove('is-float');
-        }
-        onScroll();
-        window.addEventListener('scroll', onScroll, { passive:true });
-      }catch(_){}
-    })();
-  </script>
+    // Page year
+    (function(){ const yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear(); })();
 
-  <!-- Measure actual header height for hero layout -->
-  <script>
-    (function setHeaderVar(){
-      const pick = ()=> document.querySelector('header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-      const set  = ()=> {
-        const el = pick(); const h = el ? el.getBoundingClientRect().height : 56;
-        document.documentElement.style.setProperty('--header-h', Math.round(h) + 'px');
-      };
-      set();
-      window.addEventListener('resize', set, { passive:true });
-      window.addEventListener('orientationchange', set, { passive:true });
-      const el = pick(); if (el && 'ResizeObserver' in window) new ResizeObserver(set).observe(el);
-    })();
-  </script>
-
-  <!-- Arrow reveal after CTA text stabilizes -->
-  <script>
-    (() => {
-      const ARROW_AFTER_CTA_MS = 40;
-      const arrow  = document.getElementById('heroArrow');
-      const ctaBtn = document.getElementById('heroCtaBtn');
-      const ctaTxt = document.querySelector('#home .hero-cta-text');
-      if (!arrow || !ctaBtn) return;
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const reveal = () => { arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
-
-      document.addEventListener('oc:cta-text-done', () => {
-        if (prefersReduced) { reveal(); return; }
-        setTimeout(reveal, ARROW_AFTER_CTA_MS);
-      }, { once: true });
-
-      const onCtaInView = () => {
-        if (prefersReduced) { reveal(); return; }
-        if (!ctaTxt) { setTimeout(reveal, 10); return; }
-        let lastChange = Date.now();
-        const mo = new MutationObserver(() => { lastChange = Date.now(); });
-        mo.observe(ctaTxt, { childList: true, characterData: true, subtree: true });
-
-        const checkStable = () => {
-          const idleMs = Date.now() - lastChange;
-          if ((ctaTxt.textContent || '').trim() && idleMs > 10) { mo.disconnect(); reveal(); return true; }
-          return false;
-        };
-        const tick = () => { if (!checkStable()) requestAnimationFrame(tick); };
-        requestAnimationFrame(tick);
-        setTimeout(() => { try { mo.disconnect(); } catch(e){} if (arrow.classList.contains('opacity-0')) reveal(); }, 6000);
-      };
-
-      const io = new IntersectionObserver((entries) => {
-        for (const e of entries) if (e.isIntersecting){ onCtaInView(); io.disconnect(); break; }
-      }, { threshold: 0.35 });
-      io.observe(ctaBtn);
-    })();
-  </script>
-
-  <!-- OS-aware CTA label & icon -->
-  <script>
-    (() => {
-      const elBtn = document.getElementById('heroCtaBtn');
-      const elIcon = document.getElementById('heroCtaIcon');
-      const elTxt = document.querySelector('#home .hero-cta-text');
-      if (!elBtn || !elTxt) return;
-
-      const detectOS = () => {
-        const ua = (navigator.userAgent || '').toLowerCase();
-        const p = String((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '').toLowerCase();
-        const isWindows = p.includes('win') || ua.includes('windows');
-        const isAppleDesktop = p.includes('mac') || ua.includes('mac os x') || ua.includes('macintosh');
-        const isIOS = /iphone|ipad|ipod/.test(ua);
-        if (isWindows) return 'windows';
-        if (isAppleDesktop || isIOS) return 'mac';
-        return 'other';
-      };
-
-      const os = detectOS();
-      const label = os === 'windows' ? 'Get for Windows' : (os === 'mac' ? 'Get for Mac' : 'Download');
-      elTxt.textContent = label; elBtn.setAttribute('aria-label', label); elBtn.setAttribute('title', label);
-
-      if (elIcon) {
-        elIcon.className = os === 'windows' ? 'ph ph-microsoft-logo text-xl' : 'ph ph-apple-logo text-xl';
-        elIcon.setAttribute('aria-hidden','true');
-      }
-      setTimeout(() => { document.dispatchEvent(new CustomEvent('oc:cta-text-done')); }, 0);
-    })();
-  </script>
-
-  <!-- Soft page blur fade + reveal observers -->
-  <script>
-    // Veil fade
+    // Page blur fade on load
     window.addEventListener('load', () => {
-      const pageBlur = document.getElementById('pageBlur');
-      if (!pageBlur) return;
-      pageBlur.classList.add('hide');
-      document.dispatchEvent(new Event('oc:page-blur-fade'));
+      const pageBlur = document.getElementById('pageBlur'); if (!pageBlur) return;
+      pageBlur.classList.add('hide'); document.dispatchEvent(new Event('oc:page-blur-fade'));
       setTimeout(() => pageBlur.remove(), 1300);
     });
 
-    // One-shot reveal for .reveal
-    const io = new IntersectionObserver((entries)=>{
-      for (const e of entries) if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
-    },{threshold:.12});
-    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+    // One-shot reveal on scroll
+    (function(){
+      const io = new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} } }, {threshold:.12});
+      document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+    })();
 
-    // Scroll-blur “in-view” on content blocks
-    const sbo = new IntersectionObserver((entries) => {
-      for (const e of entries) if (e.isIntersecting){ e.target.classList.add('in-view'); sbo.unobserve(e.target); }
-    }, { threshold: 0.35, rootMargin: "-12% 0px -12% 0px" });
-    document.querySelectorAll('.scroll-fade').forEach(el => sbo.observe(el));
-  </script>
-
-  <!-- Mobile drawer controls -->
-  <script>
+    // Mobile menu
     (function(){
       const hamburgerBtn = document.getElementById('hamburgerBtn');
       const mobileMenu   = document.getElementById('mobileMenu');
       const closeMenuBtn = document.getElementById('closeMenuBtn');
-
-      function openMenu(){
-        if (window.matchMedia('(min-width: 768px)').matches) return;
-        mobileMenu.style.display = 'block'; void mobileMenu.offsetWidth;
-        mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active');
-        hamburgerBtn.setAttribute('aria-expanded','true'); mobileMenu.setAttribute('aria-hidden','false');
-        document.body.classList.add('overflow-hidden');
-      }
-      function closeMenu(){
-        mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active');
-        hamburgerBtn.setAttribute('aria-expanded','false'); mobileMenu.setAttribute('aria-hidden','true');
-        document.body.classList.remove('overflow-hidden');
-        setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display='none'; }, 550);
-      }
-
+      function openMenu(){ if (matchMedia('(min-width: 768px)').matches) return; mobileMenu.style.display='block'; void mobileMenu.offsetWidth; mobileMenu.classList.add('active'); hamburgerBtn.classList.add('is-active'); hamburgerBtn.setAttribute('aria-expanded','true'); mobileMenu.setAttribute('aria-hidden','false'); document.body.classList.add('overflow-hidden'); }
+      function closeMenu(){ mobileMenu.classList.remove('active'); hamburgerBtn.classList.remove('is-active'); hamburgerBtn.setAttribute('aria-expanded','false'); mobileMenu.setAttribute('aria-hidden','true'); document.body.classList.remove('overflow-hidden'); setTimeout(()=>{ if(!mobileMenu.classList.contains('active')) mobileMenu.style.display='none'; }, 550); }
       hamburgerBtn?.addEventListener('click', ()=> mobileMenu.classList.contains('active') ? closeMenu() : openMenu());
       closeMenuBtn?.addEventListener('click', closeMenu);
       mobileMenu?.addEventListener('click', (e)=>{ if (e.target.classList.contains('menu-scrim')) closeMenu(); });
-
-      const mq = window.matchMedia('(min-width: 768px)');
-      function handleMQ(e){ if (e.matches) closeMenu(); }
-      if (mq.addEventListener) mq.addEventListener('change', handleMQ); else mq.addListener(handleMQ);
-
-      document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeMenu(); });
+      const mq=matchMedia('(min-width: 768px)'); const handleMQ=(e)=>{ if(e.matches) closeMenu(); }; (mq.addEventListener?mq.addEventListener('change',handleMQ):mq.addListener(handleMQ));
+      document.addEventListener('keydown', (e)=>{ if (e.key==='Escape') closeMenu(); });
     })();
-  </script>
 
-  <!-- HERO typing + moved rotator + section typers (EDITABLE KNOBS near top of each block) -->
-  <script>
-    // ===== HERO type settings (EDITABLE KNOBS)
-    window.OC_HERO = Object.assign({
-      enabled:true, startOnView:true, waitForBlur:true, startDelayMs:200, staggerMs:50, streamSpeed:1.0,
-      line1CharMin:44, line1CharMax:50, lineCharMin:18, lineCharMax:22, buttonCharMin:5, buttonCharMax:10
-    }, window.OC_HERO || {});
+    // Scroll-blur content observer (one-shot)
+    (function(){
+      const sbo = new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ e.target.classList.add('in-view'); sbo.unobserve(e.target); } } }, { threshold:.35, rootMargin:"-12% 0px -12% 0px" });
+      document.querySelectorAll('.scroll-fade').forEach(el=>sbo.observe(el));
+    })();
 
-    // ===== Rotator words in sly-4 (EDITABLE KNOBS)
-    window.OC_HERO_ROTATOR = Object.assign({
-      prefix:'Your AI. For ',
-      words:['everything.','entrepreneurs.','research.','students.','product R&D.','business.','law.','inventors.','designers.','commerce.','education.','entrepreneurs.','innovation.'],
-      dwellMs:2000, typeMin:50, typeMax:70, deleteMin:20, deleteMax:30,
-      caretBlinkMs:800, caretWidthPx:2, caretColor:'rgba(0,0,0,.85)'
-    }, window.OC_HERO_ROTATOR || {});
-
-    // ===== Section typer speeds (EDITABLE KNOBS)
-    window.OC_SLY = Object.assign({ enabled:true, startOnView:true, titleCharMin:30, titleCharMax:30, lineCharMin:10, lineCharMax:10, startDelayMs:0, staggerMs:0, streamSpeed:1.0 }, window.OC_SLY || {});
-    window.OC_TCT = Object.assign({ enabled:true, startOnView:true, titleCharMin:30, titleCharMax:30, lineCharMin:10, lineCharMax:10, startDelayMs:0, staggerMs:0, streamSpeed:1.0 }, window.OC_TCT || {});
-  </script>
-
-  <script>
-    // HERO typing (logo stays; single-line shimmering tagline)
-    (function heroTyping(){
-      const cfg = window.OC_HERO || {}; if (!cfg.enabled) return;
-      const hero = document.getElementById('home'); if (!hero) return;
-
-      const titleEl = hero.querySelector('.hero-title');
-      const sub1El  = hero.querySelector('.hero-sub1');
-      const ctaTxt  = hero.querySelector('.hero-cta-text');
-      const ctaBtn  = hero.querySelector('#heroCtaBtn');
+    // HERO typing
+    (function(){
+      const cfg = Object.assign({enabled:true,startOnView:true,waitForBlur:true,startDelayMs:200,staggerMs:50,streamSpeed:1.0,line1CharMin:44,line1CharMax:50,line2CharMin:18,line2CharMax:22,lineCharMin:18,lineCharMax:22,buttonCharMin:5,buttonCharMax:10}, window.OC_HERO||{});
+      if (!cfg.enabled) return;
+      const hero=document.getElementById('home'); if(!hero) return;
+      const titleEl=hero.querySelector('.hero-title'); const sub1El=hero.querySelector('.hero-sub1'); const ctaTxt=hero.querySelector('.hero-cta-text'); const ctaBtn=hero.querySelector('#heroCtaBtn');
       if (!titleEl || !ctaTxt || !ctaBtn) return;
-
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const bTxt = ctaTxt.textContent || '';
-      const TAGLINE_FULL = 'The AI. Without Limits.';
-      const MOBILE_LINE1 = 'The AI Workspace.'; const MOBILE_LINE2 = 'Without Limits.';
-      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      const TAGLINE_FULL='The AI Workspace. Without Limits.'; const MOBILE_LINE1='The AI Workspace.'; const MOBILE_LINE2='Without Limits.'; const isMobile = matchMedia('(max-width: 767px)').matches;
 
-      // Replace title text with logo mask (keeps your brand)
-      titleEl.innerHTML = '';
-      const wrapSpan = document.createElement('span'); wrapSpan.className = 'hero-logo-wrap'; titleEl.appendChild(wrapSpan);
-
-      // Optional glow (respects top-level toggle)
-      if (window.OC_ENABLE_HERO_LOGO_GLOW){
-        const glow = document.createElement('span');
-        glow.className = 'hero-logo-glow glow-pulse';
-        glow.style.background =
-          'radial-gradient(60% 60% at 50% 40%, rgba(0,207,255,.40), rgba(0,0,0,0) 70%),' +
-          'radial-gradient(55% 55% at 40% 60%, rgba(14,111,92,.28), rgba(0,0,0,0) 70%)';
-        wrapSpan.appendChild(glow);
-      }
-
-      const logoSpan = document.createElement('span');
-      logoSpan.className = 'hero-logo-white';
-      logoSpan.setAttribute('role','img'); logoSpan.setAttribute('aria-label','OC');
-      wrapSpan.appendChild(logoSpan);
+      titleEl.innerHTML=''; const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
+      const glowCfg = Object.assign({enabled:!!window.OC_ENABLE_HERO_LOGO_GLOW,pulse:true,pulseDur:'6s',color1:'rgba(0,207,255,.40)',color2:'rgba(14,111,92,.28)',opacity:.55,blurPx:30,insetPct:16}, window.OC_HERO_GLOW||{});
+      if (glowCfg.enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'+(glowCfg.pulse?' glow-pulse':''); glow.style.setProperty('--glow-c1',glowCfg.color1); glow.style.setProperty('--glow-c2',glowCfg.color2); glow.style.setProperty('--glow-opacity',String(glowCfg.opacity)); glow.style.setProperty('--glow-blur',((glowCfg.blurPx|0)||30)+'px'); glow.style.setProperty('--glow-pulse-dur',glowCfg.pulseDur); const inset=Math.max(0,Math.min(40, glowCfg.insetPct))+'%'; glow.style.inset=`-${inset}`; wrapSpan.appendChild(glow); }
+      const logo=document.createElement('span'); logo.className='hero-logo-white'; logo.setAttribute('role','img'); logo.setAttribute('aria-label','OC'); wrapSpan.appendChild(logo);
 
       if (prefersReduced){
-        sub1El.innerHTML = isMobile
-          ? `<span class="hero-line1">${MOBILE_LINE1}</span><span class="hero-line2">${MOBILE_LINE2}</span>`
-          : `<span class="hero-line1">${TAGLINE_FULL}</span>`;
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-text-done'));
-        return;
+        if (sub1El){ sub1El.innerHTML = isMobile ? `<span class="hero-line1">${MOBILE_LINE1}</span><span class="hero-line2">${MOBILE_LINE2}</span>` : `<span class="hero-line1">${TAGLINE_FULL}</span>`; }
+        ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-text-done')); return;
       }
 
-      // Helpers
-      function spH(ms){ const f = (typeof cfg.streamSpeed==='number' && cfg.streamSpeed>0) ? cfg.streamSpeed : 1.0; return ms*f; }
+      if (sub1El) sub1El.textContent=''; ctaTxt.textContent=''; ctaBtn.classList.remove('cta-visible');
+
+      function spH(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
       function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-      function type(el, text, min, max){
-        return new Promise(resolve=>{
-          let i=0; const tn=document.createTextNode(''); el.textContent=''; el.appendChild(tn);
-          (function tick(){ tn.textContent = text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })();
-        });
-      }
-      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+      function type(el, text, min, max){ return new Promise(resolve=>{ let i=0; const tn=document.createTextNode(''); el.textContent=''; el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })(); }); }
+      const wait=(ms)=>new Promise(r=>setTimeout(r,ms));
 
       async function run(){
         await wait(Math.max(0, cfg.startDelayMs|0));
         if (sub1El){
-          const min = (cfg.line1CharMin ?? cfg.lineCharMin) | 0;
-          const max = (cfg.line1CharMax ?? cfg.lineCharMax) | 0;
+          const min=(cfg.line1CharMin ?? cfg.lineCharMin)|0; const max=(cfg.line1CharMax ?? cfg.lineCharMax)|0;
           if (isMobile){
-            sub1El.innerHTML = '<span class="hero-line1"><span class="seg-fullshine l1"></span></span><span class="hero-line2"><span class="seg-fullshine l2"></span></span>';
+            sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine l1"></span></span><span class="hero-line2"><span class="seg-fullshine l2"></span></span>';
             await type(sub1El.querySelector('.l1'), MOBILE_LINE1, min, max);
             await type(sub1El.querySelector('.l2'), MOBILE_LINE2, min, max);
-          }else{
-            sub1El.innerHTML = '<span class="hero-line1"><span class="seg-fullshine"></span></span>';
+          } else {
+            sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine"></span></span>';
             await type(sub1El.querySelector('.seg-fullshine'), TAGLINE_FULL, min, max);
           }
         }
         await wait(cfg.staggerMs|0);
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-visible'));
-        await wait(900);
+        ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-visible'));
+        await new Promise(r=>{ const done=()=>{ctaBtn.removeEventListener('transitionend', done); r();}; ctaBtn.addEventListener('transitionend', done, {once:true}); setTimeout(done, 900); });
+        await wait(60);
+        document.dispatchEvent(new Event('oc:cta-text-start'));
         await type(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
         document.dispatchEvent(new Event('oc:cta-text-done'));
       }
 
       let started=false, inView=!cfg.startOnView, blurReady=!cfg.waitForBlur;
       function tryStart(){ if(!started && inView && blurReady){ started=true; run(); } }
-
-      if (cfg.startOnView){
-        const ob = new IntersectionObserver((entries)=>{ for (const e of entries) if (e.isIntersecting){ inView=true; tryStart(); ob.disconnect(); } }, { threshold:.35 });
-        ob.observe(hero);
-      }
-      if (cfg.waitForBlur){
-        document.addEventListener('oc:page-blur-fade', () => { blurReady = true; tryStart(); }, { once:true });
-      } else { blurReady = true; tryStart(); }
+      if (cfg.startOnView){ const ob=new IntersectionObserver((ents)=>{ for(const e of ents){ if(e.isIntersecting){ inView=true; tryStart(); ob.disconnect(); } } }, {threshold:.35}); ob.observe(hero); }
+      if (cfg.waitForBlur){ document.addEventListener('oc:page-blur-fade', ()=>{ blurReady=true; tryStart(); }, { once:true }); } else { blurReady=true; tryStart(); }
     })();
 
-    // Rotator in sly-4 (single line: "Your AI. For [word]")
-    (function movedRotator(){
-      const root = document.querySelector('#sly-4 .sly-sub'); const rCfg = window.OC_HERO_ROTATOR || {}; const cfg = window.OC_HERO || {};
-      if (!root || !rCfg.words || !rCfg.words.length) return;
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const prefix = rCfg.prefix || 'Your AI. For '; const words = rCfg.words.slice();
-
-      function spH(ms){ const f = (typeof cfg.streamSpeed==='number' && cfg.streamSpeed>0) ? cfg.streamSpeed : 1.0; return ms*f; }
+    // Rotator moved to #sly-4 subtitle (single line)
+    (function(){
+      const root=document.querySelector('#sly-4 .sly-sub'); const baseCfg=Object.assign({prefix:'Your AI. For ',words:['everything.','entrepreneurs.','research.','students.','product R&D.','business.','law.','inventors.','designers.','commerce.','education.','entrepreneurs.','innovation.'],dwellMs:2000,typeMin:50,typeMax:70,deleteMin:20,deleteMax:30,caretBlinkMs:800,caretWidthPx:2,caretColor:'rgba(255,255,255,.92)'}, window.OC_HERO_ROTATOR||{});
+      const cfgH = Object.assign({streamSpeed:1}, window.OC_HERO||{});
+      if (!root || !baseCfg.words?.length) return;
+      const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function spH(ms){ const f=(typeof cfgH.streamSpeed==='number'&&cfgH.streamSpeed>0)?cfgH.streamSpeed:1.0; return ms*f; }
       function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
       function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-      function type(el, text, min, max){
-        return new Promise(resolve=>{
-          let i=0; el.textContent=''; const tn=document.createTextNode(''); el.appendChild(tn);
-          (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })();
-        });
-      }
-      function del(el, min, max){
-        return new Promise(resolve=>{
-          (function step(){ const t=el.textContent||''; if(!t.length){ resolve(); return; } el.textContent=t.slice(0,-1); setTimeout(step, spH(rand(min,max))); })();
-        });
-      }
-
-      root.innerHTML = '<span class="rot-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
-      root.style.setProperty('--caret-blink', (rCfg.caretBlinkMs||800) + 'ms');
-      root.style.setProperty('--caret-w', (rCfg.caretWidthPx||2) + 'px');
-      root.style.setProperty('--caret-color', rCfg.caretColor || 'rgba(0,0,0,.85)');
-
-      const pEl = root.querySelector('.rot-prefix'); const wEl = root.querySelector('.hero-word');
-
+      function type(el, text, min, max){ return new Promise(resolve=>{ let i=0; el.textContent=''; const tn=document.createTextNode(''); el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })(); }); }
+      function del(el, min, max){ return new Promise(resolve=>{ const step=()=>{ const t=el.textContent||''; if(!t.length){ resolve(); return; } el.textContent=t.slice(0,-1); setTimeout(step, spH(rand(min,max))); }; step(); }); }
+      root.innerHTML='<span class="rot-prefix"></span><span class="hero-word"></span><span class="hero-caret" aria-hidden="true"></span>';
+      root.style.setProperty('--caret-blink', (baseCfg.caretBlinkMs||800)+'ms'); root.style.setProperty('--caret-w', (baseCfg.caretWidthPx||2)+'px'); root.style.setProperty('--caret-color', baseCfg.caretColor || 'rgba(0,0,0,.85)');
+      const pEl=root.querySelector('.rot-prefix'), wEl=root.querySelector('.hero-word'), words=baseCfg.words.slice();
       async function run(){
-        if (prefersReduced){ root.textContent = prefix + words[0]; return; }
-        await type(pEl, prefix, cfg.lineCharMin|0 || 12, cfg.lineCharMax|0 || 18);
-        await type(wEl, words[0], rCfg.typeMin|0 || 40, rCfg.typeMax|0 || 70);
-
-        let i = 1 % words.length;
+        if (prefersReduced){ root.textContent = baseCfg.prefix + words[0]; return; }
+        await type(pEl, baseCfg.prefix, 12, 18);
+        await type(wEl, words[0], baseCfg.typeMin|0, baseCfg.typeMax|0);
+        let i=1 % words.length;
         (async function loop(){
-          await wait(spH(rCfg.dwellMs|0 || 2000));
-          await del(wEl, rCfg.deleteMin|0 || 20, rCfg.deleteMax|0 || 30);
-          await type(wEl, words[i], rCfg.typeMin|0 || 40, rCfg.typeMax|0 || 70);
-          i = (i + 1) % words.length;
-          loop();
+          await wait(spH(baseCfg.dwellMs|0));
+          await del(wEl, baseCfg.deleteMin|0, baseCfg.deleteMax|0);
+          await type(wEl, words[i], baseCfg.typeMin|0, baseCfg.typeMax|0);
+          i=(i+1)%words.length; loop();
         })();
       }
-
-      const ob = new IntersectionObserver((entries)=>{ for (const e of entries) if (e.isIntersecting){ run(); ob.disconnect(); } }, { threshold:.35 });
+      const ob=new IntersectionObserver((ents)=>{ for(const e of ents){ if(e.isIntersecting){ run(); ob.disconnect(); } } }, {threshold:.35});
       ob.observe(document.getElementById('sly-4'));
     })();
 
-    // Generic section typer (headlines/subheads)
-    function makeSectionTyper(rootSel, titleSel, subSel, cfg){
-      const root  = document.querySelector(rootSel);
-      if (!root || !cfg?.enabled) return;
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-      const titleEl = root.querySelector(titleSel); const subEl = root.querySelector(subSel);
-      if (!titleEl && !subEl) return;
-      const tText = titleEl ? (titleEl.textContent || '') : ''; const sText = subEl ? (subEl.textContent || '') : '';
-      if (titleEl) titleEl.textContent = ''; if (subEl) subEl.textContent = '';
-
-      function spLocal(ms){ const f = (typeof cfg.streamSpeed==='number' && cfg.streamSpeed>0) ? cfg.streamSpeed : 1.0; return ms*f; }
-      function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-      function typeLocal(el, text, min, max){
-        return new Promise(resolve=>{
-          let i=0; const tn=document.createTextNode(''); el.appendChild(tn);
-          (function tick(){ tn.textContent = text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spLocal(rand(min,max))); else resolve(); })();
-        });
-      }
-      const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
-
-      async function run(){
-        await wait(Math.max(0, cfg.startDelayMs|0));
-        if (titleEl) await typeLocal(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0);
-        if (subEl){ await wait(cfg.staggerMs|0); await typeLocal(subEl, sText, cfg.lineCharMin|0, cfg.lineCharMax|0); }
+    // Section typers (sly, sly-2, etc.)
+    (function(){
+      function makeSectionTyper(rootSel, titleSel, subSel, cfg){
+        const root=document.querySelector(rootSel); if(!root || !(cfg?.enabled)) return;
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const titleEl=root.querySelector(titleSel), subEl=root.querySelector(subSel);
+        if (!titleEl && !subEl) return;
+        const tText=titleEl?(titleEl.textContent||''):'', sText=subEl?(subEl.textContent||''):'';
+        if (titleEl) titleEl.textContent=''; if (subEl) subEl.textContent='';
+        function sp(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
+        function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+        function type(el, text, min, max){ return new Promise(resolve=>{ let i=0; const tn=document.createTextNode(''); el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, sp(rand(min,max))); else resolve(); })(); }); }
+        const wait=(ms)=>new Promise(r=>setTimeout(r,ms));
+        async function run(){ await wait(Math.max(0, cfg.startDelayMs|0)); if (titleEl) await type(titleEl, tText, cfg.titleCharMin|0, cfg.titleCharMax|0); if (subEl){ await wait(cfg.staggerMs|0); await type(subEl, sText, cfg.lineCharMin|0, cfg.lineCharMax|0); } }
+        if (cfg.startOnView){ let started=false; const ob=new IntersectionObserver((ents)=>{ for(const e of ents){ if(e.isIntersecting && !started){ started=true; run(); ob.disconnect(); } } }, {threshold:.35}); ob.observe(root); } else { run(); }
       }
 
-      if (cfg.startOnView){
-        let started=false;
-        const ob = new IntersectionObserver((entries)=>{
-          for (const e of entries) if (e.isIntersecting && !started){ started=true; run(); ob.disconnect(); }
-        }, { threshold:.35 });
-        ob.observe(root);
-      } else { run(); }
-    }
-
-    makeSectionTyper('#sly',  '.sly-title', '.sly-sub', window.OC_SLY);
-    makeSectionTyper('#sly-2','.sly-title', '.sly-sub', window.OC_SLY);
-    makeSectionTyper('#sly-3','.sly-title', '.sly-sub', window.OC_SLY);
-    makeSectionTyper('#tct',  '.tct-title', '.tct-sub', window.OC_TCT);
-  </script>
-
-  <!-- Apply brand logos to data-oc-brand imgs -->
-  <script>
-    (function applyBrandLogos(){
-      // EDITABLE: override paths globally via window.OC_BRANDS before this runs.
-      window.OC_BRANDS = Object.assign({ openai:'OAILogo.png', google:'googleLogo.svg', meta:'metaLogo.svg' }, window.OC_BRANDS || {});
-      const map = window.OC_BRANDS || {};
-      document.querySelectorAll('img[data-oc-brand]').forEach(img=>{
-        const key = (img.getAttribute('data-oc-brand')||'').toLowerCase();
-        if (map[key]) img.src = map[key];
-        const fadeIn = () => requestAnimationFrame(()=> img.style.opacity='0.9');
-        if (img.complete) fadeIn(); else img.addEventListener('load', fadeIn, { once:true });
-      });
+      const BASE={enabled:true,startOnView:true,startDelayMs:0,staggerMs:0,streamSpeed:1.0,titleCharMin:30,titleCharMax:30,lineCharMin:10,lineCharMax:10};
+      makeSectionTyper('#sly',  '.sly-title', '.sly-sub',  Object.assign({}, BASE, window.OC_SLY||{}));
+      makeSectionTyper('#sly-2','.sly-title', '.sly-sub',  Object.assign({}, BASE, window.OC_SLY||{}));
+      makeSectionTyper('#sly-3','.sly-title', '.sly-sub',  Object.assign({}, BASE, window.OC_SLY||{}));
+      makeSectionTyper('#tct',  '.tct-title', '.tct-sub',  Object.assign({}, BASE, window.OC_TCT||{}));
     })();
-  </script>
 
-  <!-- Update CTA icon based on OS -->
-  <script>
-    (function setHeroCtaIcon(){
+    // HERO CTA icon class from detected OS
+    (function(){
       const el = document.getElementById('heroCtaIcon'); if (!el) return;
-      const os = (window.OC_OS || '').toLowerCase();
+      const os=(window.OC_OS||'').toLowerCase();
       el.classList.remove('ph-download','ph-apple-logo','ph-windows-logo');
-      if (os === 'windows'){ el.classList.add('ph-windows-logo'); el.setAttribute('title','Windows'); el.setAttribute('aria-label','Windows'); }
+      if (os==='windows'){ el.classList.add('ph-windows-logo'); el.setAttribute('title','Windows'); el.setAttribute('aria-label','Windows'); }
       else { el.classList.add('ph-apple-logo'); el.setAttribute('title','macOS'); el.setAttribute('aria-label','macOS'); }
     })();
-  </script>
 
-  <!-- Footer year -->
-  <script> document.getElementById('yr')?.append(new Date().getFullYear()); </script>
-
-  <!-- Custom element: <oc-down-arrow> -->
-  <script>
-    (() => {
-      class OCDownArrow extends HTMLElement {
+    // Lightweight <oc-down-arrow> web component (replaces heavy demo version)
+    (function(){
+      class OCDownArrow extends HTMLElement{
         static get observedAttributes(){ return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to']; }
         constructor(){ super(); this.attachShadow({mode:'open'}); }
         connectedCallback(){ this.render(); }
         attributeChangedCallback(){ this.render(); }
         render(){
-          const dir = (this.getAttribute('dir') || 'down').toLowerCase();
-          const size = Math.max(8, parseInt(this.getAttribute('size') || '56', 10));
-          const strokeW = Math.max(1, parseFloat(this.getAttribute('thickness') || '3'));
-          const alpha = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
-          const amp = this.getAttribute('amp') || '12%';
-          const bounceDur = this.getAttribute('bounce') || '2s';
-          const breatheDur = this.getAttribute('breathe') || '4s';
-
-          // Simple white stroke with alpha; gradient props are accepted but optional
-          const color = 'rgba(255,255,255,'+alpha+')';
-
-          const rotate = dir === 'up' ? -180 : dir === 'left' ? -90 : dir === 'right' ? 90 : 0;
-
+          const dir=(this.getAttribute('dir')||'down').toLowerCase();
+          const size=Math.max(8, parseInt(this.getAttribute('size')||'72',10));
+          const stroke=Math.max(1, parseFloat(this.getAttribute('thickness')||'7'));
+          const alpha=Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha')||'0.85')));
+          const amp=this.getAttribute('amp')||'14%';
+          const bounce=this.getAttribute('bounce')||'1.8s';
+          const breathe=this.getAttribute('breathe')||'3.6s';
+          const from=this.getAttribute('from')||'#ffffff';
+          const via=this.getAttribute('via')||from;
+          const to=this.getAttribute('to')||from;
+          const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+          const rot = ({right:0,down:90,left:180,up:-90}[dir] ?? 90);
           this.shadowRoot.innerHTML = `
             <style>
-              :host{ display:inline-block; line-height:0; }
-              .wrap{ display:inline-block; transform: rotate(${rotate}deg); will-change: transform; }
-              .chev{ transform-origin: 50% 50%; animation: ocBounce ${bounceDur} ease-in-out infinite; }
-              .chev:nth-child(2){ animation-delay: calc(${bounceDur} / 6); opacity:.8 }
-              .chev:nth-child(3){ animation-delay: calc(${bounceDur} / 3); opacity:.6 }
-              @keyframes ocBounce{
-                0%,100%{ transform: translateY(0); }
-                50%{ transform: translateY(${amp}); }
-              }
-              /* gentle breathing opacity on the whole group */
-              .breath{ animation: ocBreathe ${breatheDur} ease-in-out infinite; }
-              @keyframes ocBreathe{ 0%,100%{ opacity:1 } 50%{ opacity:.9 } }
+              :host{display:inline-block;line-height:0}
+              svg{display:block;opacity:${alpha};transform:rotate(${rot}deg)}
+              .g{transform-origin:50% 50%}
+              ${reduce ? '' : `
+              @keyframes ocBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(${amp})}}
+              @keyframes ocBreathe{0%,100%{opacity:${alpha}}50%{opacity:${Math.min(1, alpha+0.08)}}}
+              .g{animation: ocBounce ${bounce} ease-in-out infinite, ocBreathe ${breathe} ease-in-out infinite;}
+              `}
             </style>
-            <svg class="wrap breath" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <g stroke="${color}" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round">
-                <polyline class="chev" points="6 8 12 14 18 8"></polyline>
-                <polyline class="chev" points="6 4 12 10 18 4"></polyline>
-                <polyline class="chev" points="6 12 12 18 18 12"></polyline>
+            <svg width="${size}" height="${size}" viewBox="0 0 64 64" role="img" aria-label="Scroll">
+              <defs>
+                <linearGradient id="ocg" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="${from}"/><stop offset="50%" stop-color="${via}"/><stop offset="100%" stop-color="${to}"/>
+                </linearGradient>
+              </defs>
+              <g class="g" fill="none" stroke="url(#ocg)" stroke-linecap="round" stroke-linejoin="round" stroke-width="${stroke}">
+                <path d="M20 28 L32 40 L44 28"/>
+                <path d="M32 12 L32 40"/>
               </g>
-            </svg>
-          `;
+            </svg>`;
         }
       }
       customElements.define('oc-down-arrow', OCDownArrow);
