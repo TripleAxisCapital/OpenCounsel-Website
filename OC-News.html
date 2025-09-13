@@ -8,9 +8,11 @@
     • Removed Google Trends section + all related logic
     • Apple-style centered Editions segmented control (desktop & mobile) with perfect spacing
     • Image pipeline overhaul for speed:
-        - Responsive proxy (wsrv.nl) → modern WebP, smart widths (srcset/sizes)
+        - Responsive proxy (wsrv.nl) → modern AVIF/WebP, smart widths (srcset/sizes), DPR & quality
         - Lazy loading via IntersectionObserver (zero-jank, content-visibility)
-        - Priority for first hero image only (LCP)
+        - Priority + <link rel=preload> for first hero (LCP), no async decoding on LCP
+    • SWR render-from-cache for instant first paint
+    • Service Worker cache for image proxy (stale-while-revalidate)
     • Content-visibility for offscreen cards (CLS-safe)
     • Kept all existing features: feeds, hero, trending, saves, weather (with cinematic FX), theme, preloader
   -->
@@ -94,8 +96,8 @@
     }
     html.light{
       /* Page background slightly grey (Apple vibe), cards stay pure white */
-      --bg:#f5f6f8;              /* <— main backdrop */
-      --surface:#ffffff;         /* <— cards */
+      --bg:#f5f6f8;
+      --surface:#ffffff;
       --elev:rgba(10,10,15,0.035);
       --border:rgba(5,13,38,0.10);
       --text:#0b0b0e;--sub:#5a6274;--accent:#356dff;--live:#e5484d;
@@ -498,6 +500,21 @@
     const SORT_MODES = { NEWEST:'newest', OLDEST:'oldest', SOURCE:'source' };
     let sortMode = SORT_MODES.NEWEST;
 
+    /* ===== SWR (render from last good cache) ===== */
+    const LAST_KEY = 'oc_last_items_v1';
+    const serializeItems = (arr)=> arr.map(it=>({ ...it, pubDate: it.pubDate?.toISOString?.() || it.pubDate }));
+    const deserializeItems = (arr)=> arr.map(it=>({ ...it, pubDate: it.pubDate ? new Date(it.pubDate) : new Date() }));
+
+    /* ===== OUTPUT FORMAT DETECTION (AVIF → WebP fallback) ===== */
+    let OUTPUT_FORMAT = 'webp';
+    (function detectAvif(){
+      try{
+        const avif = new Image();
+        avif.onload = avif.onerror = function(){ if (avif.width === 1) OUTPUT_FORMAT = 'avif'; };
+        avif.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAG1pZjFoZWlmAAACAG1ldGEAAABIaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAaWxvYwAAAAEAAAAAAQAAAG1kYXQAAAABAAAAAQ==';
+      }catch{}
+    })();
+
     /* ===== FEEDS ===== */
     const FEEDS = {
       CA: [
@@ -689,45 +706,54 @@
         <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
       </div>
     `;
-    const upscaleImageUrl = (u)=>{
-      try{
-        let url = new URL(u);
-        ['w','width','maxwidth','px','param','imgw'].forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
-        return url.toString();
-      }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
-    };
 
     /* ===== IMAGE PIPELINE (fast) ===== */
     const IMG_PROXY = 'https://wsrv.nl';
-    const proxyImage = (u,w=1280)=> `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${w}&output=webp`;
+    const DPR = Math.min(2, window.devicePixelRatio || 1);
+    const proxyImage = (u,w=1280,q=76)=> `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${Math.round(w)}&dpr=${DPR}&q=${q}&output=${OUTPUT_FORMAT}`;
     const makeSrcset = (u,widths=[360,540,720,960,1200,1440,1800])=> widths.map(w=>`${proxyImage(u,w)} ${w}w`).join(', ');
-    const prepareImage = (u)=> {
-      const src = upscaleImageUrl(u);
-      return { src: proxyImage(src, 1200), srcset: makeSrcset(src) };
-    };
+    const prepareImage = (u)=> ({ src: proxyImage(u, 1200), srcset: makeSrcset(u) });
 
+    /* LCP preload helper (preload first hero) */
+    let _preloadedHeroHref = '';
+    function preloadHero(prep){
+      if (!prep || _preloadedHeroHref === prep.src) return;
+      _preloadedHeroHref = prep.src;
+      const l = document.createElement('link');
+      l.rel = 'preload';
+      l.as = 'image';
+      l.href = prep.src;
+      l.imagesrcset = prep.srcset;
+      l.imagesizes = '100vw';
+      l.fetchpriority = 'high';
+      document.head.appendChild(l);
+    }
+
+    /* ===== LAZY LOAD ===== */
     let lazyObs=null;
     function setupLazyObserver(){
       if(!('IntersectionObserver' in window)) return;
       lazyObs = new IntersectionObserver((entries)=>{
         entries.forEach(entry=>{
           if(entry.isIntersecting){
-            const img = entry.target;
-            if (img.dataset.src){ img.src = img.dataset.src; }
-            if (img.dataset.srcset){ img.srcset = img.dataset.srcset; }
-            img.loading = 'lazy'; img.decoding = 'async';
-            img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
-            lazyObs.unobserve(img);
+            const target = entry.target;
+            if (target.tagName === 'IMG'){
+              if (target.dataset.src) target.src = target.dataset.src;
+              if (target.dataset.srcset) target.srcset = target.dataset.srcset;
+              target.loading = 'lazy'; target.decoding = 'async';
+              target.removeAttribute('data-src'); target.removeAttribute('data-srcset');
+            }
+            lazyObs.unobserve(target);
           }
         });
-      }, { rootMargin:'300px 0px' });
+      }, { rootMargin:'150px 0px' });
     }
     function observeAllLazy(root=document){
       if (!lazyObs) return;
       root.querySelectorAll('img.lazy-img').forEach(im=> lazyObs.observe(im));
     }
 
-    /* ===== RSS + IMAGE RESOLUTION ===== */
+    /* ===== RSS + IMAGE RESOLUTION (Worker-assisted parse) ===== */
     const parseRSS = (text)=>{
       const tryXML = ()=>{
         const dom = new DOMParser().parseFromString(text, 'text/xml');
@@ -777,58 +803,75 @@
     const IMG_CACHE = new Map();
     const resolving = new Set();
 
-    const tryFindOgImage = (html, baseUrl)=>{
-      try{
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const tryMeta = (sel)=> absolutize(pick(doc, sel), baseUrl);
-        const cands = [
-          'meta[property="og:image:secure_url"]',
-          'meta[property="og:image:url"]',
-          'meta[property="og:image"]',
-          'meta[name="og:image"]',
-          'meta[name="twitter:image:src"]',
-          'meta[name="twitter:image"]',
-          'meta[itemprop="image"]'
-        ];
-        for(const sel of cands){
-          const u = tryMeta(sel); if(u) return u;
-        }
-        const linkImg = doc.querySelector('link[rel="image_src"]');
-        if (linkImg){
-          const href = linkImg.getAttribute('href');
-          const u = absolutize(href, baseUrl); if (u) return u;
-        }
-        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
-        for(const s of scripts){
+    /* Mini worker to parse OG image off main thread (regex-based) */
+    let ogWorker = null;
+    function ensureOgWorker(){
+      if (ogWorker) return ogWorker;
+      const code = `
+        self.onmessage = (e)=>{
           try{
-            const data = JSON.parse(s.textContent.trim());
-            const collect = (obj)=>{
-              if(!obj) return null;
-              if(typeof obj === 'string') return absolutize(obj, baseUrl);
-              if(Array.isArray(obj)){
-                for(const it of obj){ const inner = collect(it); if(inner) return inner; }
-              }else if(typeof obj === 'object'){
-                if(obj.url && typeof obj.url === 'string' && /(\.jpe?g|\.png|\.webp|\.gif)(\?|$)/i.test(obj.url)) return absolutize(obj.url, baseUrl);
-                if(obj.image) return collect(obj.image);
-                if(obj.thumbnailUrl) return absolutize(obj.thumbnailUrl, baseUrl);
-                if(obj.logo) return collect(obj.logo);
-              }
-              return null;
+            const { html, base } = e.data;
+            const abs = (u)=>{
+              try{
+                if(!u) return '';
+                if (/^https?:\\/\\//i.test(u)) return u;
+                if (u.startsWith('//')) return (new URL(base)).protocol + u;
+                return new URL(u, base).toString();
+              }catch{ return u||'' }
             };
-            const found = collect(data); if(found) return found;
-          }catch{}
-        }
-        const imgs = Array.from(doc.querySelectorAll('img'));
-        for(const im of imgs){
-          const src = absolutize(im.getAttribute('src') || im.getAttribute('data-src') || '', baseUrl);
-          if(!src) continue;
-          const w = parseInt(im.getAttribute('width')||'0',10);
-          const h = parseInt(im.getAttribute('height')||'0',10);
-          if ((w>=300 || h>=200) || /[\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src)) return src;
-        }
-      }catch{}
-      return '';
-    };
+            const find = (pat)=>{ const m = html.match(pat); return m? m[1] : '' };
+            // common metas
+            let u = '';
+            u = u || abs(find(/<meta[^>]+property=["']og:image:secure_url["'][^>]+content=["']([^"']+)["']/i));
+            u = u || abs(find(/<meta[^>]+property=["']og:image:url["'][^>]+content=["']([^"']+)["']/i));
+            u = u || abs(find(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i));
+            u = u || abs(find(/<meta[^>]+name=["']og:image["'][^>]+content=["']([^"']+)["']/i));
+            u = u || abs(find(/<meta[^>]+name=["']twitter:image:src["'][^>]+content=["']([^"']+)["']/i));
+            u = u || abs(find(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i));
+            u = u || abs(find(/<meta[^>]+itemprop=["']image["'][^>]+content=["']([^"']+)["']/i));
+            // link rel image_src
+            u = u || abs(find(/<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["']/i));
+            // JSON-LD quick scan
+            if(!u){
+              const scripts = html.match(/<script[^>]+type=["']application\\/ld\\+json["'][^>]*>([\\s\\S]*?)<\\/script>/ig) || [];
+              for (const s of scripts){
+                try{
+                  const j = JSON.parse(s.replace(/^[\\s\\S]*?>/,'').replace(/<\\/script>[\\s\\S]*$/,''));
+                  const walk = (o)=>{
+                    if(!o) return '';
+                    if (typeof o === 'string') return abs(o);
+                    if (Array.isArray(o)){ for(const it of o){ const got = walk(it); if (got) return got; } }
+                    if (typeof o === 'object'){
+                      if (typeof o.url === 'string' && /\\.(jpe?g|png|webp|gif|avif)(\\?|$)/i.test(o.url)) return abs(o.url);
+                      return walk(o.image) || walk(o.thumbnailUrl) || walk(o.logo);
+                    }
+                    return '';
+                  };
+                  const found = walk(j);
+                  if (found){ u = found; break; }
+                }catch{}
+              }
+            }
+            // Fallback: any large-ish <img>
+            if(!u){
+              const imgMatch = html.match(/<img[^>]+(src|data-src)=["']([^"']+)["'][^>]*>/ig) || [];
+              for (const tag of imgMatch){
+                const m = tag.match(/(src|data-src)=["']([^"']+)["']/i);
+                const src = m ? m[2] : '';
+                if(!src) continue;
+                if (/[\\/-](hero|lead|feature|main|large|og|share)[-_.]/i.test(src) || /\\.(jpe?g|png|webp|gif|avif)(\\?|$)/i.test(src)){
+                  u = abs(src); break;
+                }
+              }
+            }
+            postMessage({ img: u||'' });
+          }catch{ postMessage({ img: '' }) }
+        };
+      `;
+      const blob = new Blob([code], { type: 'text/javascript' });
+      ogWorker = new Worker(URL.createObjectURL(blob));
+      return ogWorker;
+    }
 
     const resolveArticleImage = async (url)=>{
       if(!url) return '';
@@ -837,8 +880,13 @@
       resolving.add(url);
       try{
         const html = await fetchWithProxies(url);
-        const img = tryFindOgImage(html, url) || '';
-        const better = img ? upscaleImageUrl(img) : '';
+        const w = ensureOgWorker();
+        const img = await new Promise((res)=>{
+          const onMsg = (e)=>{ w.removeEventListener('message', onMsg); res(e.data?.img || ''); };
+          w.addEventListener('message', onMsg, { once:true });
+          w.postMessage({ html, base: url });
+        });
+        const better = img || '';
         IMG_CACHE.set(url, better);
         return better;
       }catch{
@@ -885,7 +933,6 @@
       uniq.forEach(u=>{
         const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
         u._score = (u.trendCount||1) * (1/ageMin);
-        if (u.image) u.image = upscaleImageUrl(u.image);
       });
       uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
       return uniq.slice(0, MAX_ITEMS);
@@ -953,6 +1000,11 @@
 
     const renderTicker = (_items)=>{ /* no-op; #tickerWrap hidden */ };
 
+    const HERO_W = 1600, HERO_H = 900; // intrinsic size hint
+    const TILE_V_W = 1200, TILE_V_H = 720;
+    const TILE_H_W = 960, TILE_H_H = 600;
+    const TREND_W = 800, TREND_H = 440;
+
     const buildHeroSlides = (items)=>{
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
@@ -963,10 +1015,11 @@
         if (src){
           const prep = prepareImage(src);
           if (idx === 0){
-            // First hero → priority for LCP
-            mediaHTML = `<img fetchpriority="high" loading="eager" decoding="async" src="${prep.src}" srcset="${prep.srcset}" sizes="100vw" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`;
+            preloadHero(prep); // start request ASAP
+            // First hero → priority for LCP (no async decoding)
+            mediaHTML = `<img fetchpriority="high" loading="eager" src="${prep.src}" srcset="${prep.srcset}" sizes="100vw" width="${HERO_W}" height="${HERO_H}" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`;
           } else {
-            mediaHTML = `<img class="brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async" data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="100vw" alt="${safeTitle}" data-host="${host}" data-kind="content">`;
+            mediaHTML = `<img class="brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async" data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="100vw" width="${HERO_W}" height="${HERO_H}" alt="${safeTitle}" data-host="${host}" data-kind="content">`;
           }
         } else {
           mediaHTML = noImageHTML('');
@@ -986,7 +1039,6 @@
       }).join('');
       const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
       heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
-      // Observe lazy hero images (except first)
       observeAllLazy(heroTrack);
     };
 
@@ -1011,6 +1063,7 @@
           media =
             `<img class="w-full h-44 object-cover rounded-md brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
                   data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 33vw"
+                  width="${TREND_W}" height="${TREND_H}"
                   data-host="${host}" data-kind="content" alt="${safeTitle}">`;
         } else {
           media = noImageHTML('w-full h-44 rounded-md');
@@ -1061,6 +1114,7 @@
             const prep = prepareImage(it.image);
             media = `<img class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
                         data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 50vw"
+                        width="${TILE_V_W}" height="${TILE_V_H}"
                         data-host="${host}" data-kind="content" alt="${safeTitle}">`;
           } else {
             media = noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
@@ -1089,6 +1143,7 @@
             const prep = prepareImage(it.image);
             media = `<img class="w-full h-full object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
                         data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 44vw"
+                        width="${TILE_H_W}" height="${TILE_H_H}"
                         data-host="${host}" data-kind="content" alt="${safeTitle}">`;
           } else {
             media = noImageHTML('w-full h-full');
@@ -1590,6 +1645,8 @@
       updatedAt.textContent = 'Updating…';
       const items = await loadFeeds(currentEdition);
       cacheItems = items.length ? items : [ { title: 'OC-News is live — your Apple-grade breaking news surface.', link: '#', pubDate: new Date(), source: 'OC', image: '' } ];
+      // Persist fresh items for SWR next boot
+      try{ localStorage.setItem(LAST_KEY, JSON.stringify(serializeItems(cacheItems))); }catch{}
       cycleIdx = 0;
       applyFilter();
       if (CYCLE_TOPS && filteredItems.length > 3) startCycle(); else stopCycle();
@@ -1606,12 +1663,36 @@
       try{
         currentEdition = DEFAULT_EDITION;
         setMobileEditionUI();
-
         setupLazyObserver();
 
+        // SWR: render immediately from last good cache
+        let hadLast = false;
+        try{
+          const last = JSON.parse(localStorage.getItem(LAST_KEY)||'[]');
+          if (last && last.length){
+            cacheItems = deserializeItems(last);
+            cycleIdx = 0;
+            applyFilter();
+            hadLast = true;
+          }
+        }catch{}
+
+        // Service worker for image proxy (stale-while-revalidate)
+        if ('serviceWorker' in navigator){
+          try{
+            navigator.serviceWorker.register('/sw.js');
+          }catch(e){ /* ignore */ }
+        }
+
         cycleTimerId = preloadCycle();
+
+        // Refresh in background
         await hydrate();
-        await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
+
+        // For cold boots without SWR, wait briefly for hero before hiding preloader
+        if (!hadLast){
+          await Promise.race([waitForHeroImages(6000), new Promise(res=> setTimeout(res, 800))]);
+        }
       }catch(e){ console.error(e); }
       finally{
         if (cycleTimerId) clearInterval(cycleTimerId);
@@ -1710,5 +1791,25 @@
       }catch{ wxMeta.textContent = 'Location unavailable.'; }
     });
   </script>
+
+  <!--
+    Place the following Service Worker at /sw.js on the same origin:
+
+    self.addEventListener('install', (e)=> self.skipWaiting());
+    self.addEventListener('activate', (e)=> self.clients.claim());
+    const CACHE = 'oc-img-v1';
+    self.addEventListener('fetch', (e)=>{
+      const u = new URL(e.request.url);
+      if (u.hostname.endsWith('wsrv.nl')){
+        e.respondWith((async ()=>{
+          const c = await caches.open(CACHE);
+          const m = await c.match(e.request);
+          const net = fetch(e.request).then(r=>{ c.put(e.request, r.clone()); return r; }).catch(()=>m);
+          return m || net;
+        })());
+      }
+    });
+
+  -->
 </body>
 </html>
