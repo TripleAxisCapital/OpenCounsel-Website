@@ -593,83 +593,57 @@
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
 
-<!-- HEADER — full-width at top → floating pill on scroll -->
 
-<!-- Spacer -->
+  
+
+  <!-- HEADER --------------------------------------------------------full-width at top → floating pill on scroll) -->
+
+<!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
 
 <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
   style="
-    /* ===== Controls you’ll tweak ===== */
-    /* Per-side inner padding */
-    --pill-inner-left-mobile: 12px;
-    --pill-inner-right-mobile: 12px;
-    --pill-inner-left-desktop: 12px;
-    --pill-inner-right-desktop: 12px;
-
-    /* Outer inset / span */
-    --pill-outer-x-mobile: 40px;
-    --pill-outer-x-desktop: 0px;
-
-    /* Size */
-    --pill-height-mobile: 3rem;
-    --pill-height-desktop: 3.5rem;
-    --pill-max-w: 1200px;
-    --pill-radius: 999px;
-
-    /* Visuals (pill look) */
-    --pill-bg: #fff;
-    --pill-border: 1px solid rgba(0,0,0,.06);
-    --pill-shadow: 0 10px 28px rgba(0,0,0,.10);
-    --pill-shadow-float: 0 16px 40px rgba(0,0,0,.14);
-
-    /* Right-side button group + buttons */
-    --actions-gap: 12px;
-    --btn-h-desktop: 2.25rem;
-    --btn-pad-x: 14px;
-    --btn-radius: 999px;
-    --btn-shadow: 0 10px 24px rgba(0,0,0,.18);
-    --btn-grad-angle: 135deg;
-    --btn-grad-from: var(--grad-from, #2aa3a1);
-    --btn-grad-to:   var(--grad-to,   #46c0d0);
+    /* 🔧 Controls */
+    --pill-inner-x-mobile: 30px;      /* inside L/R padding (mobile)  */
+    --pill-inner-x-desktop: 12px;     /* inside L/R padding (desktop) */
+    --pill-outer-x-mobile: 35px;      /* outer inset L/R (mobile)     */
+    --pill-outer-x-desktop: 0px;      /* outer inset L/R (desktop)    */
+    --pill-height-mobile: 2.75rem;    /* pill height (mobile)         */
+    --pill-height-desktop: 3.5rem;    /* pill height (desktop)        */
+    --pill-max-w: 1200px;             /* max width cap for the pill   */
   "
 >
-  <div class="header-bar relative mx-auto oc-container">
-    <!-- Left: Logo -->
-    <div class="hb-left flex items-center gap-3 min-w-0">
+  <div
+    class="header-bar relative mx-auto oc-container flex items-center justify-between"
+  >
+    <div class="flex items-center gap-3">
       <a href="index.html" class="inline-flex items-center" aria-label="OC home">
         <span class="logo-anim" role="img" aria-label="OC"></span>
       </a>
     </div>
 
-    <!-- Center (desktop only): OC-Pro / Models (NO OC-News link) -->
-    <nav class="hb-center hidden md:flex items-center gap-8 text-sm pointer-events-auto absolute left-1/2 -translate-x-1/2">
+    <!-- Centered nav stays inside the pill -->
+    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
       <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
       <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="Models.html">Models</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="OC-News.html">OC-News</a>
     </nav>
 
-    <!-- Right: Desktop actions + Mobile hamburger -->
-    <div class="hb-right flex items-center justify-end min-w-0">
-      <div class="actions hidden md:flex items-center"
-           style="gap:var(--actions-gap); flex-wrap:nowrap; white-space:nowrap; max-width:100%; flex-shrink:1;">
-        <!-- OC-News button (desktop) -->
-        <a href="OC-News.html"
-           class="oc-pillbtn inline-flex items-center font-semibold text-white"
-           aria-label="OC-News" title="OC-News">
-          <i class="ph ph-newspaper text-[16px] mr-2" aria-hidden="true"></i>
-          <span>OC-News</span>
-        </a>
-
-        <!-- Download button (desktop) -->
-        <a href="download.html"
-           class="oc-pillbtn inline-flex items-center font-semibold text-white"
-           aria-label="Download" title="Download">
-          <i class="ph ph-download text-[16px] mr-2" aria-hidden="true"></i>
-          <span>Download</span>
-        </a>
-      </div>
-
-      <!-- Mobile hamburger -->
+    <div class="flex items-center gap-2">
+      <!-- Desktop Download button moved to right side (opposite the logo) -->
+      <a
+        href="download.html"
+        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+               focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+               shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+               transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
+               g-grad grad-anim"
+        style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+        aria-label="Download" title="Download"
+      >
+        <i class="ph ph-download text-base" aria-hidden="true"></i>
+        <span>Download</span>
+      </a>
       <button id="hamburgerBtn"
         class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
         aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
@@ -680,94 +654,45 @@
     </div>
   </div>
 
-  <!-- Layout + pill styling -->
+  <!-- 🛠 Pill layout + centering logic -->
   <style>
-    /* Remove container side padding so pill centers perfectly */
+    /* Neutralize container padding specifically for this header so centering is exact */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
 
-    /* ===== Mobile: FLEX — real pill (rounded, white, shadow) ===== */
+    /* Base (mobile) */
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
 
-      /* Centered pill with outer insets */
+      /* Perfect centering via width formula + auto margins */
       width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
       margin-inline: auto;
 
-      /* TRUE per-side inner padding on mobile */
-      padding-inline-start: var(--pill-inner-left-mobile) !important;
-      padding-inline-end:   var(--pill-inner-right-mobile) !important;
-
+      /* Inside padding + height control */
+      padding-left: var(--pill-inner-x-mobile);
+      padding-right: var(--pill-inner-x-mobile);
       height: var(--pill-height-mobile);
 
-      /* Pill visuals */
-      background: var(--pill-bg);
-      border: var(--pill-border);
-      border-radius: var(--pill-radius);
-      box-shadow: var(--pill-shadow);
-      overflow: hidden; /* contain content inside pill */
-      /* layout */
-      display: flex; align-items: center; justify-content: space-between; gap: 0;
+      /* Keep contents vertically centered */
+      display: flex;
+      align-items: center;
+
+      /* Optional: keep the pill edge clean if you have any background/glass */
+      border-radius: 999px; /* if your design uses a pill radius */
     }
 
-    /* Hide center nav on mobile cleanly */
-    #siteHeader .hb-center { display: none; }
-
-    /* Let left/right groups shrink properly */
-    #siteHeader .hb-left, #siteHeader .hb-right { min-width: 0; flex: 0 1 auto; }
-
-    /* Increase pill’s shadow on float (mobile & desktop) */
-    #siteHeader.is-float .header-bar { box-shadow: var(--pill-shadow-float); }
-
-    /* ===== Desktop: GRID — true centered nav, pill preserved ===== */
+    /* Desktop (≥768px) */
     @media (min-width: 768px) {
       #siteHeader .header-bar {
         width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-        padding-inline-start: var(--pill-inner-left-desktop) !important;
-        padding-inline-end:   var(--pill-inner-right-desktop) !important;
+        padding-left: var(--pill-inner-x-desktop);
+        padding-right: var(--pill-inner-x-desktop);
         height: var(--pill-height-desktop);
-
-        /* Keep pill visuals on desktop too */
-        background: var(--pill-bg);
-        border: var(--pill-border);
-        border-radius: var(--pill-radius);
-        box-shadow: var(--pill-shadow);
-        overflow: hidden;
-
-        display: grid;
-        grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
-        align-items: center; justify-items: stretch;
       }
-
-      /* Center nav becomes a normal in-flow element in the middle cell */
-      #siteHeader .header-bar .hb-center {
-        position: static !important; transform: none !important; left: auto !important;
-        display: flex !important; justify-self: center;
-        gap: clamp(12px, 2.5vw, 32px);
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      }
-
-      #siteHeader .hb-left  { justify-self: start; min-width: 0; }
-      #siteHeader .hb-right { justify-self: end;   min-width: 0; }
     }
-
-    /* Buttons styled like the photo (rounded gradient pills) */
-    #siteHeader .oc-pillbtn {
-      height: var(--btn-h-desktop);
-      padding-inline: var(--btn-pad-x);
-      border-radius: var(--btn-radius);
-      color: #fff;
-      background-image: linear-gradient(var(--btn-grad-angle), var(--btn-grad-from), var(--btn-grad-to));
-      box-shadow: var(--btn-shadow);
-      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
-      line-height: 1;
-    }
-    #siteHeader .oc-pillbtn:hover  { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,.22); }
-    #siteHeader .oc-pillbtn:active { transform: translateY(0);    box-shadow: var(--btn-shadow); }
-    #siteHeader .oc-pillbtn i { display: inline-block; }
   </style>
 
-  <!-- MOBILE MENU (unchanged) -->
+  <!-- MOBILE MENU -->
   <div id="mobileMenu" aria-hidden="true">
     <div class="menu-scrim"></div>
     <aside class="menu-panel">
@@ -780,6 +705,7 @@
         </button>
       </div>
 
+      <!-- UPDATED MOBILE MENU LINKS -->
       <nav class="drawer-nav mt-2">
         <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">OC-Pro</a>
         <a href="Models.html">Models</a>
@@ -802,7 +728,11 @@
   </div>
 </header>
 
-<!-- Spacer -->
+<!-- Drop-in 12px spacer (no content needed) -->
+<div aria-hidden="true" style="height:12px;"></div>
+
+
+<!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
 
 <!-- Header mode controller: toggles floating pill after slight scroll -->
