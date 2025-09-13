@@ -599,17 +599,18 @@
 
 <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
   style="
-    /* 🔧 Adjust these to control inside padding, span, and height */
+    /* 🔧 Controls */
     --pill-inner-x-mobile: 12px;      /* inside L/R padding (mobile)  */
     --pill-inner-x-desktop: 12px;     /* inside L/R padding (desktop) */
-    --pill-outer-x-mobile: 40px;      /* exterior L/R margin (mobile) */
-    --pill-outer-x-desktop: 0px;      /* exterior L/R margin (desktop) */
-    --pill-height-mobile: 2.75rem;    /* pill height (mobile)         */
+    --pill-outer-x-mobile: 40px;      /* outer inset L/R (mobile)     */
+    --pill-outer-x-desktop: 0px;      /* outer inset L/R (desktop)    */
+    --pill-height-mobile: 3.25rem;    /* pill height (mobile)         */
     --pill-height-desktop: 3.5rem;    /* pill height (desktop)        */
+    --pill-max-w: 1200px;             /* max width cap for the pill   */
   "
 >
   <div
-    class="header-bar relative mx-auto max-w-[1200px] oc-container flex items-center justify-between"
+    class="header-bar relative mx-auto oc-container flex items-center justify-between"
   >
     <div class="flex items-center gap-3">
       <a href="index.html" class="inline-flex items-center" aria-label="OC home">
@@ -649,32 +650,39 @@
     </div>
   </div>
 
-  <!-- 🖥️ Responsive + centering fixes (no inline overrides) -->
+  <!-- 🛠 Pill layout + centering logic -->
   <style>
-    /* Base (mobile) — use variables for layout */
-    #siteHeader .header-bar {
-      /* Ensure pill centers: width capped, auto side margins, then controlled inset via outer vars */
-      margin-inline: auto;
-      /* Add controlled exterior inset on top of auto-centering */
-      padding-inline: var(--pill-inner-x-mobile);
-      margin-left: max(var(--pill-outer-x-mobile), 0px);
-      margin-right: max(var(--pill-outer-x-mobile), 0px);
+    /* Neutralize container padding specifically for this header so centering is exact */
+    #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
 
-      /* Height control via variable */
+    /* Base (mobile) */
+    #siteHeader .header-bar {
+      position: relative;
+      box-sizing: border-box;
+
+      /* Perfect centering via width formula + auto margins */
+      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+      margin-inline: auto;
+
+      /* Inside padding + height control */
+      padding-left: var(--pill-inner-x-mobile);
+      padding-right: var(--pill-inner-x-mobile);
       height: var(--pill-height-mobile);
-      /* Maintain vertical centering if custom height is used */
+
+      /* Keep contents vertically centered */
+      display: flex;
       align-items: center;
+
+      /* Optional: keep the pill edge clean if you have any background/glass */
+      border-radius: 999px; /* if your design uses a pill radius */
     }
 
-    /* Desktop overrides */
+    /* Desktop (≥768px) */
     @media (min-width: 768px) {
       #siteHeader .header-bar {
+        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
         padding-left: var(--pill-inner-x-desktop);
         padding-right: var(--pill-inner-x-desktop);
-
-        margin-left: max(var(--pill-outer-x-desktop), 0px);
-        margin-right: max(var(--pill-outer-x-desktop), 0px);
-
         height: var(--pill-height-desktop);
       }
     }
@@ -715,6 +723,9 @@
     </aside>
   </div>
 </header>
+
+<!-- Drop-in 12px spacer (no content needed) -->
+<div aria-hidden="true" style="height:12px;"></div>
 
 
 <!-- Drop-in 12px spacer (no content needed) -->
