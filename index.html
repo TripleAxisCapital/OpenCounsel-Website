@@ -599,24 +599,17 @@
 
 <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
   style="
-    /* 🔧 Adjust these to control inside padding and overall span */
-    --pill-inner-x-mobile: 12px;     /* inside padding L/R on mobile */
-    --pill-inner-x-desktop: 12px;    /* inside padding L/R on desktop */
-    --pill-outer-x-mobile: 40px;      /* exterior margin L/R on mobile (shrinks/expands span) */
-    --pill-outer-x-desktop: 0px;     /* exterior margin L/R on desktop (shrinks/expands span) */
+    /* 🔧 Adjust these to control inside padding, span, and height */
+    --pill-inner-x-mobile: 12px;      /* inside L/R padding (mobile)  */
+    --pill-inner-x-desktop: 12px;     /* inside L/R padding (desktop) */
+    --pill-outer-x-mobile: 40px;      /* exterior L/R margin (mobile) */
+    --pill-outer-x-desktop: 0px;      /* exterior L/R margin (desktop) */
+    --pill-height-mobile: 3.25rem;    /* pill height (mobile)         */
+    --pill-height-desktop: 3.5rem;    /* pill height (desktop)        */
   "
 >
   <div
-    class="header-bar relative mx-auto max-w-[1200px] oc-container h-[3.25rem] md:h-14 flex items-center justify-between"
-    style="
-      /* 🟣 Exterior margins (control overall pill span) */
-      margin-left: var(--pill-outer-x-mobile);
-      margin-right: var(--pill-outer-x-mobile);
-
-      /* 🔵 Inside padding (space from pill edge to content) */
-      padding-left: var(--pill-inner-x-mobile);
-      padding-right: var(--pill-inner-x-mobile);
-    "
+    class="header-bar relative mx-auto max-w-[1200px] oc-container flex items-center justify-between"
   >
     <div class="flex items-center gap-3">
       <a href="index.html" class="inline-flex items-center" aria-label="OC home">
@@ -656,14 +649,33 @@
     </div>
   </div>
 
-  <!-- 🖥️ Desktop overrides -->
+  <!-- 🖥️ Responsive + centering fixes (no inline overrides) -->
   <style>
+    /* Base (mobile) — use variables for layout */
+    #siteHeader .header-bar {
+      /* Ensure pill centers: width capped, auto side margins, then controlled inset via outer vars */
+      margin-inline: auto;
+      /* Add controlled exterior inset on top of auto-centering */
+      padding-inline: var(--pill-inner-x-mobile);
+      margin-left: max(var(--pill-outer-x-mobile), 0px);
+      margin-right: max(var(--pill-outer-x-mobile), 0px);
+
+      /* Height control via variable */
+      height: var(--pill-height-mobile);
+      /* Maintain vertical centering if custom height is used */
+      align-items: center;
+    }
+
+    /* Desktop overrides */
     @media (min-width: 768px) {
       #siteHeader .header-bar {
-        margin-left: var(--pill-outer-x-desktop);
-        margin-right: var(--pill-outer-x-desktop);
         padding-left: var(--pill-inner-x-desktop);
         padding-right: var(--pill-inner-x-desktop);
+
+        margin-left: max(var(--pill-outer-x-desktop), 0px);
+        margin-right: max(var(--pill-outer-x-desktop), 0px);
+
+        height: var(--pill-height-desktop);
       }
     }
   </style>
@@ -703,6 +715,7 @@
     </aside>
   </div>
 </header>
+
 
 <!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
