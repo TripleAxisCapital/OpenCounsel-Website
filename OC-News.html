@@ -8,11 +8,8 @@
     • Removed Google Trends section + all related logic
     • Apple-style centered Editions segmented control (desktop & mobile) with perfect spacing
     • Image pipeline overhaul for speed:
-        - Responsive proxy (wsrv.nl) → AVIF/WebP with smart widths (srcset/sizes)
-        - DPR/connection-aware quality + widths (Save-Data / slow nets)
-        - Native priority hints (fetchpriority) + programmatic LCP <link rel="preload" as="image">
+        - Responsive proxy (wsrv.nl) → modern WebP, smart widths (srcset/sizes)
         - Lazy loading via IntersectionObserver (zero-jank, content-visibility)
-        - Width/height on key images to stabilize layout (CLS)
         - Priority for first hero image only (LCP)
     • Content-visibility for offscreen cards (CLS-safe)
     • Kept all existing features: feeds, hero, trending, saves, weather (with cinematic FX), theme, preloader
@@ -22,24 +19,19 @@
   <title>OC-News — The AI Workspace. Without Limits.</title>
   <meta name="description" content="OC-News surfaces the most breaking headlines with an Apple-style minimal hero. Private, fast, and elegant." />
   <meta name="theme-color" content="#000000" />
-  <meta name="color-scheme" content="dark light" />
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Preconnects (feeds + image proxy + logos) -->
+  <!-- Preconnects (feeds + image proxy) -->
   <link rel="preconnect" href="https://r.jina.ai" crossorigin>
   <link rel="preconnect" href="https://api.allorigins.win" crossorigin>
   <link rel="preconnect" href="https://wsrv.nl" crossorigin>
-  <link rel="preconnect" href="https://logo.clearbit.com" crossorigin>
-  <link rel="preconnect" href="https://www.google.com" crossorigin>
   <link rel="dns-prefetch" href="//wsrv.nl">
   <link rel="dns-prefetch" href="//r.jina.ai">
   <link rel="dns-prefetch" href="//api.allorigins.win">
-  <link rel="dns-prefetch" href="//logo.clearbit.com">
-  <link rel="dns-prefetch" href="//www.google.com">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -170,7 +162,7 @@
     .hero-track{ display:flex; height:100%; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; transform:translateZ(0); will-change:transform; }
     .hero-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:center }
     .hero-slide a{ position:absolute; inset:0; display:block }
-    .hero-slide picture, .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
+    .hero-slide img{ width:100%; height:100%; object-fit:cover; display:block }
 
     /* Remove old global fog */
     .hero-gradient{ display:none !important }
@@ -494,18 +486,11 @@
   </main>
 
   <script>
-    /* ===== NETWORK & IMAGE HINTS (connection-aware) ===== */
-    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    const SAVE_DATA = !!(conn && conn.saveData);
-    const SLOW_NET = !!(conn && ((conn.effectiveType && /(^|[^a-z])(2g|slow-2g)([^a-z]|$)/i.test(conn.effectiveType)) || (typeof conn.downlink === 'number' && conn.downlink < 1.5)));
-    const IMG_QUALITY = (SAVE_DATA || SLOW_NET) ? 60 : 78;
-    const WIDTHS_RICH = (SAVE_DATA || SLOW_NET) ? [320,480,640,800,960,1200] : [360,540,720,960,1200,1440,1800];
-    const WIDTHS_THUMB = (SAVE_DATA || SLOW_NET) ? [240,360,480,640,800] : [320,480,640,800,960];
-
     /* ===== CONFIG ===== */
     const DEFAULT_EDITION = 'CA';
     const MAX_ITEMS = 64;
     const CYCLE_TOPS = true;
+    const SHOW_IMAGES = true;
     const HERO_SLIDES = 10;
     const DOT_COUNT = 6;
     const PRELOAD_ON_REFRESH = true;
@@ -685,11 +670,11 @@
     };
     const brandLogoHTML = (host, className = '', alt = '')=>{
       const b = brandSources(host);
-      return `<img loading="lazy" fetchpriority="low" decoding="async" src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
+      return `<img loading="lazy" decoding="async" src="${b.src}" srcset="${b.srcset}" sizes="(max-width:640px) 50vw, 33vw" data-alt1="${b.s2}" data-host="${host}" alt="${alt || host}" class="${className} brand-fb">`;
     };
     const brandBadgeHTML = (host, size=14)=>{
       const b = brandSources(host);
-      return `<img loading="lazy" fetchpriority="low" decoding="async" src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
+      return `<img loading="lazy" decoding="async" src="${b.src}" srcset="${b.srcset}" data-alt1="${b.s2}" data-host="${host}" alt="${host}" class="inline-block rounded-[3px] align-[-2px] brand-fb" style="height:${size}px;width:${size}px">`;
     };
     const hostLinkHTML = (url)=>{
       const h = hostname(url) || 'source';
@@ -712,42 +697,13 @@
       }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
     };
 
-    /* ===== IMAGE PIPELINE (fast, AVIF/WebP + lazy + LCP preload) ===== */
+    /* ===== IMAGE PIPELINE (fast) ===== */
     const IMG_PROXY = 'https://wsrv.nl';
-    const proxyImage = (u,w=1280,fmt='webp',q=IMG_QUALITY)=> `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${w}&output=${fmt}&q=${q}`;
-    const makeSrcset = (u,widths,fmt)=> widths.map(w=>`${proxyImage(u,w,fmt)} ${w}w`).join(', ');
-
-    // picture generator – supports eager (LCP) and lazy variants
-    const pictureHTML = ({ url, alt, sizes, className='', fetchPriority='low', eager=false, host='', width=1600, height=900, widths=WIDTHS_RICH })=>{
-      const src = upscaleImageUrl(url);
-      const avifSet = makeSrcset(src, widths, 'avif');
-      const webpSet = makeSrcset(src, widths, 'webp');
-      const jpegSet = makeSrcset(src, widths, 'jpg');
-      const jpegSrc = proxyImage(src, Math.min(Math.max(...widths), 1200), 'jpg');
-
-      if (eager){
-        return `
-          <picture>
-            <source type="image/avif" srcset="${avifSet}" sizes="${sizes}">
-            <source type="image/webp" srcset="${webpSet}" sizes="${sizes}">
-            <img fetchpriority="${fetchPriority}" loading="eager" decoding="async"
-                 src="${jpegSrc}" srcset="${jpegSet}" sizes="${sizes}"
-                 alt="${alt}" class="brand-fb ${className}" data-host="${host}" data-kind="content"
-                 width="${width}" height="${height}">
-          </picture>
-        `;
-      }else{
-        return `
-          <picture>
-            <source type="image/avif" data-srcset="${avifSet}">
-            <source type="image/webp" data-srcset="${webpSet}">
-            <img class="brand-fb lazy-img ${className}" fetchpriority="${fetchPriority}" loading="lazy" decoding="async"
-                 data-src="${jpegSrc}" data-srcset="${jpegSet}" sizes="${sizes}"
-                 alt="${alt}" data-host="${host}" data-kind="content"
-                 width="${width}" height="${height}">
-          </picture>
-        `;
-      }
+    const proxyImage = (u,w=1280)=> `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${w}&output=webp`;
+    const makeSrcset = (u,widths=[360,540,720,960,1200,1440,1800])=> widths.map(w=>`${proxyImage(u,w)} ${w}w`).join(', ');
+    const prepareImage = (u)=> {
+      const src = upscaleImageUrl(u);
+      return { src: proxyImage(src, 1200), srcset: makeSrcset(src) };
     };
 
     let lazyObs=null;
@@ -757,14 +713,6 @@
         entries.forEach(entry=>{
           if(entry.isIntersecting){
             const img = entry.target;
-            // hydrate <picture> sources first
-            const pic = img.closest('picture');
-            if (pic){
-              pic.querySelectorAll('source[data-srcset]').forEach(s=>{
-                s.srcset = s.dataset.srcset;
-                s.removeAttribute('data-srcset');
-              });
-            }
             if (img.dataset.src){ img.src = img.dataset.src; }
             if (img.dataset.srcset){ img.srcset = img.dataset.srcset; }
             img.loading = 'lazy'; img.decoding = 'async';
@@ -1005,41 +953,20 @@
 
     const renderTicker = (_items)=>{ /* no-op; #tickerWrap hidden */ };
 
-    function preloadHeroFromPicture(picEl){
-      try{
-        if (!picEl) return;
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'image';
-        const bestSrcset = picEl.querySelector('source[type="image/avif"]')?.getAttribute('srcset') ||
-                           picEl.querySelector('source[type="image/webp"]')?.getAttribute('srcset');
-        const img = picEl.querySelector('img');
-        if (bestSrcset) link.setAttribute('imagesrcset', bestSrcset);
-        if (img?.getAttribute('sizes')) link.setAttribute('imagesizes', img.getAttribute('sizes'));
-        link.fetchPriority = 'high';
-        document.head.appendChild(link);
-      }catch(_){}
-    }
-
     const buildHeroSlides = (items)=>{
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
         const host = hostname(it.link) || 'news.google.com';
-        const src  = it.image ? it.image : '';
+        const src  = (SHOW_IMAGES && it.image) ? it.image : '';
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         let mediaHTML='';
         if (src){
+          const prep = prepareImage(src);
           if (idx === 0){
-            // First hero → priority for LCP + eager decode
-            mediaHTML = pictureHTML({
-              url: src, alt: safeTitle, sizes: '100vw', className: '',
-              fetchPriority: 'high', eager: true, host, width: 1600, height: 900, widths: WIDTHS_RICH
-            });
+            // First hero → priority for LCP
+            mediaHTML = `<img fetchpriority="high" loading="eager" decoding="async" src="${prep.src}" srcset="${prep.srcset}" sizes="100vw" alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`;
           } else {
-            mediaHTML = pictureHTML({
-              url: src, alt: safeTitle, sizes: '100vw', className: '',
-              fetchPriority: 'low', eager: false, host, width: 1600, height: 900, widths: WIDTHS_RICH
-            });
+            mediaHTML = `<img class="brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async" data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="100vw" alt="${safeTitle}" data-host="${host}" data-kind="content">`;
           }
         } else {
           mediaHTML = noImageHTML('');
@@ -1059,9 +986,6 @@
       }).join('');
       const dcount = Math.min(DOT_COUNT, Math.max(1, list.length));
       heroDots.innerHTML = Array.from({ length: dcount }).map((_,i)=>`<span class="${i===0?'active':''}"></span>`).join('');
-      // Preload LCP hero image using the just-rendered picture
-      const firstPic = heroTrack.querySelector('.hero-slide picture');
-      preloadHeroFromPicture(firstPic);
       // Observe lazy hero images (except first)
       observeAllLazy(heroTrack);
     };
@@ -1083,11 +1007,11 @@
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         let media = '';
         if (it.image){
-          media = pictureHTML({
-            url: it.image, alt: safeTitle,
-            sizes: '(max-width:640px) 100vw, 33vw', className: 'w-full h-44 rounded-md object-cover',
-            fetchPriority: 'low', eager: false, host, width: 800, height: 500, widths: WIDTHS_THUMB
-          });
+          const prep = prepareImage(it.image);
+          media =
+            `<img class="w-full h-44 object-cover rounded-md brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
+                  data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 33vw"
+                  data-host="${host}" data-kind="content" alt="${safeTitle}">`;
         } else {
           media = noImageHTML('w-full h-44 rounded-md');
         }
@@ -1133,13 +1057,11 @@
 
         if (vertical){
           let media = '';
-          if (it.image){
-            media = pictureHTML({
-              url: it.image, alt: safeTitle,
-              sizes: '(max-width:640px) 100vw, 50vw',
-              className: 'tile-img w-full h-[300px] sm:h-[360px] object-cover',
-              fetchPriority: 'low', eager: false, host, width: 1200, height: 800, widths: WIDTHS_RICH
-            });
+          if (SHOW_IMAGES && it.image){
+            const prep = prepareImage(it.image);
+            media = `<img class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
+                        data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 50vw"
+                        data-host="${host}" data-kind="content" alt="${safeTitle}">`;
           } else {
             media = noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
           }
@@ -1163,13 +1085,11 @@
           `;
         } else {
           let media = '';
-          if (it.image){
-            media = pictureHTML({
-              url: it.image, alt: safeTitle,
-              sizes: '(max-width:640px) 100vw, 44vw',
-              className: 'w-full h-full object-cover',
-              fetchPriority: 'low', eager: false, host, width: 800, height: 500, widths: WIDTHS_THUMB
-            });
+          if (SHOW_IMAGES && it.image){
+            const prep = prepareImage(it.image);
+            media = `<img class="w-full h-full object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
+                        data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 44vw"
+                        data-host="${host}" data-kind="content" alt="${safeTitle}">`;
           } else {
             media = noImageHTML('w-full h-full');
           }
@@ -1723,14 +1643,8 @@
         return;
       }
       // Content images (hero/tiles/trending): replace with clean placeholder
-      const pic = img.closest('picture');
-      if (pic){
-        pic.insertAdjacentHTML('afterend', noImageHTML(img.className));
-        pic.remove();
-      }else{
-        img.insertAdjacentHTML('afterend', noImageHTML(img.className));
-        img.remove();
-      }
+      img.insertAdjacentHTML('afterend', noImageHTML(img.className));
+      img.remove();
     };
     document.addEventListener('error', (e)=>{
       const t = e.target;
