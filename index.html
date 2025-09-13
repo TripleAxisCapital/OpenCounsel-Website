@@ -592,7 +592,11 @@
   <!-- FULL-PAGE BLUR OVERLAY (unchanged) -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- HEADER (full-width at top → floating pill on scroll) -->
+
+
+
+
+  <!-- HEADER -------------------------------------------------------- full-width at top → floating pill on scroll) -->
 
 <!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
@@ -607,39 +611,58 @@
     --pill-height-mobile: 2.75rem;    /* pill height (mobile)         */
     --pill-height-desktop: 3.5rem;    /* pill height (desktop)        */
     --pill-max-w: 1200px;             /* max width cap for the pill   */
+    --pill-radius: 999px;             /* pill corner radius           */
+    --actions-gap: 8px;               /* gap between right-side buttons */
   "
 >
-  <div
-    class="header-bar relative mx-auto oc-container flex items-center justify-between"
-  >
-    <div class="flex items-center gap-3">
+  <div class="header-bar relative mx-auto oc-container flex items-center"
+       style="gap:0">
+    <!-- Left group (logo) -->
+    <div class="flex items-center gap-3 min-w-0 flex-1 basis-0 justify-start">
       <a href="index.html" class="inline-flex items-center" aria-label="OC home">
         <span class="logo-anim" role="img" aria-label="OC"></span>
       </a>
     </div>
 
-    <!-- Centered nav stays inside the pill -->
-    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+    <!-- Centered nav stays inside the pill (OC-News removed here) -->
+    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm pointer-events-auto">
       <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
       <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="Models.html">Models</a>
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="OC-News.html">OC-News</a>
     </nav>
 
-    <div class="flex items-center gap-2">
-      <!-- Desktop Download button moved to right side (opposite the logo) -->
-      <a
-        href="download.html"
-        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
-               focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-               shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-               transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
-               g-grad grad-anim"
-        style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
-        aria-label="Download" title="Download"
-      >
-        <i class="ph ph-download text-base" aria-hidden="true"></i>
-        <span>Download</span>
-      </a>
+    <!-- Right group (desktop actions + mobile menu) -->
+    <div class="flex items-center justify-end min-w-0 flex-1 basis-0">
+      <div class="hidden md:flex items-center" style="gap:var(--actions-gap)">
+        <!-- New OC-News button (desktop) -->
+        <a
+          href="OC-News.html"
+          class="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold
+                 text-neutral-900 bg-white/80 hover:bg-white focus:outline-none
+                 focus-visible:ring-4 focus-visible:ring-black/5 shadow-sm hover:shadow
+                 transition-all duration-300 ease-out"
+          aria-label="OC-News" title="OC-News"
+        >
+          <i class="ph ph-newspaper text-base" aria-hidden="true"></i>
+          <span>OC-News</span>
+        </a>
+
+        <!-- Download button (desktop) -->
+        <a
+          href="download.html"
+          class="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
+                 g-grad grad-anim"
+          style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+          aria-label="Download" title="Download"
+        >
+          <i class="ph ph-download text-base" aria-hidden="true"></i>
+          <span>Download</span>
+        </a>
+      </div>
+
+      <!-- Mobile hamburger -->
       <button id="hamburgerBtn"
         class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
         aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
@@ -673,8 +696,10 @@
       display: flex;
       align-items: center;
 
-      /* Optional: keep the pill edge clean if you have any background/glass */
-      border-radius: 999px; /* if your design uses a pill radius */
+      /* Keep everything contained visually inside the pill */
+      border-radius: var(--pill-radius);
+      overflow: hidden;               /* prevents bleed outside edges */
+      overflow-clip-margin: 1px;      /* improves edge clipping on Safari */
     }
 
     /* Desktop (≥768px) */
@@ -686,6 +711,9 @@
         height: var(--pill-height-desktop);
       }
     }
+
+    /* Ensure the centered nav never pushes content outside */
+    #siteHeader nav { white-space: nowrap; }
   </style>
 
   <!-- MOBILE MENU -->
@@ -701,7 +729,7 @@
         </button>
       </div>
 
-      <!-- UPDATED MOBILE MENU LINKS -->
+      <!-- UPDATED MOBILE MENU LINKS (kept OC-News here for mobile) -->
       <nav class="drawer-nav mt-2">
         <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">OC-Pro</a>
         <a href="Models.html">Models</a>
@@ -727,10 +755,6 @@
 <!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
 
-
-<!-- Drop-in 12px spacer (no content needed) -->
-<div aria-hidden="true" style="height:12px;"></div>
-
 <!-- Header mode controller: toggles floating pill after slight scroll -->
 <script>
   (function(){
@@ -750,6 +774,7 @@
     }catch(_){/* no-op */}
   })();
 </script>
+
 
 
   <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
