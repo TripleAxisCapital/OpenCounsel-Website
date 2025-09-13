@@ -598,13 +598,13 @@
 <div aria-hidden="true" style="height:12px;"></div>
 
 <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
-  style="--pill-padding-x-mobile: 30px; --pill-padding-x-desktop: 40px;">
-  <!-- 🔧 Added adjustable outer padding vars (separate for mobile & desktop) -->
+  style="--pill-padding-x-mobile: 0px; --pill-padding-x-desktop: 0px;">
+  <!-- 🔧 Adjustable outer padding vars (mobile & desktop) -->
   <div
-    class="header-bar relative mx-auto max-w-[1200px] oc-container h-[3.25rem] md:h-14 flex items-center justify-between px-3 md:px-4"
+    class="header-bar relative mx-auto max-w-[1200px] oc-container h-[3.25rem] md:h-14 flex items-center justify-between"
     style="
-      padding-left: calc(var(--pill-padding-x-mobile));
-      padding-right: calc(var(--pill-padding-x-mobile));
+      padding-left: calc(var(--pill-padding-x-mobile) + 12px);
+      padding-right: calc(var(--pill-padding-x-mobile) + 12px);
     "
   >
     <div class="flex items-center gap-3">
@@ -621,7 +621,7 @@
     </nav>
 
     <div class="flex items-center gap-2">
-      <!-- Desktop Download button moved to right side (opposite the logo) -->
+      <!-- Desktop Download button on right edge -->
       <a
         href="download.html"
         class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
@@ -649,8 +649,8 @@
   <style>
     @media (min-width: 768px) {
       #siteHeader .header-bar {
-        padding-left: var(--pill-padding-x-desktop);
-        padding-right: var(--pill-padding-x-desktop);
+        padding-left: calc(var(--pill-padding-x-desktop) + 12px);
+        padding-right: calc(var(--pill-padding-x-desktop) + 12px);
       }
     }
   </style>
@@ -694,14 +694,14 @@
 <!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
 
-<!-- Header mode controller: toggles floating pill after slight scroll -->
+<!-- Header mode controller -->
 <script>
   (function(){
     try{
       var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
       if(!header) return;
       var last = -1;
-      var THRESH = 8; // pixels before converting to floating pill
+      var THRESH = 8;
       var onScroll = function(){
         var y = window.scrollY || document.documentElement.scrollTop || 0;
         if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
@@ -710,7 +710,7 @@
       };
       onScroll();
       window.addEventListener('scroll', onScroll, { passive:true });
-    }catch(_){/* no-op */}
+    }catch(_){}
   })();
 </script>
 
