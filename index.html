@@ -684,23 +684,23 @@
     /* Neutralize container padding for exact centering */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
 
-    /* ===== Mobile: FLEX (no squish, simple) ===== */
+    /* ===== Mobile: FLEX (unsquished) ===== */
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
 
-      /* Perfect centering regardless of parent padding */
+      /* Center the pill regardless of parent padding */
       width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
       margin-inline: auto;
 
-      /* TRUE per-side inner padding with legacy fallback */
-      padding-left: var(--pill-inner-left-mobile, var(--pill-inner-x-mobile));
-      padding-right: var(--pill-inner-right-mobile, var(--pill-inner-x-mobile));
+      /* ✅ TRUE per-side inner padding (logical props) + strong override */
+      padding-inline-start: var(--pill-inner-left-mobile, var(--pill-inner-x-mobile)) !important;
+      padding-inline-end:   var(--pill-inner-right-mobile, var(--pill-inner-x-mobile)) !important;
 
       /* Height control */
       height: var(--pill-height-mobile);
 
-      /* Mobile uses flex to avoid grid auto-placement quirks */
+      /* Layout */
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -708,20 +708,20 @@
 
       /* Hard containment: nothing bleeds outside */
       border-radius: var(--pill-radius);
-      overflow: clip;               /* modern containment (better than hidden) */
-      -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari edge antialiasing */
+      overflow: hidden; /* (replaces the previous -webkit-mask hack) */
     }
 
-    /* Make the left/right groups shrink properly on small screens */
+    /* Ensure left/right groups behave on small screens */
     #siteHeader .hb-left, #siteHeader .hb-right { min-width: 0; flex: 0 1 auto; }
-    #siteHeader .hb-center { display: none; } /* hidden on mobile by class, ensure no layout impact */
+    #siteHeader .hb-center { display: none; } /* hidden on mobile by class; ensure no layout impact */
 
-    /* ===== Desktop: GRID (true center for nav) ===== */
+    /* ===== Desktop: GRID (true centered nav) ===== */
     @media (min-width: 768px) {
       #siteHeader .header-bar {
         width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-        padding-left: var(--pill-inner-left-desktop, var(--pill-inner-x-desktop));
-        padding-right: var(--pill-inner-right-desktop, var(--pill-inner-x-desktop));
+        /* ✅ Desktop per-side inner padding (logical props) */
+        padding-inline-start: var(--pill-inner-left-desktop, var(--pill-inner-x-desktop)) !important;
+        padding-inline-end:   var(--pill-inner-right-desktop, var(--pill-inner-x-desktop)) !important;
         height: var(--pill-height-desktop);
 
         display: grid;
@@ -743,7 +743,6 @@
         text-overflow: ellipsis;
       }
 
-      /* Ensure left and right stay inside, can shrink a bit if needed */
       #siteHeader .hb-left  { justify-self: start; min-width: 0; }
       #siteHeader .hb-right { justify-self: end;   min-width: 0; }
     }
