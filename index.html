@@ -594,7 +594,7 @@
 
 
 
-
+  
 
   <!-- HEADER -------------------------------------------------------- full-width at top → floating pill on scroll) -->
 
@@ -604,36 +604,42 @@
 <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
   style="
     /* 🔧 Controls */
-    --pill-inner-x-mobile: 12px;      /* inside L/R padding (mobile)  */
-    --pill-inner-x-desktop: 12px;     /* inside L/R padding (desktop) */
-    --pill-outer-x-mobile: 40px;      /* outer inset L/R (mobile)     */
-    --pill-outer-x-desktop: 0px;      /* outer inset L/R (desktop)    */
-    --pill-height-mobile: 2.75rem;    /* pill height (mobile)         */
-    --pill-height-desktop: 3.5rem;    /* pill height (desktop)        */
-    --pill-max-w: 1200px;             /* max width cap for the pill   */
-    --pill-radius: 999px;             /* pill corner radius           */
-    --actions-gap: 8px;               /* gap between right-side buttons */
+    --pill-inner-left-mobile: 12px;    /* inner LEFT padding (mobile)  */
+    --pill-inner-right-mobile: 12px;   /* inner RIGHT padding (mobile) */
+    --pill-inner-left-desktop: 16px;   /* inner LEFT padding (desktop) */
+    --pill-inner-right-desktop: 24px;  /* inner RIGHT padding (desktop) */
+
+    /* (Optional) legacy fallbacks if you still set these elsewhere */
+    --pill-inner-x-mobile: 12px;
+    --pill-inner-x-desktop: 12px;
+
+    --pill-outer-x-mobile: 40px;       /* outer inset L/R (mobile)     */
+    --pill-outer-x-desktop: 0px;       /* outer inset L/R (desktop)    */
+    --pill-height-mobile: 3rem;        /* pill height (mobile)         */
+    --pill-height-desktop: 3.5rem;     /* pill height (desktop)        */
+    --pill-max-w: 1200px;              /* max width cap for the pill   */
+    --pill-radius: 999px;              /* pill corner radius           */
+    --actions-gap: 8px;                /* gap between right-side buttons */
   "
 >
-  <div class="header-bar relative mx-auto oc-container flex items-center"
-       style="gap:0">
+  <div class="header-bar relative mx-auto oc-container">
     <!-- Left group (logo) -->
-    <div class="flex items-center gap-3 min-w-0 flex-1 basis-0 justify-start">
+    <div class="hb-left flex items-center gap-3 min-w-0">
       <a href="index.html" class="inline-flex items-center" aria-label="OC home">
         <span class="logo-anim" role="img" aria-label="OC"></span>
       </a>
     </div>
 
-    <!-- Centered nav stays inside the pill (OC-News removed here) -->
-    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm pointer-events-auto">
+    <!-- Centered nav (desktop only). OC-News removed per your spec. -->
+    <nav class="hb-center hidden md:flex items-center gap-8 text-sm pointer-events-auto absolute left-1/2 -translate-x-1/2">
       <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
       <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="Models.html">Models</a>
     </nav>
 
     <!-- Right group (desktop actions + mobile menu) -->
-    <div class="flex items-center justify-end min-w-0 flex-1 basis-0">
-      <div class="hidden md:flex items-center" style="gap:var(--actions-gap)">
-        <!-- New OC-News button (desktop) -->
+    <div class="hb-right flex items-center justify-end min-w-0">
+      <div class="actions hidden md:flex items-center" style="gap:var(--actions-gap); flex-wrap:nowrap; white-space:nowrap; max-width:100%; flex-shrink:1;">
+        <!-- OC-News button (desktop) -->
         <a
           href="OC-News.html"
           class="inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold
@@ -673,47 +679,78 @@
     </div>
   </div>
 
-  <!-- 🛠 Pill layout + centering logic -->
+  <!-- 🛠 Pill layout + centering + containment -->
   <style>
-    /* Neutralize container padding specifically for this header so centering is exact */
+    /* Neutralize container padding for exact centering */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
 
-    /* Base (mobile) */
+    /* ===== Mobile: FLEX (no squish, simple) ===== */
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
 
-      /* Perfect centering via width formula + auto margins */
+      /* Perfect centering regardless of parent padding */
       width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
       margin-inline: auto;
 
-      /* Inside padding + height control */
-      padding-left: var(--pill-inner-x-mobile);
-      padding-right: var(--pill-inner-x-mobile);
+      /* TRUE per-side inner padding with legacy fallback */
+      padding-left: var(--pill-inner-left-mobile, var(--pill-inner-x-mobile));
+      padding-right: var(--pill-inner-right-mobile, var(--pill-inner-x-mobile));
+
+      /* Height control */
       height: var(--pill-height-mobile);
 
-      /* Keep contents vertically centered */
+      /* Mobile uses flex to avoid grid auto-placement quirks */
       display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 0;
 
-      /* Keep everything contained visually inside the pill */
+      /* Hard containment: nothing bleeds outside */
       border-radius: var(--pill-radius);
-      overflow: hidden;               /* prevents bleed outside edges */
-      overflow-clip-margin: 1px;      /* improves edge clipping on Safari */
+      overflow: clip;               /* modern containment (better than hidden) */
+      -webkit-mask-image: -webkit-radial-gradient(white, black); /* Safari edge antialiasing */
     }
 
-    /* Desktop (≥768px) */
+    /* Make the left/right groups shrink properly on small screens */
+    #siteHeader .hb-left, #siteHeader .hb-right { min-width: 0; flex: 0 1 auto; }
+    #siteHeader .hb-center { display: none; } /* hidden on mobile by class, ensure no layout impact */
+
+    /* ===== Desktop: GRID (true center for nav) ===== */
     @media (min-width: 768px) {
       #siteHeader .header-bar {
         width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-        padding-left: var(--pill-inner-x-desktop);
-        padding-right: var(--pill-inner-x-desktop);
+        padding-left: var(--pill-inner-left-desktop, var(--pill-inner-x-desktop));
+        padding-right: var(--pill-inner-right-desktop, var(--pill-inner-x-desktop));
         height: var(--pill-height-desktop);
+
+        display: grid;
+        grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+        align-items: center;
+        justify-items: stretch;
       }
+
+      /* Convert nav from absolute to normal flow inside the center grid cell */
+      #siteHeader .header-bar .hb-center {
+        position: static !important;
+        transform: none !important;
+        left: auto !important;
+        display: flex !important;
+        justify-self: center;
+        gap: clamp(12px, 2.5vw, 32px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Ensure left and right stay inside, can shrink a bit if needed */
+      #siteHeader .hb-left  { justify-self: start; min-width: 0; }
+      #siteHeader .hb-right { justify-self: end;   min-width: 0; }
     }
 
-    /* Ensure the centered nav never pushes content outside */
-    #siteHeader nav { white-space: nowrap; }
+    /* Safety: right actions never exceed container */
+    #siteHeader .actions { max-width: 100%; overflow: hidden; }
+    #siteHeader .actions > a { flex-shrink: 0; }
   </style>
 
   <!-- MOBILE MENU -->
@@ -729,7 +766,7 @@
         </button>
       </div>
 
-      <!-- UPDATED MOBILE MENU LINKS (kept OC-News here for mobile) -->
+      <!-- UPDATED MOBILE MENU LINKS (OC-News remains here for mobile) -->
       <nav class="drawer-nav mt-2">
         <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">OC-Pro</a>
         <a href="Models.html">Models</a>
