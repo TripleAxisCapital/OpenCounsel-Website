@@ -8,9 +8,11 @@
     • Removed Google Trends section + all related logic
     • Apple-style centered Editions segmented control (desktop & mobile) with perfect spacing
     • Image pipeline overhaul for speed:
-        - Responsive proxy (wsrv.nl) → modern WebP, smart widths (srcset/sizes)
+        - Responsive proxy (wsrv.nl) → AVIF/WebP (via <picture>), smart widths (srcset/sizes)
         - Lazy loading via IntersectionObserver (zero-jank, content-visibility)
-        - Priority for first hero image only (LCP)
+        - Dynamic <link rel="preload"> for first hero image (LCP)
+        - Save-Data aware: leaner srcsets on data saver connections
+        - LocalStorage cache for resolved OG images (persist across reloads)
     • Content-visibility for offscreen cards (CLS-safe)
     • Kept all existing features: feeds, hero, trending, saves, weather (with cinematic FX), theme, preloader
   -->
@@ -22,6 +24,7 @@
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
 
   <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
@@ -689,43 +692,61 @@
         <span class="text-xs sm:text-sm font-semibold" style="color: var(--sub)">${label.slice(0,3).toUpperCase()}</span>
       </div>
     `;
+    const upscaleImageUrl = (u)=>{
+      try{
+        let url = new URL(u);
+        ['w','width','maxwidth','px','param','imgw'].forEach(k=>{ if (url.searchParams.has(k)) url.searchParams.set(k,'1600'); });
+        return url.toString();
+      }catch{ return u.replace(/([?&])(w|width|maxwidth|px)=\d+/gi,'$1$2=1600'); }
+    };
 
-    /* ===== IMAGE PIPELINE (FAST, TUNED) ===== */
+    /* ===== IMAGE PIPELINE (fast) ===== */
     const IMG_PROXY = 'https://wsrv.nl';
-    const DPR = Math.min(2, Math.round(window.devicePixelRatio || 1));
-    const SAVE_DATA = navigator.connection?.saveData;
-    const QUALITY = SAVE_DATA ? 50 : (DPR > 1 ? 60 : 72);
 
-    const proxyImage = (u, w = 1280, h = null, fit = 'cover') => {
-      const base = `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${w}&we&dpr=${DPR}&q=${QUALITY}&output=webp`;
-      return h ? `${base}&h=${h}&fit=${fit}` : base;
-    };
-    const makeSrcset = (u, widths=[360,540,720,960,1200,1440,1800], targetW=null, targetH=null, fit='cover') => {
-      const ratio = (targetW && targetH) ? (targetH / targetW) : null;
-      return widths.map(w=>{
-        const hh = ratio ? Math.round(w * ratio) : null;
-        return `${proxyImage(u, w, hh, fit)} ${w}w`;
-      }).join(', ');
-    };
-    const prepareImage = (u, { targetW=1200, targetH=null, fit='cover' } = {}) => {
+    // Save-Data aware srcset density
+    const SAVE_DATA = !!(navigator.connection && navigator.connection.saveData);
+    const DEFAULT_WIDTHS = SAVE_DATA ? [360, 540, 720] : [360, 540, 720, 960, 1200, 1440, 1800];
+
+    const proxyImage = (u, w = 1280, fmt = 'webp') =>
+      `${IMG_PROXY}/?url=${encodeURIComponent(u)}&w=${w}&output=${fmt}`;
+
+    const makeSrcset = (u, widths = DEFAULT_WIDTHS, fmt = 'webp') =>
+      widths.map(w => `${proxyImage(u, w, fmt)} ${w}w`).join(', ');
+
+    const prepareImage = (u) => {
+      const src = upscaleImageUrl(u);
       return {
-        src: proxyImage(u, targetW, targetH, fit),
-        srcset: makeSrcset(u, [360,540,720,960,1200,1440,1800], targetW, targetH, fit),
-        w: targetW,
-        h: targetH
+        avif: makeSrcset(src, DEFAULT_WIDTHS, 'avif'),
+        webp: makeSrcset(src, DEFAULT_WIDTHS, 'webp'),
+        fallback: proxyImage(src, 1200, 'webp') // <img src> fallback
       };
     };
 
-    // Target height helpers (for server-side crop)
-    const heroTargetHeight = ()=>{
-      const isMobile = window.matchMedia && window.matchMedia('(max-width: 639.98px)').matches;
-      const frac = isMobile ? 0.54 : 0.58;
-      const vh = window.innerHeight || 800;
-      return Math.max(320, Math.round(vh * frac));
+    // Picture HTML helper (supports eager LCP + lazy IO)
+    const pictureHTML = ({ prep, alt, sizes, className = '', host = '', kind = 'content', eager = false }) => {
+      if (eager) {
+        return `
+          <picture>
+            <source type="image/avif" srcset="${prep.avif}" sizes="${sizes}">
+            <source type="image/webp" srcset="${prep.webp}" sizes="${sizes}">
+            <img fetchpriority="high" loading="eager" decoding="async"
+                 src="${prep.fallback}" sizes="${sizes}"
+                 alt="${alt}" class="brand-fb ${className}" data-host="${host}" data-kind="${kind}">
+          </picture>
+        `;
+      }
+      return `
+        <picture>
+          <source type="image/avif" data-srcset="${prep.avif}" sizes="${sizes}">
+          <source type="image/webp" data-srcset="${prep.webp}" sizes="${sizes}">
+          <img class="brand-fb lazy-img ${className}" fetchpriority="low" loading="lazy" decoding="async"
+               data-src="${prep.fallback}" sizes="${sizes}"
+               alt="${alt}" data-host="${host}" data-kind="${kind}">
+        </picture>
+      `;
     };
-    const verticalTileTargetHeight = ()=> (window.matchMedia && window.matchMedia('(min-width:640px)').matches) ? 360 : 300;
-    const trendingTargetHeight = ()=> 176;
 
+    // Lazy loader (also wires up <picture> <source> tags)
     let lazyObs=null;
     function setupLazyObserver(){
       if(!('IntersectionObserver' in window)) return;
@@ -733,10 +754,16 @@
         entries.forEach(entry=>{
           if(entry.isIntersecting){
             const img = entry.target;
-            if (img.dataset.src){ img.src = img.dataset.src; }
-            if (img.dataset.srcset){ img.srcset = img.dataset.srcset; }
+            // Populate <picture><source> srcsets if present
+            const pic = img.parentElement && img.parentElement.tagName === 'PICTURE' ? img.parentElement : null;
+            if (pic){
+              pic.querySelectorAll('source').forEach(s=>{
+                if (s.dataset.srcset){ s.srcset = s.dataset.srcset; s.removeAttribute('data-srcset'); }
+              });
+            }
+            if (img.dataset.src){ img.src = img.dataset.src; img.removeAttribute('data-src'); }
+            if (img.dataset.srcset){ img.srcset = img.dataset.srcset; img.removeAttribute('data-srcset'); }
             img.loading = 'lazy'; img.decoding = 'async';
-            img.removeAttribute('data-src'); img.removeAttribute('data-srcset');
             lazyObs.unobserve(img);
           }
         });
@@ -745,6 +772,22 @@
     function observeAllLazy(root=document){
       if (!lazyObs) return;
       root.querySelectorAll('img.lazy-img').forEach(im=> lazyObs.observe(im));
+    }
+
+    // Dynamic hero preload (improves LCP)
+    let heroPreloadDone = false;
+    function preloadHero(prep, sizes='100vw'){
+      if (heroPreloadDone) return;
+      try{
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = prep.fallback;
+        link.setAttribute('imagesrcset', prep.webp); // browsers pick best from srcset
+        link.setAttribute('imagesizes', sizes);
+        document.head.appendChild(link);
+        heroPreloadDone = true;
+      }catch(_){}
     }
 
     /* ===== RSS + IMAGE RESOLUTION ===== */
@@ -794,7 +837,25 @@
       throw new Error('All proxies failed for ' + url);
     };
 
+    // Persisted image cache for resolved OG images
+    const IMG_CACHE_KEY = 'oc_img_cache_v1';
     const IMG_CACHE = new Map();
+    try{
+      const persisted = JSON.parse(localStorage.getItem(IMG_CACHE_KEY) || '{}');
+      Object.entries(persisted).forEach(([k,v]) => IMG_CACHE.set(k, v));
+    }catch(_){}
+
+    let _imgCacheSaveTimer = 0;
+    const saveImgCache = ()=>{
+      clearTimeout(_imgCacheSaveTimer);
+      _imgCacheSaveTimer = setTimeout(()=>{
+        try{
+          const obj = Object.fromEntries(IMG_CACHE);
+          localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(obj));
+        }catch(_){}
+      }, 300);
+    };
+
     const resolving = new Set();
 
     const tryFindOgImage = (html, baseUrl)=>{
@@ -858,37 +919,24 @@
       try{
         const html = await fetchWithProxies(url);
         const img = tryFindOgImage(html, url) || '';
-        const better = img || '';
+        const better = img ? upscaleImageUrl(img) : '';
         IMG_CACHE.set(url, better);
+        saveImgCache();
         return better;
       }catch{
         IMG_CACHE.set(url, '');
+        saveImgCache();
         return '';
       }finally{ resolving.delete(url) }
     };
 
-    // Concurrency-limited mapper
-    async function pMap(iterable, limit, mapper){
-      const ret = [];
-      const executing = [];
-      for (const item of iterable){
-        const p = Promise.resolve().then(()=>mapper(item));
-        ret.push(p);
-        const e = p.then(()=> executing.splice(executing.indexOf(e),1));
-        executing.push(e);
-        if (executing.length >= limit) await Promise.race(executing);
-      }
-      return Promise.all(ret);
-    }
-
     const improveImagesFor = async (items, limit=12)=>{
       const targets = items.filter(it=>!it.image).slice(0, limit);
-      if (!targets.length) return;
       let updated = false;
-      await pMap(targets, 2, async (it)=>{
+      await Promise.all(targets.map(async (it)=>{
         const best = await resolveArticleImage(it.link);
         if(best){ it.image = best; updated = true; }
-      });
+      }));
       if(updated){ applyFilter(); }
     };
 
@@ -920,7 +968,7 @@
       uniq.forEach(u=>{
         const ageMin = Math.max(1, (now - (u.pubDate?.getTime?.()||now))/60000);
         u._score = (u.trendCount||1) * (1/ageMin);
-        // no pre-upscale — wsrv handles sizing/cropping
+        if (u.image) u.image = upscaleImageUrl(u.image);
       });
       uniq.sort((a,b)=> (b._score - a._score) || ((b.pubDate||0) - (a.pubDate||0)));
       return uniq.slice(0, MAX_ITEMS);
@@ -988,7 +1036,6 @@
 
     const renderTicker = (_items)=>{ /* no-op; #tickerWrap hidden */ };
 
-    let LCP_PRELOADED = false;
     const buildHeroSlides = (items)=>{
       const list = items.slice(0, Math.min(HERO_SLIDES, items.length));
       heroTrack.innerHTML = list.map((it, idx)=>{
@@ -997,34 +1044,13 @@
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         let mediaHTML='';
         if (src){
-          // consistent crop for hero based on viewport
-          const ht = heroTargetHeight();
-          const prep = prepareImage(src, { targetW: 1200, targetH: ht, fit: 'cover' });
-
+          const prep = prepareImage(src);
           if (idx === 0){
-            // Preload LCP (imagesrcset) before <img> parsing
-            if (!LCP_PRELOADED){
-              const l = document.createElement('link');
-              l.rel = 'preload';
-              l.as = 'image';
-              l.href = prep.src;
-              l.crossOrigin = 'anonymous';
-              l.fetchPriority = 'high';
-              l.setAttribute('imagesrcset', prep.srcset);
-              l.setAttribute('imagesizes', '100vw');
-              document.head.appendChild(l);
-              LCP_PRELOADED = true;
-            }
-            // First hero → priority for LCP
-            mediaHTML = `<img fetchpriority="high" loading="eager" decoding="async"
-                               src="${prep.src}" srcset="${prep.srcset}" sizes="100vw"
-                               width="${prep.w}" height="${prep.h}"
-                               alt="${safeTitle}" class="brand-fb" data-host="${host}" data-kind="content">`;
+            // First hero → priority for LCP + dynamic preload
+            preloadHero(prep, '100vw');
+            mediaHTML = pictureHTML({ prep, alt: safeTitle, sizes: '100vw', className:'', host, kind:'content', eager:true });
           } else {
-            mediaHTML = `<img class="brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
-                               data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="100vw"
-                               width="${prep.w}" height="${prep.h}"
-                               alt="${safeTitle}" data-host="${host}" data-kind="content">`;
+            mediaHTML = pictureHTML({ prep, alt: safeTitle, sizes: '100vw', className:'', host, kind:'content', eager:false });
           }
         } else {
           mediaHTML = noImageHTML('');
@@ -1065,18 +1091,17 @@
         const safeTitle = it.title.replace(/</g,'&lt;').replace(/>/g,'&gt;');
         let media = '';
         if (it.image){
-          const prep = prepareImage(it.image, { targetW: 800, targetH: trendingTargetHeight(), fit: 'cover' });
+          const prep = prepareImage(it.image);
           media =
-            `<img class="w-full h-44 object-cover rounded-md brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
-                  data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 33vw"
-                  width="${prep.w}" height="${prep.h}"
-                  data-host="${host}" data-kind="content" alt="${safeTitle}">`;
+            `<a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">
+              ${pictureHTML({ prep, alt: safeTitle, sizes: '(max-width:640px) 100vw, 33vw', className:'w-full h-44 object-cover rounded-md', host, kind:'content', eager:false })}
+            </a>`;
         } else {
-          media = noImageHTML('w-full h-44 rounded-md');
+          media = `<a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${noImageHTML('w-full h-44 rounded-md')}</a>`;
         }
         return `
           <article class="card p-3 sm:p-4 cv-auto">
-            <a href="${it.link}" target="_blank" rel="noopener" class="block mb-3 rounded-md overflow-hidden">${media}</a>
+            ${media}
             <div class="flex items-center justify-between gap-3 text-[11px] text-[var(--sub)] mb-1">
               <span>${timeAgo(it.pubDate)}</span>
               ${hostLinkHTML(it.link)}
@@ -1117,12 +1142,11 @@
         if (vertical){
           let media = '';
           if (SHOW_IMAGES && it.image){
-            const vh = verticalTileTargetHeight();
-            const prep = prepareImage(it.image, { targetW: 1200, targetH: vh, fit: 'cover' });
-            media = `<img class="tile-img w-full h-[300px] sm:h-[360px] object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
-                        data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 50vw"
-                        width="${prep.w}" height="${prep.h}"
-                        data-host="${host}" data-kind="content" alt="${safeTitle}">`;
+            const prep = prepareImage(it.image);
+            media = pictureHTML({
+              prep, alt: safeTitle, sizes: '(max-width:640px) 100vw, 50vw',
+              className: 'tile-img w-full h-[300px] sm:h-[360px] object-cover', host, kind:'content', eager:false
+            });
           } else {
             media = noImageHTML('tile-img w-full h-[300px] sm:h-[360px]');
           }
@@ -1147,12 +1171,11 @@
         } else {
           let media = '';
           if (SHOW_IMAGES && it.image){
-            // right-hand image uses aspect-[16/10]
-            const prep = prepareImage(it.image, { targetW: 1600, targetH: 1000, fit: 'cover' });
-            media = `<img class="w-full h-full object-cover brand-fb lazy-img" fetchpriority="low" loading="lazy" decoding="async"
-                        data-src="${prep.src}" data-srcset="${prep.srcset}" sizes="(max-width:640px) 100vw, 44vw"
-                        width="${prep.w}" height="${prep.h}"
-                        data-host="${host}" data-kind="content" alt="${safeTitle}">`;
+            const prep = prepareImage(it.image);
+            media = pictureHTML({
+              prep, alt: safeTitle, sizes: '(max-width:640px) 100vw, 44vw',
+              className: 'w-full h-full object-cover', host, kind:'content', eager:false
+            });
           } else {
             media = noImageHTML('w-full h-full');
           }
@@ -1190,7 +1213,7 @@
 
       renderTrending(items);
 
-      // Defer image improvement to idle time — limited concurrency
+      // Defer image improvement to idle time
       const ridle = window.requestIdleCallback || ((fn)=> setTimeout(fn, 180));
       ridle(()=> {
         improveImagesFor(items.slice(0, HERO_SLIDES), HERO_SLIDES).then(()=>{});
@@ -1706,8 +1729,10 @@
         return;
       }
       // Content images (hero/tiles/trending): replace with clean placeholder
-      img.insertAdjacentHTML('afterend', noImageHTML(img.className));
-      img.remove();
+      const wrapper = img.closest('picture');
+      if (wrapper) wrapper.insertAdjacentHTML('afterend', noImageHTML(img.className));
+      else img.insertAdjacentHTML('afterend', noImageHTML(img.className));
+      if (wrapper) wrapper.remove(); else img.remove();
     };
     document.addEventListener('error', (e)=>{
       const t = e.target;
