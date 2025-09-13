@@ -611,9 +611,9 @@
 
     /* 🆕 Independent element paddings */
     --logo-pad-left-mobile: 6px;         /* left padding before logo (mobile)   */
-    --logo-pad-left-desktop: 12px;        /* left padding before logo (desktop)  */
+    --logo-pad-left-desktop: 12px;       /* left padding before logo (desktop)  */
     --download-pad-right-mobile: 6px;    /* right padding after Download (mobile)  */
-    --download-pad-right-desktop: 12px;   /* right padding after Download (desktop) */
+    --download-pad-right-desktop: 12px;  /* right padding after Download (desktop) */
   "
 >
   <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
@@ -628,12 +628,24 @@
     <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
       <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
       <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="Models.html">Models</a>
-      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="OC-News.html">OC-News</a>
+      <!-- OC-News link removed from here -->
     </nav>
 
-    <!-- 🆕 Right wrapper gets adjustable right padding for the Download button -->
+    <!-- 🆕 Right wrapper gets adjustable right padding for the Download + OC-News buttons -->
     <div class="flex items-center gap-2 download-pad">
-      <!-- Desktop Download button moved to right side (opposite the logo) -->
+      <!-- 🆕 New OC-News button (just left of Download) -->
+      <a
+        href="OC-News.html"
+        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-neutral-900
+               hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-oc-accent/50
+               transition-all duration-200 ease-out"
+        aria-label="OC-News" title="OC-News"
+      >
+        <i class="ph ph-newspaper text-base" aria-hidden="true"></i>
+        <span>OC-News</span>
+      </a>
+
+      <!-- Desktop Download button (unchanged) -->
       <a
         href="download.html"
         class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
@@ -647,6 +659,8 @@
         <i class="ph ph-download text-base" aria-hidden="true"></i>
         <span>Download</span>
       </a>
+
+      <!-- Mobile Hamburger -->
       <button id="hamburgerBtn"
         class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
         aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
@@ -666,22 +680,14 @@
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
-
-      /* Perfect centering via width formula + auto margins */
       width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
       margin-inline: auto;
-
-      /* Inside padding + height control */
       padding-left: var(--pill-inner-x-mobile);
       padding-right: var(--pill-inner-x-mobile);
       height: var(--pill-height-mobile);
-
-      /* Keep contents vertically centered */
       display: flex;
       align-items: center;
-
-      /* Optional: keep the pill edge clean if you have any background/glass */
-      border-radius: 999px; /* if your design uses a pill radius */
+      border-radius: 999px;
     }
 
     /* 🆕 Element-specific paddings (mobile) */
@@ -696,14 +702,12 @@
         padding-right: var(--pill-inner-x-desktop);
         height: var(--pill-height-desktop);
       }
-
-      /* 🆕 Element-specific paddings (desktop) */
       #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
       #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
     }
   </style>
 
-  <!-- MOBILE MENU -->
+  <!-- MOBILE MENU (unchanged) -->
   <div id="mobileMenu" aria-hidden="true">
     <div class="menu-scrim"></div>
     <aside class="menu-panel">
@@ -739,20 +743,17 @@
   </div>
 </header>
 
-<!-- Drop-in 12px spacer (no content needed) -->
+<!-- Drop-in 12px spacer -->
 <div aria-hidden="true" style="height:12px;"></div>
 
-<!-- Drop-in 12px spacer (no content needed) -->
-<div aria-hidden="true" style="height:12px;"></div>
-
-<!-- Header mode controller: toggles floating pill after slight scroll -->
+<!-- Header mode controller -->
 <script>
   (function(){
     try{
       var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
       if(!header) return;
       var last = -1;
-      var THRESH = 8; // pixels before converting to floating pill
+      var THRESH = 8;
       var onScroll = function(){
         var y = window.scrollY || document.documentElement.scrollTop || 0;
         if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
@@ -761,11 +762,11 @@
       };
       onScroll();
       window.addEventListener('scroll', onScroll, { passive:true });
-    }catch(_){/* no-op */}
+    }catch(_){}
   })();
 </script>
+<!-- HEADER END -------------------------------------------------------->
 
-<!-- HEADER END-------------------------------------------------------->
 
   <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
   <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
