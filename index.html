@@ -594,111 +594,126 @@
 
   <!-- HEADER (full-width at top → floating pill on scroll) -->
 
-  <!-- Drop-in 12px spacer (no content needed) -->
+<!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
 
-  <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white">
-    <div
-      class="header-bar relative mx-auto max-w-[1200px] oc-container h-[3.25rem] md:h-14 flex items-center justify-between px-3 md:px-4">
-      <div class="flex items-center gap-3">
-        <a href="index.html" class="inline-flex items-center" aria-label="OC home">
-          <span class="logo-anim" role="img" aria-label="OC"></span>
-        </a>
-      </div>
+<header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
+  style="--pill-padding-x-mobile: 0px; --pill-padding-x-desktop: 0px;">
+  <!-- 🔧 Added adjustable outer padding vars (separate for mobile & desktop) -->
+  <div
+    class="header-bar relative mx-auto max-w-[1200px] oc-container h-[3.25rem] md:h-14 flex items-center justify-between px-3 md:px-4"
+    style="
+      padding-left: calc(var(--pill-padding-x-mobile));
+      padding-right: calc(var(--pill-padding-x-mobile));
+    "
+  >
+    <div class="flex items-center gap-3">
+      <a href="index.html" class="inline-flex items-center" aria-label="OC home">
+        <span class="logo-anim" role="img" aria-label="OC"></span>
+      </a>
+    </div>
 
-      <!-- Centered nav stays inside the pill -->
-      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
-        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="Models.html">Models</a>
-        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="OC-News.html">OC-News</a>
+    <!-- Centered nav stays inside the pill -->
+    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+      <a class="nav-link font-extrabold text-black" href="oc-pro.html">OC-Pro</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="Models.html">Models</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="OC-News.html">OC-News</a>
+    </nav>
 
-      </nav>
+    <div class="flex items-center gap-2">
+      <!-- Desktop Download button moved to right side (opposite the logo) -->
+      <a
+        href="download.html"
+        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+               focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+               shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+               transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
+               g-grad grad-anim"
+        style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+        aria-label="Download" title="Download"
+      >
+        <i class="ph ph-download text-base" aria-hidden="true"></i>
+        <span>Download</span>
+      </a>
+      <button id="hamburgerBtn"
+        class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+        aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="hamburger" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+    </div>
+  </div>
 
-      <div class="flex items-center gap-2">
-        <!-- Desktop Download button moved to right side (opposite the logo) -->
-        <a
-          href="download.html"
-          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
-                 g-grad grad-anim"
-          style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
-          aria-label="Download" title="Download"
-        >
-          <i class="ph ph-download text-base" aria-hidden="true"></i>
-          <span>Download</span>
-        </a>
-        <button id="hamburgerBtn"
-          class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
-          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger" aria-hidden="true">
-            <span></span><span></span><span></span>
-          </span>
+  <!-- 🖥️ Responsive adjustment for desktop -->
+  <style>
+    @media (min-width: 768px) {
+      #siteHeader .header-bar {
+        padding-left: var(--pill-padding-x-desktop);
+        padding-right: var(--pill-padding-x-desktop);
+      }
+    }
+  </style>
+
+  <!-- MOBILE MENU -->
+  <div id="mobileMenu" aria-hidden="true">
+    <div class="menu-scrim"></div>
+    <aside class="menu-panel">
+      <div class="drawer-head">
+        <a href="index.html" class="drawer-title">OC</a>
+        <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+          </svg>
         </button>
       </div>
-    </div>
 
-    <!-- MOBILE MENU -->
-    <div id="mobileMenu" aria-hidden="true">
-      <div class="menu-scrim"></div>
-      <aside class="menu-panel">
-        <div class="drawer-head">
-          <!-- Title now links to home for parity with other pages -->
-          <a href="index.html" class="drawer-title">OC</a>
-          <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
+      <!-- UPDATED MOBILE MENU LINKS -->
+      <nav class="drawer-nav mt-2">
+        <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">OC-Pro</a>
+        <a href="Models.html">Models</a>
+        <a href="OC-News.html">OC-News</a>
+        <div class="drawer-sep"></div>
+        <a
+          href="download.html"
+          class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                 grad-anim mt-2 w-full justify-center"
+          style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+        >
+          <i class="ph ph-download text-xl"></i>
+          <span>Download</span>
+        </a>
+      </nav>
+    </aside>
+  </div>
+</header>
 
-        <!-- UPDATED MOBILE MENU LINKS (remove OpenCounsel item) -->
-        <nav class="drawer-nav mt-2">
-          <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">OC-Pro</a>
-          <a href="Models.html">Models</a>
-          <a href="OC-News.html">OC-News</a>
-          <div class="drawer-sep"></div>
-          <a
-            href="download.html"
-            class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
-                   focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                   shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                   transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
-                   grad-anim mt-2 w-full justify-center"
-            style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
-          >
-            <i class="ph ph-download text-xl"></i>
-            <span>Download</span>
-          </a>
-        </nav>
-      </aside>
-    </div>
-  </header>
-
-  <!-- Drop-in 12px spacer (no content needed) -->
+<!-- Drop-in 12px spacer (no content needed) -->
 <div aria-hidden="true" style="height:12px;"></div>
 
+<!-- Header mode controller: toggles floating pill after slight scroll -->
+<script>
+  (function(){
+    try{
+      var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
+      if(!header) return;
+      var last = -1;
+      var THRESH = 8; // pixels before converting to floating pill
+      var onScroll = function(){
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
+        else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
+        if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive:true });
+    }catch(_){/* no-op */}
+  })();
+</script>
 
-  <!-- Header mode controller: toggles floating pill after slight scroll -->
-  <script>
-    (function(){
-      try{
-        var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
-        if(!header) return;
-        var last = -1;
-        var THRESH = 8; // pixels before converting to floating pill
-        var onScroll = function(){
-          var y = window.scrollY || document.documentElement.scrollTop || 0;
-          if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
-          else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
-          if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
-        };
-        onScroll();
-        window.addEventListener('scroll', onScroll, { passive:true });
-      }catch(_){/* no-op */}
-    })();
-  </script>
 
   <!-- DESKTOP SPACER TO OFFSET STICKY HEADER (prevents hero being hidden) 
   <div class="hidden lg:block h-14" aria-hidden="true"></div>-->
