@@ -392,33 +392,130 @@
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- HEADER (match old PRO header exactly) -->
-  <header id="siteHeader" class="sticky top-0 z-50 text-white transition-colors">
-    <div class="relative mx-auto max-w-[1200px] oc-container h-14 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a href="index.html" class="inline-flex items-center" aria-label="OC home"><span class="logo-white" role="img" aria-label="OC" style="--logo-width:40px;--logo-height:40px"></span></a>
-      </div>
-      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link font-semibold" href="oc-pro.html">OC-Pro</a>
-        <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="models.html">Models</a>
-      </nav>
-      <div class="flex items-center gap-2">
-        <a
-          href="download.html"
-          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black"
-          focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-          shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
-          transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
-          aria-label="Download" title="Download">
-          <i class="ph ph-download text-base" aria-hidden="true"></i>
-          <span>Download</span>
-        </a>
-        <button id="hamburgerBtn" class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
-        </button>
-      </div>
+  <!-- HEADER -------------------------------------------------------- full-width at top → floating pill on scroll -->
+
+<!-- Drop-in 12px spacer (no content needed) -->
+<div aria-hidden="true" style="height:12px;"></div>
+
+<header id="siteHeader" class="oc-header sticky top-0 z-50 text-white transition-colors"
+  style="
+    /* 🔧 Controls (layout only — colors unchanged) */
+    --pill-inner-x-mobile: 30px;         /* inside L/R padding (mobile)  */
+    --pill-inner-x-desktop: 12px;        /* inside L/R padding (desktop) */
+    --pill-outer-x-mobile: 35px;         /* outer inset L/R (mobile)     */
+    --pill-outer-x-desktop: 0px;         /* outer inset L/R (desktop)    */
+    --pill-height-mobile: 2.75rem;       /* pill height (mobile)         */
+    --pill-height-desktop: 3.5rem;       /* pill height (desktop)        */
+    --pill-max-w: 1200px;                /* max width cap for the pill   */
+
+    /* Element-specific paddings (adjust freely) */
+    --logo-pad-left-mobile: 6px;         /* left padding before logo (mobile)   */
+    --logo-pad-left-desktop: 12px;       /* left padding before logo (desktop)  */
+    --download-pad-right-mobile: 6px;    /* right padding after Download (mobile)  */
+    --download-pad-right-desktop: 12px;  /* right padding after Download (desktop) */
+  "
+>
+  <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
+    <!-- Logo (keeps your white mark) -->
+    <div class="flex items-center gap-3 logo-pad">
+      <a href="index.html" class="inline-flex items-center" aria-label="OC home">
+        <span class="logo-white" role="img" aria-label="OC" style="--logo-width:40px;--logo-height:40px"></span>
+      </a>
     </div>
-  </header>
+
+    <!-- Centered nav (unchanged labels + gradient text on “Models”) -->
+    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+      <a class="nav-link font-semibold" href="oc-pro.html">OC-Pro</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="models.html">Models</a>
+    </nav>
+
+    <!-- Right controls (Download + Hamburger) -->
+    <div class="flex items-center gap-2 download-pad">
+      <a
+        href="download.html"
+        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold bg-white text-black
+               focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+               shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/40
+               transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0"
+        aria-label="Download" title="Download"
+      >
+        <i class="ph ph-download text-base" aria-hidden="true"></i>
+        <span>Download</span>
+      </a>
+
+      <button id="hamburgerBtn"
+        class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+        aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 🛠 Pill layout + centering logic -->
+  <style>
+    /* Neutralize container padding specifically for this header so centering is exact */
+    #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
+
+    /* Base (mobile) */
+    #siteHeader .header-bar{
+      position: relative;
+      box-sizing: border-box;
+      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+      margin-inline: auto;
+      padding-left: var(--pill-inner-x-mobile);
+      padding-right: var(--pill-inner-x-mobile);
+      height: var(--pill-height-mobile);
+      display: flex;
+      align-items: center;
+      border-radius: 999px; /* pill shape */
+      /* No background here → preserves your existing page/header coloring */
+    }
+
+    /* Element-specific paddings (mobile) */
+    #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
+    #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
+
+    /* Desktop (≥768px) */
+    @media (min-width: 768px){
+      #siteHeader .header-bar{
+        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+        padding-left: var(--pill-inner-x-desktop);
+        padding-right: var(--pill-inner-x-desktop);
+        height: var(--pill-height-desktop);
+      }
+      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
+      #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
+    }
+
+    /* Optional: when floating, you may already style via .is-float elsewhere.
+       We do NOT change colors; add shadows/borders there if desired. */
+  </style>
+</header>
+
+<!-- Drop-in 12px spacer below the header -->
+<div aria-hidden="true" style="height:12px;"></div>
+
+<!-- Float-on-scroll controller (adds .is-float; colors remain yours) -->
+<script>
+  (function(){
+    try{
+      var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
+      if(!header) return;
+      var last = -1;
+      var THRESH = 8;
+      var onScroll = function(){
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
+        else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
+        if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive:true });
+    }catch(_){}
+  })();
+</script>
+<!-- HEADER END ---------------------------------------------------- -->
+
 
   <!-- MOBILE MENU (match old PRO) -->
   <div id="mobileMenu" aria-hidden="true">
