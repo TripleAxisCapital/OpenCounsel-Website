@@ -1068,342 +1068,381 @@
 
 
 
-<!-- OC Prompt Flow — Apple-style drop-in animation component -->
-<oc-prompt-flow autoplay loop speed="1.0" theme="auto" style="display:block;max-width:980px;margin:24px auto;"></oc-prompt-flow>
+<!--
+  Drop-in "Prompt Flow" — Apple-quality flow animation in one block.
+  Paste this anywhere in your page. Then place <prompt-flow></prompt-flow> where you want it.
+  No external deps. Fully encapsulated via Shadow DOM. Light/Dark and reduced-motion aware.
+  Attributes (optional): theme="light|dark|auto"  speed="1..3"  autoplay  prompt="Your text"
+-->
+<prompt-flow theme="auto" speed="1"></prompt-flow>
 
 <script>
 (() => {
-  const TAG = 'oc-prompt-flow';
-  if (customElements.get(TAG)) return;
+  const CSS = `
+  :host { --bg: #0b0c0f; --fg: #ffffff; --muted:#9aa4ad; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
+          --glass: rgba(255,255,255,.08); --shadow: 0 10px 30px rgba(0,0,0,.35);
+          color-scheme: light dark; display:block; font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,system-ui,sans-serif; }
+  :host([theme="light"]) { --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3; --glass: rgba(16,18,20,.06); --shadow: 0 10px 30px rgba(0,0,0,.12); }
+  :host([theme="auto"]) { @media (prefers-color-scheme: light){:host{ --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3; --glass: rgba(16,18,20,.06); --shadow: 0 10px 30px rgba(0,0,0,.12);} } }
+  .root{ position:relative; overflow:hidden; width:100%; background:linear-gradient(180deg, color-mix(in oklab, var(--bg) 94%, #0ea5ff 6%), var(--bg));
+         border-radius:24px; box-shadow:var(--shadow); padding:24px; }
+  .stage { position:relative; width:100%; aspect-ratio: 12 / 4; border-radius:16px; background:
+           radial-gradient(1200px 60% at 10% 90%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%),
+           radial-gradient(800px 60% at 80% 25%, color-mix(in oklab, #22d3ee 18%, transparent), transparent 60%),
+           linear-gradient(180deg, color-mix(in oklab, var(--bg), #000 6%), color-mix(in oklab, var(--bg), #000 2%));
+           border:1px solid color-mix(in oklab, var(--line), transparent 30%); }
+  .controls { display:flex; gap:8px; align-items:center; margin-top:16px; }
+  .input { flex:1; display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--card); color:var(--fg);
+           border:1px solid color-mix(in oklab, var(--line), transparent 20%); border-radius:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.02); }
+  .input input { all:unset; flex:1; font:600 14px/1.2 inherit; color:inherit; }
+  .btn { all:unset; cursor:pointer; padding:12px 16px; border-radius:12px; background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 90%, #fff 10%), var(--accent));
+         box-shadow:0 8px 20px color-mix(in oklab, var(--accent) 35%, transparent); color:white; font:700 13px/1 inherit; letter-spacing:.2px; }
+  .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+  .label{ font-weight:600; color:var(--muted); margin:0 0 10px 2px; letter-spacing:.2px; }
 
-  class OCPromptFlow extends HTMLElement {
-    static get observedAttributes() { return ['speed','theme','autoplay','loop']; }
+  /* Bubbles & cards inside SVG via foreignObject */
+  .bubble{ background:var(--card); border:1px solid color-mix(in oklab, var(--line), transparent 20%); color:var(--fg);
+           border-radius:14px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.02);
+           filter: drop-shadow(0 12px 30px rgba(0,0,0,.25)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .bubble.user{ border-radius:18px 18px 18px 4px; }
+  .bubble.assistant{ border-radius:18px 18px 4px 18px; }
+  .typing{ width:36px; display:inline-flex; justify-content:space-between; }
+  .dot{ width:6px; height:6px; border-radius:50%; background:color-mix(in oklab, var(--fg) 65%, transparent);
+        animation:bounce 1200ms infinite; }
+  .dot:nth-child(2){ animation-delay: .15s } .dot:nth-child(3){ animation-delay: .3s }
+  @keyframes bounce{ 0%,80%,100%{ transform:translateY(0); opacity:.5 } 40%{ transform:translateY(-4px); opacity:1 } }
 
-    constructor() {
+  .card{ background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 3%), var(--card));
+         border:1px solid color-mix(in oklab, var(--line), transparent 15%);
+         border-radius:16px; padding:12px; color:var(--fg); box-shadow:0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.02); }
+  .card h4{ margin:0 0 6px; font:700 13px/1.1 inherit; letter-spacing:.25px; }
+  .meta{ font:600 10px/1.2 inherit; color:var(--muted); letter-spacing:.3px; }
+  .scan{ margin-top:8px; font:600 12px/1.25 inherit; border-radius:10px; padding:8px 10px; position:relative;
+         background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 4%), var(--card)); border:1px dashed color-mix(in oklab, var(--line), transparent 10%); }
+  .scan .redact{ color:#ff6b6b; }
+  .scan .clean{ color:#10b981; opacity:0; transition:opacity .4s ease; }
+  .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; font:700 10px/1 inherit; letter-spacing:.25px;
+          background:color-mix(in oklab, var(--glass), transparent 30%); border:1px solid color-mix(in oklab, var(--line), transparent 15%); }
+
+  /* SVG presentation */
+  .svg{ width:100%; height:100%; }
+  .path{ fill:none; stroke:color-mix(in oklab, var(--line), var(--fg) 8%); stroke-width:3; stroke-linecap:round; filter: drop-shadow(0 2px 10px rgba(0,0,0,.25)); }
+  .path.return{ stroke-dasharray: 6 10; stroke: color-mix(in oklab, var(--line), var(--accent) 30%); }
+  .glow { filter: url(#pf-glow); }
+  .packet{ pointer-events:none; }
+  .halo{ opacity:.7 }
+  .pulse{ opacity:0; }
+  .cloud-icons{ display:flex; gap:8px; margin-top:8px; }
+  .icon{ width:16px; height:16px; border-radius:6px; display:inline-grid; place-items:center; background:color-mix(in oklab, var(--glass), transparent 20%);
+         border:1px solid color-mix(in oklab, var(--line), transparent 10%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); font-size:12px }
+  .ok{ color:#10b981; } .warn{ color:#f59e0b } .info{ color:#0ea5ff }
+
+  /* Reduced motion: turn animations into simple fades/moves */
+  @media (prefers-reduced-motion: reduce){
+    .dot{ animation:none }
+  }
+  `;
+
+  const TEMPLATE = `
+    <div class="root">
+      <div class="label">Prompt flow</div>
+      <div class="stage" part="stage">
+        <svg class="svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <linearGradient id="pf-line" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="color-mix(in oklab, var(--accent), #22d3ee 40%)"/>
+              <stop offset="100%" stop-color="color-mix(in oklab, #7c3aed, var(--accent) 30%)"/>
+            </linearGradient>
+            <filter id="pf-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <radialGradient id="pf-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity=".85"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <!-- Paths -->
+          <path id="pf-forward" class="path glow" stroke="url(#pf-line)"
+                d="M120,300 C220,272 290,220 360,160
+                   C430,102 530,90 650,110
+                   C730,123 790,125 840,130" />
+          <path id="pf-return" class="path return"
+                d="M840,130 C680,175 520,230 360,270
+                   C260,296 190,300 120,300" />
+
+          <!-- Packet (the glowing prompt) -->
+          <g id="pf-packet" class="packet">
+            <circle class="halo" r="24" fill="url(#pf-halo)"/>
+            <circle class="core" r="8" fill="#fff"/>
+          </g>
+
+          <!-- Station overlays via foreignObject for crisp HTML UI inside SVG coords -->
+          <foreignObject x="48" y="262" width="220" height="90">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="bubble user" id="pf-user-bubble">
+              <div class="meta">You</div>
+              <div id="pf-user-text">Ask anything…</div>
+            </div>
+          </foreignObject>
+
+          <foreignObject x="310" y="78" width="230" height="160">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-pii-card">
+              <div class="badge"><span>🛡️</span> PII Scrubber</div>
+              <h4>Sanitize sensitive data</h4>
+              <div class="scan" id="pf-pii-scan">
+                <div class="raw" id="pf-pii-raw">john.doe@email.com → "Call me at (555) 123-9876"</div>
+                <div class="clean" id="pf-pii-clean">•••••••• → "Call me at •••-•••-••••"</div>
+              </div>
+              <div class="meta" id="pf-pii-status">Idle</div>
+            </div>
+          </foreignObject>
+
+          <foreignObject x="780" y="52" width="270" height="170">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-cloud-card">
+              <div class="badge"><span>☁️</span> Cloud + KB + Compute</div>
+              <h4>Enrich with knowledge & power</h4>
+              <div class="cloud-icons">
+                <div class="icon info" title="Search">🔎</div>
+                <div class="icon ok" title="Knowledge Base">📚</div>
+                <div class="icon warn" title="Compute">⚙️</div>
+                <div class="icon info" title="Vector DB">🧠</div>
+              </div>
+              <div class="meta" id="pf-cloud-status">Warming up…</div>
+            </div>
+          </foreignObject>
+
+          <foreignObject x="104" y="210" width="220" height="90">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="bubble assistant" id="pf-assist-bubble" style="opacity:.0; transform: translateY(6px);">
+              <div class="meta">Assistant</div>
+              <div id="pf-assist-text"><span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+            </div>
+          </foreignObject>
+        </svg>
+      </div>
+
+      <div class="controls">
+        <div class="input"><input id="pf-input" maxlength="240" placeholder="Type a prompt — e.g., “Summarize the Apple event and compare to last year.”" />
+          <button class="btn" id="pf-send">Send</button>
+        </div>
+        <button class="btn" id="pf-replay" title="Replay flow" style="background:linear-gradient(180deg,#111,#0f1114); border:1px solid color-mix(in oklab, var(--line), transparent 10%)">↻</button>
+      </div>
+    </div>
+  `;
+
+  class PromptFlow extends HTMLElement {
+    static get observedAttributes(){ return ['theme','speed','prompt','autoplay'] }
+    constructor(){
       super();
-      this.attachShadow({ mode: 'open' });
-      this._playing = false;
-      this._destroyFns = [];
-      this._prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      this._speed = this.#clampSpeed(parseFloat(this.getAttribute('speed')) || 1.0);
-      this._theme = (this.getAttribute('theme') || 'auto').toLowerCase();
-      this._autoplay = this.hasAttribute('autoplay');
-      this._loop = this.hasAttribute('loop');
+      this.attachShadow({mode:'open'});
+      this.shadowRoot.innerHTML = `<style>${CSS}</style>${TEMPLATE}`;
     }
-
-    connectedCallback() {
-      this.#render();
-      this.#bind();
-      if (this._autoplay) this.play();
-    }
-
-    disconnectedCallback() {
-      this._destroyFns.forEach(fn => { try { fn(); } catch {} });
-      this._destroyFns = [];
-    }
-
-    attributeChangedCallback(name, oldV, newV) {
-      if (name === 'speed') this._speed = this.#clampSpeed(parseFloat(newV) || 1.0);
-      if (name === 'theme') { this._theme = (newV || 'auto').toLowerCase(); this.#applyTheme(); }
-      if (name === 'autoplay') this._autoplay = this.hasAttribute('autoplay');
-      if (name === 'loop') this._loop = this.hasAttribute('loop');
-    }
-
-    // Public controls
-    play() { if (!this._playing) this.#runSequence(); }
-    pause() { this._paused = true; }
-    resume() { if (this._paused) { this._paused = false; this.#tick(); } }
-    restart() { this.#reset(true); this.play(); }
-
-    // ---------- Render ----------
-    #render() {
-      const css = `
-:host{--oc-blue:#0A84FF;--oc-bg:#f7f8fa;--oc-card:rgba(255,255,255,.7);--oc-border:rgba(0,0,0,.06);--oc-text:#0b0c0e;--oc-muted:#667085;--oc-shadow:0 8px 30px rgba(0,0,0,.06)}
-:host([theme="dark"]), :host([data-theme="dark"]){--oc-bg:#0b0c0e;--oc-card:rgba(20,22,25,.55);--oc-border:rgba(255,255,255,.08);--oc-text:#f5f7fa;--oc-muted:#a1a7b3;--oc-shadow:0 10px 40px rgba(0,0,0,.35)}
-:host{font: 15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--oc-text)}
-.wrapper{position:relative; width:100%; aspect-ratio: 16/7; min-height:320px; border-radius:20px; background:linear-gradient(180deg, var(--oc-bg), rgba(127,127,127,0.02)); box-shadow: var(--oc-shadow); overflow:hidden}
-.grid{position:absolute; inset:0; background:
-  radial-gradient( circle at 20% 10%, rgba(10,132,255,.08), transparent 45%),
-  radial-gradient( circle at 80% 90%, rgba(10,132,255,.06), transparent 40%);
-  backdrop-filter: saturate(140%) blur(8px);
-}
-.hdr{position:absolute; inset:16px auto auto 16px; padding:10px 14px; border-radius:999px; background:var(--oc-card); border:1px solid var(--oc-border); display:flex; align-items:center; gap:10px}
-.dot{width:8px;height:8px;border-radius:50%; background:var(--oc-blue); box-shadow:0 0 0 2px rgba(10,132,255,.18), 0 0 18px rgba(10,132,255,.55)}
-.hdr span{font-weight:600;letter-spacing:.2px}
-.ctr{position:absolute; inset:auto 16px 16px auto; display:flex; gap:8px}
-.btn{appearance:none;border:1px solid var(--oc-border); background:var(--oc-card); color:var(--oc-text); padding:8px 12px; border-radius:12px; font-weight:600; cursor:pointer; transition:.22s ease; backdrop-filter: blur(6px)}
-.btn:hover{transform: translateY(-1px)}
-.btn:active{transform: translateY(0)}
-.btn.primary{background:linear-gradient(180deg,#0A84FF,#0066d6); color:white; border-color:rgba(10,132,255,.4)}
-.stage{position:absolute; inset:0; display:grid; place-items:center}
-svg{width:100%; height:100%}
-.node{position:absolute; min-width:220px; max-width:260px; padding:14px 16px; border-radius:18px; background:var(--oc-card); border:1px solid var(--oc-border); box-shadow: var(--oc-shadow); backdrop-filter: blur(10px); display:flex; gap:12px; align-items:flex-start}
-.node h4{margin:0 0 2px 0; font-size:14px; letter-spacing:.25px}
-.node p{margin:0; font-size:13px; color:var(--oc-muted)}
-.ic{width:28px;height:28px;border-radius:10px;display:grid;place-items:center;background:rgba(10,132,255,.12); color:var(--oc-blue)}
-.badge{display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:3px 8px; font-size:12px; font-weight:600; background:rgba(10,132,255,.12); color:var(--oc-blue); margin-top:6px}
-.scan{position:absolute; inset:0; border-radius:inherit; overflow:hidden; display:none}
-.scan.active{display:block}
-.scan::after{content:""; position:absolute; inset:-40% -20%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform: rotate(12deg); animation: scan 1.2s linear infinite}
-@keyframes scan{from{transform:translateX(-60%) rotate(12deg)} to{transform:translateX(60%) rotate(12deg)}}
-.cloud-pulse{position:absolute; inset:0; border-radius:inherit; display:none}
-.cloud-pulse.active{display:block}
-.cloud-pulse::after{content:""; position:absolute; inset:-6px; border-radius:inherit; border:2px solid rgba(10,132,255,.30); animation:pulse 1.8s ease-out infinite}
-@keyframes pulse{0%{opacity:.9; transform:scale(.98)} 100%{opacity:0; transform:scale(1.10)}}
-
-.chat{position:absolute; left:3.5%; bottom:6.5%; min-width:280px}
-.chat .bubble{background:var(--oc-card); border:1px solid var(--oc-border); border-radius:16px; padding:12px 14px; box-shadow: var(--oc-shadow); backdrop-filter: blur(8px)}
-.chat .from{display:flex; align-items:center; gap:8px; margin-bottom:8px; color:var(--oc-muted); font-weight:600}
-.chat .typing{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; white-space:nowrap; overflow:hidden; border-right:2px solid rgba(255,255,255,0); animation: caret .95s steps(1) infinite}
-@keyframes caret{50%{border-color: rgba(10,132,255,.9)}}
-.kbd{display:inline-block; border-radius:10px; padding:2px 8px; background:rgba(10,132,255,.12); color:var(--oc-blue); font-weight:700; font-size:12px; margin-left:6px}
-
-legend{position:absolute; right:16px; top:16px; font-size:12px; color:var(--oc-muted)}
-.a11y{position:absolute; left:-9999px}
-
-@media (prefers-color-scheme: dark) {
-  :host([theme="auto"]){--oc-bg:#0b0c0e;--oc-card:rgba(20,22,25,.55);--oc-border:rgba(255,255,255,.08);--oc-text:#f5f7fa;--oc-muted:#a1a7b3;--oc-shadow:0 10px 40px rgba(0,0,0,.35)}
-}
-@media (max-width: 680px){
-  .node{min-width:200px}
-}
-      `;
-      const html = `
-<div class="wrapper" role="img" aria-label="Animated flow of a user's prompt through PII scrubbing and cloud enrichment, returning to chat.">
-  <div class="grid"></div>
-
-  <div class="hdr" aria-hidden="true">
-    <div class="dot"></div><span>Secure Prompt Flow</span>
-  </div>
-
-  <div class="ctr">
-    <button class="btn" data-action="restart" title="Replay">Replay</button>
-    <button class="btn primary" data-action="playpause" title="Play/Pause">Play</button>
-  </div>
-
-  <div class="stage">
-    <svg viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-      <defs>
-        <linearGradient id="strokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="rgba(10,132,255,.25)"/>
-          <stop offset="60%" stop-color="rgba(10,132,255,.8)"/>
-          <stop offset="100%" stop-color="rgba(10,132,255,.25)"/>
-        </linearGradient>
-        <filter id="orbGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="8" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(10,132,255,.8)"></path>
-        </marker>
-      </defs>
-
-      <!-- Forward path: Chat -> PII -> Cloud -->
-      <path id="p1" d="M 160 410 C 280 380, 340 240, 430 210 S 620 180, 720 160" fill="none" stroke="url(#strokeGrad)" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arrow)" opacity=".85"></path>
-      <!-- Continue to cloud plateau -->
-      <path id="p2" d="M 720 160 C 820 140, 900 150, 980 180" fill="none" stroke="url(#strokeGrad)" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arrow)" opacity=".85"></path>
-      <!-- Return path: Cloud -> Chat -->
-      <path id="p3" d="M 980 180 C 820 220, 620 260, 420 320 S 260 420, 160 410" fill="none" stroke="url(#strokeGrad)" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arrow)" opacity=".65" stroke-dasharray="8 10"></path>
-
-      <!-- Traveling Orb -->
-      <g id="orb" filter="url(#orbGlow)" transform="translate(160,410)">
-        <circle r="8" fill="#0A84FF"></circle>
-        <circle r="16" fill="rgba(10,132,255,.18)"></circle>
-      </g>
-    </svg>
-
-    <!-- Nodes -->
-    <div class="node" id="n-pii" style="left: 370px; top: 120px;">
-      <div class="ic" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4zm0 4l-5 3v3c0 3.7 2.6 7 5 7s5-3.3 5-7V9l-5-3zm-1.1 9.2l-2.1-2.2 1.2-1.1 0.9 0.9 2.7-2.7 1.1 1.1-3.8 4z"/></svg>
-      </div>
-      <div>
-        <h4>PII Scrubber</h4>
-        <p>Names, emails, phones, IDs — removed before processing.</p>
-        <div class="badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5 1.1-1.1L9 14l8.5-8.5 1.1 1.1z"/></svg> Clean</div>
-      </div>
-      <div class="scan" id="scan"></div>
-    </div>
-
-    <div class="node" id="n-cloud" style="left: 860px; top: 110px;">
-      <div class="ic" aria-hidden="true">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18h11a4 4 0 0 0 0-8 5 5 0 0 0-9.6-1.2A3.5 3.5 0 0 0 6 18z"/></svg>
-      </div>
-      <div>
-        <h4>Knowledge & Compute</h4>
-        <p>Context, tools, and extra processing power in the cloud.</p>
-        <div class="badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg> Boost</div>
-      </div>
-      <div class="cloud-pulse" id="pulse"></div>
-    </div>
-
-    <div class="chat" id="chat">
-      <div class="bubble">
-        <div class="from"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16v12H7l-3 3z"/></svg> Chat <span class="kbd">You</span></div>
-        <div class="typing" id="typing">“What’s the fastest route to launch?”</div>
-      </div>
-    </div>
-
-    <legend>Apple-style demo • Motion honors <code>prefers-reduced-motion</code></legend>
-    <span class="a11y" aria-live="polite" id="aria"></span>
-  </div>
-</div>
-      `;
-
-      this.shadowRoot.innerHTML = `
-        <style>${css}</style>
-        ${html}
-      `;
-
-      // Theme application
-      this.#applyTheme();
-    }
-
-    #applyTheme() {
-      const host = this;
-      host.removeAttribute('data-theme');
-      if (this._theme === 'light') host.setAttribute('data-theme','light');
-      else if (this._theme === 'dark') host.setAttribute('data-theme','dark');
-      else host.setAttribute('theme','auto'); // respect system
-    }
-
-    // ---------- Behavior ----------
-    #bind() {
-      const $ = sel => this.shadowRoot.querySelector(sel);
-      this.$ = $;
-
-      // Controls
-      const btnPlay = $('[data-action="playpause"]');
-      const btnRestart = $('[data-action="restart"]');
-      const aria = $('#aria');
-
-      const onPlayToggle = () => {
-        if (!this._playing) this.play();
-        else { this._paused = !this._paused; if (!this._paused) this.#tick(); }
-        btnPlay.textContent = (this._playing && !this._paused) ? 'Pause' : 'Play';
+    connectedCallback(){
+      const $ = (sel) => this.shadowRoot.querySelector(sel);
+      this.els = {
+        input: $('#pf-input'), send: $('#pf-send'), replay: $('#pf-replay'),
+        userText: $('#pf-user-text'), assistText: $('#pf-assist-text'),
+        assistBubble: $('#pf-assist-bubble'), piiCard: $('#pf-pii-card'),
+        piiRaw: $('#pf-pii-raw'), piiClean: $('#pf-pii-clean'), piiStatus: $('#pf-pii-status'),
+        cloudStatus: $('#pf-cloud-status'),
+        svg: this.shadowRoot.querySelector('svg'),
+        fwd: this.shadowRoot.getElementById('pf-forward'),
+        rtn: this.shadowRoot.getElementById('pf-return'),
+        packet: this.shadowRoot.getElementById('pf-packet')
       };
-      const onRestart = () => { this.restart(); btnPlay.textContent = 'Pause'; };
-      btnPlay.addEventListener('click', onPlayToggle);
-      btnRestart.addEventListener('click', onRestart);
-      this._destroyFns.push(() => { btnPlay.removeEventListener('click', onPlayToggle); btnRestart.removeEventListener('click', onRestart); });
+      // Defaults
+      const presetPrompt = this.getAttribute('prompt') || '';
+      if (presetPrompt) this.els.input.value = presetPrompt;
+      const sp = Number(this.getAttribute('speed') || 1);
+      this.speed = Number.isFinite(sp) ? Math.min(Math.max(sp, .5), 3) : 1;
+      this.running = false;
 
-      // Pause when not visible
-      const io = new IntersectionObserver((entries) => {
-        const v = entries[0]?.isIntersecting;
-        this._pausedByVisibility = !v;
-        if (!v) return;
-        if (this._playing && !this._paused) this.#tick();
-      }, { threshold: 0.2 });
-      io.observe(this);
-      this._destroyFns.push(() => { try { io.disconnect(); } catch {} });
+      // Init packet at start
+      this.positionPacket(this.els.fwd, 0);
 
-      // Initial ARIA
-      aria.textContent = 'Prompt flow ready.';
-    }
+      // Events
+      this.els.send.addEventListener('click', () => this.runFlow());
+      this.els.input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') this.runFlow() });
+      this.els.replay.addEventListener('click', () => this.reset(true));
 
-    #clampSpeed(v){ return Math.min(3, Math.max(0.25, v)); }
-
-    #reset(hard=false){
-      const scan = this.$('#scan'); if (scan) scan.classList.remove('active');
-      const pulse = this.$('#pulse'); if (pulse) pulse.classList.remove('active');
-      const typing = this.$('#typing'); if (typing){ typing.textContent = '“What’s the fastest route to launch?”'; }
-      this._seqIndex = 0; this._t0 = 0; this._playing = false; this._paused = false;
-      if (hard) {
-        const p1 = this.$('#p1'); const orb = this.$('#orb');
-        if (p1 && orb) orb.setAttribute('transform','translate(160,410)');
+      // Autoplay once if attribute present
+      if (this.hasAttribute('autoplay')) {
+        queueMicrotask(()=> this.runFlow());
       }
     }
 
-    #runSequence(){
-      // If reduced motion, skip path travel but still show stages with fades.
-      this._playing = true; this._paused = false; this._seqIndex = 0;
-      const aria = this.$('#aria'); aria.textContent = 'Sending prompt…';
-
-      const p1 = this.$('#p1'), p2 = this.$('#p2'), p3 = this.$('#p3');
-      const orb = this.$('#orb');
-      const scan = this.$('#scan');
-      const pulse = this.$('#pulse');
-
-      // stage helpers
-      const easeInOut = t => t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
-      const moveAlong = (path, ms, onEnter, onExit) => new Promise(resolve => {
-        if (this._prefersReduced) { onEnter?.(); setTimeout(() => { onExit?.(); resolve(); }, ms/4); return; }
-        const L = path.getTotalLength();
-        let start = 0;
-        const step = (ts) => {
-          if (!start) { start = ts; onEnter?.(); }
-          if (this._paused || this._pausedByVisibility) { this._raf = requestAnimationFrame(step); return; }
-          const d = Math.min(1, (ts - start) / (ms / this._speed));
-          const e = easeInOut(d);
-          const pt = path.getPointAtLength(e * L);
-          orb.setAttribute('transform', `translate(${pt.x},${pt.y})`);
-          if (d < 1) this._raf = requestAnimationFrame(step);
-          else { onExit?.(); resolve(); }
-        };
-        this._raf = requestAnimationFrame(step);
-      });
-
-      const hold = (ms, onEnter, onExit) => new Promise(resolve => {
-        onEnter?.();
-        setTimeout(() => { onExit?.(); resolve(); }, this._prefersReduced ? ms/3 : ms / this._speed);
-      });
-
-      // Typing back into chat
-      const typeIntoChat = (text) => new Promise(resolve => {
-        const el = this.$('#typing'); if (!el) return resolve();
-        el.textContent = '';
-        let i = 0;
-        const tick = () => {
-          if (this._paused || this._pausedByVisibility) return setTimeout(tick, 50);
-          el.textContent += text[i++];
-          if (i < text.length) setTimeout(tick, 14); else resolve();
-        };
-        tick();
-      });
-
-      // Sequence
-      (async () => {
-        // Move: Chat -> PII
-        await moveAlong(p1, 1600, () => {
-          this.$('#aria').textContent = 'Prompt traveling to PII scrubber.';
-        });
-
-        // Hold at PII with scan
-        await hold(900, () => {
-          scan.classList.add('active');
-          this.$('#aria').textContent = 'Scrubbing PII…';
-        }, () => scan.classList.remove('active'));
-
-        // Move: PII -> Cloud
-        await moveAlong(p2, 1300, () => {
-          this.$('#aria').textContent = 'Heading to cloud for context & compute.';
-        });
-
-        // Hold at Cloud with pulse
-        await hold(1100, () => {
-          pulse.classList.add('active');
-          this.$('#aria').textContent = 'Enriching with knowledge & compute.';
-        }, () => pulse.classList.remove('active'));
-
-        // Move: Cloud -> Chat (return)
-        await moveAlong(p3, 1700, () => {
-          this.$('#aria').textContent = 'Returning enriched response to chat.';
-        });
-
-        // Type result
-        await hold(200, null, null);
-        await typeIntoChat('“Launch playbook: 1) Validate scope; 2) Ship MVP in 7 days; 3) Iterate daily; 4) Measure; 5) Scale.”');
-
-        this._playing = false;
-        this.$('#aria').textContent = 'Flow complete.';
-        if (this._loop) setTimeout(() => this.restart(), 1200);
-      })();
+    attributeChangedCallback(name, oldV, newV){
+      if(name==='speed' && this.isConnected){
+        const sp = Number(newV); if(Number.isFinite(sp)) this.speed = Math.min(Math.max(sp,.5),3);
+      }
     }
 
-    #tick(){ /* used to resume raf loops; no-op here because we schedule inside moveAlong */ }
+    reset(focusInput=false){
+      const {els} = this;
+      this.running = false;
+      this.positionPacket(els.fwd, 0);
+      els.userText.textContent = 'Ask anything…';
+      els.assistText.innerHTML = '<span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>';
+      els.assistBubble.style.opacity = '.0'; els.assistBubble.style.transform = 'translateY(6px)';
+      els.piiStatus.textContent = 'Idle';
+      els.piiClean.style.opacity = '0';
+      els.piiRaw.style.opacity = '1';
+      els.cloudStatus.textContent = 'Warming up…';
+      els.send.disabled = false;
+      if (focusInput) els.input.focus();
+    }
+
+    async runFlow(){
+      if (this.running) return;
+      const {els} = this;
+      const text = (els.input.value || 'Email John at john.doe@email.com about the budget. My cell is (555) 123-9876.').trim();
+      this.reset(false);
+      els.userText.textContent = text;
+      els.send.disabled = true; this.running = true;
+
+      const total1 = els.fwd.getTotalLength(), total2 = els.rtn.getTotalLength();
+      const stopPII = this.findTForPoint(els.fwd, {x:360,y:160}); // approximate station
+      const stopCloud = this.findTForPoint(els.fwd, {x:840,y:130});
+
+      // 1) Travel to PII
+      await this.tweenAlong(els.fwd, 0, stopPII, 900/this.speed, (t)=>this.sparkle(t));
+      await this.scrubPII(text);
+
+      // 2) Travel to Cloud
+      await this.tweenAlong(els.fwd, stopPII, stopCloud, 900/this.speed, (t)=>this.sparkle(t));
+      await this.cloudBurst();
+
+      // 3) Return to user
+      await this.tweenAlong(els.rtn, 0, 1, 1100/this.speed, (t)=>this.sparkle(t));
+      await this.revealAnswer(text);
+
+      this.running = false; els.send.disabled = false;
+    }
+
+    // --- Visual steps ---
+    async scrubPII(text){
+      const {piiRaw, piiClean, piiStatus} = this.els;
+      const cleaned = this.maskPII(text);
+      piiRaw.textContent = text.slice(0, 120) + (text.length>120?'…':'');
+      this.els.piiClean.textContent = cleaned.slice(0, 120) + (cleaned.length>120?'…':'');
+      piiStatus.textContent = 'Scanning for emails, phones, IDs…';
+      await this.wait(250/this.speed);
+      piiStatus.textContent = 'Redacting…';
+      piiRaw.style.opacity = '.25';
+      piiClean.style.opacity = '1';
+      await this.wait(500/this.speed);
+      piiStatus.textContent = 'Clean ✔︎';
+      await this.wait(200/this.speed);
+    }
+
+    async cloudBurst(){
+      const {cloudStatus} = this.els;
+      cloudStatus.textContent = 'Querying sources…';
+      await this.radialPulse();
+      cloudStatus.textContent = 'Merging knowledge…';
+      await this.wait(350/this.speed);
+      cloudStatus.textContent = 'Synthesizing answer ✔︎';
+      await this.wait(200/this.speed);
+    }
+
+    async revealAnswer(sourceText){
+      const {assistBubble, assistText} = this.els;
+      assistBubble.style.transition = 'opacity .35s cubic-bezier(.2,.7,.2,1), transform .35s cubic-bezier(.2,.7,.2,1)';
+      assistBubble.style.opacity = '1'; assistBubble.style.transform = 'translateY(0)';
+      const reply = this.generateReply(this.maskPII(sourceText));
+      await this.typewriter(assistText, reply, 16/this.speed);
+    }
+
+    // --- Motion engine ---
+    positionPacket(path, t){
+      const len = path.getTotalLength();
+      const p = path.getPointAtLength(len * t);
+      const p2 = path.getPointAtLength(Math.min(len * t + 1, len));
+      const angle = Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI;
+      this.els.packet.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${angle})`);
+    }
+
+    tweenAlong(path, t0, t1, duration, onUpdate){
+      return new Promise((res)=>{
+        const start = performance.now();
+        const run = (now)=>{
+          const raw = Math.min(1, (now - start) / duration);
+          const ease = this.easeInOutCubic(raw);
+          const t = t0 + (t1 - t0) * ease;
+          this.positionPacket(path, t);
+          onUpdate && onUpdate(t);
+          if (raw < 1) this._raf = requestAnimationFrame(run); else res();
+        };
+        this._raf && cancelAnimationFrame(this._raf);
+        this._raf = requestAnimationFrame(run);
+      });
+    }
+
+    findTForPoint(path, target){
+      // Sample along path to find closest t to target (ok for small template paths)
+      const L = path.getTotalLength(); let bestT = 0, bestD = Infinity;
+      for (let i=0;i<=200;i++){
+        const t = i/200; const p = path.getPointAtLength(L*t);
+        const d = (p.x-target.x)**2 + (p.y-target.y)**2; if (d<bestD){bestD=d; bestT=t;}
+      }
+      return bestT;
+    }
+
+    // --- Micro FX ---
+    sparkle(t){
+      // Subtle size/halo breathing as it travels
+      const halo = this.els.packet.querySelector('.halo');
+      const core = this.els.packet.querySelector('.core');
+      const s = 1 + Math.sin(t*Math.PI*2)*0.06;
+      core.setAttribute('r', 8*s);
+      halo.setAttribute('r', 24*s*1.05);
+    }
+
+    radialPulse(){
+      // quick expanding stroke pulse along the return path origin (cloud)
+      return new Promise((res)=>{
+        const svg = this.els.svg;
+        const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        pulse.setAttribute('class','pulse');
+        pulse.setAttribute('cx','840'); pulse.setAttribute('cy','130'); pulse.setAttribute('r','6');
+        pulse.setAttribute('fill','none'); pulse.setAttribute('stroke','url(#pf-line)'); pulse.setAttribute('stroke-width','3');
+        svg.appendChild(pulse);
+        pulse.animate([{opacity:.8, r:6, strokeWidth:3}, {opacity:0, r:120, strokeWidth:0.5}], {duration:500/this.speed, easing:'cubic-bezier(.2,.7,.2,1)'}).onfinish=()=>{
+          svg.removeChild(pulse); res();
+        };
+      });
+    }
+
+    typewriter(node, text, speed=16){
+      return new Promise(async (res)=>{
+        node.textContent = '';
+        for (let i=0;i<text.length;i++){
+          node.textContent += text[i];
+          await this.wait(speed);
+        }
+        res();
+      });
+    }
+
+    wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+    easeInOutCubic(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
+
+    // --- PII utilities & reply stub ---
+    maskPII(str){
+      return str
+        .replace(/\b[\w.+-]+@[\w.-]+\.\w+\b/gi, (m)=>'•'.repeat(Math.min(12, m.length)))
+        .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, (m)=>'•'.repeat(Math.min(12, m.replace(/\D/g,'').length)))
+        .replace(/\b(\d{4}[-\s]?){3}\d{4}\b/g, '•••• •••• •••• ••••')
+        .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '•••-••-••••');
+    }
+
+    generateReply(cleaned){
+      const hint = cleaned.length>90 ? cleaned.slice(0,90)+'…' : cleaned;
+      return `Here’s a concise, privacy-safe answer enriched by verified knowledge and on-demand compute.\n\nPrompt (sanitized): “${hint}”\n\n• Sensitive bits removed\n• Relevant sources consulted\n• Reasoned and summarized for you ✅`;
+    }
   }
 
-  customElements.define(TAG, OCPromptFlow);
+  customElements.define('prompt-flow', PromptFlow);
 })();
 </script>
 
