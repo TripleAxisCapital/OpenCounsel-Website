@@ -1261,31 +1261,65 @@ with updates that just appear — no noise, just progress.
       </ul>
     </article>
 
-    <!-- Minimal Apple-style "More Models Coming Soon" with site blue/green bg -->
+    <!-- Apple-style, minimal, perfectly centered “More Models Coming Soon”
+     — retains your site’s blue/green animated bg via g-grad grad-anim -->
 <article id="oc-coming-soon"
-  class="group relative isolate overflow-hidden rounded-2xl g-grad grad-anim text-white border border-white/12 shadow-[0_16px_54px_rgba(0,0,0,.18)] backdrop-blur-xl p-10 md:p-14 transition-[box-shadow,transform] duration-500 will-change-transform hover:shadow-[0_22px_70px_rgba(0,0,0,.28)]">
-  <h3 class="m-0 text-center font-semibold tracking-tight text-2xl md:text-3xl lg:text-4xl leading-none">
-    <span class="oc-soon-text inline-block opacity-0 translate-y-2 select-none">More&nbsp;Models&nbsp;Coming&nbsp;Soon</span>
+  class="group relative isolate overflow-hidden rounded-2xl g-grad grad-anim text-white border border-white/12 shadow-[0_16px_54px_rgba(0,0,0,.18)] backdrop-blur-xl
+         grid place-items-center min-h-[180px] md:min-h-[220px] px-6
+         transition-[box-shadow,transform] duration-500 will-change-transform
+         hover:shadow-[0_22px_70px_rgba(0,0,0,.28)]">
+  <!-- Sheen sweep layer -->
+  <span aria-hidden="true" class="pointer-events-none absolute inset-0"></span>
+
+  <!-- Centered label -->
+  <h3 class="m-0 text-center font-semibold tracking-tight leading-none">
+    <span class="oc-soon-text block text-[22px] md:text-[28px] lg:text-[32px]
+                 opacity-0 translate-y-2 will-change-transform select-none
+                 drop-shadow-[0_1px_8px_rgba(0,0,0,.25)]">
+      More&nbsp;Models&nbsp;Coming&nbsp;Soon
+    </span>
   </h3>
+
   <span class="sr-only">More models coming soon</span>
 </article>
 
 <style>
-  /* Sheen sweep across the card (keeps your animated gradient visible) */
+  /* --- Scoped to #oc-coming-soon to avoid leaking styles --- */
+
+  /* Subtle “breathing” once visible */
+  @keyframes oc-breathe {
+    0%,100% { transform: translateZ(0) scale(1) }
+    50%     { transform: translateZ(0) scale(1.01) }
+  }
+
+  /* Card sheen sweep */
+  @keyframes oc-sweep {
+    0%   { transform: translateX(-120%) rotate(10deg); opacity: 0 }
+    15%  { opacity: .75 }
+    100% { transform: translateX(120%)  rotate(10deg); opacity: 0 }
+  }
+
+  /* Text shine (Apple-like gradient pass) */
+  @keyframes oc-shine {
+    0%   { background-position:   0% 50% }
+    100% { background-position: 100% 50% }
+  }
+
+  /* Sheen pseudo-element lives on the article itself for a glassy sweep */
   #oc-coming-soon::before {
     content: "";
     position: absolute;
-    inset: -35% -20%;
-    background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.35) 50%, transparent 60%);
-    transform: translateX(-120%);
+    inset: -40% -20%;
+    background: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.35) 50%, transparent 58%);
+    transform: translateX(-120%) rotate(10deg);
     opacity: 0;
     pointer-events: none;
     mix-blend-mode: screen;
   }
 
-  /* Text gradient + reveal */
+  /* Text gradient for the headline */
   #oc-coming-soon .oc-soon-text {
-    background: linear-gradient(90deg, rgba(255,255,255,.6), #fff, rgba(255,255,255,.6));
+    background: linear-gradient(90deg, rgba(255,255,255,.65), #fff, rgba(255,255,255,.65));
     -webkit-background-clip: text;
             background-clip: text;
     color: transparent;
@@ -1293,56 +1327,61 @@ with updates that just appear — no noise, just progress.
     transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .7s cubic-bezier(.2,.8,.2,1);
   }
 
-  /* Visible state on scroll */
+  /* Reveal + animations when entering viewport */
   #oc-coming-soon.is-visible .oc-soon-text {
     opacity: 1;
     transform: translateY(0);
-    animation: oc-shine 1.6s ease-out .35s both;
+    animation: oc-shine 1.6s ease-out .25s both;
+  }
+  #oc-coming-soon.is-visible {
+    animation: oc-breathe 10s ease-in-out .8s infinite;
   }
   #oc-coming-soon.is-visible::before {
-    animation: oc-sweep 1.8s cubic-bezier(.2,.8,.2,1) .25s both;
+    animation: oc-sweep 1.8s cubic-bezier(.2,.8,.2,1) .35s both;
   }
 
-  /* Keyframes */
-  @keyframes oc-shine {
-    0%   { background-position:   0% 50%; }
-    100% { background-position: 100% 50%; }
+  /* Re-trigger sheen on hover/focus for delight */
+  #oc-coming-soon:hover::before,
+  #oc-coming-soon:focus-visible::before {
+    animation: oc-sweep 1.4s cubic-bezier(.2,.8,.2,1) .05s both;
   }
-  @keyframes oc-sweep {
-    0%   { transform: translateX(-120%); opacity: 0; }
-    20%  { opacity: 1; }
-    100% { transform: translateX(120%);  opacity: 0; }
+  #oc-coming-soon:hover .oc-soon-text,
+  #oc-coming-soon:focus-visible .oc-soon-text {
+    animation: oc-shine 1.2s ease-out .05s both;
   }
 
   /* Respect motion preferences */
   @media (prefers-reduced-motion: reduce) {
+    #oc-coming-soon,
     #oc-coming-soon::before,
     #oc-coming-soon .oc-soon-text {
       animation: none !important;
       transition: none !important;
-    }
-    #oc-coming-soon .oc-soon-text {
-      opacity: 1 !important;
       transform: none !important;
+      opacity: 1 !important;
     }
   }
 </style>
 
 <script>
-  // Once-only reveal
+  // Once-only, minimal reveal
   (function () {
     const el = document.getElementById('oc-coming-soon');
     if (!el) return;
+
+    // Fallback if IO not supported
     if (!('IntersectionObserver' in window)) {
       el.classList.add('is-visible');
       return;
     }
+
     const io = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
         el.classList.add('is-visible');
         io.disconnect();
       }
-    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.2 });
+    }, { rootMargin: '0px 0px -10% 0px', threshold: 0.25 });
+
     io.observe(el);
   })();
 </script>
