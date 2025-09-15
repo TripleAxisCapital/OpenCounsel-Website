@@ -1068,6 +1068,603 @@
 
 
 
+<!-- OC Prompt Flow — single-file, production-grade, Apple-style animation -->
+<!-- Usage example: <oc-prompt-flow prompt="Find me the best case law on trademark dilution." auto speed="1.1"></oc-prompt-flow> -->
+<div style="contain:content;">
+  <oc-prompt-flow prompt="Summarize the latest on quantum battery breakthroughs." auto speed="1"></oc-prompt-flow>
+</div>
+
+<script>
+(() => {
+  const TAG = 'oc-prompt-flow';
+  if (customElements.get(TAG)) return;
+
+  const TEMPLATE = document.createElement('template');
+  TEMPLATE.innerHTML = `
+  <style>
+    :host {
+      --oc-accent: #0A84FF;            /* Apple blue */
+      --oc-accent-2: #9D4EDD;          /* Subtle purple for gradients */
+      --oc-bg: color-mix(in oklab, canvas 96%, black 4%);
+      --oc-card: color-mix(in oklab, white 14%, transparent);
+      --oc-border: color-mix(in oklab, white 22%, transparent);
+      --oc-text: color-mix(in oklab, black 80%, white 20%);
+      --oc-text-dim: color-mix(in oklab, black 60%, white 40%);
+      --oc-shadow: 0 15px 35px rgba(0,0,0,.20), 0 2px 8px rgba(0,0,0,.12);
+      --oc-radius: 20px;
+      --oc-chip-shadow: 0 8px 24px rgba(10,132,255,.40);
+      --oc-node-shadow: 0 12px 30px rgba(0,0,0,.18);
+      --oc-path: color-mix(in oklab, var(--oc-accent) 30%, black 70%);
+      --oc-path-ghost: color-mix(in oklab, var(--oc-accent) 12%, transparent);
+      --oc-glass: linear-gradient(180deg, color-mix(in oklab, white 12%, transparent), color-mix(in oklab, white 4%, transparent));
+      --oc-noise: url('data:image/svg+xml;utf8, \
+        <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"> \
+          <filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch"/></filter> \
+          <rect width="100%" height="100%" filter="url(%23n)" opacity="0.025"/> \
+        </svg>');
+      display: block;
+      font-family: "SF Pro Text","SF Pro Display",-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Inter,Arial,Helvetica,sans-serif;
+      color: var(--oc-text);
+      position: relative;
+      min-height: 360px;
+      contain: content;
+    }
+    .wrap {
+      position: relative;
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      aspect-ratio: 16/7;
+      min-height: 360px;
+      border-radius: calc(var(--oc-radius) * 1.1);
+      box-shadow: var(--oc-shadow);
+      background:
+        radial-gradient(1200px 500px at -10% -20%, color-mix(in oklab, var(--oc-accent) 10%, transparent), transparent 60%),
+        radial-gradient(1000px 600px at 120% 120%, color-mix(in oklab, var(--oc-accent-2) 16%, transparent), transparent 60%),
+        var(--oc-glass),
+        var(--oc-bg);
+      overflow: hidden;
+      backdrop-filter: saturate(112%) contrast(102%);
+      isolation: isolate;
+    }
+    .noise {
+      position:absolute; inset:0; background-image: var(--oc-noise); pointer-events:none; mix-blend-mode: soft-light;
+    }
+
+    /* Header (chip + restart) */
+    .hud {
+      position: absolute; top: 14px; left: 14px; right: 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px; z-index: 6;
+      pointer-events: none;
+    }
+    .chip {
+      pointer-events:auto;
+      display: inline-flex; align-items: center; gap: 10px; max-width: 70%;
+      padding: 10px 14px; border-radius: 999px; backdrop-filter: blur(12px) saturate(130%);
+      background: linear-gradient(180deg, color-mix(in oklab, white 16%, transparent), color-mix(in oklab, white 8%, transparent));
+      border: 1px solid var(--oc-border);
+      box-shadow: 0 2px 10px rgba(0,0,0,.10);
+      font-size: 14px; line-height: 1.2; color: var(--oc-text);
+      white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    }
+    .chip .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, white, var(--oc-accent) 60%);
+      box-shadow: 0 0 16px var(--oc-accent);
+      animation: dotPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes dotPulse { 0%,100%{ transform: scale(.95);} 50%{ transform: scale(1.15);} }
+
+    .btn {
+      pointer-events:auto;
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px;
+      border: 1px solid var(--oc-border);
+      background: linear-gradient(180deg, color-mix(in oklab, white 10%, transparent), color-mix(in oklab, white 4%, transparent));
+      box-shadow: 0 6px 18px rgba(0,0,0,.1);
+      font-size: 13px; color: var(--oc-text);
+      user-select: none; cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.14); }
+    .btn:active { transform: translateY(0); }
+
+    /* Canvas */
+    .canvas { position:absolute; inset:0; }
+    svg { position:absolute; inset:0; width:100%; height:100%; }
+
+    .path-base {
+      fill: none;
+      stroke: var(--oc-path-ghost);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+      stroke-linecap: round;
+    }
+    .path-accent {
+      fill: none;
+      stroke: url(#ocGradient);
+      stroke-width: 3.2;
+      vector-effect: non-scaling-stroke;
+      stroke-linecap: round;
+      opacity: .6;
+      filter: drop-shadow(0 2px 8px color-mix(in oklab, var(--oc-accent) 35%, transparent));
+    }
+
+    .node {
+      position:absolute; display:flex; flex-direction: column; align-items:center; justify-content:center;
+      min-width: 160px; min-height: 86px; padding: 14px 16px; gap: 6px;
+      background: var(--oc-glass);
+      border: 1px solid var(--oc-border);
+      border-radius: calc(var(--oc-radius) * .8);
+      box-shadow: var(--oc-node-shadow);
+      backdrop-filter: blur(14px) saturate(120%);
+      text-align:center;
+      transition: transform .35s cubic-bezier(.2,.7,0,1), box-shadow .35s ease;
+    }
+    .node.active { box-shadow: 0 18px 40px rgba(10,132,255,.28), var(--oc-node-shadow); transform: translateY(-2px); }
+    .node .title { font-weight: 600; letter-spacing: .2px; }
+    .node .sub { font-size: 12px; color: var(--oc-text-dim); }
+
+    .node .icon {
+      width: 22px; height: 22px; border-radius: 6px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background: linear-gradient(180deg, color-mix(in oklab, white 18%, transparent), color-mix(in oklab, white 10%, transparent));
+      border: 1px solid var(--oc-border);
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    }
+    .node .icon svg { width: 14px; height: 14px; opacity: .9; }
+
+    .chip-prompt {
+      position:absolute; width: auto; min-width: 38px; height: 30px; padding: 0 12px;
+      display:flex; align-items:center; justify-content:center; gap:8px;
+      background: linear-gradient(180deg, color-mix(in oklab, white 20%, transparent), color-mix(in oklab, white 8%, transparent));
+      border: 1px solid color-mix(in oklab, var(--oc-accent) 40%, white 60%);
+      color: var(--oc-text);
+      border-radius: 999px;
+      box-shadow: var(--oc-chip-shadow);
+      backdrop-filter: blur(10px) saturate(140%);
+      pointer-events: none;
+      translate: -50% -50%;
+      will-change: transform;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .chip-prompt .glow {
+      width:6px; height:6px; border-radius:999px; background: var(--oc-accent);
+      box-shadow: 0 0 0 6px color-mix(in oklab, var(--oc-accent) 30%, transparent),
+                  0 0 20px 4px color-mix(in oklab, var(--oc-accent) 60%, transparent);
+    }
+
+    /* Branch pulses from Cloud to KB/Compute */
+    .pulse-dot {
+      position:absolute; width:8px; height:8px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, white, var(--oc-accent) 60%);
+      filter: drop-shadow(0 0 10px var(--oc-accent));
+      translate:-50% -50%; pointer-events:none;
+      opacity: 0;
+    }
+
+    /* Footer label */
+    .footer {
+      position:absolute; bottom: 10px; right: 12px; z-index:6;
+      font-size: 12px; color: var(--oc-text-dim);
+      user-select:none;
+      background: linear-gradient(180deg, color-mix(in oklab, white 10%, transparent), transparent);
+      border: 1px solid var(--oc-border); padding: 6px 10px; border-radius: 999px; backdrop-filter: blur(8px) saturate(120%);
+    }
+
+    /* Light/Dark support */
+    @media (prefers-color-scheme: dark) {
+      :host { --oc-bg: #0b0e12; --oc-text: #EDEFF2; --oc-text-dim: #B7BEC7; --oc-border: color-mix(in oklab, white 24%, transparent); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .chip-prompt, .pulse-dot { transition: none !important; animation: none !important; }
+    }
+
+    /* Responsive node sizing */
+    @container (max-width: 720px) {
+      .node { min-width: 138px; min-height: 78px; }
+    }
+  </style>
+
+  <div class="wrap" role="img" aria-label="Animated prompt flow: user → PII scrubber → cloud (data & compute) → back to user.">
+    <div class="noise" aria-hidden="true"></div>
+
+    <div class="hud">
+      <div class="chip" title="Click to change sample prompt">
+        <div class="dot" aria-hidden="true"></div>
+        <div class="prompt-text" data-prompt-text>Prompt ready…</div>
+      </div>
+      <button class="btn" type="button" title="Restart animation" aria-label="Restart">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12a9 9 0 1 0 3-6.708"/><path d="M3 4v6h6"/></svg>
+        Restart
+      </button>
+    </div>
+
+    <div class="canvas">
+      <svg part="svg" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="ocGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="var(--oc-accent)" />
+            <stop offset="100%" stop-color="var(--oc-accent-2)" />
+          </linearGradient>
+          <filter id="softGlow">
+            <feGaussianBlur stdDeviation="2" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <!-- Paths will be injected dynamically -->
+        <path class="path-base" id="path-main-base" />
+        <path class="path-accent" id="path-main" filter="url(#softGlow)"/>
+        <path class="path-base" id="path-return-base" />
+        <path class="path-accent" id="path-return" filter="url(#softGlow)" />
+        <path class="path-base" id="path-branch-kb" stroke-dasharray="6 8" />
+        <path class="path-base" id="path-branch-gpu" stroke-dasharray="6 8" />
+      </svg>
+
+      <!-- Nodes -->
+      <div class="node node-user" data-node="user">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7"><circle cx="12" cy="8" r="3.2"/><path d="M4 20c1.6-3.6 5-5.3 8-5.3s6.4 1.7 8 5.3"/></svg>
+        </div>
+        <div class="title">You</div>
+        <div class="sub">Chat</div>
+      </div>
+
+      <div class="node node-pii" data-node="pii">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7"><rect x="3.5" y="8.5" width="17" height="11" rx="2"/><path d="M7 8v-1.5A5.5 5.5 0 0 1 12.5 1h0A5.5 5.5 0 0 1 18 6.5V8"/></svg>
+        </div>
+        <div class="title">PII Scrubber</div>
+        <div class="sub">Redact & normalize</div>
+      </div>
+
+      <div class="node node-cloud" data-node="cloud">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7"><path d="M7 18h9a4 4 0 0 0 0-8 6 6 0 0 0-11.5 2.5 3.5 3.5 0 0 0 2.5 6.5z"/></svg>
+        </div>
+        <div class="title">Cloud</div>
+        <div class="sub">Data • Knowledge • Compute</div>
+      </div>
+
+      <div class="node node-kb" data-node="kb">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7"><path d="M4 5h12a3 3 0 0 1 3 3v11H7a3 3 0 0 1-3-3V5z"/><path d="M7 5v11"/></svg>
+        </div>
+        <div class="title">Knowledge Base</div>
+        <div class="sub">Search & retrieval</div>
+      </div>
+
+      <div class="node node-gpu" data-node="gpu">
+        <div class="icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8v8H8z"/><path d="M4 12h4M16 12h4"/></svg>
+        </div>
+        <div class="title">Compute</div>
+        <div class="sub">Processing power</div>
+      </div>
+
+      <!-- Moving bits -->
+      <div class="chip-prompt" hidden>
+        <div class="glow" aria-hidden="true"></div>
+        <span class="chip-text"></span>
+      </div>
+      <div class="pulse-dot" data-pulse="kb" hidden></div>
+      <div class="pulse-dot" data-pulse="gpu" hidden></div>
+    </div>
+
+    <div class="footer">OC Prompt Flow</div>
+  </div>
+  `;
+
+  class OCPromptFlow extends HTMLElement {
+    static get observedAttributes() { return ['prompt','speed','theme','auto']; }
+    constructor() {
+      super();
+      this._root = this.attachShadow({mode:'open'});
+      this._root.appendChild(TEMPLATE.content.cloneNode(true));
+      this.state = { playing:false, raf: null, reduce: window.matchMedia('(prefers-reduced-motion: reduce)').matches };
+      this.speed = this._clamp(parseFloat(this.getAttribute('speed') || '1'), .5, 2.5);
+    }
+
+    connectedCallback() {
+      this._els = this._collectEls();
+      this._setPrompt(this.getAttribute('prompt') || 'Ask anything. Your data stays private.');
+      this._layout();
+      this._bind();
+      if (this.hasAttribute('auto')) Promise.resolve().then(() => this.play());
+      // Pause when out of view
+      this._io = new IntersectionObserver(([e]) => { if(!e) return; this.state.visible = e.isIntersecting; if(!e.isIntersecting) this._cancelRAF(); }, {threshold: .05});
+      this._io.observe(this);
+    }
+
+    disconnectedCallback() {
+      this._cancelRAF();
+      this._ro?.disconnect(); this._io?.disconnect();
+    }
+
+    attributeChangedCallback(name, oldV, newV) {
+      if (oldV === newV) return;
+      if (name === 'prompt') this._setPrompt(newV);
+      if (name === 'speed') this.speed = this._clamp(parseFloat(newV || '1'), .5, 2.5);
+      if (name === 'theme') this._root.host.style.colorScheme = newV === 'dark' ? 'dark' : (newV === 'light' ? 'light' : '');
+      if (name === 'auto' && this.isConnected) this.play();
+    }
+
+    /* Public API */
+    play() { if (this.state.playing) this.restart(); else this._start(); }
+    restart() { this._reset(); this._start(); }
+
+    /* Internals */
+    _collectEls() {
+      const $ = sel => this._root.querySelector(sel);
+      return {
+        wrap: $('.wrap'),
+        svg: this._root.querySelector('svg'),
+        pathMain: $('#path-main'),
+        pathMainBase: $('#path-main-base'),
+        pathReturn: $('#path-return'),
+        pathReturnBase: $('#path-return-base'),
+        pathKB: $('#path-branch-kb'),
+        pathGPU: $('#path-branch-gpu'),
+        nodeUser: this._root.querySelector('[data-node="user"]'),
+        nodePII: this._root.querySelector('[data-node="pii"]'),
+        nodeCloud: this._root.querySelector('[data-node="cloud"]'),
+        nodeKB: this._root.querySelector('[data-node="kb"]'),
+        nodeGPU: this._root.querySelector('[data-node="gpu"]'),
+        chipHud: this._root.querySelector('.chip'),
+        promptHudText: this._root.querySelector('[data-prompt-text]'),
+        btnRestart: this._root.querySelector('.btn'),
+        chip: this._root.querySelector('.chip-prompt'),
+        chipText: this._root.querySelector('.chip-text'),
+        pulseKB: this._root.querySelector('[data-pulse="kb"]'),
+        pulseGPU: this._root.querySelector('[data-pulse="gpu"]')
+      };
+    }
+
+    _bind() {
+      this._els.btnRestart.addEventListener('click', () => this.restart());
+      this._els.chipHud.addEventListener('click', () => {
+        const samples = [
+          'Draft me a concise M&A term sheet.',
+          'Explain STOL aerodynamics like I’m 12.',
+          'Summarize today’s semiconductor news.',
+          'Turn these notes into action items.'
+        ];
+        this._setPrompt(samples[Math.floor(Math.random() * samples.length)]);
+      });
+
+      // Re-layout on resize
+      this._ro = new ResizeObserver(() => this._layout());
+      this._ro.observe(this._els.wrap);
+    }
+
+    _setPrompt(text) {
+      this._prompt = String(text || '').trim();
+      this._els.promptHudText.textContent = this._prompt;
+      this._els.chipText.textContent = this._prompt;
+    }
+
+    _layout() {
+      // Place nodes responsively
+      const rect = this._els.wrap.getBoundingClientRect();
+      const W = rect.width, H = rect.height;
+
+      const place = (el, x, y) => { el.style.left = `${x}px`; el.style.top = `${y}px`; };
+
+      // Layout recipe (relative anchors)
+      const padX = 40, padY = 32;
+      const userX = padX, userY = H*0.58;
+      const piiX  = W*0.36, piiY = H*0.58;
+      const cloudX= W*0.66, cloudY = H*0.58;
+      const kbX   = W*0.78, kbY = H*0.24;
+      const gpuX  = W*0.82, gpuY = H*0.84;
+
+      place(this._els.nodeUser, userX, userY);
+      place(this._els.nodePII, piiX, piiY);
+      place(this._els.nodeCloud, cloudX, cloudY);
+      place(this._els.nodeKB, kbX, kbY);
+      place(this._els.nodeGPU, gpuX, gpuY);
+
+      // Build paths using centers
+      const c = el => {
+        const r = el.getBoundingClientRect();
+        const host = this._els.wrap.getBoundingClientRect();
+        return { x: (r.left - host.left) + r.width/2, y: (r.top - host.top) + r.height/2 };
+      };
+
+      const A = c(this._els.nodeUser);
+      const B = c(this._els.nodePII);
+      const C = c(this._els.nodeCloud);
+      const KB = c(this._els.nodeKB);
+      const GPU = c(this._els.nodeGPU);
+
+      const curve = (p, q) => {
+        const midX = (p.x + q.x) / 2;
+        return `M ${p.x} ${p.y} C ${midX} ${p.y}, ${midX} ${q.y}, ${q.x} ${q.y}`;
+      };
+
+      const main = curve(A, B) + ' ' + curve(B, C).replace(/^M [\d.]+ [\d.]+ /,'');
+      const back = curve(C, A);
+
+      const branch = (p, q) => {
+        const mx = (p.x + q.x) / 2;
+        const my = (p.y + q.y) / 2;
+        const ctrl = { x: mx, y: my + (q.y < p.y ? -40 : 40) };
+        return `M ${p.x} ${p.y} Q ${ctrl.x} ${ctrl.y}, ${q.x} ${q.y}`;
+      };
+
+      this._els.pathMain.setAttribute('d', main);
+      this._els.pathMainBase.setAttribute('d', main);
+      this._els.pathReturn.setAttribute('d', back);
+      this._els.pathReturnBase.setAttribute('d', back);
+      this._els.pathKB.setAttribute('d', branch(C, KB));
+      this._els.pathGPU.setAttribute('d', branch(C, GPU));
+
+      // Precompute lengths
+      this._geom = {
+        mainLen: this._els.pathMain.getTotalLength(),
+        backLen: this._els.pathReturn.getTotalLength(),
+        kbLen: this._els.pathKB.getTotalLength(),
+        gpuLen: this._els.pathGPU.getTotalLength()
+      };
+    }
+
+    _reset() {
+      this._cancelRAF();
+      this.state.playing = false;
+      this._els.chip.hidden = true;
+      this._els.pulseKB.hidden = true;
+      this._els.pulseGPU.hidden = true;
+      this._nodeActive(null);
+    }
+
+    _start() {
+      if (!this.state.visible && !this.hasAttribute('auto')) return;
+      this.state.playing = true;
+      this._els.chip.hidden = false;
+      this._animate();
+    }
+
+    async _animate() {
+      const reduce = this.state.reduce;
+      const t = ms => new Promise(r => setTimeout(r, ms));
+
+      // Step 1: You -> PII -> Cloud along pathMain
+      this._nodeActive('user');
+      await this._moveAlong(this._els.pathMain, this._els.chip, this._geom.mainLen, this._dur(this._geom.mainLen, 1100));
+      this._nodeActive('pii');
+      if (!reduce) await t(220);
+      this._nodeActive('cloud');
+
+      // Step 2: Fan-out pulses from Cloud to KB/Compute
+      await this._fanOutPulses();
+
+      // Step 3: Cloud -> You (return)
+      await this._moveAlong(this._els.pathReturn, this._els.chip, this._geom.backLen, this._dur(this._geom.backLen, 1000));
+      this._nodeActive('user');
+      if (!reduce) this._bounceAtUser();
+
+      // Finish
+      this.state.playing = false;
+    }
+
+    _moveAlong(pathEl, chipEl, length, duration) {
+      const reduce = this.state.reduce;
+      if (reduce) {
+        const p = pathEl.getPointAtLength(length);
+        chipEl.style.left = `${p.x}px`; chipEl.style.top = `${p.y}px`;
+        return Promise.resolve();
+      }
+      return new Promise(resolve => {
+        const start = performance.now();
+        const ease = this._bezier(.24,.86,.23,.99); // smooth Apple-y ease
+        const step = (now) => {
+          const t = Math.min(1, (now - start) / duration);
+          const tt = ease(t);
+          const pos = pathEl.getPointAtLength(tt * length);
+          chipEl.style.left = `${pos.x}px`;
+          chipEl.style.top = `${pos.y}px`;
+          if (t < 1 && this.state.playing) {
+            this.state.raf = requestAnimationFrame(step);
+          } else { resolve(); }
+        };
+        this._cancelRAF();
+        this.state.raf = requestAnimationFrame(step);
+      });
+    }
+
+    async _fanOutPulses() {
+      const reduce = this.state.reduce;
+      const fire = (pathEl, dotEl, len) => {
+        dotEl.hidden = false; dotEl.style.opacity = '1';
+        return new Promise(resolve => {
+          if (reduce) {
+            const p = pathEl.getPointAtLength(len);
+            dotEl.style.left = `${p.x}px`; dotEl.style.top = `${p.y}px`;
+            dotEl.style.opacity = '0';
+            resolve(); return;
+          }
+          const start = performance.now();
+          const dur = this._dur(len, 700);
+          const ease = this._bezier(.15,.85,.25,1);
+          const step = (now) => {
+            const t = Math.min(1, (now - start) / dur);
+            const tt = ease(t);
+            const pos = pathEl.getPointAtLength(tt * len);
+            dotEl.style.left = `${pos.x}px`;
+            dotEl.style.top = `${pos.y}px`;
+            dotEl.style.opacity = `${1 - Math.pow(t,1.2)}`;
+            if (t < 1 && this.state.playing) requestAnimationFrame(step); else resolve();
+          };
+          requestAnimationFrame(step);
+        }).then(() => { dotEl.hidden = true; });
+      };
+
+      // Slight overlapping pulses
+      await Promise.all([
+        fire(this._els.pathKB, this._els.pulseKB, this._geom.kbLen),
+        (async () => { await new Promise(r=>setTimeout(r, 120)); await fire(this._els.pathGPU, this._els.pulseGPU, this._geom.gpuLen); })()
+      ]);
+      if (!this.state.reduce) await new Promise(r=>setTimeout(r, 220));
+    }
+
+    _nodeActive(which) {
+      const nodes = ['user','pii','cloud','kb','gpu'];
+      nodes.forEach(n => {
+        const el = this._root.querySelector(`[data-node="${n}"]`);
+        if (!el) return;
+        if (n === which) el.classList.add('active'); else el.classList.remove('active');
+      });
+    }
+
+    _bounceAtUser() {
+      const el = this._els.nodeUser;
+      el.animate([
+        { transform: 'translateY(-2px)' },
+        { transform: 'translateY(-6px)' },
+        { transform: 'translateY(-2px)' }
+      ], { duration: 380, easing: 'cubic-bezier(.2,.7,0,1)' });
+    }
+
+    _dur(len, base=900) {
+      // length → duration mapping; scaled by speed
+      const ms = base + (len * 0.6); // tuned for smoothness
+      return Math.max(400, ms / this.speed);
+    }
+
+    _bezier(p0,p1,p2,p3) {
+      // cubic-bezier to easing fn
+      // Adapted from https://github.com/gre/bezier-easing (tiny inline impl)
+      const NEWTON_ITERS=4, NEWTON_MIN_SLOPE=0.001, SUBDIVISION_PRECISION=0.0000001, SUBDIVISION_MAX_ITERS=10;
+      const kSplineTableSize=11, kSampleStepSize=1.0/(kSplineTableSize-1.0);
+      const float32ArraySupported = typeof Float32Array === 'function';
+      const sampleValues = float32ArraySupported ? new Float32Array(kSplineTableSize) : new Array(kSplineTableSize);
+      const A=(a1,a2)=>1.0-3.0*a2+3.0*a1, B=(a1,a2)=>3.0*a2-6.0*a1, C=(a1)=>3.0*a1;
+      const calcBezier=(t,a1,a2)=>((A(a1,a2)*t + B(a1,a2))*t + C(a1))*t;
+      const getSlope=(t,a1,a2)=>3.0*A(a1,a2)*t*t + 2.0*B(a1,a2)*t + C(a1);
+      for (let i=0;i<kSplineTableSize;i++) sampleValues[i]=calcBezier(i*kSampleStepSize,p0,p2);
+      function getTForX(x) {
+        let intervalStart=0.0, currentSample=1, lastSample=kSplineTableSize-1;
+        for (;currentSample!==lastSample && sampleValues[currentSample]<=x; ++currentSample) intervalStart += kSampleStepSize;
+        --currentSample;
+        const dist=(x - sampleValues[currentSample])/(sampleValues[currentSample+1]-sampleValues[currentSample]);
+        let guessForT=intervalStart + dist*kSampleStepSize;
+        for (let i=0;i<NEWTON_ITERS;i++) {
+          const slope=getSlope(guessForT,p0,p2);
+          if (slope===0.0) return guessForT;
+          const currentX=calcBezier(guessForT,p0,p2) - x;
+          guessForT -= currentX/slope;
+        }
+        return guessForT;
+      }
+      return x => (p0===p1 && p2===p3) ? x : calcBezier(getTForX(x), p1, p3);
+    }
+
+    _cancelRAF() { if (this.state.raf) cancelAnimationFrame(this.state.raf); this.state.raf = null; }
+    _clamp(v, min, max) { return isFinite(v) ? Math.min(max, Math.max(min, v)) : 1; }
+  }
+
+  customElements.define(TAG, OCPromptFlow);
+})();
+</script>
 
 
 
