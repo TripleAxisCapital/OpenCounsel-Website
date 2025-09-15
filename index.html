@@ -1279,7 +1279,65 @@ with updates that just appear — no noise, just progress.
   </p>
 </article>
 
+<!-- Scoped animations (add once per page) -->
+<style>
+  /* Scope to this section to avoid leaks */
+  #oc-coming-soon .coming-soon-title span {
+    transition: transform .6s cubic-bezier(.2,.8,.2,1), opacity .6s cubic-bezier(.2,.8,.2,1);
+  }
+  #oc-coming-soon .coming-soon-sub {
+    transition: transform .7s cubic-bezier(.2,.8,.2,1) .05s, opacity .7s cubic-bezier(.2,.8,.2,1) .05s;
+  }
+  #oc-coming-soon .oc-model-card {
+    transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .7s cubic-bezier(.2,.8,.2,1);
+  }
 
+  /* Float (subtle, Apple-like) */
+  @keyframes oc-float {
+    0%,100% { transform: translateY(0) }
+    50% { transform: translateY(-8px) }
+  }
+
+  /* Title shimmer */
+  @keyframes oc-shine {
+    0% { background-position: 0% 50%; opacity:.0 }
+    30%{ opacity:1 }
+    100% { background-position: 100% 50%; opacity:1 }
+  }
+
+  /* Visible state */
+  #oc-coming-soon.is-visible .coming-soon-title span,
+  #oc-coming-soon.is-visible .coming-soon-sub,
+  #oc-coming-soon.is-visible .oc-model-card {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Staggered floats */
+  #oc-coming-soon.is-visible .oc-float-a { animation: oc-float 6s ease-in-out 0.2s infinite; }
+  #oc-coming-soon.is-visible .oc-float-b { animation: oc-float 6.5s ease-in-out 0.35s infinite; }
+  #oc-coming-soon.is-visible .oc-float-c { animation: oc-float 7s ease-in-out 0.5s infinite; }
+
+  /* Apple-style shimmering title */
+  #oc-coming-soon.is-visible .coming-soon-title span {
+    background: linear-gradient(90deg, rgba(255,255,255,.45), rgba(255,255,255,1), rgba(255,255,255,.55));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    background-size: 250% 100%;
+    animation: oc-shine 1.6s ease-out both;
+  }
+
+  /* Respect motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    #oc-coming-soon .oc-model-card,
+    #oc-coming-soon .coming-soon-title span,
+    #oc-coming-soon .coming-soon-sub {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+  }
+</style>
 
 <!-- Minimal reveal on scroll (add once per page) -->
 <script>
