@@ -1066,12 +1066,26 @@
   </article>
 </section>
 
-<!-- Prompt Flow — Apple-style, no emojis/icons; auto-plays on scroll; static rotating prompts -->
+<!-- Prompt Flow — Apple-clean; auto-plays on scroll; static rotating prompts; centered, not full-width -->
 <prompt-flow theme="auto" speed="1"></prompt-flow>
+
+<style>
+/* Optional: tune sizing globally to match your other cards */
+prompt-flow{
+  --card-radius: 20px;
+  --card-padding: 20px;
+  --card-aspect: 12/4;          /* desktop */
+  --card-aspect-mobile: 4/5;     /* mobile */
+  --pf-maxw: 960px;              /* desktop max width */
+}
+@media (min-width:1200px){
+  prompt-flow{ --pf-maxw: 900px; } /* a touch tighter on very wide screens */
+}
+</style>
 
 <script>
 (() => {
-  /* ⚙️ EDIT HERE — your rotating prompts and sample sender */
+  /* ====== EDIT HERE — your rotating prompts + sample sender ====== */
   const MESSAGES = [
     'Summarize the Apple event and highlight year-over-year changes.',
     'Draft a follow-up email confirming next steps and deadlines.',
@@ -1079,15 +1093,17 @@
   ];
   const PERSON = { name: 'John Smith', email: 'john.smith@company.com' };
   const ROTATION_GAP_MS = 900;
+  /* =============================================================== */
 
   const CSS = `
   :host{
-    --bg:#0b0c0f; --fg:#ffffff; --muted:#88919a; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
-    --glass: rgba(255,255,255,.08); --shadow: 0 8px 22px rgba(0,0,0,.28);
-    --pf-radius: var(--card-radius, 24px);
-    --pf-padding: var(--card-padding, 24px);
+    --bg:#0b0c0f; --fg:#ffffff; --muted:#8b94a0; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
+    --glass: rgba(255,255,255,.08); --shadow: 0 8px 22px rgba(0,0,0,.22);
+    --pf-radius: var(--card-radius, 20px);
+    --pf-padding: var(--card-padding, 20px);
     --pf-aspect: var(--card-aspect, 12 / 4);
     --pf-aspect-mobile: var(--card-aspect-mobile, 4 / 5);
+    --pf-maxw:  var(--pf-maxw, 960px);
     color-scheme: light dark; display:block;
     font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,system-ui,sans-serif;
   }
@@ -1100,12 +1116,15 @@
            --glass: rgba(16,18,20,.06); --shadow: 0 8px 22px rgba(0,0,0,.12); }
   } }
 
+  /* Root card — centered, max width (no full-bleed on desktop) */
   .root{
-    position:relative; overflow:hidden; width:100%;
+    position:relative; overflow:visible; width:100%;
+    max-width:var(--pf-maxw); margin: 0 auto;
     background:linear-gradient(180deg, color-mix(in oklab, var(--bg) 94%, #0ea5ff 6%), var(--bg));
     border-radius:var(--pf-radius); box-shadow:var(--shadow); padding:var(--pf-padding);
   }
 
+  /* Inner stage with safe-area padding to prevent any clipping */
   .stage{
     position:relative; width:100%; aspect-ratio: var(--pf-aspect);
     border-radius:calc(var(--pf-radius) - 8px);
@@ -1114,19 +1133,32 @@
       radial-gradient(800px 60% at 80% 25%, color-mix(in oklab, #22d3ee 18%, transparent), transparent 60%),
       linear-gradient(180deg, color-mix(in oklab, var(--bg), #000 6%), color-mix(in oklab, var(--bg), #000 2%));
     border:1px solid color-mix(in oklab, var(--line), transparent 30%);
+    padding: clamp(10px, 2.2vw, 16px);         /* inset so shadows/text never touch edges */
+    overflow:hidden;                            /* clean rounded mask */
   }
-  @media (max-width: 640px){ .stage{ aspect-ratio: var(--pf-aspect-mobile); } }
+  @media (max-width: 640px){
+    .stage{ aspect-ratio: var(--pf-aspect-mobile); padding: clamp(10px, 4vw, 16px); }
+  }
 
-  .label{ font-weight:600; color:var(--muted); margin:0 0 10px 2px; letter-spacing:.2px; }
+  .label{
+    font-weight:600; color:var(--muted); margin: 2px 2px 10px; letter-spacing:.2px;
+  }
 
-  /* Bubbles & cards inside SVG via foreignObject */
+  .shell{ width:100%; height:100%; }
+  .svg{
+    display:block; width:100%; height:100%;
+    overflow:visible;                        /* prevent inner FX from being cropped */
+  }
+
+  /* Bubbles & cards (HTML inside the SVG via foreignObject) */
   .bubble{
     background:var(--card); border:1px solid color-mix(in oklab, var(--line), transparent 20%); color:var(--fg);
-    border-radius:14px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.02);
-    filter: drop-shadow(0 12px 30px rgba(0,0,0,.25)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border-radius:14px; padding:10px 12px;
+    box-shadow:0 6px 18px rgba(0,0,0,.16), inset 0 0 0 1px rgba(255,255,255,.02);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   }
-  .bubble.user{ border-radius:18px 18px 18px 4px; }
-  .bubble.assistant{ border-radius:18px 18px 4px 18px; }
+  .bubble.user{ border-radius:18px 18px 18px 6px; }
+  .bubble.assistant{ border-radius:18px 18px 6px 18px; }
 
   .typing{ width:36px; display:inline-flex; justify-content:space-between; }
   .dot{ width:6px; height:6px; border-radius:50%; background:color-mix(in oklab, var(--fg) 65%, transparent);
@@ -1138,27 +1170,29 @@
     background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 3%), var(--card));
     border:1px solid color-mix(in oklab, var(--line), transparent 15%);
     border-radius:16px; padding:12px; color:var(--fg);
-    box-shadow:0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.02);
+    box-shadow:0 10px 24px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.02);
   }
   .card h4{ margin:0 0 6px; font:700 13px/1.1 inherit; letter-spacing:.25px; }
   .meta{ font:600 10px/1.2 inherit; color:var(--muted); letter-spacing:.3px; }
 
-  .scan{ margin-top:8px; font:600 12px/1.25 inherit; border-radius:10px; padding:8px 10px; position:relative;
-         background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 4%), var(--card));
-         border:1px dashed color-mix(in oklab, var(--line), transparent 10%); }
+  .scan{
+    margin-top:8px; font:600 12px/1.25 inherit; border-radius:10px; padding:8px 10px;
+    background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 4%), var(--card));
+    border:1px dashed color-mix(in oklab, var(--line), transparent 10%);
+  }
   .scan .clean{ color:#10b981; opacity:0; transition:opacity .4s ease; }
 
-  /* SVG presentation */
-  .svg{ width:100%; height:100%; }
-  .path{ fill:none; stroke:color-mix(in oklab, var(--line), var(--fg) 8%); stroke-width:3; stroke-linecap:round;
-         filter: drop-shadow(0 2px 10px rgba(0,0,0,.25)); vector-effect: non-scaling-stroke; }
+  /* Paths & FX */
+  .path{
+    fill:none; stroke:color-mix(in oklab, var(--line), var(--fg) 8%); stroke-width:3; stroke-linecap:round;
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,.25)); vector-effect: non-scaling-stroke;
+  }
   .path.return{ stroke-dasharray: 6 10; stroke: color-mix(in oklab, var(--line), var(--accent) 30%); }
   .glow{ filter:url(#pf-glow); }
   .packet{ pointer-events:none; }
   .halo{ opacity:.7 }
   .pulse{ opacity:0; }
 
-  /* Reduced motion */
   @media (prefers-reduced-motion: reduce){ .dot{ animation:none } }
   `;
 
@@ -1166,72 +1200,74 @@
     <div class="root" part="root">
       <div class="label">Prompt flow</div>
       <div class="stage" part="stage">
-        <svg class="svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-          <defs>
-            <linearGradient id="pf-line" x1="0" x2="1" y1="0" y2="0">
-              <stop offset="0%" stop-color="color-mix(in oklab, var(--accent), #22d3ee 40%)"/>
-              <stop offset="100%" stop-color="color-mix(in oklab, #7c3aed, var(--accent) 30%)"/>
-            </linearGradient>
-            <filter id="pf-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
-              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-            </filter>
-            <radialGradient id="pf-halo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="var(--accent)" stop-opacity=".85"/>
-              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
-            </radialGradient>
-          </defs>
+        <div class="shell">
+          <svg class="svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <defs>
+              <linearGradient id="pf-line" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stop-color="color-mix(in oklab, var(--accent), #22d3ee 40%)"/>
+                <stop offset="100%" stop-color="color-mix(in oklab, #7c3aed, var(--accent) 30%)"/>
+              </linearGradient>
+              <filter id="pf-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <radialGradient id="pf-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity=".85"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
 
-          <!-- Paths -->
-          <path id="pf-forward" class="path glow" stroke="url(#pf-line)"
-                d="M120,300 C220,272 290,220 360,160
-                   C430,102 530,90 650,110
-                   C730,123 790,125 840,130" />
-          <path id="pf-return" class="path return"
-                d="M840,130 C680,175 520,230 360,270
-                   C260,296 190,300 120,300" />
+            <!-- Paths -->
+            <path id="pf-forward" class="path glow" stroke="url(#pf-line)"
+                  d="M120,300 C220,272 290,220 360,160
+                     C430,102 530,90 650,110
+                     C730,123 790,125 840,130" />
+            <path id="pf-return" class="path return"
+                  d="M840,130 C680,175 520,230 360,270
+                     C260,296 190,300 120,300" />
 
-          <!-- Packet -->
-          <g id="pf-packet" class="packet">
-            <circle class="halo" r="24" fill="url(#pf-halo)"/>
-            <circle class="core" r="8" fill="#fff"/>
-          </g>
+            <!-- Packet -->
+            <g id="pf-packet" class="packet">
+              <circle class="halo" r="24" fill="url(#pf-halo)"/>
+              <circle class="core" r="8" fill="#fff"/>
+            </g>
 
-          <!-- Stations -->
-          <foreignObject x="48" y="262" width="220" height="90">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="bubble user" id="pf-user-bubble">
-              <div class="meta">You</div>
-              <div id="pf-user-text">…</div>
-            </div>
-          </foreignObject>
-
-          <foreignObject x="310" y="78" width="230" height="160">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-pii-card">
-              <div class="meta" style="font-weight:700;margin-bottom:6px;">PII Scrubber</div>
-              <h4>Sanitize sensitive data</h4>
-              <div class="scan" id="pf-pii-scan">
-                <div class="raw" id="pf-pii-raw">From: John Smith &lt;john.smith@company.com&gt; — …</div>
-                <div class="clean" id="pf-pii-clean">From: Person X &lt;PersonX@Email&gt; — …</div>
+            <!-- Stations -->
+            <foreignObject x="48" y="262" width="220" height="90">
+              <div xmlns="http://www.w3.org/1999/xhtml" class="bubble user" id="pf-user-bubble">
+                <div class="meta">You</div>
+                <div id="pf-user-text">…</div>
               </div>
-              <div class="meta" id="pf-pii-status">Idle</div>
-            </div>
-          </foreignObject>
+            </foreignObject>
 
-          <foreignObject x="780" y="52" width="270" height="170">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-cloud-card">
-              <div class="meta" style="font-weight:700;margin-bottom:6px;">Cloud + Knowledge + Compute</div>
-              <h4>Enrich with knowledge & power</h4>
-              <div class="meta" id="pf-cloud-status">Warming up…</div>
-            </div>
-          </foreignObject>
+            <foreignObject x="310" y="78" width="230" height="160">
+              <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-pii-card">
+                <div class="meta" style="font-weight:700;margin-bottom:6px;">PII Scrubber</div>
+                <h4>Sanitize sensitive data</h4>
+                <div class="scan" id="pf-pii-scan">
+                  <div class="raw" id="pf-pii-raw">From: John Smith &lt;john.smith@company.com&gt; — …</div>
+                  <div class="clean" id="pf-pii-clean">From: Person X &lt;PersonX@Email&gt; — …</div>
+                </div>
+                <div class="meta" id="pf-pii-status">Idle</div>
+              </div>
+            </foreignObject>
 
-          <foreignObject x="104" y="210" width="220" height="90">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="bubble assistant" id="pf-assist-bubble" style="opacity:.0; transform: translateY(6px);">
-              <div class="meta">Assistant</div>
-              <div id="pf-assist-text"><span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
-            </div>
-          </foreignObject>
-        </svg>
+            <foreignObject x="780" y="52" width="270" height="170">
+              <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-cloud-card">
+                <div class="meta" style="font-weight:700;margin-bottom:6px;">Cloud · Knowledge · Compute</div>
+                <h4>Enrich with knowledge & power</h4>
+                <div class="meta" id="pf-cloud-status">Warming up…</div>
+              </div>
+            </foreignObject>
+
+            <foreignObject x="104" y="210" width="220" height="90">
+              <div xmlns="http://www.w3.org/1999/xhtml" class="bubble assistant" id="pf-assist-bubble" style="opacity:.0; transform: translateY(6px);">
+                <div class="meta">Assistant</div>
+                <div id="pf-assist-text"><span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+              </div>
+            </foreignObject>
+          </svg>
+        </div>
       </div>
     </div>
   `;
@@ -1350,7 +1386,7 @@
       piiStatus.textContent = 'Scanning for names and emails…';
       await this.wait(250/this.speed);
       piiStatus.textContent = 'Anonymizing…';
-      piiRaw.style.opacity = '.25';
+      piiRaw.style.opacity = '.35';
       piiClean.style.opacity = '1';
       await this.wait(500/this.speed);
       piiStatus.textContent = 'Anonymized';
@@ -1455,14 +1491,14 @@
       let out = str.replace(emailRe, 'PersonX@Email');
       out = out.replace(nameRe, 'Person X');
 
-      // Also anonymize "From: Name <email>"
-      out = out.replace(/From:\s*[^<]+<[^>]+>/gi, 'From: Person X <PersonX@Email>');
+      // Also anonymize common "From: Name <email>" and variants
+      out = out.replace(/From:\s*[^<\n]+<[^>]+>/gi, 'From: Person X <PersonX@Email>');
       return out;
     }
 
     generateReply(cleaned){
       const hint = cleaned.length>90 ? cleaned.slice(0,90)+'…' : cleaned;
-      return `Privacy-safe answer synthesized.\n\nPrompt (sanitized): “${hint}”\n\n- Name anonymized to “Person X”\n- Email anonymized to “PersonX@Email”\n- Relevant sources consulted and summarized`;
+      return `Privacy-safe answer synthesized.\n\nPrompt (sanitized): “${hint}”\n\n- Name → “Person X”\n- Email → “PersonX@Email”\n- Relevant sources consulted and summarized`;
     }
   }
 
