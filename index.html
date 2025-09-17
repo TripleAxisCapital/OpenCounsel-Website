@@ -1034,7 +1034,6 @@
     </p>
   </div>
 
-
   <!-- Usage -->
 <oc-pii-bubble></oc-pii-bubble>
 
@@ -1102,7 +1101,7 @@
     }
     @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 
-    /* Subtle PII attention + scrub finish */
+    /* Subtle detect pulse + scrub finish */
     .pii{position:relative; white-space:nowrap; border-radius:8px; padding:0 2px;}
     .pii.pulse::before{
       content:""; position:absolute; inset:-1px -2px; border-radius:10px;
@@ -1120,7 +1119,7 @@
     }
   </style>
 
-  <div class="bubble">
+  <div class="bubble" aria-label="PII is redacted locally before sending">
     <span class="content"></span>
   </div>
 </template>
@@ -1191,34 +1190,31 @@
 
     reset(){
       this._runId++;
-      // Clean reveal: empty, centered bubble; no stray nodes/hints/labels
       this.bubble.style.opacity=0;
-      // Remove all children of .content (ensures no residual text/caret)
       while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
       this.nameEl=this.emailEl=this.phoneEl=null;
     }
 
+    // --- Core typing: ALWAYS insert new nodes *before the caret* to preserve order ---
     async typeScript(runId){
       const delay=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msType(t)));
 
-      // Create one persistent base text node to avoid accumulating extra nodes
-      const baseTN=document.createTextNode("");
-      this.content.appendChild(baseTN);
-
-      // Caret
+      // caret
       const caret=document.createElement('span'); caret.className='caret';
       this.content.appendChild(caret);
 
-      // Writer helpers (keep DOM stable)
-      const writeBase = (ch)=>{ baseTN.nodeValue += ch; };
-      const makeSpanWriter=(span)=>{
+      // helpers
+      const textWriterBeforeCaret = ()=>{
         const tn=document.createTextNode("");
-        span.appendChild(tn);
+        this.content.insertBefore(tn, caret);
         return (ch)=>{ tn.nodeValue += ch; };
       };
-
-      let spanWriter=null;
-
+      const spanWriterBeforeCaret = (cls)=>{
+        const span=document.createElement('span'); span.className=`pii ${cls}`;
+        this.content.insertBefore(span, caret);
+        const tn=document.createTextNode(""); span.appendChild(tn);
+        return {span, write:(ch)=>{ tn.nodeValue += ch; }};
+      };
       const typeChar = async (writer, ch)=>{
         writer(ch);
         let base=26;
@@ -1226,28 +1222,27 @@
         await delay(base);
       };
 
+      let write = textWriterBeforeCaret(); // start with plain text writer
+
       for(const seg of SCRIPT){
         if(runId!==this._runId) return;
 
         if(seg.type==='text'){
           for(let i=0;i<seg.text.length && runId===this._runId;i++){
-            await typeChar(writeBase, seg.text[i]);
+            await typeChar(write, seg.text[i]);
           }
         } else {
-          const span=document.createElement('span');
-          span.className=`pii ${seg.cls}`;
-          // insert span just before caret to keep caret at end
-          this.content.insertBefore(span, caret);
+          const sw = spanWriterBeforeCaret(seg.cls);
+          // save refs for effects
+          if(seg.key==='name')  this.nameEl  = sw.span;
+          if(seg.key==='email') this.emailEl = sw.span;
+          if(seg.key==='phone') this.phoneEl = sw.span;
 
-          // keep references for effects
-          if(seg.key==='name')  this.nameEl  = span;
-          if(seg.key==='email') this.emailEl = span;
-          if(seg.key==='phone') this.phoneEl = span;
-
-          spanWriter = makeSpanWriter(span);
           for(let i=0;i<seg.text.length && runId===this._runId;i++){
-            await typeChar(spanWriter, seg.text[i]);
+            await typeChar(sw.write, seg.text[i]);
           }
+          // return to base text writer before caret for next segment
+          write = textWriterBeforeCaret();
         }
       }
 
@@ -1259,7 +1254,6 @@
       this._running=true;
       this.reset();
       const runId=this._runId;
-
       const delayFx=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msFx(t)));
 
       // Fade in bubble (no movement)
@@ -1273,27 +1267,28 @@
         await delayFx(310);
       }
 
-      // Type streaming
+      // Streamed typing
       if(this.reduced){
-        // Instant render of final text when reduced motion is on
-        const finalFrag=document.createDocumentFragment();
+        // Build final DOM in correct order (before-caret logic mirrored)
+        const frag=document.createDocumentFragment();
+        const makeText=(t)=>frag.appendChild(document.createTextNode(t));
         for(const seg of SCRIPT){
-          if(seg.type==='text') finalFrag.appendChild(document.createTextNode(seg.text));
+          if(seg.type==='text') makeText(seg.text);
           else{
             const el=document.createElement('span'); el.className=`pii ${seg.cls}`; el.textContent=seg.text;
             if(seg.key==='name') this.nameEl=el;
             if(seg.key==='email') this.emailEl=el;
             if(seg.key==='phone') this.phoneEl=el;
-            finalFrag.appendChild(el);
+            frag.appendChild(el);
           }
         }
-        this.content.appendChild(finalFrag);
+        this.content.appendChild(frag);
       }else{
         await this.typeScript(runId);
       }
       if(runId!==this._runId) return;
 
-      // Detect pulses (smooth)
+      // Detect pulses
       if(!this.reduced){
         [this.nameEl,this.emailEl,this.phoneEl].forEach((el,i)=>{
           if(!el) return;
@@ -1335,7 +1330,6 @@
   customElements.define('oc-pii-bubble', OCPiiBubble);
 })();
 </script>
-
 
 
 
