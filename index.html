@@ -1033,8 +1033,10 @@
       OC runs locally by default, with optional private cloud power. Personal details are removed on-device before anything leaves your machine.
     </p>
   </div>
-<div class="w-full pt-20 md:pt-28 pb-6 text-center">
-  <oc-pii-bubble></oc-pii-bubble> </div>
+
+
+  <!-- Usage -->
+<oc-pii-bubble></oc-pii-bubble>
 
   <!-- Single Unified Card -->
   <article class="mx-auto max-w-[960px] rounded-2xl border border-neutral-200 bg-white p-8 md:p-10 shadow-[0_10px_30px_rgba(0,0,0,.06)]">
@@ -1072,50 +1074,45 @@
 <template id="oc-pii-bubble-template">
   <style>
     :host{
-      display:inline-block;
-      box-sizing:border-box;
+      display:block; width:100%; box-sizing:border-box;
       font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,"Segoe UI Emoji";
       color:var(--oc-text,#0b0b0b);
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
       max-width:100%;
     }
     .bubble{
-      display:inline-block;
-      width:var(--oc-bubble-width,560px);  /* fixed width; won’t change during typing */
-      max-width:100%;
+      display:block; margin:0 auto;
+      width:var(--oc-bubble-width,560px); max-width:100%;
       background:#f7f7f7;
       border:1px solid rgba(0,0,0,.10);
       border-radius:18px;
       padding:14px 16px;
-      line-height:1.45;
-      font-size:15px;
-      color:inherit;
+      line-height:1.45; font-size:15px; color:inherit;
       box-sizing:border-box;
-      opacity:0; /* fade-in only, no movement */
-      will-change:opacity;
+      opacity:0; will-change:opacity;
     }
     .content{ display:inline; }
 
     .caret{
-      display:inline-block;
-      width:1.5px; height:1em;
+      display:inline-block; width:1.5px; height:1em;
       background:rgba(0,0,0,.65);
-      vertical-align:-.12em;
-      margin-left:1px;
+      vertical-align:-.12em; margin-left:1px;
       animation:blink 1s steps(2,end) infinite;
       transform:translateY(.5px);
     }
     @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 
-    .pii{position:relative;white-space:nowrap;border-radius:8px;padding:0 2px;}
+    /* Subtle PII attention + scrub finish */
+    .pii{position:relative; white-space:nowrap; border-radius:8px; padding:0 2px;}
     .pii.pulse::before{
-      content:"";position:absolute;inset:-1px -2px;border-radius:10px;
+      content:""; position:absolute; inset:-1px -2px; border-radius:10px;
       background:rgba(255,59,48,.12);
-      box-shadow:0 0 0 1px rgba(255,59,48,.24) inset;
+      box-shadow:0 0 0 1px rgba(255,59,48,.22) inset;
       animation:piiPulse 900ms cubic-bezier(.22,.61,.36,1) 2 both;
       pointer-events:none;
     }
     @keyframes piiPulse{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
-    .scrub{background:#ececec;border-radius:8px;padding:0 4px;}
+    .scrub{background:#ececec; border-radius:8px; padding:0 4px;}
 
     @media (prefers-reduced-motion:reduce){
       .pii.pulse::before{animation:none !important}
@@ -1123,7 +1120,7 @@
     }
   </style>
 
-  <div class="bubble" role="figure" aria-label="PII is redacted locally before sending">
+  <div class="bubble">
     <span class="content"></span>
   </div>
 </template>
@@ -1176,6 +1173,7 @@
     msFx(base){ return Math.max(1, Math.round(base/(EFFECT_SPEED||1))); }
 
     connectedCallback(){
+      // Autoplay when visible
       this._io=new IntersectionObserver((entries)=>{
         for(const e of entries){
           if(e.isIntersecting){ setTimeout(()=>this.play(),120); this._io.disconnect(); break; }
@@ -1193,53 +1191,66 @@
 
     reset(){
       this._runId++;
-      this.bubble.style.opacity=0;     // empty bubble, will fade in
-      this.content.textContent='';
+      // Clean reveal: empty, centered bubble; no stray nodes/hints/labels
+      this.bubble.style.opacity=0;
+      // Remove all children of .content (ensures no residual text/caret)
+      while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
       this.nameEl=this.emailEl=this.phoneEl=null;
     }
 
     async typeScript(runId){
       const delay=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msType(t)));
 
-      // Single writer text nodes for smoother paints
-      const makeWriter=(parent)=>{
+      // Create one persistent base text node to avoid accumulating extra nodes
+      const baseTN=document.createTextNode("");
+      this.content.appendChild(baseTN);
+
+      // Caret
+      const caret=document.createElement('span'); caret.className='caret';
+      this.content.appendChild(caret);
+
+      // Writer helpers (keep DOM stable)
+      const writeBase = (ch)=>{ baseTN.nodeValue += ch; };
+      const makeSpanWriter=(span)=>{
         const tn=document.createTextNode("");
-        parent.appendChild(tn);
+        span.appendChild(tn);
         return (ch)=>{ tn.nodeValue += ch; };
       };
 
-      const caret=document.createElement('span');
-      caret.className='caret';
-      this.content.appendChild(caret);
+      let spanWriter=null;
 
-      let writer = makeWriter(this.content);
+      const typeChar = async (writer, ch)=>{
+        writer(ch);
+        let base=26;
+        if(ch==='.'){ base=85; } else if(ch===',' ){ base=44; } else if(ch===' ' ){ base=20; }
+        await delay(base);
+      };
 
       for(const seg of SCRIPT){
         if(runId!==this._runId) return;
+
         if(seg.type==='text'){
           for(let i=0;i<seg.text.length && runId===this._runId;i++){
-            const ch=seg.text[i];
-            writer(ch);
-            let base=26;
-            if(ch==='.'){ base=85; } else if(ch===',' ){ base=44; } else if(ch===' ' ){ base=20; }
-            await delay(base);
+            await typeChar(writeBase, seg.text[i]);
           }
-        }else{
+        } else {
           const span=document.createElement('span');
           span.className=`pii ${seg.cls}`;
-          caret.before(span);
-          writer = makeWriter(span);
+          // insert span just before caret to keep caret at end
+          this.content.insertBefore(span, caret);
+
+          // keep references for effects
+          if(seg.key==='name')  this.nameEl  = span;
+          if(seg.key==='email') this.emailEl = span;
+          if(seg.key==='phone') this.phoneEl = span;
+
+          spanWriter = makeSpanWriter(span);
           for(let i=0;i<seg.text.length && runId===this._runId;i++){
-            const ch=seg.text[i];
-            writer(ch);
-            let base=26;
-            if(ch==='.'){ base=85; } else if(ch===',' ){ base=44; } else if(ch===' ' ){ base=20; }
-            await delay(base);
+            await typeChar(spanWriter, seg.text[i]);
           }
-          // return writer to bubble content for next plain segment
-          writer = makeWriter(this.content);
         }
       }
+
       caret.remove();
     }
 
@@ -1254,33 +1265,36 @@
       // Fade in bubble (no movement)
       if(this.reduced){ this.bubble.style.opacity=1; }
       else{
-        this.bubble.animate([{opacity:0},{opacity:1}], {duration:this.msFx(280), easing:'cubic-bezier(.2,.6,.2,1)', fill:'forwards'});
-        await delayFx(290);
+        this.bubble.animate([{opacity:0},{opacity:1}], {
+          duration:this.msFx(300),
+          easing:'cubic-bezier(.2,.7,.2,1)',
+          fill:'forwards'
+        });
+        await delayFx(310);
       }
 
-      // Streamed typing
+      // Type streaming
       if(this.reduced){
+        // Instant render of final text when reduced motion is on
+        const finalFrag=document.createDocumentFragment();
         for(const seg of SCRIPT){
-          if(seg.type==='text'){ this.content.append(document.createTextNode(seg.text)); }
+          if(seg.type==='text') finalFrag.appendChild(document.createTextNode(seg.text));
           else{
-            const el=document.createElement('span'); el.className=`pii ${seg.cls}`; el.textContent=seg.text; this.content.append(el);
+            const el=document.createElement('span'); el.className=`pii ${seg.cls}`; el.textContent=seg.text;
             if(seg.key==='name') this.nameEl=el;
             if(seg.key==='email') this.emailEl=el;
             if(seg.key==='phone') this.phoneEl=el;
+            finalFrag.appendChild(el);
           }
         }
+        this.content.appendChild(finalFrag);
       }else{
         await this.typeScript(runId);
       }
       if(runId!==this._runId) return;
 
-      // Detect pulses (smoother)
+      // Detect pulses (smooth)
       if(!this.reduced){
-        // cache refs if not set (typing path sets them implicitly)
-        this.nameEl = this.nameEl || this.content.querySelector('.pii.name');
-        this.emailEl= this.emailEl|| this.content.querySelector('.pii.email');
-        this.phoneEl= this.phoneEl|| this.content.querySelector('.pii.phone');
-
         [this.nameEl,this.emailEl,this.phoneEl].forEach((el,i)=>{
           if(!el) return;
           setTimeout(()=> el.classList.add('pulse'), this.msFx(90 + i*170));
@@ -1288,21 +1302,25 @@
         await delayFx(980);
       }
 
-      // Scrub (longer, softer blur for smoothness)
+      // Scrub (soft blur cross-fades)
       const swap = async (el,to)=>{
         if(!el) return;
         if(this.reduced){ el.textContent=to; el.classList.add('scrub'); return; }
         const out=el.animate(
-          [{opacity:1,filter:'blur(0px)'},{opacity:1,filter:'blur(1px)'},{opacity:0,filter:'blur(2px)'}],
-          {duration:this.msFx(210),easing:'cubic-bezier(.3,.6,.2,1)',fill:'forwards'}
+          [{opacity:1,filter:'blur(0px)'},
+           {opacity:1,filter:'blur(1px)'},
+           {opacity:0,filter:'blur(2px)'}],
+          {duration:this.msFx(220),easing:'cubic-bezier(.3,.6,.2,1)',fill:'forwards'}
         );
         await out.finished;
         el.textContent=to;
         el.classList.remove('pulse');
         el.classList.add('scrub');
         el.animate(
-          [{opacity:0,filter:'blur(2px)'},{opacity:.6,filter:'blur(1px)'},{opacity:1,filter:'blur(0px)'}],
-          {duration:this.msFx(230),easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}
+          [{opacity:0,filter:'blur(2px)'},
+           {opacity:.6,filter:'blur(1px)'},
+           {opacity:1,filter:'blur(0px)'}],
+          {duration:this.msFx(240),easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}
         );
       };
 
