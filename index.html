@@ -1066,393 +1066,435 @@
   </article>
 </section>
 
-<!-- OC — PII Scrub Animation (drop-in, production-grade, no deps) -->
-<oc-pii-scrub></oc-pii-scrub>
-<script type="module">
-(() => {
-  const TAG = 'oc-pii-scrub';
-  if (customElements.get(TAG)) return;
+<script>
+class OCPiiScrub extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    const tpl = document.createElement("template");
+    tpl.innerHTML = `
+      <style>
+        :host {
+          --oc-card-width: 720px; /* Adjust to match your site's card width */
+          --oc-radius: 20px;
+          --oc-pad: 18px;
+          --oc-gap: 16px;
+          --oc-border: 1px;
+          --oc-dur: 560ms;
+          --oc-ease: cubic-bezier(.22,.61,.36,1);
+          --bg: #0b0b0c;
+          --card: #111214;
+          --ink: #e9e9ea;
+          --muted: #a4a6ab;
+          --hair: #1f2023;
+          --accent: #3a7afe;
+          color-scheme: light dark;
+          display: block;
+          font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, Segoe UI, Roboto, Helvetica, Arial, system-ui, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          text-rendering: optimizeLegibility;
+        }
+        @media (prefers-color-scheme: light) {
+          :host {
+            --bg: #ffffff;
+            --card: #ffffff;
+            --ink: #111214;
+            --muted: #5b5d63;
+            --hair: #e7e8ea;
+            --accent: #0a84ff;
+          }
+        }
 
-  const TPL = document.createElement('template');
-  TPL.innerHTML = `
-    <style>
-      /* --- Apple-style foundation --- */
-      :host {
-        --oc-max-width: 860px;
-        --oc-radius: 18px;
-        --oc-border: rgba(60,60,67,0.14);
-        --oc-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(0,0,0,0.04);
-        --oc-bg: #fff;
-        --oc-text: #111;
-        --oc-muted: rgba(0,0,0,0.55);
-        --oc-accent: #0A84FF;   /* iOS blue */
-        --oc-success: #34C759;  /* iOS green */
-        --oc-danger: #FF3B30;   /* iOS red (for pre-scrub emphasis) */
-        --oc-card-pad: clamp(16px, 3.2vw, 24px);
-        --oc-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        display: block;
-        font-family: var(--oc-font);
-        color: var(--oc-text);
-      }
-      .card {
-        max-width: var(--oc-max-width);
-        margin: 0 auto;
-        background: var(--oc-bg);
-        border: 1px solid var(--oc-border);
-        border-radius: var(--oc-radius);
-        box-shadow: var(--oc-shadow);
-        overflow: clip;
-      }
-      .hdr {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: calc(var(--oc-card-pad) - 2px) var(--oc-card-pad) 8px;
-        gap: 12px;
-      }
-      .title {
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        font-size: clamp(15px, 2vw, 16px);
-      }
-      .status {
-        display: inline-flex;
-        align-items: center;
-        gap: .5ch;
-        font-size: 12px;
-        padding: 6px 10px;
-        border: 1px solid var(--oc-border);
-        border-radius: 999px;
-        color: var(--oc-muted);
-        background: rgba(250,250,250,0.6);
-        backdrop-filter: saturate(140%) blur(8px);
-        -webkit-backdrop-filter: saturate(140%) blur(8px);
-        white-space: nowrap;
-      }
-      .status-dot {
-        width: 7px; height: 7px; border-radius: 50%;
-        background: var(--oc-accent);
-        box-shadow: 0 0 0 0 rgba(10,132,255,0.7);
-        animation: pulse 2s ease-out infinite;
-      }
-      @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(10,132,255,0.6) }
-        70% { box-shadow: 0 0 0 8px rgba(10,132,255,0) }
-        100% { box-shadow: 0 0 0 0 rgba(10,132,255,0) }
-      }
+        .wrap {
+          display: grid;
+          grid-template-columns: 1fr minmax(44px, 72px) 1fr;
+          align-items: center;
+          gap: var(--oc-gap);
+          max-width: min(var(--oc-card-width), 100%);
+          margin-inline: auto;
+          padding: 0;
+        }
 
-      .body {
-        display: grid;
-        grid-template-columns: 1fr minmax(56px, 120px) 1fr;
-        gap: clamp(12px, 3vw, 24px);
-        padding: 6px var(--oc-card-pad) var(--oc-card-pad);
-      }
-      @media (max-width: 780px) {
-        .body { grid-template-columns: 1fr; }
-      }
+        .panel {
+          background: var(--card);
+          border: var(--oc-border) solid var(--hair);
+          border-radius: var(--oc-radius);
+          box-shadow: 0 10px 30px rgba(0,0,0,.15);
+          overflow: clip;
+          min-height: 180px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
 
-      /* Columns */
-      .col { display: grid; align-content: start; gap: 10px; }
-      .subtle {
-        font-size: 12px; color: var(--oc-muted);
-        letter-spacing: 0.01em; user-select: none;
-      }
+        .hd {
+          padding: 12px var(--oc-pad) 0;
+          font-weight: 600;
+          letter-spacing: .01em;
+          color: var(--muted);
+          font-size: 12px;
+          text-transform: none;
+        }
 
-      /* Message bubbles */
-      .bubble {
-        position: relative;
-        border: 1px solid var(--oc-border);
-        border-radius: 14px;
-        padding: clamp(12px, 2.6vw, 16px);
-        line-height: 1.55;
-        background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.9));
-      }
-      .bubble.clean { border-color: rgba(60,60,67,0.10); }
-      .bubble p { margin: 0; font-size: clamp(14px, 1.8vw, 15px); }
+        .bubble {
+          margin: 10px var(--oc-pad) var(--oc-pad);
+          padding: 14px 16px;
+          border-radius: 16px;
+          border: 1px solid var(--hair);
+          background: color-mix(in oklab, var(--card), var(--ink) 3%);
+          color: var(--ink);
+          font-size: 14px;
+          line-height: 1.55;
+          position: relative;
+        }
 
-      /* PII emphasis (pre-scrub) */
-      .pii {
-        position: relative;
-        padding: 0 .12em;
-        border-radius: 6px;
-        background: rgba(255,59,48,0.06);
-        box-shadow: inset 0 0 0 1px rgba(255,59,48,0.22);
-        color: var(--oc-danger);
-        transition: filter .5s ease, color .5s ease, background .5s ease, box-shadow .5s ease;
-      }
-      .scrubbed .pii {
-        filter: blur(0px);
-        color: inherit;
-        background: transparent;
-        box-shadow: none;
-      }
+        .fine {
+          display: block;
+          margin-top: 8px;
+          color: var(--muted);
+          font-size: 12px;
+        }
 
-      /* Center scrub “engine” */
-      .engine {
-        align-self: center;
-        justify-self: center;
-        width: 100%;
-        max-width: 120px;
-        display: grid;
-        justify-items: center;
-        gap: 10px;
-        padding: 8px 0;
-      }
-      .engine-label {
-        font-size: 11px; color: var(--oc-muted);
-        letter-spacing: .06em; text-transform: uppercase;
-      }
-      .engine-core {
-        width: 100%;
-        height: 96px;
-        border-radius: 12px;
-        border: 1px solid var(--oc-border);
-        background:
-          linear-gradient(180deg, rgba(250,250,250,0.9), rgba(245,245,245,0.9));
-        overflow: hidden;
-        position: relative;
-      }
-      .beam {
-        position: absolute; inset: 0;
-        opacity: 0; pointer-events: none;
-        background: linear-gradient(90deg, transparent, rgba(10,132,255,0.22), transparent);
-        transform: translateX(-100%);
-      }
-      .engine-core::before,
-      .engine-core::after {
-        content: "";
-        position: absolute; inset: -40%;
-        background:
-          repeating-linear-gradient( 0deg, rgba(0,0,0,0.06) 0 2px, transparent 2px 6px);
-        transform: rotate(35deg);
-        animation: lines 8s linear infinite;
-        opacity: .5;
-      }
-      .engine-core::after {
-        transform: rotate(-35deg);
-        animation-duration: 10s;
-        opacity: .35;
-      }
-      @keyframes lines {
-        to { transform: translateY(40%) rotate(var(--rot,35deg)); }
-      }
+        .track {
+          position: relative;
+          height: 2px;
+          background: var(--hair);
+          border-radius: 999px;
+          width: 100%;
+          overflow: hidden;
+        }
+        .pulse {
+          position: absolute;
+          inset: 0;
+          transform: translateX(-100%);
+          background: linear-gradient(90deg,
+            transparent 0%,
+            color-mix(in oklab, var(--accent), transparent 60%) 40%,
+            color-mix(in oklab, var(--accent), transparent 0%) 55%,
+            color-mix(in oklab, var(--accent), transparent 60%) 70%,
+            transparent 100%);
+        }
 
-      /* Right column badges */
-      .sent {
-        display: inline-flex; align-items: center; gap: .5ch;
-        font-size: 12px; padding: 6px 10px; border-radius: 999px;
-        border: 1px solid var(--oc-border);
-        background: rgba(248,248,248,0.8);
-        color: var(--oc-muted);
-      }
-      .sent .ok {
-        width: 7px; height: 7px; border-radius: 50%;
-        background: var(--oc-success);
-      }
+        .grid-mid {
+          display: grid;
+          place-items: center;
+          height: 100%;
+          min-height: 180px;
+        }
 
-      /* Motion */
-      .fade-in { animation: fadeIn .6s ease both; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
-      .slide-in { animation: slideIn .7s cubic-bezier(.2,.7,.2,1) both; }
-      @keyframes slideIn { from { opacity: 0; transform: translateX(-28px) } to { opacity: 1; transform: translateX(0) } }
-      .beam-run { animation: beamMove 1s ease-in-out forwards; }
-      @keyframes beamMove { 0% { opacity: 0; transform: translateX(-100%) } 10% { opacity: 1 } 100% { opacity: 1; transform: translateX(100%) } }
+        .lbl {
+          color: var(--muted);
+          font-size: 11px;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+          text-align: center;
+        }
 
-      /* Respect user preferences */
-      @media (prefers-reduced-motion: reduce) {
-        * { animation: none !important; transition: none !important; }
-        .beam { display: none; }
-      }
-    </style>
+        /* Token highlight + scrub animations */
+        .pii {
+          position: relative;
+          white-space: nowrap;
+        }
+        .pii::after {
+          content: "";
+          position: absolute;
+          inset: -2px -3px;
+          border-radius: 8px;
+          background: transparent;
+          z-index: -1;
+        }
+        .pii.highlight::after {
+          background: color-mix(in oklab, var(--accent), transparent 80%);
+          animation: glow var(--oc-dur) var(--oc-ease);
+        }
+        @keyframes glow {
+          0%   { background: color-mix(in oklab, var(--accent), transparent 95%); }
+          100% { background: color-mix(in oklab, var(--accent), transparent 80%); }
+        }
+        .pii.scrubbing {
+          transition: filter var(--oc-dur) var(--oc-ease), opacity var(--oc-dur) var(--oc-ease);
+          filter: blur(2px);
+          opacity: .2;
+        }
+        .pii.replaced {
+          filter: none;
+          opacity: 1;
+        }
 
-    <div class="card" part="card" role="group" aria-label="PII Scrubbing Demonstration">
-      <div class="hdr">
-        <div class="title">PII scrub before cloud send</div>
-        <div class="status" aria-live="polite">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span class="status-text">Idle</span>
+        /* Ghost send */
+        .ghost {
+          position: fixed; /* detached overlay for smooth travel */
+          left: 0; top: 0;
+          margin: 0;
+          padding: 10px 12px;
+          border-radius: 12px;
+          border: 1px solid var(--hair);
+          background: color-mix(in oklab, var(--card), var(--ink) 4%);
+          color: var(--ink);
+          font: inherit;
+          line-height: 1.5;
+          pointer-events: none;
+          will-change: transform, opacity;
+          z-index: 999999;
+        }
+
+        .actions {
+          display: flex;
+          justify-content: flex-end;
+          padding: 0 var(--oc-pad) var(--oc-pad);
+        }
+        .btn {
+          appearance: none;
+          border: 1px solid var(--hair);
+          background: color-mix(in oklab, var(--card), var(--ink) 3%);
+          color: var(--ink);
+          padding: 8px 12px;
+          border-radius: 12px;
+          font-size: 12px;
+          letter-spacing: .01em;
+          cursor: pointer;
+          transition: transform 180ms var(--oc-ease), background 180ms, border-color 180ms;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+
+        @media (max-width: 860px) {
+          .wrap {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+          .grid-mid { min-height: 24px; height: 24px; }
+        }
+
+        /* Reduced motion: skip animations */
+        @media (prefers-reduced-motion: reduce) {
+          .pulse, .pii.highlight::after { animation: none !important; }
+        }
+      </style>
+
+      <div class="wrap" aria-label="PII scrubbing demonstration">
+        <section class="panel left" aria-live="polite">
+          <div class="hd">On your device</div>
+          <div class="bubble raw" part="raw">
+            <span class="t">
+              Hi, I’m <span class="pii" data-key="name">Alexander Reed</span> — 
+              <span class="pii" data-key="email">alex.reed@onxium.com</span>. 
+              Call me at <span class="pii" data-key="phone">(415) 555-0133</span>. 
+              My SSN is <span class="pii" data-key="ssn">123-45-6789</span>.
+            </span>
+            <span class="fine">Nothing leaves your device until sensitive details are removed.</span>
+          </div>
+
+          <div class="bubble clean" part="clean" hidden>
+            <span class="t"></span>
+            <span class="fine">PII removed locally. Ready to send.</span>
+          </div>
+
+          <div class="actions">
+            <button class="btn" part="replay" type="button" aria-label="Replay">Replay</button>
+          </div>
+        </section>
+
+        <div class="grid-mid">
+          <div class="lbl">Secure send</div>
+          <div class="track" aria-hidden="true"><div class="pulse"></div></div>
         </div>
+
+        <section class="panel right">
+          <div class="hd">To the cloud</div>
+          <div class="bubble cloud" part="cloud">
+            <span class="t"></span>
+            <span class="fine">PII scrubbed. Encrypted in transit.</span>
+          </div>
+        </section>
       </div>
-
-      <div class="body">
-        <!-- Left: Original -->
-        <div class="col">
-          <div class="subtle">Original message</div>
-          <div class="bubble original">
-            <p>
-              Hi, I'm <span class="pii" data-type="name" data-replace="Person X">Alex Grey</span> — my email is
-              <span class="pii" data-type="email" data-replace="PersonX@Email.com">alex.grey@example.com</span>
-              and my phone is <span class="pii" data-type="phone" data-replace="[hidden]">(555) 123-4567</span>.
-              I live at <span class="pii" data-type="address" data-replace="[hidden]">221B Baker Street</span>.
-            </p>
-          </div>
-        </div>
-
-        <!-- Center: Scrub engine -->
-        <div class="engine">
-          <div class="engine-core" aria-hidden="true"><div class="beam"></div></div>
-          <div class="engine-label">Scrub Engine</div>
-        </div>
-
-        <!-- Right: Cleaned -->
-        <div class="col">
-          <div class="subtle">Cleaned &amp; sent</div>
-          <div class="bubble clean" aria-live="polite">
-            <p class="clean-text" style="opacity:.5">Waiting…</p>
-          </div>
-          <div class="sent" title="Delivered securely">
-            <span class="ok" aria-hidden="true"></span>
-            <span class="sent-text">Not sent yet</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  class OCScrub extends HTMLElement {
-    #root; #status; #statusText; #original; #clean; #cleanText; #sent; #sentText; #beam; #observer; #ran = false;
-
-    constructor() {
-      super();
-      this.#root = this.attachShadow({ mode: 'open' });
-      this.#root.appendChild(TPL.content.cloneNode(true));
-      this.#status = this.#root.querySelector('.status');
-      this.#statusText = this.#root.querySelector('.status-text');
-      this.#original = this.#root.querySelector('.original');
-      this.#clean = this.#root.querySelector('.clean');
-      this.#cleanText = this.#root.querySelector('.clean-text');
-      this.#sent = this.#root.querySelector('.sent');
-      this.#sentText = this.#root.querySelector('.sent-text');
-      this.#beam = this.#root.querySelector('.beam');
-    }
-
-    connectedCallback() {
-      // Auto-play when in view
-      this.#observer = new IntersectionObserver((entries) => {
-        const v = entries.some(e => e.isIntersecting && e.intersectionRatio > 0.5);
-        if (v && !this.#ran) {
-          this.play();
-          this.#ran = true;
-          this.#observer?.disconnect();
-        }
-      }, { threshold: [0, .5, .75, 1] });
-      this.#observer.observe(this);
-
-      // Immediate play if already visible (e.g., above the fold)
-      queueMicrotask(() => {
-        const rect = this.getBoundingClientRect();
-        const vh = (globalThis.innerHeight || document.documentElement.clientHeight || 0);
-        if (rect.top >= 0 && rect.top < vh && !this.#ran) {
-          this.play();
-          this.#ran = true;
-          this.#observer?.disconnect();
-        }
-      });
-    }
-
-    disconnectedCallback() {
-      this.#observer?.disconnect();
-    }
-
-    play() {
-      // Reset UI
-      this.#statusText.textContent = 'Scanning…';
-      this.#sentText.textContent = 'Not sent yet';
-      this.#cleanText.style.opacity = .5;
-      this.#cleanText.textContent = 'Waiting…';
-      this.#original.classList.remove('scrubbed');
-      this.#beam.classList.remove('beam-run');
-
-      // Sequence timings (fine-tuned for smoothness)
-      const steps = [
-        { at:   0,  fn: () => this.#scan() },
-        { at: 400,  fn: () => this.#scrubOne('name') },
-        { at: 900,  fn: () => this.#scrubOne('email') },
-        { at: 1400, fn: () => this.#scrubOne('phone') },
-        { at: 1900, fn: () => this.#scrubOne('address') },
-        { at: 2300, fn: () => this.#compileClean() },
-        { at: 2600, fn: () => this.#send() },
-        { at: 3400, fn: () => this.#finish() },
-      ];
-
-      let base = performance.now();
-      const tick = () => {
-        const t = performance.now() - base;
-        while (steps.length && t >= steps[0].at) {
-          steps.shift().fn();
-        }
-        if (steps.length) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    }
-
-    #scan() {
-      this.#statusText.textContent = 'Scanning…';
-      this.#original.classList.remove('scrubbed');
-      // Gentle emphasis flicker to draw eye once
-      this.#original.classList.add('fade-in');
-      setTimeout(() => this.#original.classList.remove('fade-in'), 600);
-    }
-
-    #scrubOne(type) {
-      const node = this.#root.querySelector(`.pii[data-type="${type}"]`);
-      if (!node) return;
-      const replacement = node.getAttribute('data-replace') || '[redacted]';
-
-      // Blur out then replace; keep layout stable
-      node.animate([
-        { filter: 'blur(0px)', opacity: 1 },
-        { filter: 'blur(6px)', opacity: .2 }
-      ], { duration: 220, easing: 'ease' }).finished.then(() => {
-        node.textContent = replacement;
-        node.classList.add('replaced');
-        node.animate([
-          { filter: 'blur(6px)', opacity: .2 },
-          { filter: 'blur(0px)', opacity: 1 }
-        ], { duration: 260, easing: 'ease' });
-      });
-
-      // Update status line subtly
-      const label = type[0].toUpperCase() + type.slice(1);
-      this.#statusText.textContent = `Scrubbing ${label}…`;
-    }
-
-    #compileClean() {
-      // Mark as scrubbed (removes red styling)
-      this.#original.classList.add('scrubbed');
-
-      // Create cleaned text snapshot
-      const html = this.#original.querySelector('p')?.cloneNode(true);
-      // Strip pii classes for final render
-      html?.querySelectorAll('.pii').forEach(s => s.classList.remove('pii', 'replaced'));
-      const finalText = html?.textContent?.replace(/\s+/g, ' ').trim() || '';
-      this.#cleanText.textContent = finalText;
-      this.#cleanText.style.opacity = .85;
-      this.#cleanText.classList.add('fade-in');
-      setTimeout(() => this.#cleanText.classList.remove('fade-in'), 700);
-
-      // Beam pass through engine
-      this.#beam.classList.add('beam-run');
-      setTimeout(() => this.#beam.classList.remove('beam-run'), 1100);
-      this.#statusText.textContent = 'Compiling clean payload…';
-    }
-
-    #send() {
-      // Animate cleaned bubble appearance as if arriving in cloud
-      this.#clean.classList.add('slide-in');
-      setTimeout(() => this.#clean.classList.remove('slide-in'), 800);
-      this.#sentText.textContent = 'Sending…';
-    }
-
-    #finish() {
-      this.#statusText.textContent = 'Complete';
-      this.#sentText.textContent = 'Sent securely';
-    }
+    `;
+    this.shadowRoot.appendChild(tpl.content.cloneNode(true));
   }
 
-  customElements.define(TAG, OCScrub);
-})();
+  connectedCallback() {
+    const sh = this.shadowRoot;
+    const $ = (sel, root=sh) => root.querySelector(sel);
+    const $$ = (sel, root=sh) => [...root.querySelectorAll(sel)];
+
+    const rawBubble = $('[part="raw"]');
+    const cleanBubble = $('[part="clean"]');
+    const cloudBubble = $('[part="cloud"]');
+    const replayBtn = $('[part="replay"]');
+    const pulse = sh.querySelector('.pulse');
+
+    // Replacement rules (Apple-clean placeholders)
+    const replacements = {
+      name: 'Person X',
+      email: 'PersonX@Email',
+      phone: '[redacted]',
+      ssn:   '[redacted]'
+    };
+
+    // Build sanitized text from current DOM so it stays in sync with any edits
+    const buildSanitized = () => {
+      const clone = rawBubble.querySelector('.t').cloneNode(true);
+      $$('.pii', clone).forEach(span => {
+        const key = span.getAttribute('data-key');
+        span.textContent = (replacements[key] ?? '[redacted]');
+        span.classList.remove('pii'); // finalize
+      });
+      return clone.textContent.replace(/\s+/g,' ').trim();
+    };
+
+    const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const animatePulse = () => {
+      if (prefersReduced) return;
+      pulse.animate(
+        [{ transform: 'translateX(-100%)' }, { transform: 'translateX(100%)' }],
+        { duration: 1400, iterations: 2, easing: 'cubic-bezier(.22,.61,.36,1)' }
+      );
+    };
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    const scrubTokens = async () => {
+      const tokens = $$('.pii', rawBubble);
+      for (const span of tokens) {
+        // Highlight
+        span.classList.add('highlight');
+        await sleep(140);
+        // Blur out
+        span.classList.add('scrubbing');
+        await sleep(220);
+        // Replace
+        const key = span.getAttribute('data-key');
+        span.textContent = (replacements[key] ?? '[redacted]');
+        span.classList.remove('scrubbing');
+        span.classList.add('replaced');
+        await sleep(140);
+      }
+    };
+
+    const crossSend = async () => {
+      // Copy sanitized text into clean + cloud
+      const sanitized = buildSanitized();
+      cleanBubble.querySelector('.t').textContent = sanitized;
+      cloudBubble.querySelector('.t').textContent = '';
+
+      // Reveal clean bubble
+      cleanBubble.hidden = false;
+      cleanBubble.animate(
+        [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }],
+        { duration: 320, easing: 'cubic-bezier(.22,.61,.36,1)' }
+      );
+
+      await sleep(160);
+
+      // Ghost element that travels from clean → cloud
+      const makeGhost = () => {
+        const g = document.createElement('div');
+        g.className = 'ghost';
+        g.textContent = sanitized;
+        sh.appendChild(g);
+        return g;
+      };
+
+      const rectOf = (el) => {
+        const r = el.getBoundingClientRect();
+        const sx = window.scrollX, sy = window.scrollY;
+        return { x: r.left + sx, y: r.top + sy, w: r.width, h: r.height };
+      };
+
+      const g = makeGhost();
+      const from = rectOf(cleanBubble);
+      const to = rectOf(cloudBubble);
+
+      g.style.transform = `translate(${from.x + 12}px, ${from.y + 12}px) scale(1)`;
+      g.style.opacity = '0.98';
+
+      const travel = g.animate(
+        [
+          { transform: `translate(${from.x + 12}px, ${from.y + 12}px) scale(1)`, opacity: 0.98 },
+          { transform: `translate(${(from.x+to.x)/2}px, ${(from.y+to.y)/2 - 20}px) scale(0.98)`, opacity: 0.9 },
+          { transform: `translate(${to.x + 12}px, ${to.y + 12}px) scale(1)`, opacity: 0.0 }
+        ],
+        { duration: 720, easing: 'cubic-bezier(.22,.61,.36,1)' }
+      );
+
+      animatePulse();
+
+      await travel.finished.catch(()=>{});
+      g.remove();
+
+      // Fill the cloud bubble content after "arrival"
+      cloudBubble.querySelector('.t').textContent = sanitized;
+      cloudBubble.animate(
+        [{ opacity: 0.3 }, { opacity: 1 }],
+        { duration: 220, easing: 'linear' }
+      );
+    };
+
+    const reset = () => {
+      // Restore original raw bubble content
+      rawBubble.innerHTML = `
+        <span class="t">
+          Hi, I’m <span class="pii" data-key="name">Alexander Reed</span> — 
+          <span class="pii" data-key="email">alex.reed@onxium.com</span>. 
+          Call me at <span class="pii" data-key="phone">(415) 555-0133</span>. 
+          My SSN is <span class="pii" data-key="ssn">123-45-6789</span>.
+        </span>
+        <span class="fine">Nothing leaves your device until sensitive details are removed.</span>
+      `;
+      cleanBubble.hidden = true;
+      cleanBubble.querySelector('.t').textContent = '';
+      cloudBubble.querySelector('.t').textContent = '';
+    };
+
+    const run = async () => {
+      reset();
+      if (prefersReduced) {
+        // Skip to final state for accessibility
+        const sanitized = buildSanitized();
+        cleanBubble.hidden = false;
+        cleanBubble.querySelector('.t').textContent = sanitized;
+        cloudBubble.querySelector('.t').textContent = sanitized;
+        return;
+      }
+      await sleep(220);
+      await scrubTokens();
+      await sleep(180);
+      await crossSend();
+    };
+
+    // Replay button
+    replayBtn.addEventListener('click', () => {
+      run();
+    });
+
+    // Autoplay when visible
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          run();
+          io.disconnect();
+          break;
+        }
+      }
+    }, { rootMargin: "0px 0px -20% 0px", threshold: 0.3 });
+    io.observe(this);
+
+    // Resize recalculation safeguard on orientation/resize
+    let to;
+    const onR = () => {
+      clearTimeout(to);
+      to = setTimeout(()=>{}, 80); // noop; layout will recalc for ghost rects during run
+    };
+    window.addEventListener('resize', onR);
+    window.addEventListener('orientationchange', onR);
+  }
+}
+
+customElements.define('oc-pii-scrub', OCPiiScrub);
 </script>
+<!-- Place the component where you want it: -->
+<!-- <oc-pii-scrub style="--oc-card-width: 720px;"></oc-pii-scrub> -->
 
 
 
