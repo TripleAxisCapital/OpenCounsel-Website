@@ -1066,435 +1066,511 @@
   </article>
 </section>
 
-<script>
-class OCPiiScrub extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    const tpl = document.createElement("template");
-    tpl.innerHTML = `
-      <style>
-        :host {
-          --oc-card-width: 720px; /* Adjust to match your site's card width */
-          --oc-radius: 20px;
-          --oc-pad: 18px;
-          --oc-gap: 16px;
-          --oc-border: 1px;
-          --oc-dur: 560ms;
-          --oc-ease: cubic-bezier(.22,.61,.36,1);
-          --bg: #0b0b0c;
-          --card: #111214;
-          --ink: #e9e9ea;
-          --muted: #a4a6ab;
-          --hair: #1f2023;
-          --accent: #3a7afe;
-          color-scheme: light dark;
-          display: block;
-          font: 14px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Inter, Segoe UI, Roboto, Helvetica, Arial, system-ui, sans-serif;
-          -webkit-font-smoothing: antialiased;
-          text-rendering: optimizeLegibility;
-        }
-        @media (prefers-color-scheme: light) {
-          :host {
-            --bg: #ffffff;
-            --card: #ffffff;
-            --ink: #111214;
-            --muted: #5b5d63;
-            --hair: #e7e8ea;
-            --accent: #0a84ff;
-          }
-        }
+<!--
+  OC — PII Scrubbing Animation (Apple-style, production-grade, single file)
+  • Drop-in: paste this whole block anywhere. Use <oc-pii-scrub></oc-pii-scrub>.
+  • No dependencies. Encapsulated styles via Shadow DOM.
+  • Autoplays on scroll into view. Respects prefers-reduced-motion.
+  • Click the card (or the Replay pill) to replay.
+  • Tweak the demo message in the TEMPLATE_MESSAGE constant below if desired.
+-->
+<template id="oc-pii-scrub-template">
+  <style>
+    :host {
+      --oc-bg: #ffffff;
+      --oc-surface: #ffffff;
+      --oc-surface-2: #f6f6f6;
+      --oc-text: #0b0b0b;
+      --oc-muted: #6b6b6b;
+      --oc-accent: #007aff; /* iOS blue */
+      --oc-danger: #ff3b30; /* subtle detection highlight tone */
+      --oc-radius: 20px;
+      --oc-shadow-1: 0 0.5px 1px rgba(0,0,0,0.08), 0 8px 30px rgba(0,0,0,0.10);
+      --oc-shadow-2: 0 2px 6px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
+      --oc-border: rgba(0,0,0,0.08);
 
-        .wrap {
-          display: grid;
-          grid-template-columns: 1fr minmax(44px, 72px) 1fr;
-          align-items: center;
-          gap: var(--oc-gap);
-          max-width: min(var(--oc-card-width), 100%);
-          margin-inline: auto;
-          padding: 0;
-        }
+      display: block;
+      box-sizing: border-box;
+      max-width: 720px;
+      margin: 24px auto;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+                   "Inter", system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, "Segoe UI Emoji";
+      color: var(--oc-text);
+      contain: content;
+    }
 
-        .panel {
-          background: var(--card);
-          border: var(--oc-border) solid var(--hair);
-          border-radius: var(--oc-radius);
-          box-shadow: 0 10px 30px rgba(0,0,0,.15);
-          overflow: clip;
-          min-height: 180px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-        }
+    .card {
+      position: relative;
+      background: var(--oc-surface);
+      border-radius: calc(var(--oc-radius) + 4px);
+      box-shadow: var(--oc-shadow-1);
+      border: 1px solid var(--oc-border);
+      overflow: clip;
+      transition: box-shadow .3s ease;
+    }
+    .card:hover { box-shadow: var(--oc-shadow-2); }
 
-        .hd {
-          padding: 12px var(--oc-pad) 0;
-          font-weight: 600;
-          letter-spacing: .01em;
-          color: var(--muted);
-          font-size: 12px;
-          text-transform: none;
-        }
+    .header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px 8px 16px;
+    }
+    .title {
+      font-weight: 600;
+      letter-spacing: .02em;
+      font-size: 14px;
+    }
+    .spacer { flex: 1; }
 
-        .bubble {
-          margin: 10px var(--oc-pad) var(--oc-pad);
-          padding: 14px 16px;
-          border-radius: 16px;
-          border: 1px solid var(--hair);
-          background: color-mix(in oklab, var(--card), var(--ink) 3%);
-          color: var(--ink);
-          font-size: 14px;
-          line-height: 1.55;
-          position: relative;
-        }
+    .replay {
+      font: inherit;
+      border: 1px solid var(--oc-border);
+      background: #fbfbfb;
+      color: var(--oc-text);
+      border-radius: 999px;
+      padding: 6px 10px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: .0;
+      transform: translateY(-2px);
+      transition: opacity .25s ease, transform .25s ease, background .2s ease, border-color .2s ease;
+      user-select: none;
+    }
+    .card:hover .replay { opacity: 1; transform: translateY(0); }
+    .replay:active { transform: translateY(1px); }
+    .replay:focus-visible { outline: 2px solid var(--oc-accent); outline-offset: 2px; }
 
-        .fine {
-          display: block;
-          margin-top: 8px;
-          color: var(--muted);
-          font-size: 12px;
-        }
+    .stage {
+      position: relative;
+      padding: 24px 16px 18px 16px;
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: 220px;
+    }
 
-        .track {
-          position: relative;
-          height: 2px;
-          background: var(--hair);
-          border-radius: 999px;
-          width: 100%;
-          overflow: hidden;
-        }
-        .pulse {
-          position: absolute;
-          inset: 0;
-          transform: translateX(-100%);
-          background: linear-gradient(90deg,
-            transparent 0%,
-            color-mix(in oklab, var(--accent), transparent 60%) 40%,
-            color-mix(in oklab, var(--accent), transparent 0%) 55%,
-            color-mix(in oklab, var(--accent), transparent 60%) 70%,
-            transparent 100%);
-        }
+    /* Cloud target (minimal, monochrome) */
+    .cloud {
+      position: absolute;
+      top: 18px; right: 18px;
+      width: 92px; height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fafafa, #f2f2f2);
+      border: 1px solid var(--oc-border);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+      display: grid; place-items: center;
+      filter: saturate(.98);
+      opacity: .9;
+    }
+    .cloud::before, .cloud::after {
+      content: "";
+      position: absolute; border-radius: 999px; background: inherit; border: inherit;
+      box-shadow: inherit;
+    }
+    .cloud::before { width: 40px; height: 40px; left: 10px; top: -16px; }
+    .cloud::after  { width: 52px; height: 52px; right: 6px; top: -24px; }
+    .cloud-label {
+      position: absolute; top: 82px; right: 18px;
+      font-size: 12px; color: var(--oc-muted); letter-spacing: .02em;
+    }
 
-        .grid-mid {
-          display: grid;
-          place-items: center;
-          height: 100%;
-          min-height: 180px;
-        }
+    /* Message bubble */
+    .bubble {
+      align-self: end;
+      max-width: 84%;
+      background: #f8f8f8;
+      border: 1px solid var(--oc-border);
+      border-radius: 18px;
+      box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+      padding: 14px 16px;
+      line-height: 1.45;
+      font-size: 15px;
+      color: var(--oc-text);
+      transform-origin: left bottom;
+      opacity: 0;
+      transform: translateY(6px) scale(.98);
+    }
 
-        .lbl {
-          color: var(--muted);
-          font-size: 11px;
-          letter-spacing: .06em;
-          text-transform: uppercase;
-          text-align: center;
-        }
+    .meta {
+      display: flex; align-items: center; gap: 8px;
+      margin: 10px 2px 0 2px;
+      font-size: 12px;
+      color: var(--oc-muted);
+      letter-spacing: .02em;
+      opacity: 0;
+    }
+    .pill {
+      border: 1px solid var(--oc-border);
+      background: #f9f9f9;
+      border-radius: 999px;
+      padding: 3px 8px;
+    }
 
-        /* Token highlight + scrub animations */
-        .pii {
-          position: relative;
-          white-space: nowrap;
-        }
-        .pii::after {
-          content: "";
-          position: absolute;
-          inset: -2px -3px;
-          border-radius: 8px;
-          background: transparent;
-          z-index: -1;
-        }
-        .pii.highlight::after {
-          background: color-mix(in oklab, var(--accent), transparent 80%);
-          animation: glow var(--oc-dur) var(--oc-ease);
-        }
-        @keyframes glow {
-          0%   { background: color-mix(in oklab, var(--accent), transparent 95%); }
-          100% { background: color-mix(in oklab, var(--accent), transparent 80%); }
-        }
-        .pii.scrubbing {
-          transition: filter var(--oc-dur) var(--oc-ease), opacity var(--oc-dur) var(--oc-ease);
-          filter: blur(2px);
-          opacity: .2;
-        }
-        .pii.replaced {
-          filter: none;
-          opacity: 1;
-        }
+    /* PII detection highlight */
+    .pii {
+      position: relative;
+      white-space: nowrap;
+      border-radius: 8px;
+      padding: 0 2px;
+    }
+    .pii-detect::before {
+      content: "";
+      position: absolute; inset: -1px -2px;
+      border-radius: 10px;
+      background: color-mix(in oklab, var(--oc-danger) 16%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in oklab, var(--oc-danger) 30%, transparent) inset;
+      animation: pulse 800ms ease-in-out 2;
+      pointer-events: none;
+    }
+    @keyframes pulse {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
 
-        /* Ghost send */
-        .ghost {
-          position: fixed; /* detached overlay for smooth travel */
-          left: 0; top: 0;
-          margin: 0;
-          padding: 10px 12px;
-          border-radius: 12px;
-          border: 1px solid var(--hair);
-          background: color-mix(in oklab, var(--card), var(--ink) 4%);
-          color: var(--ink);
-          font: inherit;
-          line-height: 1.5;
-          pointer-events: none;
-          will-change: transform, opacity;
-          z-index: 999999;
-        }
+    /* Scrubbed replacement styling */
+    .scrub {
+      background: #f1f1f1;
+      border-radius: 8px;
+      padding: 0 4px;
+    }
 
-        .actions {
-          display: flex;
-          justify-content: flex-end;
-          padding: 0 var(--oc-pad) var(--oc-pad);
-        }
-        .btn {
-          appearance: none;
-          border: 1px solid var(--hair);
-          background: color-mix(in oklab, var(--card), var(--ink) 3%);
-          color: var(--ink);
-          padding: 8px 12px;
-          border-radius: 12px;
-          font-size: 12px;
-          letter-spacing: .01em;
-          cursor: pointer;
-          transition: transform 180ms var(--oc-ease), background 180ms, border-color 180ms;
-        }
-        .btn:hover { transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
+    /* Encrypted capsule overlay */
+    .cipher {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .cipher::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(115deg, transparent 0 35%, rgba(0,0,0,.06) 50%, transparent 65% 100%),
+        repeating-linear-gradient(90deg, rgba(0,0,0,.04) 0 6px, rgba(0,0,0,.02) 6px 12px);
+      transform: translateX(-100%);
+    }
 
-        @media (max-width: 860px) {
-          .wrap {
-            grid-template-columns: 1fr;
-            gap: 12px;
-          }
-          .grid-mid { min-height: 24px; height: 24px; }
-        }
+    /* Path + payload dot (to cloud) */
+    .path {
+      position: absolute; inset: 0;
+      pointer-events: none; opacity: 0;
+    }
+    .dot {
+      position: absolute; width: 8px; height: 8px;
+      border-radius: 999px; background: var(--oc-accent);
+      box-shadow: 0 0 0 6px color-mix(in oklab, var(--oc-accent) 25%, transparent);
+      transform: translate(-9999px, -9999px);
+      pointer-events: none;
+    }
 
-        /* Reduced motion: skip animations */
-        @media (prefers-reduced-motion: reduce) {
-          .pulse, .pii.highlight::after { animation: none !important; }
-        }
-      </style>
+    /* Steps / progress */
+    .steps {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px; padding: 12px 16px 16px 16px; align-items: center;
+    }
+    .step {
+      display: grid; grid-template-columns: 14px 1fr; gap: 8px; align-items: center;
+      font-size: 12px; color: var(--oc-muted);
+    }
+    .dotstep {
+      width: 10px; height: 10px; border-radius: 999px;
+      border: 1px solid var(--oc-border); background: #fff;
+      transition: background .35s ease, border-color .35s ease, box-shadow .35s ease;
+    }
+    .step.active .dotstep {
+      background: var(--oc-accent);
+      border-color: color-mix(in oklab, var(--oc-accent) 60%, #0000);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--oc-accent) 25%, transparent);
+    }
+    .step-label { letter-spacing: .02em; }
 
-      <div class="wrap" aria-label="PII scrubbing demonstration">
-        <section class="panel left" aria-live="polite">
-          <div class="hd">On your device</div>
-          <div class="bubble raw" part="raw">
-            <span class="t">
-              Hi, I’m <span class="pii" data-key="name">Alexander Reed</span> — 
-              <span class="pii" data-key="email">alex.reed@onxium.com</span>. 
-              Call me at <span class="pii" data-key="phone">(415) 555-0133</span>. 
-              My SSN is <span class="pii" data-key="ssn">123-45-6789</span>.
-            </span>
-            <span class="fine">Nothing leaves your device until sensitive details are removed.</span>
-          </div>
+    /* Reduced motion: keep it tasteful and instant */
+    @media (prefers-reduced-motion: reduce) {
+      .replay { transition: none; }
+      .card, .bubble, .meta, .cipher::before { transition: none !important; animation: none !important; }
+    }
 
-          <div class="bubble clean" part="clean" hidden>
-            <span class="t"></span>
-            <span class="fine">PII removed locally. Ready to send.</span>
-          </div>
+    /* Mobile tuning */
+    @media (max-width: 480px) {
+      .cloud { transform: scale(.9); transform-origin: top right; }
+      .bubble { max-width: 100%; }
+    }
+  </style>
 
-          <div class="actions">
-            <button class="btn" part="replay" type="button" aria-label="Replay">Replay</button>
-          </div>
-        </section>
+  <div class="card" role="figure" aria-label="Animation showing local PII scrubbing before cloud transfer">
+    <div class="header">
+      <div class="title">PII Scrubbing • On-Device</div>
+      <div class="spacer"></div>
+      <button class="replay" aria-label="Replay animation">Replay</button>
+    </div>
 
-        <div class="grid-mid">
-          <div class="lbl">Secure send</div>
-          <div class="track" aria-hidden="true"><div class="pulse"></div></div>
-        </div>
+    <div class="stage">
+      <div class="cloud" aria-hidden="true"></div>
+      <div class="cloud-label" aria-hidden="true">Cloud</div>
 
-        <section class="panel right">
-          <div class="hd">To the cloud</div>
-          <div class="bubble cloud" part="cloud">
-            <span class="t"></span>
-            <span class="fine">PII scrubbed. Encrypted in transit.</span>
-          </div>
-        </section>
-      </div>
-    `;
-    this.shadowRoot.appendChild(tpl.content.cloneNode(true));
-  }
-
-  connectedCallback() {
-    const sh = this.shadowRoot;
-    const $ = (sel, root=sh) => root.querySelector(sel);
-    const $$ = (sel, root=sh) => [...root.querySelectorAll(sel)];
-
-    const rawBubble = $('[part="raw"]');
-    const cleanBubble = $('[part="clean"]');
-    const cloudBubble = $('[part="cloud"]');
-    const replayBtn = $('[part="replay"]');
-    const pulse = sh.querySelector('.pulse');
-
-    // Replacement rules (Apple-clean placeholders)
-    const replacements = {
-      name: 'Person X',
-      email: 'PersonX@Email',
-      phone: '[redacted]',
-      ssn:   '[redacted]'
-    };
-
-    // Build sanitized text from current DOM so it stays in sync with any edits
-    const buildSanitized = () => {
-      const clone = rawBubble.querySelector('.t').cloneNode(true);
-      $$('.pii', clone).forEach(span => {
-        const key = span.getAttribute('data-key');
-        span.textContent = (replacements[key] ?? '[redacted]');
-        span.classList.remove('pii'); // finalize
-      });
-      return clone.textContent.replace(/\s+/g,' ').trim();
-    };
-
-    const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const animatePulse = () => {
-      if (prefersReduced) return;
-      pulse.animate(
-        [{ transform: 'translateX(-100%)' }, { transform: 'translateX(100%)' }],
-        { duration: 1400, iterations: 2, easing: 'cubic-bezier(.22,.61,.36,1)' }
-      );
-    };
-
-    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-    const scrubTokens = async () => {
-      const tokens = $$('.pii', rawBubble);
-      for (const span of tokens) {
-        // Highlight
-        span.classList.add('highlight');
-        await sleep(140);
-        // Blur out
-        span.classList.add('scrubbing');
-        await sleep(220);
-        // Replace
-        const key = span.getAttribute('data-key');
-        span.textContent = (replacements[key] ?? '[redacted]');
-        span.classList.remove('scrubbing');
-        span.classList.add('replaced');
-        await sleep(140);
-      }
-    };
-
-    const crossSend = async () => {
-      // Copy sanitized text into clean + cloud
-      const sanitized = buildSanitized();
-      cleanBubble.querySelector('.t').textContent = sanitized;
-      cloudBubble.querySelector('.t').textContent = '';
-
-      // Reveal clean bubble
-      cleanBubble.hidden = false;
-      cleanBubble.animate(
-        [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }],
-        { duration: 320, easing: 'cubic-bezier(.22,.61,.36,1)' }
-      );
-
-      await sleep(160);
-
-      // Ghost element that travels from clean → cloud
-      const makeGhost = () => {
-        const g = document.createElement('div');
-        g.className = 'ghost';
-        g.textContent = sanitized;
-        sh.appendChild(g);
-        return g;
-      };
-
-      const rectOf = (el) => {
-        const r = el.getBoundingClientRect();
-        const sx = window.scrollX, sy = window.scrollY;
-        return { x: r.left + sx, y: r.top + sy, w: r.width, h: r.height };
-      };
-
-      const g = makeGhost();
-      const from = rectOf(cleanBubble);
-      const to = rectOf(cloudBubble);
-
-      g.style.transform = `translate(${from.x + 12}px, ${from.y + 12}px) scale(1)`;
-      g.style.opacity = '0.98';
-
-      const travel = g.animate(
-        [
-          { transform: `translate(${from.x + 12}px, ${from.y + 12}px) scale(1)`, opacity: 0.98 },
-          { transform: `translate(${(from.x+to.x)/2}px, ${(from.y+to.y)/2 - 20}px) scale(0.98)`, opacity: 0.9 },
-          { transform: `translate(${to.x + 12}px, ${to.y + 12}px) scale(1)`, opacity: 0.0 }
-        ],
-        { duration: 720, easing: 'cubic-bezier(.22,.61,.36,1)' }
-      );
-
-      animatePulse();
-
-      await travel.finished.catch(()=>{});
-      g.remove();
-
-      // Fill the cloud bubble content after "arrival"
-      cloudBubble.querySelector('.t').textContent = sanitized;
-      cloudBubble.animate(
-        [{ opacity: 0.3 }, { opacity: 1 }],
-        { duration: 220, easing: 'linear' }
-      );
-    };
-
-    const reset = () => {
-      // Restore original raw bubble content
-      rawBubble.innerHTML = `
-        <span class="t">
-          Hi, I’m <span class="pii" data-key="name">Alexander Reed</span> — 
-          <span class="pii" data-key="email">alex.reed@onxium.com</span>. 
-          Call me at <span class="pii" data-key="phone">(415) 555-0133</span>. 
-          My SSN is <span class="pii" data-key="ssn">123-45-6789</span>.
+      <div class="bubble" aria-live="polite">
+        <span class="content">
+          Hey OC, I'm <span class="pii name">Alexander Reed</span>.
+          My email is <span class="pii email">alex.reed@example.com</span>
+          and my phone is <span class="pii phone">(555) 482-1937</span>.
+          Can you schedule a call for tomorrow?
         </span>
-        <span class="fine">Nothing leaves your device until sensitive details are removed.</span>
-      `;
-      cleanBubble.hidden = true;
-      cleanBubble.querySelector('.t').textContent = '';
-      cloudBubble.querySelector('.t').textContent = '';
-    };
+        <div class="cipher" aria-hidden="true"></div>
+      </div>
 
-    const run = async () => {
-      reset();
-      if (prefersReduced) {
-        // Skip to final state for accessibility
-        const sanitized = buildSanitized();
-        cleanBubble.hidden = false;
-        cleanBubble.querySelector('.t').textContent = sanitized;
-        cloudBubble.querySelector('.t').textContent = sanitized;
-        return;
+      <!-- Curved path from bubble to cloud -->
+      <svg class="path" viewBox="0 0 720 260" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M 140 190 C 260 140, 420 110, 602 66" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <div class="dot" aria-hidden="true"></div>
+
+      <div class="meta">
+        <span class="pill state">Local</span>
+        <span>—</span>
+        <span class="note">PII detected & removed before send</span>
+      </div>
+    </div>
+
+    <div class="steps" aria-hidden="true">
+      <div class="step s1 active"><div class="dotstep"></div><div class="step-label">Local</div></div>
+      <div class="step s2"><div class="dotstep"></div><div class="step-label">Scrubbed</div></div>
+      <div class="step s3"><div class="dotstep"></div><div class="step-label">Encrypted</div></div>
+      <div class="step s4"><div class="dotstep"></div><div class="step-label">Cloud</div></div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function(){
+  // --------- Configuration (edit the demo message here if you like) ----------
+  const TEMPLATE_MESSAGE = {
+    nameOriginal: "Alexander Reed",
+    nameScrubbed: "Person X",
+    emailOriginal: "alex.reed@example.com",
+    emailScrubbed: "personx@email.com",
+    phoneOriginal: "(555) 482-1937",
+    phoneScrubbed: "000-000-0000"
+  };
+  // --------------------------------------------------------------------------
+
+  class OCPiiScrub extends HTMLElement {
+    constructor(){
+      super();
+      const root = this.attachShadow({mode: 'open'});
+      const tpl = document.getElementById('oc-pii-scrub-template');
+      root.appendChild(tpl.content.cloneNode(true));
+
+      // Cache elements
+      this.card   = root.querySelector('.card');
+      this.bubble = root.querySelector('.bubble');
+      this.content= root.querySelector('.content');
+      this.cipher = root.querySelector('.cipher');
+      this.path   = root.querySelector('.path');
+      this.dot    = root.querySelector('.dot');
+      this.meta   = root.querySelector('.meta');
+      this.statePill = root.querySelector('.state');
+      this.steps = {
+        s1: root.querySelector('.step.s1'),
+        s2: root.querySelector('.step.s2'),
+        s3: root.querySelector('.step.s3'),
+        s4: root.querySelector('.step.s4'),
+      };
+      this.replayBtn = root.querySelector('.replay');
+
+      // Populate demo message from config (safe even if unchanged)
+      const nameEl  = root.querySelector('.pii.name');
+      const emailEl = root.querySelector('.pii.email');
+      const phoneEl = root.querySelector('.pii.phone');
+      if (nameEl)  nameEl.textContent  = TEMPLATE_MESSAGE.nameOriginal;
+      if (emailEl) emailEl.textContent = TEMPLATE_MESSAGE.emailOriginal;
+      if (phoneEl) phoneEl.textContent = TEMPLATE_MESSAGE.phoneOriginal;
+
+      // Bind
+      this.play = this.play.bind(this);
+      this.reset = this.reset.bind(this);
+      this._onReplay = () => { this.play(true); };
+      this._onClick  = () => { this.play(true); };
+    }
+
+    connectedCallback(){
+      // Autoplay when scrolled into view
+      this._io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            // small delay for polish
+            setTimeout(()=>this.play(), 120);
+            this._io.disconnect();
+            break;
+          }
+        }
+      }, {threshold: .5});
+      this._io.observe(this);
+
+      this.replayBtn.addEventListener('click', this._onReplay);
+      this.card.addEventListener('click', this._onClick);
+
+      // Prefers-reduced-motion flag
+      this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
+    disconnectedCallback(){
+      this.replayBtn.removeEventListener('click', this._onReplay);
+      this.card.removeEventListener('click', this._onClick);
+      if (this._io) this._io.disconnect();
+      if (this._raf) cancelAnimationFrame(this._raf);
+    }
+
+    reset(){
+      // Visual resets
+      this.bubble.style.opacity = 0;
+      this.bubble.style.transform = 'translateY(6px) scale(.98)';
+      this.meta.style.opacity = 0;
+      this.cipher.style.opacity = 0;
+      this.cipher.style.removeProperty('--slide');
+      this.path.style.opacity = 0;
+      this.dot.style.transform = 'translate(-9999px, -9999px)';
+
+      // Steps
+      for (const k in this.steps) this.steps[k].classList.remove('active');
+      this.steps.s1.classList.add('active');
+
+      // Content back to originals
+      const root = this.shadowRoot;
+      root.querySelector('.pii.name').textContent  = TEMPLATE_MESSAGE.nameOriginal;
+      root.querySelector('.pii.email').textContent = TEMPLATE_MESSAGE.emailOriginal;
+      root.querySelector('.pii.phone').textContent = TEMPLATE_MESSAGE.phoneOriginal;
+      ['name','email','phone'].forEach(cls => {
+        const el = root.querySelector(`.pii.${cls}`);
+        el.classList.remove('pii-detect');
+        el.classList.remove('scrub');
+      });
+
+      this.statePill.textContent = 'Local';
+      this.meta.querySelector('.note').textContent = 'PII detected & removed before send';
+    }
+
+    async play(forceReplay = false){
+      if (!forceReplay && this._running) return;
+      this._running = true;
+      this.reset();
+
+      const delay = (ms)=> new Promise(res=> setTimeout(res, ms));
+
+      // Stage 1 — Bubble in (Local)
+      if (this.reduced) {
+        this.bubble.style.opacity = 1;
+        this.bubble.style.transform = 'none';
+      } else {
+        this.bubble.animate([
+          {opacity: 0, transform:'translateY(6px) scale(.98)'},
+          {opacity: 1, transform:'translateY(0) scale(1)'}
+        ], {duration: 420, easing:'cubic-bezier(.2,.6,.2,1)', fill:'forwards'});
+        await delay(440);
       }
-      await sleep(220);
-      await scrubTokens();
-      await sleep(180);
-      await crossSend();
-    };
+      this.meta.style.opacity = 1;
 
-    // Replay button
-    replayBtn.addEventListener('click', () => {
-      run();
-    });
+      // Stage 2 — Detect (pulse highlights)
+      const root = this.shadowRoot;
+      const nameEl  = root.querySelector('.pii.name');
+      const emailEl = root.querySelector('.pii.email');
+      const phoneEl = root.querySelector('.pii.phone');
 
-    // Autoplay when visible
-    const io = new IntersectionObserver((entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          run();
-          io.disconnect();
-          break;
+      if (!this.reduced) {
+        [nameEl, emailEl, phoneEl].forEach((el,i)=>{
+          setTimeout(()=> el.classList.add('pii-detect'), 60 + i*160);
+        });
+        await delay(900);
+      }
+
+      // Stage 3 — Scrub (replace content)
+      const swap = async (el, to) => {
+        if (this.reduced) {
+          el.textContent = to; el.classList.add('scrub'); return;
+        }
+        const a = el.animate([{opacity:1, filter:'blur(0px)'},{opacity:0, filter:'blur(2px)'}],
+                             {duration:140, easing:'ease', fill:'forwards'});
+        await a.finished;
+        el.textContent = to;
+        el.classList.remove('pii-detect');
+        el.classList.add('scrub');
+        el.animate([{opacity:0, filter:'blur(2px)'},{opacity:1, filter:'blur(0px)'}],
+                   {duration:170, easing:'ease', fill:'forwards'});
+      };
+
+      await swap(nameEl,  TEMPLATE_MESSAGE.nameScrubbed);
+      await swap(emailEl, TEMPLATE_MESSAGE.emailScrubbed);
+      await swap(phoneEl, TEMPLATE_MESSAGE.phoneScrubbed);
+
+      this.steps.s2.classList.add('active');
+      this.statePill.textContent = 'Scrubbed';
+      await delay(280);
+
+      // Stage 4 — Encrypt (sheen sweep)
+      if (!this.reduced) {
+        this.cipher.style.opacity = 1;
+        this.cipher.animate([{opacity:0},{opacity:1}], {duration:160, fill:'forwards'});
+        this.cipher.querySelector(':scope::before'); // for style calc
+        // Sweep animation via Web Animations on pseudo is tricky; animate transform via overlay element:
+        const sheen = this.cipher;
+        sheen.animate([{transform:'translateX(-100%)'}, {transform:'translateX(100%)'}], {
+          duration: 1100, easing: 'cubic-bezier(.2,.6,.2,1)', fill:'both'
+        });
+      } else {
+        this.cipher.style.opacity = 1;
+      }
+      this.steps.s3.classList.add('active');
+      this.statePill.textContent = 'Encrypted';
+      await delay(520);
+
+      // Stage 5 — Send to Cloud (follow path)
+      this.path.style.opacity = .999;
+
+      // Compute path positions relative to component box
+      const svg = this.path;
+      const pathEl = svg.querySelector('path');
+      const len = pathEl.getTotalLength ? pathEl.getTotalLength() : 0;
+
+      const placeDotAt = (t) => {
+        const pt = pathEl.getPointAtLength(len * t);
+        const rect = svg.getBoundingClientRect();
+        const stageRect = this.shadowRoot.querySelector('.stage').getBoundingClientRect();
+        const x = pt.x / rect.width  * stageRect.width;
+        const y = pt.y / rect.height * stageRect.height;
+        this.dot.style.transform = `translate(${x + 20}px, ${y - 2}px)`; // slight offset for aesthetics
+      };
+
+      if (this.reduced || !len) {
+        // Minimal jump for reduced motion
+        placeDotAt(1);
+      } else {
+        const steps = 36;
+        for (let i=0;i<=steps;i++){
+          placeDotAt(i/steps);
+          await delay(14);
         }
       }
-    }, { rootMargin: "0px 0px -20% 0px", threshold: 0.3 });
-    io.observe(this);
 
-    // Resize recalculation safeguard on orientation/resize
-    let to;
-    const onR = () => {
-      clearTimeout(to);
-      to = setTimeout(()=>{}, 80); // noop; layout will recalc for ghost rects during run
-    };
-    window.addEventListener('resize', onR);
-    window.addEventListener('orientationchange', onR);
+      this.steps.s4.classList.add('active');
+      this.statePill.textContent = 'Cloud';
+      await delay(260);
+
+      // Gentle settle
+      if (!this.reduced) {
+        this.bubble.animate([{transform:'translateY(0)'},{transform:'translateY(-2px)'}],
+                            {duration:200, easing:'ease-out'});
+      }
+
+      this._running = false;
+    }
   }
-}
 
-customElements.define('oc-pii-scrub', OCPiiScrub);
+  customElements.define('oc-pii-scrub', OCPiiScrub);
+})();
 </script>
-<!-- Place the component where you want it: -->
-<oc-pii-scrub style="--oc-card-width: 720px;"></oc-pii-scrub> 
+
+<!-- Usage: paste this element where you want the animation card to appear -->
+<oc-pii-scrub></oc-pii-scrub>
 
 
 
