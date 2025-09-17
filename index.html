@@ -1033,9 +1033,8 @@
       OC runs locally by default, with optional private cloud power. Personal details are removed on-device before anything leaves your machine.
     </p>
   </div>
-
-<!-- Usage -->
-<oc-pii-bubble></oc-pii-bubble>
+<div class="w-full pt-20 md:pt-28 pb-6 text-center">
+  <oc-pii-bubble></oc-pii-bubble> </div>
 
   <!-- Single Unified Card -->
   <article class="mx-auto max-w-[960px] rounded-2xl border border-neutral-200 bg-white p-8 md:p-10 shadow-[0_10px_30px_rgba(0,0,0,.06)]">
@@ -1077,10 +1076,11 @@
       box-sizing:border-box;
       font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,"Segoe UI Emoji";
       color:var(--oc-text,#0b0b0b);
-      max-width:min(760px,100%);
+      max-width:100%;
     }
     .bubble{
       display:inline-block;
+      width:var(--oc-bubble-width,560px);  /* fixed width; won’t change during typing */
       max-width:100%;
       background:#f7f7f7;
       border:1px solid rgba(0,0,0,.10);
@@ -1089,27 +1089,35 @@
       line-height:1.45;
       font-size:15px;
       color:inherit;
-      transform-origin:left bottom;
-      opacity:0;
-      transform:translateY(6px) scale(.98);
+      box-sizing:border-box;
+      opacity:0; /* fade-in only, no movement */
+      will-change:opacity;
     }
+    .content{ display:inline; }
+
     .caret{
-      display:inline-block;width:1px;height:1em;background:rgba(0,0,0,.6);
-      vertical-align:-.12em;margin-left:1px;animation:blink 1s steps(2,end) infinite;
+      display:inline-block;
+      width:1.5px; height:1em;
+      background:rgba(0,0,0,.65);
+      vertical-align:-.12em;
+      margin-left:1px;
+      animation:blink 1s steps(2,end) infinite;
+      transform:translateY(.5px);
     }
     @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 
     .pii{position:relative;white-space:nowrap;border-radius:8px;padding:0 2px;}
     .pii.pulse::before{
       content:"";position:absolute;inset:-1px -2px;border-radius:10px;
-      background:rgba(255,59,48,.14);box-shadow:0 0 0 1px rgba(255,59,48,.28) inset;
-      animation:piiPulse 820ms ease-in-out 2 both;pointer-events:none;
+      background:rgba(255,59,48,.12);
+      box-shadow:0 0 0 1px rgba(255,59,48,.24) inset;
+      animation:piiPulse 900ms cubic-bezier(.22,.61,.36,1) 2 both;
+      pointer-events:none;
     }
-    @keyframes piiPulse{0%{opacity:0}45%{opacity:1}100%{opacity:0}}
+    @keyframes piiPulse{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
     .scrub{background:#ececec;border-radius:8px;padding:0 4px;}
 
     @media (prefers-reduced-motion:reduce){
-      .bubble{transition:none !important}
       .pii.pulse::before{animation:none !important}
       .caret{display:none}
     }
@@ -1122,8 +1130,11 @@
 
 <script>
 (()=> {
-  // ---- Adjust overall animation speed (1.0 default; higher = faster)
-  const SPEED = 1.0;
+  /* ===== Global speed knobs =====
+     Increase values to go faster; decrease to slow down. */
+  const TYPING_SPEED = 1.0;  // typing cadence
+  const EFFECT_SPEED = 1.0;  // detect & scrub effects
+  /* ============================= */
 
   const CONFIG = {
     nameOriginal:"Alexander Reed",
@@ -1134,7 +1145,6 @@
     phoneScrubbed:"000-000-0000"
   };
 
-  // Structured message for streamed typing
   const SCRIPT = [
     {type:"text", text:"Hi OC, I’m "},
     {type:"pii",  key:"name",  text:CONFIG.nameOriginal,  cls:"name"},
@@ -1156,28 +1166,21 @@
       this.content=root.querySelector('.content');
 
       this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const attrSpeed=parseFloat(this.getAttribute('speed'));
-      this._speed=Number.isFinite(attrSpeed)&&attrSpeed>0?attrSpeed:SPEED;
-
       this.play=this.play.bind(this);
       this.reset=this.reset.bind(this);
       this._onClick=()=>this.play(true);
-
-      this._runId=0; // cancel guard
+      this._runId=0;
     }
 
-    ms(base){ return Math.max(1, Math.round(base/(this._speed||1))); }
+    msType(base){ return Math.max(1, Math.round(base/(TYPING_SPEED||1))); }
+    msFx(base){ return Math.max(1, Math.round(base/(EFFECT_SPEED||1))); }
 
     connectedCallback(){
-      // Autoplay when visible
       this._io=new IntersectionObserver((entries)=>{
         for(const e of entries){
-          if(e.isIntersecting){
-            setTimeout(()=>this.play(),120);
-            this._io.disconnect(); break;
-          }
+          if(e.isIntersecting){ setTimeout(()=>this.play(),120); this._io.disconnect(); break; }
         }
-      },{threshold:.45});
+      },{threshold:.35});
       this._io.observe(this);
 
       this.addEventListener('click', this._onClick);
@@ -1190,54 +1193,53 @@
 
     reset(){
       this._runId++;
-      this.bubble.style.opacity=0;
-      this.bubble.style.transform='translateY(6px) scale(.98)';
+      this.bubble.style.opacity=0;     // empty bubble, will fade in
       this.content.textContent='';
       this.nameEl=this.emailEl=this.phoneEl=null;
     }
 
     async typeScript(runId){
-      const delay=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.ms(t)));
+      const delay=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msType(t)));
 
-      const makePIISpan=(cls)=>{
-        const s=document.createElement('span');
-        s.className=`pii ${cls}`;
-        return s;
+      // Single writer text nodes for smoother paints
+      const makeWriter=(parent)=>{
+        const tn=document.createTextNode("");
+        parent.appendChild(tn);
+        return (ch)=>{ tn.nodeValue += ch; };
       };
 
-      // caret
-      const caret=document.createElement('span'); caret.className='caret'; this.content.appendChild(caret);
+      const caret=document.createElement('span');
+      caret.className='caret';
+      this.content.appendChild(caret);
 
-      const typeInto=(node, str)=>new Promise(async (resolve)=>{
-        for(let i=0;i<str.length && runId===this._runId;i++){
-          const ch=str[i];
-          caret.before(document.createTextNode(ch));
-          // natural pauses on punctuation
-          let base=28;
-          if(ch==='.'){ base=80; }
-          else if(ch===',' ){ base=45; }
-          else if(ch===' ' ){ base=22; }
-          await delay(base);
-        }
-        resolve();
-      });
+      let writer = makeWriter(this.content);
 
       for(const seg of SCRIPT){
         if(runId!==this._runId) return;
         if(seg.type==='text'){
-          await typeInto(this.content, seg.text);
-        } else {
-          const el=makePIISpan(seg.cls);
-          caret.before(el);
-          // keep references for pulses/scrub
-          if(seg.key==='name') this.nameEl=el;
-          if(seg.key==='email') this.emailEl=el;
-          if(seg.key==='phone') this.phoneEl=el;
-          await typeInto(el, seg.text);
+          for(let i=0;i<seg.text.length && runId===this._runId;i++){
+            const ch=seg.text[i];
+            writer(ch);
+            let base=26;
+            if(ch==='.'){ base=85; } else if(ch===',' ){ base=44; } else if(ch===' ' ){ base=20; }
+            await delay(base);
+          }
+        }else{
+          const span=document.createElement('span');
+          span.className=`pii ${seg.cls}`;
+          caret.before(span);
+          writer = makeWriter(span);
+          for(let i=0;i<seg.text.length && runId===this._runId;i++){
+            const ch=seg.text[i];
+            writer(ch);
+            let base=26;
+            if(ch==='.'){ base=85; } else if(ch===',' ){ base=44; } else if(ch===' ' ){ base=20; }
+            await delay(base);
+          }
+          // return writer to bubble content for next plain segment
+          writer = makeWriter(this.content);
         }
       }
-
-      // remove caret
       caret.remove();
     }
 
@@ -1247,73 +1249,66 @@
       this.reset();
       const runId=this._runId;
 
-      const delay=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.ms(t)));
+      const delayFx=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msFx(t)));
 
-      // Bubble in
-      if(this.reduced){
-        this.bubble.style.opacity=1; this.bubble.style.transform='none';
-      }else{
-        this.bubble.animate(
-          [{opacity:0,transform:'translateY(6px) scale(.98)'},
-           {opacity:1,transform:'translateY(0) scale(1)'}],
-          {duration:this.ms(420),easing:'cubic-bezier(.2,.6,.2,1)',fill:'forwards'}
-        );
-        await delay(430);
+      // Fade in bubble (no movement)
+      if(this.reduced){ this.bubble.style.opacity=1; }
+      else{
+        this.bubble.animate([{opacity:0},{opacity:1}], {duration:this.msFx(280), easing:'cubic-bezier(.2,.6,.2,1)', fill:'forwards'});
+        await delayFx(290);
       }
 
       // Streamed typing
       if(this.reduced){
-        // If reduced motion, render final string instantly
         for(const seg of SCRIPT){
           if(seg.type==='text'){ this.content.append(document.createTextNode(seg.text)); }
-          else {
-            const el=document.createElement('span'); el.className=`pii ${seg.cls}`;
-            el.textContent=seg.text; this.content.append(el);
+          else{
+            const el=document.createElement('span'); el.className=`pii ${seg.cls}`; el.textContent=seg.text; this.content.append(el);
             if(seg.key==='name') this.nameEl=el;
             if(seg.key==='email') this.emailEl=el;
             if(seg.key==='phone') this.phoneEl=el;
           }
         }
-      } else {
+      }else{
         await this.typeScript(runId);
       }
-
       if(runId!==this._runId) return;
 
-      // Detect pulses
+      // Detect pulses (smoother)
       if(!this.reduced){
+        // cache refs if not set (typing path sets them implicitly)
+        this.nameEl = this.nameEl || this.content.querySelector('.pii.name');
+        this.emailEl= this.emailEl|| this.content.querySelector('.pii.email');
+        this.phoneEl= this.phoneEl|| this.content.querySelector('.pii.phone');
+
         [this.nameEl,this.emailEl,this.phoneEl].forEach((el,i)=>{
-          setTimeout(()=> el && el.classList.add('pulse'), this.ms(80+i*160));
+          if(!el) return;
+          setTimeout(()=> el.classList.add('pulse'), this.msFx(90 + i*170));
         });
-        await delay(900);
+        await delayFx(980);
       }
 
-      // Scrub with blur swap
+      // Scrub (longer, softer blur for smoothness)
       const swap = async (el,to)=>{
         if(!el) return;
         if(this.reduced){ el.textContent=to; el.classList.add('scrub'); return; }
         const out=el.animate(
-          [{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(2px)'}],
-          {duration:this.ms(140),easing:'ease',fill:'forwards'}
+          [{opacity:1,filter:'blur(0px)'},{opacity:1,filter:'blur(1px)'},{opacity:0,filter:'blur(2px)'}],
+          {duration:this.msFx(210),easing:'cubic-bezier(.3,.6,.2,1)',fill:'forwards'}
         );
         await out.finished;
         el.textContent=to;
         el.classList.remove('pulse');
         el.classList.add('scrub');
         el.animate(
-          [{opacity:0,filter:'blur(2px)'},{opacity:1,filter:'blur(0px)'}],
-          {duration:this.ms(170),easing:'ease',fill:'forwards'}
+          [{opacity:0,filter:'blur(2px)'},{opacity:.6,filter:'blur(1px)'},{opacity:1,filter:'blur(0px)'}],
+          {duration:this.msFx(230),easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}
         );
       };
 
       await swap(this.nameEl,  CONFIG.nameScrubbed);
       await swap(this.emailEl, CONFIG.emailScrubbed);
       await swap(this.phoneEl, CONFIG.phoneScrubbed);
-
-      if(!this.reduced){
-        this.bubble.animate([{transform:'translateY(0)'},{transform:'translateY(-1px)'}],
-                            {duration:this.ms(180),easing:'ease-out'});
-      }
 
       this._running=false;
     }
