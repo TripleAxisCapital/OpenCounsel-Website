@@ -1066,443 +1066,391 @@
   </article>
 </section>
 
-<!-- Prompt Flow — Apple-clean; auto-plays on scroll; static rotating prompts; centered, not full-width -->
-<prompt-flow theme="auto" speed="1"></prompt-flow>
-
-<style>
-/* Optional: tune sizing globally to match your other cards */
-prompt-flow{
-  --card-radius: 20px;
-  --card-padding: 20px;
-  --card-aspect: 12/4;          /* desktop */
-  --card-aspect-mobile: 4/5;     /* mobile */
-  --pf-maxw: 960px;              /* desktop max width */
-}
-@media (min-width:1200px){
-  prompt-flow{ --pf-maxw: 900px; } /* a touch tighter on very wide screens */
-}
-</style>
-
-<script>
+<!-- OC — PII Scrub Animation (drop-in, production-grade, no deps) -->
+<oc-pii-scrub></oc-pii-scrub>
+<script type="module">
 (() => {
-  /* ====== EDIT HERE — your rotating prompts + sample sender ====== */
-  const MESSAGES = [
-    'Summarize the Apple event and highlight year-over-year changes.',
-    'Draft a follow-up email confirming next steps and deadlines.',
-    'Plan a 3-day Tokyo itinerary optimized for food, culture, and transit.'
-  ];
-  const PERSON = { name: 'John Smith', email: 'john.smith@company.com' };
-  const ROTATION_GAP_MS = 900;
-  /* =============================================================== */
+  const TAG = 'oc-pii-scrub';
+  if (customElements.get(TAG)) return;
 
-  const CSS = `
-  :host{
-    --bg:#0b0c0f; --fg:#ffffff; --muted:#8b94a0; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
-    --glass: rgba(255,255,255,.08); --shadow: 0 8px 22px rgba(0,0,0,.22);
-    --pf-radius: var(--card-radius, 20px);
-    --pf-padding: var(--card-padding, 20px);
-    --pf-aspect: var(--card-aspect, 12 / 4);
-    --pf-aspect-mobile: var(--card-aspect-mobile, 4 / 5);
-    --pf-maxw:  var(--pf-maxw, 960px);
-    color-scheme: light dark; display:block;
-    font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,system-ui,sans-serif;
-  }
-  :host([theme="light"]){
-    --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3;
-    --glass: rgba(16,18,20,.06); --shadow: 0 8px 22px rgba(0,0,0,.12);
-  }
-  :host([theme="auto"]){ @media (prefers-color-scheme: light){
-    :host{ --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3;
-           --glass: rgba(16,18,20,.06); --shadow: 0 8px 22px rgba(0,0,0,.12); }
-  } }
+  const TPL = document.createElement('template');
+  TPL.innerHTML = `
+    <style>
+      /* --- Apple-style foundation --- */
+      :host {
+        --oc-max-width: 860px;
+        --oc-radius: 18px;
+        --oc-border: rgba(60,60,67,0.14);
+        --oc-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(0,0,0,0.04);
+        --oc-bg: #fff;
+        --oc-text: #111;
+        --oc-muted: rgba(0,0,0,0.55);
+        --oc-accent: #0A84FF;   /* iOS blue */
+        --oc-success: #34C759;  /* iOS green */
+        --oc-danger: #FF3B30;   /* iOS red (for pre-scrub emphasis) */
+        --oc-card-pad: clamp(16px, 3.2vw, 24px);
+        --oc-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        display: block;
+        font-family: var(--oc-font);
+        color: var(--oc-text);
+      }
+      .card {
+        max-width: var(--oc-max-width);
+        margin: 0 auto;
+        background: var(--oc-bg);
+        border: 1px solid var(--oc-border);
+        border-radius: var(--oc-radius);
+        box-shadow: var(--oc-shadow);
+        overflow: clip;
+      }
+      .hdr {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: calc(var(--oc-card-pad) - 2px) var(--oc-card-pad) 8px;
+        gap: 12px;
+      }
+      .title {
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        font-size: clamp(15px, 2vw, 16px);
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: .5ch;
+        font-size: 12px;
+        padding: 6px 10px;
+        border: 1px solid var(--oc-border);
+        border-radius: 999px;
+        color: var(--oc-muted);
+        background: rgba(250,250,250,0.6);
+        backdrop-filter: saturate(140%) blur(8px);
+        -webkit-backdrop-filter: saturate(140%) blur(8px);
+        white-space: nowrap;
+      }
+      .status-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--oc-accent);
+        box-shadow: 0 0 0 0 rgba(10,132,255,0.7);
+        animation: pulse 2s ease-out infinite;
+      }
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(10,132,255,0.6) }
+        70% { box-shadow: 0 0 0 8px rgba(10,132,255,0) }
+        100% { box-shadow: 0 0 0 0 rgba(10,132,255,0) }
+      }
 
-  /* Root card — centered, max width (no full-bleed on desktop) */
-  .root{
-    position:relative; overflow:visible; width:100%;
-    max-width:var(--pf-maxw); margin: 0 auto;
-    background:linear-gradient(180deg, color-mix(in oklab, var(--bg) 94%, #0ea5ff 6%), var(--bg));
-    border-radius:var(--pf-radius); box-shadow:var(--shadow); padding:var(--pf-padding);
-  }
+      .body {
+        display: grid;
+        grid-template-columns: 1fr minmax(56px, 120px) 1fr;
+        gap: clamp(12px, 3vw, 24px);
+        padding: 6px var(--oc-card-pad) var(--oc-card-pad);
+      }
+      @media (max-width: 780px) {
+        .body { grid-template-columns: 1fr; }
+      }
 
-  /* Inner stage with safe-area padding to prevent any clipping */
-  .stage{
-    position:relative; width:100%; aspect-ratio: var(--pf-aspect);
-    border-radius:calc(var(--pf-radius) - 8px);
-    background:
-      radial-gradient(1200px 60% at 10% 90%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%),
-      radial-gradient(800px 60% at 80% 25%, color-mix(in oklab, #22d3ee 18%, transparent), transparent 60%),
-      linear-gradient(180deg, color-mix(in oklab, var(--bg), #000 6%), color-mix(in oklab, var(--bg), #000 2%));
-    border:1px solid color-mix(in oklab, var(--line), transparent 30%);
-    padding: clamp(10px, 2.2vw, 16px);         /* inset so shadows/text never touch edges */
-    overflow:hidden;                            /* clean rounded mask */
-  }
-  @media (max-width: 640px){
-    .stage{ aspect-ratio: var(--pf-aspect-mobile); padding: clamp(10px, 4vw, 16px); }
-  }
+      /* Columns */
+      .col { display: grid; align-content: start; gap: 10px; }
+      .subtle {
+        font-size: 12px; color: var(--oc-muted);
+        letter-spacing: 0.01em; user-select: none;
+      }
 
-  .label{
-    font-weight:600; color:var(--muted); margin: 2px 2px 10px; letter-spacing:.2px;
-  }
+      /* Message bubbles */
+      .bubble {
+        position: relative;
+        border: 1px solid var(--oc-border);
+        border-radius: 14px;
+        padding: clamp(12px, 2.6vw, 16px);
+        line-height: 1.55;
+        background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,250,0.9));
+      }
+      .bubble.clean { border-color: rgba(60,60,67,0.10); }
+      .bubble p { margin: 0; font-size: clamp(14px, 1.8vw, 15px); }
 
-  .shell{ width:100%; height:100%; }
-  .svg{
-    display:block; width:100%; height:100%;
-    overflow:visible;                        /* prevent inner FX from being cropped */
-  }
+      /* PII emphasis (pre-scrub) */
+      .pii {
+        position: relative;
+        padding: 0 .12em;
+        border-radius: 6px;
+        background: rgba(255,59,48,0.06);
+        box-shadow: inset 0 0 0 1px rgba(255,59,48,0.22);
+        color: var(--oc-danger);
+        transition: filter .5s ease, color .5s ease, background .5s ease, box-shadow .5s ease;
+      }
+      .scrubbed .pii {
+        filter: blur(0px);
+        color: inherit;
+        background: transparent;
+        box-shadow: none;
+      }
 
-  /* Bubbles & cards (HTML inside the SVG via foreignObject) */
-  .bubble{
-    background:var(--card); border:1px solid color-mix(in oklab, var(--line), transparent 20%); color:var(--fg);
-    border-radius:14px; padding:10px 12px;
-    box-shadow:0 6px 18px rgba(0,0,0,.16), inset 0 0 0 1px rgba(255,255,255,.02);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  }
-  .bubble.user{ border-radius:18px 18px 18px 6px; }
-  .bubble.assistant{ border-radius:18px 18px 6px 18px; }
+      /* Center scrub “engine” */
+      .engine {
+        align-self: center;
+        justify-self: center;
+        width: 100%;
+        max-width: 120px;
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        padding: 8px 0;
+      }
+      .engine-label {
+        font-size: 11px; color: var(--oc-muted);
+        letter-spacing: .06em; text-transform: uppercase;
+      }
+      .engine-core {
+        width: 100%;
+        height: 96px;
+        border-radius: 12px;
+        border: 1px solid var(--oc-border);
+        background:
+          linear-gradient(180deg, rgba(250,250,250,0.9), rgba(245,245,245,0.9));
+        overflow: hidden;
+        position: relative;
+      }
+      .beam {
+        position: absolute; inset: 0;
+        opacity: 0; pointer-events: none;
+        background: linear-gradient(90deg, transparent, rgba(10,132,255,0.22), transparent);
+        transform: translateX(-100%);
+      }
+      .engine-core::before,
+      .engine-core::after {
+        content: "";
+        position: absolute; inset: -40%;
+        background:
+          repeating-linear-gradient( 0deg, rgba(0,0,0,0.06) 0 2px, transparent 2px 6px);
+        transform: rotate(35deg);
+        animation: lines 8s linear infinite;
+        opacity: .5;
+      }
+      .engine-core::after {
+        transform: rotate(-35deg);
+        animation-duration: 10s;
+        opacity: .35;
+      }
+      @keyframes lines {
+        to { transform: translateY(40%) rotate(var(--rot,35deg)); }
+      }
 
-  .typing{ width:36px; display:inline-flex; justify-content:space-between; }
-  .dot{ width:6px; height:6px; border-radius:50%; background:color-mix(in oklab, var(--fg) 65%, transparent);
-        animation:bounce 1200ms infinite; }
-  .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
-  @keyframes bounce{ 0%,80%,100%{ transform:translateY(0); opacity:.5 } 40%{ transform:translateY(-4px); opacity:1 } }
+      /* Right column badges */
+      .sent {
+        display: inline-flex; align-items: center; gap: .5ch;
+        font-size: 12px; padding: 6px 10px; border-radius: 999px;
+        border: 1px solid var(--oc-border);
+        background: rgba(248,248,248,0.8);
+        color: var(--oc-muted);
+      }
+      .sent .ok {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--oc-success);
+      }
 
-  .card{
-    background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 3%), var(--card));
-    border:1px solid color-mix(in oklab, var(--line), transparent 15%);
-    border-radius:16px; padding:12px; color:var(--fg);
-    box-shadow:0 10px 24px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.02);
-  }
-  .card h4{ margin:0 0 6px; font:700 13px/1.1 inherit; letter-spacing:.25px; }
-  .meta{ font:600 10px/1.2 inherit; color:var(--muted); letter-spacing:.3px; }
+      /* Motion */
+      .fade-in { animation: fadeIn .6s ease both; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
+      .slide-in { animation: slideIn .7s cubic-bezier(.2,.7,.2,1) both; }
+      @keyframes slideIn { from { opacity: 0; transform: translateX(-28px) } to { opacity: 1; transform: translateX(0) } }
+      .beam-run { animation: beamMove 1s ease-in-out forwards; }
+      @keyframes beamMove { 0% { opacity: 0; transform: translateX(-100%) } 10% { opacity: 1 } 100% { opacity: 1; transform: translateX(100%) } }
 
-  .scan{
-    margin-top:8px; font:600 12px/1.25 inherit; border-radius:10px; padding:8px 10px;
-    background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 4%), var(--card));
-    border:1px dashed color-mix(in oklab, var(--line), transparent 10%);
-  }
-  .scan .clean{ color:#10b981; opacity:0; transition:opacity .4s ease; }
+      /* Respect user preferences */
+      @media (prefers-reduced-motion: reduce) {
+        * { animation: none !important; transition: none !important; }
+        .beam { display: none; }
+      }
+    </style>
 
-  /* Paths & FX */
-  .path{
-    fill:none; stroke:color-mix(in oklab, var(--line), var(--fg) 8%); stroke-width:3; stroke-linecap:round;
-    filter: drop-shadow(0 2px 10px rgba(0,0,0,.25)); vector-effect: non-scaling-stroke;
-  }
-  .path.return{ stroke-dasharray: 6 10; stroke: color-mix(in oklab, var(--line), var(--accent) 30%); }
-  .glow{ filter:url(#pf-glow); }
-  .packet{ pointer-events:none; }
-  .halo{ opacity:.7 }
-  .pulse{ opacity:0; }
+    <div class="card" part="card" role="group" aria-label="PII Scrubbing Demonstration">
+      <div class="hdr">
+        <div class="title">PII scrub before cloud send</div>
+        <div class="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text">Idle</span>
+        </div>
+      </div>
 
-  @media (prefers-reduced-motion: reduce){ .dot{ animation:none } }
-  `;
+      <div class="body">
+        <!-- Left: Original -->
+        <div class="col">
+          <div class="subtle">Original message</div>
+          <div class="bubble original">
+            <p>
+              Hi, I'm <span class="pii" data-type="name" data-replace="Person X">Alex Grey</span> — my email is
+              <span class="pii" data-type="email" data-replace="PersonX@Email.com">alex.grey@example.com</span>
+              and my phone is <span class="pii" data-type="phone" data-replace="[hidden]">(555) 123-4567</span>.
+              I live at <span class="pii" data-type="address" data-replace="[hidden]">221B Baker Street</span>.
+            </p>
+          </div>
+        </div>
 
-  const TEMPLATE = `
-    <div class="root" part="root">
-      <div class="label">Prompt flow</div>
-      <div class="stage" part="stage">
-        <div class="shell">
-          <svg class="svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <defs>
-              <linearGradient id="pf-line" x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0%" stop-color="color-mix(in oklab, var(--accent), #22d3ee 40%)"/>
-                <stop offset="100%" stop-color="color-mix(in oklab, #7c3aed, var(--accent) 30%)"/>
-              </linearGradient>
-              <filter id="pf-glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-              <radialGradient id="pf-halo" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="var(--accent)" stop-opacity=".85"/>
-                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
-              </radialGradient>
-            </defs>
+        <!-- Center: Scrub engine -->
+        <div class="engine">
+          <div class="engine-core" aria-hidden="true"><div class="beam"></div></div>
+          <div class="engine-label">Scrub Engine</div>
+        </div>
 
-            <!-- Paths -->
-            <path id="pf-forward" class="path glow" stroke="url(#pf-line)"
-                  d="M120,300 C220,272 290,220 360,160
-                     C430,102 530,90 650,110
-                     C730,123 790,125 840,130" />
-            <path id="pf-return" class="path return"
-                  d="M840,130 C680,175 520,230 360,270
-                     C260,296 190,300 120,300" />
-
-            <!-- Packet -->
-            <g id="pf-packet" class="packet">
-              <circle class="halo" r="24" fill="url(#pf-halo)"/>
-              <circle class="core" r="8" fill="#fff"/>
-            </g>
-
-            <!-- Stations -->
-            <foreignObject x="48" y="262" width="220" height="90">
-              <div xmlns="http://www.w3.org/1999/xhtml" class="bubble user" id="pf-user-bubble">
-                <div class="meta">You</div>
-                <div id="pf-user-text">…</div>
-              </div>
-            </foreignObject>
-
-            <foreignObject x="310" y="78" width="230" height="160">
-              <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-pii-card">
-                <div class="meta" style="font-weight:700;margin-bottom:6px;">PII Scrubber</div>
-                <h4>Sanitize sensitive data</h4>
-                <div class="scan" id="pf-pii-scan">
-                  <div class="raw" id="pf-pii-raw">From: John Smith &lt;john.smith@company.com&gt; — …</div>
-                  <div class="clean" id="pf-pii-clean">From: Person X &lt;PersonX@Email&gt; — …</div>
-                </div>
-                <div class="meta" id="pf-pii-status">Idle</div>
-              </div>
-            </foreignObject>
-
-            <foreignObject x="780" y="52" width="270" height="170">
-              <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-cloud-card">
-                <div class="meta" style="font-weight:700;margin-bottom:6px;">Cloud · Knowledge · Compute</div>
-                <h4>Enrich with knowledge & power</h4>
-                <div class="meta" id="pf-cloud-status">Warming up…</div>
-              </div>
-            </foreignObject>
-
-            <foreignObject x="104" y="210" width="220" height="90">
-              <div xmlns="http://www.w3.org/1999/xhtml" class="bubble assistant" id="pf-assist-bubble" style="opacity:.0; transform: translateY(6px);">
-                <div class="meta">Assistant</div>
-                <div id="pf-assist-text"><span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
-              </div>
-            </foreignObject>
-          </svg>
+        <!-- Right: Cleaned -->
+        <div class="col">
+          <div class="subtle">Cleaned &amp; sent</div>
+          <div class="bubble clean" aria-live="polite">
+            <p class="clean-text" style="opacity:.5">Waiting…</p>
+          </div>
+          <div class="sent" title="Delivered securely">
+            <span class="ok" aria-hidden="true"></span>
+            <span class="sent-text">Not sent yet</span>
+          </div>
         </div>
       </div>
     </div>
   `;
 
-  class PromptFlow extends HTMLElement {
-    static get observedAttributes(){ return ['theme','speed'] }
-    constructor(){
+  class OCScrub extends HTMLElement {
+    #root; #status; #statusText; #original; #clean; #cleanText; #sent; #sentText; #beam; #observer; #ran = false;
+
+    constructor() {
       super();
-      this.attachShadow({mode:'open'});
-      this.shadowRoot.innerHTML = `<style>${CSS}</style>${TEMPLATE}`;
-      this._visible = false;
-      this._cycling = false;
-      this._msgIndex = 0;
+      this.#root = this.attachShadow({ mode: 'open' });
+      this.#root.appendChild(TPL.content.cloneNode(true));
+      this.#status = this.#root.querySelector('.status');
+      this.#statusText = this.#root.querySelector('.status-text');
+      this.#original = this.#root.querySelector('.original');
+      this.#clean = this.#root.querySelector('.clean');
+      this.#cleanText = this.#root.querySelector('.clean-text');
+      this.#sent = this.#root.querySelector('.sent');
+      this.#sentText = this.#root.querySelector('.sent-text');
+      this.#beam = this.#root.querySelector('.beam');
     }
 
-    connectedCallback(){
-      const $ = (sel) => this.shadowRoot.querySelector(sel);
-      this.els = {
-        userText: $('#pf-user-text'), assistText: $('#pf-assist-text'),
-        assistBubble: $('#pf-assist-bubble'),
-        piiRaw: $('#pf-pii-raw'), piiClean: $('#pf-pii-clean'), piiStatus: $('#pf-pii-status'),
-        cloudStatus: $('#pf-cloud-status'),
-        svg: this.shadowRoot.querySelector('svg'),
-        fwd: this.shadowRoot.getElementById('pf-forward'),
-        rtn: this.shadowRoot.getElementById('pf-return'),
-        packet: this.shadowRoot.getElementById('pf-packet')
-      };
-
-      const sp = Number(this.getAttribute('speed') || 1);
-      this.speed = Number.isFinite(sp) ? Math.min(Math.max(sp, .5), 3) : 1;
-      this.running = false;
-
-      // init
-      this.positionPacket(this.els.fwd, 0);
-
-      // autoplay on scroll
-      this._io = new IntersectionObserver((entries)=>{
-        const e = entries[0];
-        this._visible = !!e.isIntersecting;
-        if (this._visible) this.startCycle(); else this.stopCycle();
-      }, { threshold: 0.4 });
-      this._io.observe(this);
-    }
-
-    disconnectedCallback(){ this._io && this._io.disconnect(); this.stopCycle(); }
-
-    attributeChangedCallback(name, _o, v){
-      if(name==='speed' && this.isConnected){
-        const sp = Number(v); if(Number.isFinite(sp)) this.speed = Math.min(Math.max(sp,.5),3);
-      }
-    }
-
-    /* Rotation */
-    async startCycle(){
-      if (this._cycling) return;
-      this._cycling = true;
-      while (this._cycling && this._visible) {
-        const base = MESSAGES[this._msgIndex];
-        const composed = `From: ${PERSON.name} <${PERSON.email}> — ${base}`;
-        await this.runFlow(composed);
-        this._msgIndex = (this._msgIndex + 1) % MESSAGES.length;
-        await this.wait(ROTATION_GAP_MS / this.speed);
-      }
-    }
-    stopCycle(){ this._cycling = false; }
-
-    reset(){
-      const {els} = this;
-      this.running = false;
-      this.positionPacket(els.fwd, 0);
-      els.userText.textContent = '…';
-      els.assistText.innerHTML = '<span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>';
-      els.assistBubble.style.opacity = '.0'; els.assistBubble.style.transform = 'translateY(6px)';
-      els.piiStatus.textContent = 'Idle';
-      els.piiClean.style.opacity = '0';
-      els.piiRaw.style.opacity = '1';
-      els.cloudStatus.textContent = 'Warming up…';
-    }
-
-    async runFlow(text){
-      if (this.running) return;
-      const {els} = this;
-      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      this.reset();
-      this.running = true;
-
-      els.userText.textContent = text.trim();
-      const stopPII   = this.findTForPoint(els.fwd, {x:360,y:160});
-      const stopCloud = this.findTForPoint(els.fwd, {x:840,y:130});
-
-      if (reduced) {
-        await this.scrubPII(text);
-        await this.cloudBurst(true);
-        await this.revealAnswer(text);
-        this.running = false; return;
-      }
-
-      await this.tweenAlong(els.fwd, 0, stopPII, 900/this.speed, (t)=>this.sparkle(t));
-      await this.scrubPII(text);
-
-      await this.tweenAlong(els.fwd, stopPII, stopCloud, 900/this.speed, (t)=>this.sparkle(t));
-      await this.cloudBurst();
-
-      await this.tweenAlong(els.rtn, 0, 1, 1100/this.speed, (t)=>this.sparkle(t));
-      await this.revealAnswer(text);
-
-      this.running = false;
-    }
-
-    /* Steps */
-    async scrubPII(text){
-      const {piiRaw, piiClean, piiStatus} = this.els;
-      const cleaned = this.anonymize(text);
-      piiRaw.textContent  = text.slice(0, 180) + (text.length>180?'…':'');
-      piiClean.textContent = cleaned.slice(0, 180) + (cleaned.length>180?'…':'');
-      piiStatus.textContent = 'Scanning for names and emails…';
-      await this.wait(250/this.speed);
-      piiStatus.textContent = 'Anonymizing…';
-      piiRaw.style.opacity = '.35';
-      piiClean.style.opacity = '1';
-      await this.wait(500/this.speed);
-      piiStatus.textContent = 'Anonymized';
-      await this.wait(200/this.speed);
-    }
-
-    async cloudBurst(minimal=false){
-      const {cloudStatus} = this.els;
-      cloudStatus.textContent = 'Querying sources…';
-      if (!minimal) await this.radialPulse();
-      cloudStatus.textContent = 'Merging knowledge…';
-      await this.wait(350/this.speed);
-      cloudStatus.textContent = 'Synthesizing answer — done';
-      await this.wait(200/this.speed);
-    }
-
-    async revealAnswer(sourceText){
-      const {assistBubble, assistText} = this.els;
-      assistBubble.style.transition = 'opacity .35s cubic-bezier(.2,.7,.2,1), transform .35s cubic-bezier(.2,.7,.2,1)';
-      assistBubble.style.opacity = '1'; assistBubble.style.transform = 'translateY(0)';
-      const reply = this.generateReply(this.anonymize(sourceText));
-      await this.typewriter(assistText, reply, 16/this.speed);
-    }
-
-    /* Motion */
-    positionPacket(path, t){
-      const len = path.getTotalLength();
-      const p = path.getPointAtLength(len * t);
-      const p2 = path.getPointAtLength(Math.min(len * t + 1, len));
-      const angle = Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI;
-      this.els.packet.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${angle})`);
-    }
-
-    tweenAlong(path, t0, t1, duration, onUpdate){
-      return new Promise((res)=>{
-        const start = performance.now();
-        const run = (now)=>{
-          const raw = Math.min(1, (now - start) / duration);
-          const ease = this.easeInOutCubic(raw);
-          const t = t0 + (t1 - t0) * ease;
-          this.positionPacket(path, t);
-          onUpdate && onUpdate(t);
-          if (raw < 1) this._raf = requestAnimationFrame(run); else res();
-        };
-        this._raf && cancelAnimationFrame(this._raf);
-        this._raf = requestAnimationFrame(run);
-      });
-    }
-
-    findTForPoint(path, target){
-      const L = path.getTotalLength(); let bestT = 0, bestD = Infinity;
-      for (let i=0;i<=200;i++){
-        const t = i/200; const p = path.getPointAtLength(L*t);
-        const d = (p.x-target.x)**2 + (p.y-target.y)**2; if (d<bestD){bestD=d; bestT=t;}
-      }
-      return bestT;
-    }
-
-    sparkle(t){
-      const halo = this.els.packet.querySelector('.halo');
-      const core = this.els.packet.querySelector('.core');
-      const s = 1 + Math.sin(t*Math.PI*2)*0.06;
-      core.setAttribute('r', 8*s);
-      halo.setAttribute('r', 24*s*1.05);
-    }
-
-    radialPulse(){
-      return new Promise((res)=>{
-        const svg = this.els.svg;
-        const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
-        pulse.setAttribute('class','pulse');
-        pulse.setAttribute('cx','840'); pulse.setAttribute('cy','130'); pulse.setAttribute('r','6');
-        pulse.setAttribute('fill','none'); pulse.setAttribute('stroke','url(#pf-line)'); pulse.setAttribute('stroke-width','3');
-        svg.appendChild(pulse);
-        pulse.animate(
-          [{opacity:.8, r:6, strokeWidth:3},{opacity:0, r:120, strokeWidth:.5}],
-          {duration:500/this.speed, easing:'cubic-bezier(.2,.7,.2,1)'}
-        ).onfinish=()=>{ svg.removeChild(pulse); res(); };
-      });
-    }
-
-    typewriter(node, text, speed=16){
-      return new Promise(async (res)=>{
-        node.textContent = '';
-        for (let i=0;i<text.length;i++){
-          node.textContent += text[i];
-          await this.wait(speed);
+    connectedCallback() {
+      // Auto-play when in view
+      this.#observer = new IntersectionObserver((entries) => {
+        const v = entries.some(e => e.isIntersecting && e.intersectionRatio > 0.5);
+        if (v && !this.#ran) {
+          this.play();
+          this.#ran = true;
+          this.#observer?.disconnect();
         }
-        res();
+      }, { threshold: [0, .5, .75, 1] });
+      this.#observer.observe(this);
+
+      // Immediate play if already visible (e.g., above the fold)
+      queueMicrotask(() => {
+        const rect = this.getBoundingClientRect();
+        const vh = (globalThis.innerHeight || document.documentElement.clientHeight || 0);
+        if (rect.top >= 0 && rect.top < vh && !this.#ran) {
+          this.play();
+          this.#ran = true;
+          this.#observer?.disconnect();
+        }
       });
     }
 
-    wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
-    easeInOutCubic(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
-
-    /* Anonymization — Name → Person X, Email → PersonX@Email (deterministic) */
-    anonymize(str){
-      const esc = (s)=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-      const emailRe = /\b[\w.+-]+@[\w.-]+\.\w+\b/gi;
-      const nameRe  = new RegExp(esc(PERSON.name), 'gi');
-
-      let out = str.replace(emailRe, 'PersonX@Email');
-      out = out.replace(nameRe, 'Person X');
-
-      // Also anonymize common "From: Name <email>" and variants
-      out = out.replace(/From:\s*[^<\n]+<[^>]+>/gi, 'From: Person X <PersonX@Email>');
-      return out;
+    disconnectedCallback() {
+      this.#observer?.disconnect();
     }
 
-    generateReply(cleaned){
-      const hint = cleaned.length>90 ? cleaned.slice(0,90)+'…' : cleaned;
-      return `Privacy-safe answer synthesized.\n\nPrompt (sanitized): “${hint}”\n\n- Name → “Person X”\n- Email → “PersonX@Email”\n- Relevant sources consulted and summarized`;
+    play() {
+      // Reset UI
+      this.#statusText.textContent = 'Scanning…';
+      this.#sentText.textContent = 'Not sent yet';
+      this.#cleanText.style.opacity = .5;
+      this.#cleanText.textContent = 'Waiting…';
+      this.#original.classList.remove('scrubbed');
+      this.#beam.classList.remove('beam-run');
+
+      // Sequence timings (fine-tuned for smoothness)
+      const steps = [
+        { at:   0,  fn: () => this.#scan() },
+        { at: 400,  fn: () => this.#scrubOne('name') },
+        { at: 900,  fn: () => this.#scrubOne('email') },
+        { at: 1400, fn: () => this.#scrubOne('phone') },
+        { at: 1900, fn: () => this.#scrubOne('address') },
+        { at: 2300, fn: () => this.#compileClean() },
+        { at: 2600, fn: () => this.#send() },
+        { at: 3400, fn: () => this.#finish() },
+      ];
+
+      let base = performance.now();
+      const tick = () => {
+        const t = performance.now() - base;
+        while (steps.length && t >= steps[0].at) {
+          steps.shift().fn();
+        }
+        if (steps.length) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }
+
+    #scan() {
+      this.#statusText.textContent = 'Scanning…';
+      this.#original.classList.remove('scrubbed');
+      // Gentle emphasis flicker to draw eye once
+      this.#original.classList.add('fade-in');
+      setTimeout(() => this.#original.classList.remove('fade-in'), 600);
+    }
+
+    #scrubOne(type) {
+      const node = this.#root.querySelector(`.pii[data-type="${type}"]`);
+      if (!node) return;
+      const replacement = node.getAttribute('data-replace') || '[redacted]';
+
+      // Blur out then replace; keep layout stable
+      node.animate([
+        { filter: 'blur(0px)', opacity: 1 },
+        { filter: 'blur(6px)', opacity: .2 }
+      ], { duration: 220, easing: 'ease' }).finished.then(() => {
+        node.textContent = replacement;
+        node.classList.add('replaced');
+        node.animate([
+          { filter: 'blur(6px)', opacity: .2 },
+          { filter: 'blur(0px)', opacity: 1 }
+        ], { duration: 260, easing: 'ease' });
+      });
+
+      // Update status line subtly
+      const label = type[0].toUpperCase() + type.slice(1);
+      this.#statusText.textContent = `Scrubbing ${label}…`;
+    }
+
+    #compileClean() {
+      // Mark as scrubbed (removes red styling)
+      this.#original.classList.add('scrubbed');
+
+      // Create cleaned text snapshot
+      const html = this.#original.querySelector('p')?.cloneNode(true);
+      // Strip pii classes for final render
+      html?.querySelectorAll('.pii').forEach(s => s.classList.remove('pii', 'replaced'));
+      const finalText = html?.textContent?.replace(/\s+/g, ' ').trim() || '';
+      this.#cleanText.textContent = finalText;
+      this.#cleanText.style.opacity = .85;
+      this.#cleanText.classList.add('fade-in');
+      setTimeout(() => this.#cleanText.classList.remove('fade-in'), 700);
+
+      // Beam pass through engine
+      this.#beam.classList.add('beam-run');
+      setTimeout(() => this.#beam.classList.remove('beam-run'), 1100);
+      this.#statusText.textContent = 'Compiling clean payload…';
+    }
+
+    #send() {
+      // Animate cleaned bubble appearance as if arriving in cloud
+      this.#clean.classList.add('slide-in');
+      setTimeout(() => this.#clean.classList.remove('slide-in'), 800);
+      this.#sentText.textContent = 'Sending…';
+    }
+
+    #finish() {
+      this.#statusText.textContent = 'Complete';
+      this.#sentText.textContent = 'Sent securely';
     }
   }
 
-  customElements.define('prompt-flow', PromptFlow);
+  customElements.define(TAG, OCScrub);
 })();
 </script>
 
