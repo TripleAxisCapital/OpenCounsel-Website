@@ -1066,512 +1066,385 @@
   </article>
 </section>
 
+
+
 <!--
-  OC — PII Scrubbing Animation (Apple-style, production-grade, single file)
-  • Drop-in: paste this whole block anywhere. Use <oc-pii-scrub></oc-pii-scrub>.
-  • No dependencies. Encapsulated styles via Shadow DOM.
-  • Autoplays on scroll into view. Respects prefers-reduced-motion.
-  • Click the card (or the Replay pill) to replay.
-  • Tweak the demo message in the TEMPLATE_MESSAGE constant below if desired.
+  Drop-in "Prompt Flow" — Apple-quality flow animation in one block.
+  Paste this anywhere in your page. Then place <prompt-flow></prompt-flow> where you want it.
+  No external deps. Fully encapsulated via Shadow DOM. Light/Dark and reduced-motion aware.
+  Attributes (optional): theme="light|dark|auto"  speed="1..3"  autoplay  prompt="Your text"
 -->
-<template id="oc-pii-scrub-template">
-  <style>
-    :host {
-      --oc-bg: #ffffff;
-      --oc-surface: #ffffff;
-      --oc-surface-2: #f6f6f6;
-      --oc-text: #0b0b0b;
-      --oc-muted: #6b6b6b;
-      --oc-accent: #007aff; /* iOS blue */
-      --oc-danger: #ff3b30; /* subtle detection highlight tone */
-      --oc-radius: 20px;
-      --oc-shadow-1: 0 0.5px 1px rgba(0,0,0,0.08), 0 8px 30px rgba(0,0,0,0.10);
-      --oc-shadow-2: 0 2px 6px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
-      --oc-border: rgba(0,0,0,0.08);
-
-      display: block;
-      box-sizing: border-box;
-      max-width: 720px;
-      margin: 24px auto;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-                   "Inter", system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, "Segoe UI Emoji";
-      color: var(--oc-text);
-      contain: content;
-    }
-
-    .card {
-      position: relative;
-      background: var(--oc-surface);
-      border-radius: calc(var(--oc-radius) + 4px);
-      box-shadow: var(--oc-shadow-1);
-      border: 1px solid var(--oc-border);
-      overflow: clip;
-      transition: box-shadow .3s ease;
-    }
-    .card:hover { box-shadow: var(--oc-shadow-2); }
-
-    .header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 16px 8px 16px;
-    }
-    .title {
-      font-weight: 600;
-      letter-spacing: .02em;
-      font-size: 14px;
-    }
-    .spacer { flex: 1; }
-
-    .replay {
-      font: inherit;
-      border: 1px solid var(--oc-border);
-      background: #fbfbfb;
-      color: var(--oc-text);
-      border-radius: 999px;
-      padding: 6px 10px;
-      line-height: 1;
-      cursor: pointer;
-      opacity: .0;
-      transform: translateY(-2px);
-      transition: opacity .25s ease, transform .25s ease, background .2s ease, border-color .2s ease;
-      user-select: none;
-    }
-    .card:hover .replay { opacity: 1; transform: translateY(0); }
-    .replay:active { transform: translateY(1px); }
-    .replay:focus-visible { outline: 2px solid var(--oc-accent); outline-offset: 2px; }
-
-    .stage {
-      position: relative;
-      padding: 24px 16px 18px 16px;
-      display: grid;
-      grid-template-columns: 1fr;
-      min-height: 220px;
-    }
-
-    /* Cloud target (minimal, monochrome) */
-    .cloud {
-      position: absolute;
-      top: 18px; right: 18px;
-      width: 92px; height: 54px;
-      border-radius: 14px;
-      background: linear-gradient(180deg, #fafafa, #f2f2f2);
-      border: 1px solid var(--oc-border);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
-      display: grid; place-items: center;
-      filter: saturate(.98);
-      opacity: .9;
-    }
-    .cloud::before, .cloud::after {
-      content: "";
-      position: absolute; border-radius: 999px; background: inherit; border: inherit;
-      box-shadow: inherit;
-    }
-    .cloud::before { width: 40px; height: 40px; left: 10px; top: -16px; }
-    .cloud::after  { width: 52px; height: 52px; right: 6px; top: -24px; }
-    .cloud-label {
-      position: absolute; top: 82px; right: 18px;
-      font-size: 12px; color: var(--oc-muted); letter-spacing: .02em;
-    }
-
-    /* Message bubble */
-    .bubble {
-      align-self: end;
-      max-width: 84%;
-      background: #f8f8f8;
-      border: 1px solid var(--oc-border);
-      border-radius: 18px;
-      box-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
-      padding: 14px 16px;
-      line-height: 1.45;
-      font-size: 15px;
-      color: var(--oc-text);
-      transform-origin: left bottom;
-      opacity: 0;
-      transform: translateY(6px) scale(.98);
-    }
-
-    .meta {
-      display: flex; align-items: center; gap: 8px;
-      margin: 10px 2px 0 2px;
-      font-size: 12px;
-      color: var(--oc-muted);
-      letter-spacing: .02em;
-      opacity: 0;
-    }
-    .pill {
-      border: 1px solid var(--oc-border);
-      background: #f9f9f9;
-      border-radius: 999px;
-      padding: 3px 8px;
-    }
-
-    /* PII detection highlight */
-    .pii {
-      position: relative;
-      white-space: nowrap;
-      border-radius: 8px;
-      padding: 0 2px;
-    }
-    .pii-detect::before {
-      content: "";
-      position: absolute; inset: -1px -2px;
-      border-radius: 10px;
-      background: color-mix(in oklab, var(--oc-danger) 16%, transparent);
-      box-shadow: 0 0 0 1px color-mix(in oklab, var(--oc-danger) 30%, transparent) inset;
-      animation: pulse 800ms ease-in-out 2;
-      pointer-events: none;
-    }
-    @keyframes pulse {
-      0% { opacity: 0; }
-      50% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-
-    /* Scrubbed replacement styling */
-    .scrub {
-      background: #f1f1f1;
-      border-radius: 8px;
-      padding: 0 4px;
-    }
-
-    /* Encrypted capsule overlay */
-    .cipher {
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      overflow: hidden;
-      pointer-events: none;
-      opacity: 0;
-    }
-    .cipher::before {
-      content: "";
-      position: absolute; inset: 0;
-      background:
-        linear-gradient(115deg, transparent 0 35%, rgba(0,0,0,.06) 50%, transparent 65% 100%),
-        repeating-linear-gradient(90deg, rgba(0,0,0,.04) 0 6px, rgba(0,0,0,.02) 6px 12px);
-      transform: translateX(-100%);
-    }
-
-    /* Path + payload dot (to cloud) */
-    .path {
-      position: absolute; inset: 0;
-      pointer-events: none; opacity: 0;
-    }
-    .dot {
-      position: absolute; width: 8px; height: 8px;
-      border-radius: 999px; background: var(--oc-accent);
-      box-shadow: 0 0 0 6px color-mix(in oklab, var(--oc-accent) 25%, transparent);
-      transform: translate(-9999px, -9999px);
-      pointer-events: none;
-    }
-
-    /* Steps / progress */
-    .steps {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 10px; padding: 12px 16px 16px 16px; align-items: center;
-    }
-    .step {
-      display: grid; grid-template-columns: 14px 1fr; gap: 8px; align-items: center;
-      font-size: 12px; color: var(--oc-muted);
-    }
-    .dotstep {
-      width: 10px; height: 10px; border-radius: 999px;
-      border: 1px solid var(--oc-border); background: #fff;
-      transition: background .35s ease, border-color .35s ease, box-shadow .35s ease;
-    }
-    .step.active .dotstep {
-      background: var(--oc-accent);
-      border-color: color-mix(in oklab, var(--oc-accent) 60%, #0000);
-      box-shadow: 0 0 0 3px color-mix(in oklab, var(--oc-accent) 25%, transparent);
-    }
-    .step-label { letter-spacing: .02em; }
-
-    /* Reduced motion: keep it tasteful and instant */
-    @media (prefers-reduced-motion: reduce) {
-      .replay { transition: none; }
-      .card, .bubble, .meta, .cipher::before { transition: none !important; animation: none !important; }
-    }
-
-    /* Mobile tuning */
-    @media (max-width: 480px) {
-      .cloud { transform: scale(.9); transform-origin: top right; }
-      .bubble { max-width: 100%; }
-    }
-  </style>
-
-  <div class="card" role="figure" aria-label="Animation showing local PII scrubbing before cloud transfer">
-    <div class="header">
-      <div class="title">PII Scrubbing • On-Device</div>
-      <div class="spacer"></div>
-      <button class="replay" aria-label="Replay animation">Replay</button>
-    </div>
-
-    <div class="stage">
-      <div class="cloud" aria-hidden="true"></div>
-      <div class="cloud-label" aria-hidden="true">Cloud</div>
-
-      <div class="bubble" aria-live="polite">
-        <span class="content">
-          Hey OC, I'm <span class="pii name">Alexander Reed</span>.
-          My email is <span class="pii email">alex.reed@example.com</span>
-          and my phone is <span class="pii phone">(555) 482-1937</span>.
-          Can you schedule a call for tomorrow?
-        </span>
-        <div class="cipher" aria-hidden="true"></div>
-      </div>
-
-      <!-- Curved path from bubble to cloud -->
-      <svg class="path" viewBox="0 0 720 260" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M 140 190 C 260 140, 420 110, 602 66" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-      <div class="dot" aria-hidden="true"></div>
-
-      <div class="meta">
-        <span class="pill state">Local</span>
-        <span>—</span>
-        <span class="note">PII detected & removed before send</span>
-      </div>
-    </div>
-
-    <div class="steps" aria-hidden="true">
-      <div class="step s1 active"><div class="dotstep"></div><div class="step-label">Local</div></div>
-      <div class="step s2"><div class="dotstep"></div><div class="step-label">Scrubbed</div></div>
-      <div class="step s3"><div class="dotstep"></div><div class="step-label">Encrypted</div></div>
-      <div class="step s4"><div class="dotstep"></div><div class="step-label">Cloud</div></div>
-    </div>
-  </div>
-</template>
+<prompt-flow theme="auto" speed="1"></prompt-flow>
 
 <script>
-(function(){
-  // --------- Configuration (edit the demo message here if you like) ----------
-  const TEMPLATE_MESSAGE = {
-    nameOriginal: "Alexander Reed",
-    nameScrubbed: "Person X",
-    emailOriginal: "alex.reed@example.com",
-    emailScrubbed: "personx@email.com",
-    phoneOriginal: "(555) 482-1937",
-    phoneScrubbed: "000-000-0000"
-  };
-  // --------------------------------------------------------------------------
+(() => {
+  const CSS = `
+  :host { --bg: #0b0c0f; --fg: #ffffff; --muted:#9aa4ad; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
+          --glass: rgba(255,255,255,.08); --shadow: 0 10px 30px rgba(0,0,0,.35);
+          color-scheme: light dark; display:block; font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,system-ui,sans-serif; }
+  :host([theme="light"]) { --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3; --glass: rgba(16,18,20,.06); --shadow: 0 10px 30px rgba(0,0,0,.12); }
+  :host([theme="auto"]) { @media (prefers-color-scheme: light){:host{ --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3; --glass: rgba(16,18,20,.06); --shadow: 0 10px 30px rgba(0,0,0,.12);} } }
+  .root{ position:relative; overflow:hidden; width:100%; background:linear-gradient(180deg, color-mix(in oklab, var(--bg) 94%, #0ea5ff 6%), var(--bg));
+         border-radius:24px; box-shadow:var(--shadow); padding:24px; }
+  .stage { position:relative; width:100%; aspect-ratio: 12 / 4; border-radius:16px; background:
+           radial-gradient(1200px 60% at 10% 90%, color-mix(in oklab, var(--accent) 14%, transparent), transparent 60%),
+           radial-gradient(800px 60% at 80% 25%, color-mix(in oklab, #22d3ee 18%, transparent), transparent 60%),
+           linear-gradient(180deg, color-mix(in oklab, var(--bg), #000 6%), color-mix(in oklab, var(--bg), #000 2%));
+           border:1px solid color-mix(in oklab, var(--line), transparent 30%); }
+  .controls { display:flex; gap:8px; align-items:center; margin-top:16px; }
+  .input { flex:1; display:flex; align-items:center; gap:10px; padding:12px 14px; background:var(--card); color:var(--fg);
+           border:1px solid color-mix(in oklab, var(--line), transparent 20%); border-radius:14px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.02); }
+  .input input { all:unset; flex:1; font:600 14px/1.2 inherit; color:inherit; }
+  .btn { all:unset; cursor:pointer; padding:12px 16px; border-radius:12px; background:linear-gradient(180deg, color-mix(in oklab, var(--accent) 90%, #fff 10%), var(--accent));
+         box-shadow:0 8px 20px color-mix(in oklab, var(--accent) 35%, transparent); color:white; font:700 13px/1 inherit; letter-spacing:.2px; }
+  .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+  .label{ font-weight:600; color:var(--muted); margin:0 0 10px 2px; letter-spacing:.2px; }
 
-  class OCPiiScrub extends HTMLElement {
+  /* Bubbles & cards inside SVG via foreignObject */
+  .bubble{ background:var(--card); border:1px solid color-mix(in oklab, var(--line), transparent 20%); color:var(--fg);
+           border-radius:14px; padding:10px 12px; box-shadow:0 6px 18px rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.02);
+           filter: drop-shadow(0 12px 30px rgba(0,0,0,.25)); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .bubble.user{ border-radius:18px 18px 18px 4px; }
+  .bubble.assistant{ border-radius:18px 18px 4px 18px; }
+  .typing{ width:36px; display:inline-flex; justify-content:space-between; }
+  .dot{ width:6px; height:6px; border-radius:50%; background:color-mix(in oklab, var(--fg) 65%, transparent);
+        animation:bounce 1200ms infinite; }
+  .dot:nth-child(2){ animation-delay: .15s } .dot:nth-child(3){ animation-delay: .3s }
+  @keyframes bounce{ 0%,80%,100%{ transform:translateY(0); opacity:.5 } 40%{ transform:translateY(-4px); opacity:1 } }
+
+  .card{ background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 3%), var(--card));
+         border:1px solid color-mix(in oklab, var(--line), transparent 15%);
+         border-radius:16px; padding:12px; color:var(--fg); box-shadow:0 10px 24px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.02); }
+  .card h4{ margin:0 0 6px; font:700 13px/1.1 inherit; letter-spacing:.25px; }
+  .meta{ font:600 10px/1.2 inherit; color:var(--muted); letter-spacing:.3px; }
+  .scan{ margin-top:8px; font:600 12px/1.25 inherit; border-radius:10px; padding:8px 10px; position:relative;
+         background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 4%), var(--card)); border:1px dashed color-mix(in oklab, var(--line), transparent 10%); }
+  .scan .redact{ color:#ff6b6b; }
+  .scan .clean{ color:#10b981; opacity:0; transition:opacity .4s ease; }
+  .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; font:700 10px/1 inherit; letter-spacing:.25px;
+          background:color-mix(in oklab, var(--glass), transparent 30%); border:1px solid color-mix(in oklab, var(--line), transparent 15%); }
+
+  /* SVG presentation */
+  .svg{ width:100%; height:100%; }
+  .path{ fill:none; stroke:color-mix(in oklab, var(--line), var(--fg) 8%); stroke-width:3; stroke-linecap:round; filter: drop-shadow(0 2px 10px rgba(0,0,0,.25)); }
+  .path.return{ stroke-dasharray: 6 10; stroke: color-mix(in oklab, var(--line), var(--accent) 30%); }
+  .glow { filter: url(#pf-glow); }
+  .packet{ pointer-events:none; }
+  .halo{ opacity:.7 }
+  .pulse{ opacity:0; }
+  .cloud-icons{ display:flex; gap:8px; margin-top:8px; }
+  .icon{ width:16px; height:16px; border-radius:6px; display:inline-grid; place-items:center; background:color-mix(in oklab, var(--glass), transparent 20%);
+         border:1px solid color-mix(in oklab, var(--line), transparent 10%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); font-size:12px }
+  .ok{ color:#10b981; } .warn{ color:#f59e0b } .info{ color:#0ea5ff }
+
+  /* Reduced motion: turn animations into simple fades/moves */
+  @media (prefers-reduced-motion: reduce){
+    .dot{ animation:none }
+  }
+  `;
+
+  const TEMPLATE = `
+    <div class="root">
+      <div class="label">Prompt flow</div>
+      <div class="stage" part="stage">
+        <svg class="svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <linearGradient id="pf-line" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="color-mix(in oklab, var(--accent), #22d3ee 40%)"/>
+              <stop offset="100%" stop-color="color-mix(in oklab, #7c3aed, var(--accent) 30%)"/>
+            </linearGradient>
+            <filter id="pf-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <radialGradient id="pf-halo" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity=".85"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <!-- Paths -->
+          <path id="pf-forward" class="path glow" stroke="url(#pf-line)"
+                d="M120,300 C220,272 290,220 360,160
+                   C430,102 530,90 650,110
+                   C730,123 790,125 840,130" />
+          <path id="pf-return" class="path return"
+                d="M840,130 C680,175 520,230 360,270
+                   C260,296 190,300 120,300" />
+
+          <!-- Packet (the glowing prompt) -->
+          <g id="pf-packet" class="packet">
+            <circle class="halo" r="24" fill="url(#pf-halo)"/>
+            <circle class="core" r="8" fill="#fff"/>
+          </g>
+
+          <!-- Station overlays via foreignObject for crisp HTML UI inside SVG coords -->
+          <foreignObject x="48" y="262" width="220" height="90">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="bubble user" id="pf-user-bubble">
+              <div class="meta">You</div>
+              <div id="pf-user-text">Ask anything…</div>
+            </div>
+          </foreignObject>
+
+          <foreignObject x="310" y="78" width="230" height="160">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-pii-card">
+              <div class="badge"><span>🛡️</span> PII Scrubber</div>
+              <h4>Sanitize sensitive data</h4>
+              <div class="scan" id="pf-pii-scan">
+                <div class="raw" id="pf-pii-raw">john.doe@email.com → "Call me at (555) 123-9876"</div>
+                <div class="clean" id="pf-pii-clean">•••••••• → "Call me at •••-•••-••••"</div>
+              </div>
+              <div class="meta" id="pf-pii-status">Idle</div>
+            </div>
+          </foreignObject>
+
+          <foreignObject x="780" y="52" width="270" height="170">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-cloud-card">
+              <div class="badge"><span>☁️</span> Cloud + KB + Compute</div>
+              <h4>Enrich with knowledge & power</h4>
+              <div class="cloud-icons">
+                <div class="icon info" title="Search">🔎</div>
+                <div class="icon ok" title="Knowledge Base">📚</div>
+                <div class="icon warn" title="Compute">⚙️</div>
+                <div class="icon info" title="Vector DB">🧠</div>
+              </div>
+              <div class="meta" id="pf-cloud-status">Warming up…</div>
+            </div>
+          </foreignObject>
+
+          <foreignObject x="104" y="210" width="220" height="90">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="bubble assistant" id="pf-assist-bubble" style="opacity:.0; transform: translateY(6px);">
+              <div class="meta">Assistant</div>
+              <div id="pf-assist-text"><span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span></div>
+            </div>
+          </foreignObject>
+        </svg>
+      </div>
+
+      <div class="controls">
+        <div class="input"><input id="pf-input" maxlength="240" placeholder="Type a prompt — e.g., “Summarize the Apple event and compare to last year.”" />
+          <button class="btn" id="pf-send">Send</button>
+        </div>
+        <button class="btn" id="pf-replay" title="Replay flow" style="background:linear-gradient(180deg,#111,#0f1114); border:1px solid color-mix(in oklab, var(--line), transparent 10%)">↻</button>
+      </div>
+    </div>
+  `;
+
+  class PromptFlow extends HTMLElement {
+    static get observedAttributes(){ return ['theme','speed','prompt','autoplay'] }
     constructor(){
       super();
-      const root = this.attachShadow({mode: 'open'});
-      const tpl = document.getElementById('oc-pii-scrub-template');
-      root.appendChild(tpl.content.cloneNode(true));
-
-      // Cache elements
-      this.card   = root.querySelector('.card');
-      this.bubble = root.querySelector('.bubble');
-      this.content= root.querySelector('.content');
-      this.cipher = root.querySelector('.cipher');
-      this.path   = root.querySelector('.path');
-      this.dot    = root.querySelector('.dot');
-      this.meta   = root.querySelector('.meta');
-      this.statePill = root.querySelector('.state');
-      this.steps = {
-        s1: root.querySelector('.step.s1'),
-        s2: root.querySelector('.step.s2'),
-        s3: root.querySelector('.step.s3'),
-        s4: root.querySelector('.step.s4'),
-      };
-      this.replayBtn = root.querySelector('.replay');
-
-      // Populate demo message from config (safe even if unchanged)
-      const nameEl  = root.querySelector('.pii.name');
-      const emailEl = root.querySelector('.pii.email');
-      const phoneEl = root.querySelector('.pii.phone');
-      if (nameEl)  nameEl.textContent  = TEMPLATE_MESSAGE.nameOriginal;
-      if (emailEl) emailEl.textContent = TEMPLATE_MESSAGE.emailOriginal;
-      if (phoneEl) phoneEl.textContent = TEMPLATE_MESSAGE.phoneOriginal;
-
-      // Bind
-      this.play = this.play.bind(this);
-      this.reset = this.reset.bind(this);
-      this._onReplay = () => { this.play(true); };
-      this._onClick  = () => { this.play(true); };
+      this.attachShadow({mode:'open'});
+      this.shadowRoot.innerHTML = `<style>${CSS}</style>${TEMPLATE}`;
     }
-
     connectedCallback(){
-      // Autoplay when scrolled into view
-      this._io = new IntersectionObserver((entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            // small delay for polish
-            setTimeout(()=>this.play(), 120);
-            this._io.disconnect();
-            break;
-          }
-        }
-      }, {threshold: .5});
-      this._io.observe(this);
+      const $ = (sel) => this.shadowRoot.querySelector(sel);
+      this.els = {
+        input: $('#pf-input'), send: $('#pf-send'), replay: $('#pf-replay'),
+        userText: $('#pf-user-text'), assistText: $('#pf-assist-text'),
+        assistBubble: $('#pf-assist-bubble'), piiCard: $('#pf-pii-card'),
+        piiRaw: $('#pf-pii-raw'), piiClean: $('#pf-pii-clean'), piiStatus: $('#pf-pii-status'),
+        cloudStatus: $('#pf-cloud-status'),
+        svg: this.shadowRoot.querySelector('svg'),
+        fwd: this.shadowRoot.getElementById('pf-forward'),
+        rtn: this.shadowRoot.getElementById('pf-return'),
+        packet: this.shadowRoot.getElementById('pf-packet')
+      };
+      // Defaults
+      const presetPrompt = this.getAttribute('prompt') || '';
+      if (presetPrompt) this.els.input.value = presetPrompt;
+      const sp = Number(this.getAttribute('speed') || 1);
+      this.speed = Number.isFinite(sp) ? Math.min(Math.max(sp, .5), 3) : 1;
+      this.running = false;
 
-      this.replayBtn.addEventListener('click', this._onReplay);
-      this.card.addEventListener('click', this._onClick);
+      // Init packet at start
+      this.positionPacket(this.els.fwd, 0);
 
-      // Prefers-reduced-motion flag
-      this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Events
+      this.els.send.addEventListener('click', () => this.runFlow());
+      this.els.input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') this.runFlow() });
+      this.els.replay.addEventListener('click', () => this.reset(true));
+
+      // Autoplay once if attribute present
+      if (this.hasAttribute('autoplay')) {
+        queueMicrotask(()=> this.runFlow());
+      }
     }
 
-    disconnectedCallback(){
-      this.replayBtn.removeEventListener('click', this._onReplay);
-      this.card.removeEventListener('click', this._onClick);
-      if (this._io) this._io.disconnect();
-      if (this._raf) cancelAnimationFrame(this._raf);
+    attributeChangedCallback(name, oldV, newV){
+      if(name==='speed' && this.isConnected){
+        const sp = Number(newV); if(Number.isFinite(sp)) this.speed = Math.min(Math.max(sp,.5),3);
+      }
     }
 
-    reset(){
-      // Visual resets
-      this.bubble.style.opacity = 0;
-      this.bubble.style.transform = 'translateY(6px) scale(.98)';
-      this.meta.style.opacity = 0;
-      this.cipher.style.opacity = 0;
-      this.cipher.style.removeProperty('--slide');
-      this.path.style.opacity = 0;
-      this.dot.style.transform = 'translate(-9999px, -9999px)';
+    reset(focusInput=false){
+      const {els} = this;
+      this.running = false;
+      this.positionPacket(els.fwd, 0);
+      els.userText.textContent = 'Ask anything…';
+      els.assistText.innerHTML = '<span class="typing"><i class="dot"></i><i class="dot"></i><i class="dot"></i></span>';
+      els.assistBubble.style.opacity = '.0'; els.assistBubble.style.transform = 'translateY(6px)';
+      els.piiStatus.textContent = 'Idle';
+      els.piiClean.style.opacity = '0';
+      els.piiRaw.style.opacity = '1';
+      els.cloudStatus.textContent = 'Warming up…';
+      els.send.disabled = false;
+      if (focusInput) els.input.focus();
+    }
 
-      // Steps
-      for (const k in this.steps) this.steps[k].classList.remove('active');
-      this.steps.s1.classList.add('active');
+    async runFlow(){
+      if (this.running) return;
+      const {els} = this;
+      const text = (els.input.value || 'Email John at john.doe@email.com about the budget. My cell is (555) 123-9876.').trim();
+      this.reset(false);
+      els.userText.textContent = text;
+      els.send.disabled = true; this.running = true;
 
-      // Content back to originals
-      const root = this.shadowRoot;
-      root.querySelector('.pii.name').textContent  = TEMPLATE_MESSAGE.nameOriginal;
-      root.querySelector('.pii.email').textContent = TEMPLATE_MESSAGE.emailOriginal;
-      root.querySelector('.pii.phone').textContent = TEMPLATE_MESSAGE.phoneOriginal;
-      ['name','email','phone'].forEach(cls => {
-        const el = root.querySelector(`.pii.${cls}`);
-        el.classList.remove('pii-detect');
-        el.classList.remove('scrub');
+      const total1 = els.fwd.getTotalLength(), total2 = els.rtn.getTotalLength();
+      const stopPII = this.findTForPoint(els.fwd, {x:360,y:160}); // approximate station
+      const stopCloud = this.findTForPoint(els.fwd, {x:840,y:130});
+
+      // 1) Travel to PII
+      await this.tweenAlong(els.fwd, 0, stopPII, 900/this.speed, (t)=>this.sparkle(t));
+      await this.scrubPII(text);
+
+      // 2) Travel to Cloud
+      await this.tweenAlong(els.fwd, stopPII, stopCloud, 900/this.speed, (t)=>this.sparkle(t));
+      await this.cloudBurst();
+
+      // 3) Return to user
+      await this.tweenAlong(els.rtn, 0, 1, 1100/this.speed, (t)=>this.sparkle(t));
+      await this.revealAnswer(text);
+
+      this.running = false; els.send.disabled = false;
+    }
+
+    // --- Visual steps ---
+    async scrubPII(text){
+      const {piiRaw, piiClean, piiStatus} = this.els;
+      const cleaned = this.maskPII(text);
+      piiRaw.textContent = text.slice(0, 120) + (text.length>120?'…':'');
+      this.els.piiClean.textContent = cleaned.slice(0, 120) + (cleaned.length>120?'…':'');
+      piiStatus.textContent = 'Scanning for emails, phones, IDs…';
+      await this.wait(250/this.speed);
+      piiStatus.textContent = 'Redacting…';
+      piiRaw.style.opacity = '.25';
+      piiClean.style.opacity = '1';
+      await this.wait(500/this.speed);
+      piiStatus.textContent = 'Clean ✔︎';
+      await this.wait(200/this.speed);
+    }
+
+    async cloudBurst(){
+      const {cloudStatus} = this.els;
+      cloudStatus.textContent = 'Querying sources…';
+      await this.radialPulse();
+      cloudStatus.textContent = 'Merging knowledge…';
+      await this.wait(350/this.speed);
+      cloudStatus.textContent = 'Synthesizing answer ✔︎';
+      await this.wait(200/this.speed);
+    }
+
+    async revealAnswer(sourceText){
+      const {assistBubble, assistText} = this.els;
+      assistBubble.style.transition = 'opacity .35s cubic-bezier(.2,.7,.2,1), transform .35s cubic-bezier(.2,.7,.2,1)';
+      assistBubble.style.opacity = '1'; assistBubble.style.transform = 'translateY(0)';
+      const reply = this.generateReply(this.maskPII(sourceText));
+      await this.typewriter(assistText, reply, 16/this.speed);
+    }
+
+    // --- Motion engine ---
+    positionPacket(path, t){
+      const len = path.getTotalLength();
+      const p = path.getPointAtLength(len * t);
+      const p2 = path.getPointAtLength(Math.min(len * t + 1, len));
+      const angle = Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI;
+      this.els.packet.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${angle})`);
+    }
+
+    tweenAlong(path, t0, t1, duration, onUpdate){
+      return new Promise((res)=>{
+        const start = performance.now();
+        const run = (now)=>{
+          const raw = Math.min(1, (now - start) / duration);
+          const ease = this.easeInOutCubic(raw);
+          const t = t0 + (t1 - t0) * ease;
+          this.positionPacket(path, t);
+          onUpdate && onUpdate(t);
+          if (raw < 1) this._raf = requestAnimationFrame(run); else res();
+        };
+        this._raf && cancelAnimationFrame(this._raf);
+        this._raf = requestAnimationFrame(run);
       });
-
-      this.statePill.textContent = 'Local';
-      this.meta.querySelector('.note').textContent = 'PII detected & removed before send';
     }
 
-    async play(forceReplay = false){
-      if (!forceReplay && this._running) return;
-      this._running = true;
-      this.reset();
-
-      const delay = (ms)=> new Promise(res=> setTimeout(res, ms));
-
-      // Stage 1 — Bubble in (Local)
-      if (this.reduced) {
-        this.bubble.style.opacity = 1;
-        this.bubble.style.transform = 'none';
-      } else {
-        this.bubble.animate([
-          {opacity: 0, transform:'translateY(6px) scale(.98)'},
-          {opacity: 1, transform:'translateY(0) scale(1)'}
-        ], {duration: 420, easing:'cubic-bezier(.2,.6,.2,1)', fill:'forwards'});
-        await delay(440);
+    findTForPoint(path, target){
+      // Sample along path to find closest t to target (ok for small template paths)
+      const L = path.getTotalLength(); let bestT = 0, bestD = Infinity;
+      for (let i=0;i<=200;i++){
+        const t = i/200; const p = path.getPointAtLength(L*t);
+        const d = (p.x-target.x)**2 + (p.y-target.y)**2; if (d<bestD){bestD=d; bestT=t;}
       }
-      this.meta.style.opacity = 1;
+      return bestT;
+    }
 
-      // Stage 2 — Detect (pulse highlights)
-      const root = this.shadowRoot;
-      const nameEl  = root.querySelector('.pii.name');
-      const emailEl = root.querySelector('.pii.email');
-      const phoneEl = root.querySelector('.pii.phone');
+    // --- Micro FX ---
+    sparkle(t){
+      // Subtle size/halo breathing as it travels
+      const halo = this.els.packet.querySelector('.halo');
+      const core = this.els.packet.querySelector('.core');
+      const s = 1 + Math.sin(t*Math.PI*2)*0.06;
+      core.setAttribute('r', 8*s);
+      halo.setAttribute('r', 24*s*1.05);
+    }
 
-      if (!this.reduced) {
-        [nameEl, emailEl, phoneEl].forEach((el,i)=>{
-          setTimeout(()=> el.classList.add('pii-detect'), 60 + i*160);
-        });
-        await delay(900);
-      }
+    radialPulse(){
+      // quick expanding stroke pulse along the return path origin (cloud)
+      return new Promise((res)=>{
+        const svg = this.els.svg;
+        const pulse = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        pulse.setAttribute('class','pulse');
+        pulse.setAttribute('cx','840'); pulse.setAttribute('cy','130'); pulse.setAttribute('r','6');
+        pulse.setAttribute('fill','none'); pulse.setAttribute('stroke','url(#pf-line)'); pulse.setAttribute('stroke-width','3');
+        svg.appendChild(pulse);
+        pulse.animate([{opacity:.8, r:6, strokeWidth:3}, {opacity:0, r:120, strokeWidth:0.5}], {duration:500/this.speed, easing:'cubic-bezier(.2,.7,.2,1)'}).onfinish=()=>{
+          svg.removeChild(pulse); res();
+        };
+      });
+    }
 
-      // Stage 3 — Scrub (replace content)
-      const swap = async (el, to) => {
-        if (this.reduced) {
-          el.textContent = to; el.classList.add('scrub'); return;
+    typewriter(node, text, speed=16){
+      return new Promise(async (res)=>{
+        node.textContent = '';
+        for (let i=0;i<text.length;i++){
+          node.textContent += text[i];
+          await this.wait(speed);
         }
-        const a = el.animate([{opacity:1, filter:'blur(0px)'},{opacity:0, filter:'blur(2px)'}],
-                             {duration:140, easing:'ease', fill:'forwards'});
-        await a.finished;
-        el.textContent = to;
-        el.classList.remove('pii-detect');
-        el.classList.add('scrub');
-        el.animate([{opacity:0, filter:'blur(2px)'},{opacity:1, filter:'blur(0px)'}],
-                   {duration:170, easing:'ease', fill:'forwards'});
-      };
+        res();
+      });
+    }
 
-      await swap(nameEl,  TEMPLATE_MESSAGE.nameScrubbed);
-      await swap(emailEl, TEMPLATE_MESSAGE.emailScrubbed);
-      await swap(phoneEl, TEMPLATE_MESSAGE.phoneScrubbed);
+    wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
+    easeInOutCubic(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
 
-      this.steps.s2.classList.add('active');
-      this.statePill.textContent = 'Scrubbed';
-      await delay(280);
+    // --- PII utilities & reply stub ---
+    maskPII(str){
+      return str
+        .replace(/\b[\w.+-]+@[\w.-]+\.\w+\b/gi, (m)=>'•'.repeat(Math.min(12, m.length)))
+        .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, (m)=>'•'.repeat(Math.min(12, m.replace(/\D/g,'').length)))
+        .replace(/\b(\d{4}[-\s]?){3}\d{4}\b/g, '•••• •••• •••• ••••')
+        .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '•••-••-••••');
+    }
 
-      // Stage 4 — Encrypt (sheen sweep)
-      if (!this.reduced) {
-        this.cipher.style.opacity = 1;
-        this.cipher.animate([{opacity:0},{opacity:1}], {duration:160, fill:'forwards'});
-        this.cipher.querySelector(':scope::before'); // for style calc
-        // Sweep animation via Web Animations on pseudo is tricky; animate transform via overlay element:
-        const sheen = this.cipher;
-        sheen.animate([{transform:'translateX(-100%)'}, {transform:'translateX(100%)'}], {
-          duration: 1100, easing: 'cubic-bezier(.2,.6,.2,1)', fill:'both'
-        });
-      } else {
-        this.cipher.style.opacity = 1;
-      }
-      this.steps.s3.classList.add('active');
-      this.statePill.textContent = 'Encrypted';
-      await delay(520);
-
-      // Stage 5 — Send to Cloud (follow path)
-      this.path.style.opacity = .999;
-
-      // Compute path positions relative to component box
-      const svg = this.path;
-      const pathEl = svg.querySelector('path');
-      const len = pathEl.getTotalLength ? pathEl.getTotalLength() : 0;
-
-      const placeDotAt = (t) => {
-        const pt = pathEl.getPointAtLength(len * t);
-        const rect = svg.getBoundingClientRect();
-        const stageRect = this.shadowRoot.querySelector('.stage').getBoundingClientRect();
-        const x = pt.x / rect.width  * stageRect.width;
-        const y = pt.y / rect.height * stageRect.height;
-        this.dot.style.transform = `translate(${x + 20}px, ${y - 2}px)`; // slight offset for aesthetics
-      };
-
-      if (this.reduced || !len) {
-        // Minimal jump for reduced motion
-        placeDotAt(1);
-      } else {
-        const steps = 36;
-        for (let i=0;i<=steps;i++){
-          placeDotAt(i/steps);
-          await delay(14);
-        }
-      }
-
-      this.steps.s4.classList.add('active');
-      this.statePill.textContent = 'Cloud';
-      await delay(260);
-
-      // Gentle settle
-      if (!this.reduced) {
-        this.bubble.animate([{transform:'translateY(0)'},{transform:'translateY(-2px)'}],
-                            {duration:200, easing:'ease-out'});
-      }
-
-      this._running = false;
+    generateReply(cleaned){
+      const hint = cleaned.length>90 ? cleaned.slice(0,90)+'…' : cleaned;
+      return `Here’s a concise, privacy-safe answer enriched by verified knowledge and on-demand compute.\n\nPrompt (sanitized): “${hint}”\n\n• Sensitive bits removed\n• Relevant sources consulted\n• Reasoned and summarized for you ✅`;
     }
   }
 
-  customElements.define('oc-pii-scrub', OCPiiScrub);
+  customElements.define('prompt-flow', PromptFlow);
 })();
 </script>
-
-<!-- Usage: paste this element where you want the animation card to appear -->
-<oc-pii-scrub></oc-pii-scrub>
-
 
 
 
