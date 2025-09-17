@@ -1067,235 +1067,99 @@
 </section>
 
 
-<!--
-  OC — Ultra-Minimal PII Redaction (Apple-style, production-grade, single file)
-  • Drop-in custom element: <oc-pii-mini></oc-pii-mini>
-  • Matches screenshot aesthetic: soft grey section, white rounded card, thin border, subtle shadow.
-  • Animation speed controls:
-      1) Global JS var:   window.OC_PII_SPEED = 1.0  (set before this script)
-      2) Built-in pill control (hover top-right of card) updates all instances
-      3) Per instance attr: <oc-pii-mini speed="1.2">
-  • No dependencies. Shadow DOM encapsulated. Autoplays on scroll. Click card to replay.
-  • Respects prefers-reduced-motion.
-  • Edit the demo text/replacements in the CONFIG object below.
--->
-<template id="oc-pii-mini-template">
+<template id="oc-pii-bubble-template">
   <style>
-    :host {
-      /* Screenshot-inspired palette */
-      --oc-canvas: #f6f7f6;         /* soft section background */
-      --oc-surface: #ffffff;        /* card */
-      --oc-text: #0b0b0b;           /* primary text */
-      --oc-muted: #6f6f6f;          /* secondary text */
-      --oc-border: rgba(0,0,0,.10); /* fine border */
-      --oc-shadow: 0 .5px 1px rgba(0,0,0,.06), 0 10px 30px rgba(0,0,0,.10);
-      --oc-radius: 18px;
-
-      display: block;
-      box-sizing: border-box;
-      max-width: 780px;
-      margin: 24px auto;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-                   Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, "Segoe UI Emoji";
-      color: var(--oc-text);
-      contain: content;
-      /* soft canvas behind the card to match screenshot section */
-      background: var(--oc-canvas);
-      padding: 8px;
-      border-radius: calc(var(--oc-radius) + 4px);
+    :host{
+      display:inline-block;
+      box-sizing:border-box;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,"Segoe UI Emoji";
+      color:var(--oc-text,#0b0b0b);
+      max-width:min(760px,100%);
+    }
+    .bubble{
+      display:inline-block;
+      max-width:100%;
+      background:#f7f7f7;
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:18px;
+      padding:14px 16px;
+      line-height:1.45;
+      font-size:15px;
+      color:inherit;
+      transform-origin:left bottom;
+      opacity:0;
+      transform:translateY(6px) scale(.98);
     }
 
-    .card {
-      position: relative;
-      background: var(--oc-surface);
-      border: 1px solid var(--oc-border);
-      border-radius: calc(var(--oc-radius) + 2px);
-      box-shadow: var(--oc-shadow);
-      overflow: clip;
-      padding: 22px 22px; /* airy interior to match screenshot */
-      transition: box-shadow .25s ease, transform .15s ease;
+    /* PII detect pulse (subtle, Apple-like) */
+    .pii{position:relative;white-space:nowrap;border-radius:8px;padding:0 2px;}
+    .pii.pulse::before{
+      content:"";
+      position:absolute;inset:-1px -2px;border-radius:10px;
+      background:rgba(255,59,48,.14);
+      box-shadow:0 0 0 1px rgba(255,59,48,.28) inset;
+      animation:piiPulse 820ms ease-in-out 2 both;
+      pointer-events:none;
     }
-    .card:active { transform: translateY(.5px); }
-
-    /* Minimal header row: title (optional) + tiny speed control */
-    .row {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 10px;
-    }
-    .title {
-      font-weight: 600; letter-spacing: .01em; font-size: 14px;
-      color: var(--oc-text);
-    }
-    .spacer { flex: 1; }
-
-    /* Segmented speed control — hidden until hover/focus for ultra-min look */
-    .speed {
-      display: inline-flex; align-items: center; gap: 2px;
-      border: 1px solid var(--oc-border);
-      border-radius: 999px;
-      padding: 2px;
-      opacity: .0; transform: translateY(-2px);
-      transition: opacity .2s ease, transform .2s ease;
-      background: #fff;
-      user-select: none;
-    }
-    .card:hover .speed, .speed:focus-within { opacity: 1; transform: translateY(0); }
-    .speed button {
-      appearance: none; border: 0; background: transparent;
-      padding: 6px 10px; margin: 0; border-radius: 999px;
-      font: 500 12px/1 -apple-system, BlinkMacSystemFont, Inter, system-ui;
-      color: var(--oc-muted);
-      cursor: pointer;
-    }
-    .speed button.active {
-      background: #f2f2f2;
-      color: var(--oc-text);
-    }
-    .speed button:focus-visible { outline: 2px solid #007aff; outline-offset: 2px; border-radius: 999px; }
-
-    /* Message bubble (only thing we animate visually) */
-    .bubble {
-      display: inline-block;
-      background: #f7f7f7;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 18px;
-      padding: 14px 16px;
-      line-height: 1.45;
-      font-size: 15px;
-      color: var(--oc-text);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
-      transform-origin: left bottom;
-      opacity: 0;
-      transform: translateY(6px) scale(.98);
-    }
-
-    .hint {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--oc-muted);
-      letter-spacing: .01em;
-      opacity: .65;
-      user-select: none;
-    }
-
-    /* PII detect pulse (subtle red tint; no emojis/icons) */
-    .pii {
-      position: relative;
-      white-space: nowrap;
-      border-radius: 8px;
-      padding: 0 2px;
-    }
-    .pii.pulse::before {
-      content: "";
-      position: absolute; inset: -1px -2px;
-      border-radius: 10px;
-      background: rgba(255,59,48, .14); /* iOS red @ 14% */
-      box-shadow: 0 0 0 1px rgba(255,59,48,.28) inset;
-      animation: piiPulse 820ms ease-in-out 2 both;
-      pointer-events: none;
-    }
-    @keyframes piiPulse {
-      0%   { opacity: 0; }
-      45%  { opacity: 1; }
-      100% { opacity: 0; }
-    }
+    @keyframes piiPulse{0%{opacity:0}45%{opacity:1}100%{opacity:0}}
 
     /* Scrubbed token look */
-    .scrub {
-      background: #ececec;
-      border-radius: 8px;
-      padding: 0 4px;
-    }
+    .scrub{background:#ececec;border-radius:8px;padding:0 4px;}
 
-    @media (prefers-reduced-motion: reduce) {
-      .card, .bubble { transition: none !important; }
-      .pii.pulse::before { animation: none !important; }
-      .speed { opacity: 1; transform: none; } /* keep control accessible */
-    }
-
-    @media (max-width: 480px) {
-      :host { padding: 6px; }
-      .card { padding: 18px; }
-      .bubble { font-size: 14px; }
+    @media (prefers-reduced-motion:reduce){
+      .bubble{transition:none !important}
+      .pii.pulse::before{animation:none !important}
     }
   </style>
 
-  <div class="card" role="figure" aria-label="Animation showing local PII redaction in a message bubble">
-    <div class="row">
-      <div class="title">Private Cloud (optional)</div>
-      <div class="spacer"></div>
-      <div class="speed" role="group" aria-label="Animation speed">
-        <button data-speed="0.75">0.75×</button>
-        <button data-speed="1" class="active">1×</button>
-        <button data-speed="1.5">1.5×</button>
-      </div>
-    </div>
-
-    <div class="bubble" aria-live="polite">
-      <span class="content">
-        Hi OC, I’m <span class="pii name">Alexander Reed</span>.
-        My email is <span class="pii email">alex.reed@example.com</span>
-        and my phone is <span class="pii phone">(555) 482-1937</span>.
-        Please book a call for tomorrow.
-      </span>
-    </div>
-    <div class="hint">Tap card to replay · PII is removed on-device before anything leaves your machine.</div>
+  <div class="bubble" role="figure" aria-label="PII is redacted locally before sending">
+    <span class="content">
+      Hi OC, I’m <span class="pii name">Alexander Reed</span>.
+      My email is <span class="pii email">alex.reed@example.com</span>
+      and my phone is <span class="pii phone">(555) 482-1937</span>.
+      Please book a call for tomorrow.
+    </span>
   </div>
 </template>
 
 <script>
 (() => {
-  // ------- CONFIG: edit the demo text and replacements here -----------------
+  // ---- Adjust animation speed here (1.0 = default, 1.5 = faster, 0.75 = slower)
+  const SPEED = 1.0;
+
+  // ---- Demo content & replacements
   const CONFIG = {
-    nameOriginal:   "Alexander Reed",
-    nameScrubbed:   "Person X",
-    emailOriginal:  "alex.reed@example.com",
-    emailScrubbed:  "personx@email.com",
-    phoneOriginal:  "(555) 482-1937",
-    phoneScrubbed:  "000-000-0000"
+    nameOriginal:  "Alexander Reed",
+    nameScrubbed:  "Person X",
+    emailOriginal: "alex.reed@example.com",
+    emailScrubbed: "personx@email.com",
+    phoneOriginal: "(555) 482-1937",
+    phoneScrubbed: "000-000-0000"
   };
-  // -------------------------------------------------------------------------
 
-  // Global speed bus (updates all instances)
-  const SPEED_EVENT = "oc-pii-speed-change";
-  function getGlobalSpeed() {
-    const g = (typeof window !== "undefined" && window.OC_PII_SPEED);
-    const v = parseFloat(g);
-    return Number.isFinite(v) && v > 0 ? v : 1;
-  }
-  function setGlobalSpeed(mult) {
-    window.OC_PII_SPEED = mult;
-    window.dispatchEvent(new CustomEvent(SPEED_EVENT, { detail: mult }));
-  }
-
-  class OCPiiMini extends HTMLElement {
+  class OCPiiBubble extends HTMLElement{
     constructor(){
       super();
-      const root = this.attachShadow({mode: 'open'});
-      const tpl = document.getElementById('oc-pii-mini-template');
+      const root = this.attachShadow({mode:'open'});
+      const tpl = document.getElementById('oc-pii-bubble-template');
       root.appendChild(tpl.content.cloneNode(true));
 
-      this.card   = root.querySelector('.card');
       this.bubble = root.querySelector('.bubble');
       this.nameEl  = root.querySelector('.pii.name');
       this.emailEl = root.querySelector('.pii.email');
       this.phoneEl = root.querySelector('.pii.phone');
-      this.speedCtl = root.querySelector('.speed');
-      this.speedBtns = Array.from(root.querySelectorAll('.speed button'));
 
-      this.play  = this.play.bind(this);
+      // Motion & speed
+      this.reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const attrSpeed = parseFloat(this.getAttribute('speed'));
+      this._speed = Number.isFinite(attrSpeed) && attrSpeed>0 ? attrSpeed : SPEED;
+
+      this.play = this.play.bind(this);
       this.reset = this.reset.bind(this);
       this._onClick = () => this.play(true);
-      this._onGlobalSpeed = (e)=> this._setSpeed(e.detail, true);
-
-      // Motion preference
-      this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      // Initial speed: attribute > global > 1
-      const attr = parseFloat(this.getAttribute('speed'));
-      this._speed = Number.isFinite(attr) && attr > 0 ? attr : getGlobalSpeed();
-      this._syncButtons();
     }
+
+    ms(base){ return Math.max(1, Math.round(base/(this._speed||1))); }
 
     connectedCallback(){
       // Set content
@@ -1303,108 +1167,78 @@
       this.emailEl.textContent = CONFIG.emailOriginal;
       this.phoneEl.textContent = CONFIG.phoneOriginal;
 
-      // Speed control interactions (optional UI; also updates global)
-      if (this.speedCtl) {
-        this.speedCtl.addEventListener('click', (ev)=>{
-          const btn = ev.target.closest('button[data-speed]');
-          if (!btn) return;
-          const mult = parseFloat(btn.dataset.speed);
-          if (!Number.isFinite(mult) || mult <= 0) return;
-          setGlobalSpeed(mult); // broadcast + store
-        });
-      }
-
-      // React to global speed changes
-      window.addEventListener(SPEED_EVENT, this._onGlobalSpeed);
-
-      // Autoplay once in view
+      // Autoplay when scrolled into view
       this._io = new IntersectionObserver((entries)=>{
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setTimeout(()=> this.play(), 120);
+        for(const e of entries){
+          if(e.isIntersecting){
+            setTimeout(()=>this.play(), 100);
             this._io.disconnect();
             break;
           }
         }
-      }, {threshold: .5});
+      }, {threshold:.45});
       this._io.observe(this);
 
-      this.card.addEventListener('click', this._onClick);
+      this.addEventListener('click', this._onClick);
     }
 
     disconnectedCallback(){
-      if (this._io) this._io.disconnect();
-      this.card.removeEventListener('click', this._onClick);
-      window.removeEventListener(SPEED_EVENT, this._onGlobalSpeed);
+      if(this._io) this._io.disconnect();
+      this.removeEventListener('click', this._onClick);
     }
-
-    _setSpeed(mult, fromGlobal=false){
-      if (!Number.isFinite(mult) || mult <= 0) return;
-      this._speed = mult;
-      if (!fromGlobal) setGlobalSpeed(mult); // keep everything in sync
-      this._syncButtons();
-    }
-    _syncButtons(){
-      this.speedBtns.forEach(b=>{
-        const v = parseFloat(b.dataset.speed);
-        b.classList.toggle('active', Math.abs(v - this._speed) < 1e-6);
-      });
-    }
-    ms(base){ return Math.max(1, Math.round(base / (this._speed || 1))); } // higher speed => shorter durations
 
     reset(){
-      // Restore originals
       this.bubble.style.opacity = 0;
       this.bubble.style.transform = 'translateY(6px) scale(.98)';
       this.nameEl.textContent  = CONFIG.nameOriginal;
       this.emailEl.textContent = CONFIG.emailOriginal;
       this.phoneEl.textContent = CONFIG.phoneOriginal;
-      [this.nameEl, this.emailEl, this.phoneEl].forEach(el=>{
+      [this.nameEl,this.emailEl,this.phoneEl].forEach(el=>{
         el.classList.remove('pulse','scrub');
       });
     }
 
     async play(force=false){
-      if (this._running && !force) return;
+      if(this._running && !force) return;
       this._running = true;
       this.reset();
 
-      const delay = (ms)=> new Promise(r=> setTimeout(r, this.ms(ms)));
+      const delay = (ms)=> new Promise(r=>setTimeout(r, this.ms(ms)));
 
-      // Stage 1: bubble in
-      if (this.reduced) {
+      // Bubble in
+      if(this.reduced){
         this.bubble.style.opacity = 1; this.bubble.style.transform = 'none';
-      } else {
+      }else{
         this.bubble.animate(
           [{opacity:0, transform:'translateY(6px) scale(.98)'},
            {opacity:1, transform:'translateY(0) scale(1)'}],
-          {duration: this.ms(420), easing:'cubic-bezier(.2,.6,.2,1)', fill:'forwards'}
+          {duration:this.ms(420), easing:'cubic-bezier(.2,.6,.2,1)', fill:'forwards'}
         );
         await delay(430);
       }
 
-      // Stage 2: detection pulses
-      if (!this.reduced) {
-        [this.nameEl, this.emailEl, this.phoneEl].forEach((el,i)=>{
-          setTimeout(()=> el.classList.add('pulse'), this.ms(80 + i*160));
+      // Detect pulses
+      if(!this.reduced){
+        [this.nameEl,this.emailEl,this.phoneEl].forEach((el,i)=>{
+          setTimeout(()=> el.classList.add('pulse'), this.ms(80+i*160));
         });
         await delay(900);
       }
 
-      // Stage 3: scrub with blur swap
-      const swap = async (el, to) => {
-        if (this.reduced) { el.textContent = to; el.classList.add('scrub'); return; }
+      // Scrub with blur swap
+      const swap = async (el,to)=>{
+        if(this.reduced){ el.textContent=to; el.classList.add('scrub'); return; }
         const out = el.animate(
-          [{opacity:1, filter:'blur(0px)'},{opacity:0, filter:'blur(2px)'}],
-          {duration: this.ms(140), easing:'ease', fill:'forwards'}
+          [{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(2px)'}],
+          {duration:this.ms(140), easing:'ease', fill:'forwards'}
         );
         await out.finished;
         el.textContent = to;
         el.classList.remove('pulse');
         el.classList.add('scrub');
         el.animate(
-          [{opacity:0, filter:'blur(2px)'},{opacity:1, filter:'blur(0px)'}],
-          {duration: this.ms(170), easing:'ease', fill:'forwards'}
+          [{opacity:0,filter:'blur(2px)'},{opacity:1,filter:'blur(0px)'}],
+          {duration:this.ms(170), easing:'ease', fill:'forwards'}
         );
       };
 
@@ -1412,26 +1246,20 @@
       await swap(this.emailEl, CONFIG.emailScrubbed);
       await swap(this.phoneEl, CONFIG.phoneScrubbed);
 
-      if (!this.reduced) {
+      if(!this.reduced){
         this.bubble.animate([{transform:'translateY(0)'},{transform:'translateY(-1px)'}],
-                            {duration: this.ms(180), easing:'ease-out'});
+                            {duration:this.ms(180), easing:'ease-out'});
       }
-
       this._running = false;
     }
   }
 
-  customElements.define('oc-pii-mini', OCPiiMini);
-
-  // If a page author set window.OC_PII_SPEED before this script, broadcast it once
-  if (typeof window !== "undefined") {
-    setTimeout(()=> setGlobalSpeed(getGlobalSpeed()), 0);
-  }
+  customElements.define('oc-pii-bubble', OCPiiBubble);
 })();
 </script>
 
 <!-- Usage -->
-<oc-pii-mini></oc-pii-mini>
+<oc-pii-bubble></oc-pii-bubble>
 
 
 
