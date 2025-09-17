@@ -1066,49 +1066,46 @@
   </article>
 </section>
 
-<!-- Drop-in "Prompt Flow" (auto-plays on scroll; static rotating prompts) -->
+<!-- Prompt Flow — Apple-style, no emojis/icons; auto-plays on scroll; static rotating prompts -->
 <prompt-flow theme="auto" speed="1"></prompt-flow>
 
 <script>
 (() => {
-  /* ⚙️ EDIT HERE — your 3 rotating messages (static) */
+  /* ⚙️ EDIT HERE — your rotating prompts and sample sender */
   const MESSAGES = [
     'Summarize the Apple event and highlight year-over-year changes.',
-    'Draft a polite follow-up email confirming next steps and deadlines.',
+    'Draft a follow-up email confirming next steps and deadlines.',
     'Plan a 3-day Tokyo itinerary optimized for food, culture, and transit.'
   ];
-  /* Optional: delay between finished animations and the next (ms) */
+  const PERSON = { name: 'John Smith', email: 'john.smith@company.com' };
   const ROTATION_GAP_MS = 900;
 
   const CSS = `
   :host{
-    /* Inherit card look & size from your site via vars */
-    --bg:#0b0c0f; --fg:#ffffff; --muted:#9aa4ad; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
-    --glass: rgba(255,255,255,.08); --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --bg:#0b0c0f; --fg:#ffffff; --muted:#88919a; --card:#0f1216; --line:#1b222a; --accent:#0ea5ff;
+    --glass: rgba(255,255,255,.08); --shadow: 0 8px 22px rgba(0,0,0,.28);
     --pf-radius: var(--card-radius, 24px);
     --pf-padding: var(--card-padding, 24px);
     --pf-aspect: var(--card-aspect, 12 / 4);
     --pf-aspect-mobile: var(--card-aspect-mobile, 4 / 5);
     color-scheme: light dark; display:block;
-    font:14px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,system-ui,sans-serif;
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,Segoe UI,Roboto,system-ui,sans-serif;
   }
   :host([theme="light"]){
     --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3;
-    --glass: rgba(16,18,20,.06); --shadow: 0 10px 30px rgba(0,0,0,.12);
+    --glass: rgba(16,18,20,.06); --shadow: 0 8px 22px rgba(0,0,0,.12);
   }
   :host([theme="auto"]){ @media (prefers-color-scheme: light){
     :host{ --bg:#ffffff; --fg:#0b0c0f; --muted:#5e6972; --card:#ffffff; --line:#e8eef3;
-           --glass: rgba(16,18,20,.06); --shadow: 0 10px 30px rgba(0,0,0,.12); }
+           --glass: rgba(16,18,20,.06); --shadow: 0 8px 22px rgba(0,0,0,.12); }
   } }
 
-  /* Root card — matches your site’s cards by using the same radius/padding vars */
   .root{
     position:relative; overflow:hidden; width:100%;
     background:linear-gradient(180deg, color-mix(in oklab, var(--bg) 94%, #0ea5ff 6%), var(--bg));
     border-radius:var(--pf-radius); box-shadow:var(--shadow); padding:var(--pf-padding);
   }
 
-  /* Stage scales with container (mobile uses taller aspect for readability) */
   .stage{
     position:relative; width:100%; aspect-ratio: var(--pf-aspect);
     border-radius:calc(var(--pf-radius) - 8px);
@@ -1118,9 +1115,7 @@
       linear-gradient(180deg, color-mix(in oklab, var(--bg), #000 6%), color-mix(in oklab, var(--bg), #000 2%));
     border:1px solid color-mix(in oklab, var(--line), transparent 30%);
   }
-  @media (max-width: 640px){
-    .stage{ aspect-ratio: var(--pf-aspect-mobile); }
-  }
+  @media (max-width: 640px){ .stage{ aspect-ratio: var(--pf-aspect-mobile); } }
 
   .label{ font-weight:600; color:var(--muted); margin:0 0 10px 2px; letter-spacing:.2px; }
 
@@ -1132,10 +1127,11 @@
   }
   .bubble.user{ border-radius:18px 18px 18px 4px; }
   .bubble.assistant{ border-radius:18px 18px 4px 18px; }
+
   .typing{ width:36px; display:inline-flex; justify-content:space-between; }
   .dot{ width:6px; height:6px; border-radius:50%; background:color-mix(in oklab, var(--fg) 65%, transparent);
         animation:bounce 1200ms infinite; }
-  .dot:nth-child(2){ animation-delay: .15s } .dot:nth-child(3){ animation-delay: .3s }
+  .dot:nth-child(2){ animation-delay:.15s } .dot:nth-child(3){ animation-delay:.3s }
   @keyframes bounce{ 0%,80%,100%{ transform:translateY(0); opacity:.5 } 40%{ transform:translateY(-4px); opacity:1 } }
 
   .card{
@@ -1146,13 +1142,11 @@
   }
   .card h4{ margin:0 0 6px; font:700 13px/1.1 inherit; letter-spacing:.25px; }
   .meta{ font:600 10px/1.2 inherit; color:var(--muted); letter-spacing:.3px; }
+
   .scan{ margin-top:8px; font:600 12px/1.25 inherit; border-radius:10px; padding:8px 10px; position:relative;
          background:linear-gradient(180deg, color-mix(in oklab, var(--card), #fff 4%), var(--card));
          border:1px dashed color-mix(in oklab, var(--line), transparent 10%); }
-  .scan .redact{ color:#ff6b6b; }
   .scan .clean{ color:#10b981; opacity:0; transition:opacity .4s ease; }
-  .badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 8px; border-radius:999px; font:700 10px/1 inherit; letter-spacing:.25px;
-          background:color-mix(in oklab, var(--glass), transparent 30%); border:1px solid color-mix(in oklab, var(--line), transparent 15%); }
 
   /* SVG presentation */
   .svg{ width:100%; height:100%; }
@@ -1163,17 +1157,9 @@
   .packet{ pointer-events:none; }
   .halo{ opacity:.7 }
   .pulse{ opacity:0; }
-  .cloud-icons{ display:flex; gap:8px; margin-top:8px; }
-  .icon{ width:16px; height:16px; border-radius:6px; display:inline-grid; place-items:center;
-         background:color-mix(in oklab, var(--glass), transparent 20%);
-         border:1px solid color-mix(in oklab, var(--line), transparent 10%);
-         box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); font-size:12px }
-  .ok{ color:#10b981; } .warn{ color:#f59e0b } .info{ color:#0ea5ff }
 
-  /* Reduced motion: minimize animation but keep layout consistent */
-  @media (prefers-reduced-motion: reduce){
-    .dot{ animation:none }
-  }
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce){ .dot{ animation:none } }
   `;
 
   const TEMPLATE = `
@@ -1221,11 +1207,11 @@
 
           <foreignObject x="310" y="78" width="230" height="160">
             <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-pii-card">
-              <div class="badge"><span>🛡️</span> PII Scrubber</div>
+              <div class="meta" style="font-weight:700;margin-bottom:6px;">PII Scrubber</div>
               <h4>Sanitize sensitive data</h4>
               <div class="scan" id="pf-pii-scan">
-                <div class="raw" id="pf-pii-raw">john.doe@email.com → "Call me at (555) 123-9876"</div>
-                <div class="clean" id="pf-pii-clean">•••••••• → "Call me at •••-•••-••••"</div>
+                <div class="raw" id="pf-pii-raw">From: John Smith &lt;john.smith@company.com&gt; — …</div>
+                <div class="clean" id="pf-pii-clean">From: Person X &lt;PersonX@Email&gt; — …</div>
               </div>
               <div class="meta" id="pf-pii-status">Idle</div>
             </div>
@@ -1233,14 +1219,8 @@
 
           <foreignObject x="780" y="52" width="270" height="170">
             <div xmlns="http://www.w3.org/1999/xhtml" class="card" id="pf-cloud-card">
-              <div class="badge"><span>☁️</span> Cloud + KB + Compute</div>
+              <div class="meta" style="font-weight:700;margin-bottom:6px;">Cloud + Knowledge + Compute</div>
               <h4>Enrich with knowledge & power</h4>
-              <div class="cloud-icons">
-                <div class="icon info" title="Search">🔎</div>
-                <div class="icon ok" title="Knowledge Base">📚</div>
-                <div class="icon warn" title="Compute">⚙️</div>
-                <div class="icon info" title="Vector DB">🧠</div>
-              </div>
               <div class="meta" id="pf-cloud-status">Warming up…</div>
             </div>
           </foreignObject>
@@ -1284,10 +1264,10 @@
       this.speed = Number.isFinite(sp) ? Math.min(Math.max(sp, .5), 3) : 1;
       this.running = false;
 
-      // Init packet at start
+      // init
       this.positionPacket(this.els.fwd, 0);
 
-      // Autoplay on scroll into view
+      // autoplay on scroll
       this._io = new IntersectionObserver((entries)=>{
         const e = entries[0];
         this._visible = !!e.isIntersecting;
@@ -1296,10 +1276,7 @@
       this._io.observe(this);
     }
 
-    disconnectedCallback(){
-      this._io && this._io.disconnect();
-      this.stopCycle();
-    }
+    disconnectedCallback(){ this._io && this._io.disconnect(); this.stopCycle(); }
 
     attributeChangedCallback(name, _o, v){
       if(name==='speed' && this.isConnected){
@@ -1307,13 +1284,14 @@
       }
     }
 
-    /* Rotation control */
+    /* Rotation */
     async startCycle(){
       if (this._cycling) return;
       this._cycling = true;
       while (this._cycling && this._visible) {
-        const text = MESSAGES[this._msgIndex];
-        await this.runFlow(text);
+        const base = MESSAGES[this._msgIndex];
+        const composed = `From: ${PERSON.name} <${PERSON.email}> — ${base}`;
+        await this.runFlow(composed);
         this._msgIndex = (this._msgIndex + 1) % MESSAGES.length;
         await this.wait(ROTATION_GAP_MS / this.speed);
       }
@@ -1345,41 +1323,37 @@
       const stopCloud = this.findTForPoint(els.fwd, {x:840,y:130});
 
       if (reduced) {
-        // Minimal motion path for accessibility
         await this.scrubPII(text);
         await this.cloudBurst(true);
         await this.revealAnswer(text);
         this.running = false; return;
       }
 
-      // 1) Travel to PII
       await this.tweenAlong(els.fwd, 0, stopPII, 900/this.speed, (t)=>this.sparkle(t));
       await this.scrubPII(text);
 
-      // 2) Travel to Cloud
       await this.tweenAlong(els.fwd, stopPII, stopCloud, 900/this.speed, (t)=>this.sparkle(t));
       await this.cloudBurst();
 
-      // 3) Return to user
       await this.tweenAlong(els.rtn, 0, 1, 1100/this.speed, (t)=>this.sparkle(t));
       await this.revealAnswer(text);
 
       this.running = false;
     }
 
-    // --- Visual steps ---
+    /* Steps */
     async scrubPII(text){
       const {piiRaw, piiClean, piiStatus} = this.els;
-      const cleaned = this.maskPII(text);
-      piiRaw.textContent = text.slice(0, 120) + (text.length>120?'…':'');
-      this.els.piiClean.textContent = cleaned.slice(0, 120) + (cleaned.length>120?'…':'');
-      piiStatus.textContent = 'Scanning for emails, phones, IDs…';
+      const cleaned = this.anonymize(text);
+      piiRaw.textContent  = text.slice(0, 180) + (text.length>180?'…':'');
+      piiClean.textContent = cleaned.slice(0, 180) + (cleaned.length>180?'…':'');
+      piiStatus.textContent = 'Scanning for names and emails…';
       await this.wait(250/this.speed);
-      piiStatus.textContent = 'Redacting…';
+      piiStatus.textContent = 'Anonymizing…';
       piiRaw.style.opacity = '.25';
       piiClean.style.opacity = '1';
       await this.wait(500/this.speed);
-      piiStatus.textContent = 'Clean ✔︎';
+      piiStatus.textContent = 'Anonymized';
       await this.wait(200/this.speed);
     }
 
@@ -1389,7 +1363,7 @@
       if (!minimal) await this.radialPulse();
       cloudStatus.textContent = 'Merging knowledge…';
       await this.wait(350/this.speed);
-      cloudStatus.textContent = 'Synthesizing answer ✔︎';
+      cloudStatus.textContent = 'Synthesizing answer — done';
       await this.wait(200/this.speed);
     }
 
@@ -1397,11 +1371,11 @@
       const {assistBubble, assistText} = this.els;
       assistBubble.style.transition = 'opacity .35s cubic-bezier(.2,.7,.2,1), transform .35s cubic-bezier(.2,.7,.2,1)';
       assistBubble.style.opacity = '1'; assistBubble.style.transform = 'translateY(0)';
-      const reply = this.generateReply(this.maskPII(sourceText));
+      const reply = this.generateReply(this.anonymize(sourceText));
       await this.typewriter(assistText, reply, 16/this.speed);
     }
 
-    // --- Motion engine ---
+    /* Motion */
     positionPacket(path, t){
       const len = path.getTotalLength();
       const p = path.getPointAtLength(len * t);
@@ -1435,7 +1409,6 @@
       return bestT;
     }
 
-    // --- Micro FX ---
     sparkle(t){
       const halo = this.els.packet.querySelector('.halo');
       const core = this.els.packet.querySelector('.core');
@@ -1473,18 +1446,23 @@
     wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
     easeInOutCubic(t){ return t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
 
-    // --- PII utilities & reply stub ---
-    maskPII(str){
-      return str
-        .replace(/\b[\w.+-]+@[\w.-]+\.\w+\b/gi, (m)=>'•'.repeat(Math.min(12, m.length)))
-        .replace(/\b(?:\+?\d[\d\s().-]{7,}\d)\b/g, (m)=>'•'.repeat(Math.min(12, m.replace(/\D/g,'').length)))
-        .replace(/\b(\d{4}[-\s]?){3}\d{4}\b/g, '•••• •••• •••• ••••')
-        .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '•••-••-••••');
+    /* Anonymization — Name → Person X, Email → PersonX@Email (deterministic) */
+    anonymize(str){
+      const esc = (s)=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      const emailRe = /\b[\w.+-]+@[\w.-]+\.\w+\b/gi;
+      const nameRe  = new RegExp(esc(PERSON.name), 'gi');
+
+      let out = str.replace(emailRe, 'PersonX@Email');
+      out = out.replace(nameRe, 'Person X');
+
+      // Also anonymize "From: Name <email>"
+      out = out.replace(/From:\s*[^<]+<[^>]+>/gi, 'From: Person X <PersonX@Email>');
+      return out;
     }
 
     generateReply(cleaned){
       const hint = cleaned.length>90 ? cleaned.slice(0,90)+'…' : cleaned;
-      return `Here’s a concise, privacy-safe answer enriched by verified knowledge and on-demand compute.\n\nPrompt (sanitized): “${hint}”\n\n• Sensitive bits removed\n• Relevant sources consulted\n• Reasoned and summarized for you ✅`;
+      return `Privacy-safe answer synthesized.\n\nPrompt (sanitized): “${hint}”\n\n- Name anonymized to “Person X”\n- Email anonymized to “PersonX@Email”\n- Relevant sources consulted and summarized`;
     }
   }
 
