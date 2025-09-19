@@ -260,8 +260,9 @@
             <span id="billingPill"
                   class="billing-pill absolute top-1 left-1 h-[34px] w-[84px] rounded-full bg-white shadow"></span>
           </div>
-          <span id="saveBadge"
-                class="ml-3 inline-flex items-center gap-1 rounded-full bg-white/90 text-oc-ink text-xs font-semibold px-3 py-1 shadow">
+          <!-- ▼▼ Only show this badge when ANNUAL is selected ▼▼ -->
+          <span id="saveBadge" aria-hidden="true"
+                class="hidden ml-3 inline-flex items-center gap-1 rounded-full bg-white/90 text-oc-ink text-xs font-semibold px-3 py-1 shadow">
             <i class="ph ph-sparkle text-sm"></i> Save 20%
           </span>
         </div>
@@ -494,7 +495,7 @@
     // Year
     (function(){ const yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear(); })();
 
-    // Billing toggle logic (+ annual shows $16/mo)
+    // Billing toggle logic (+ annual shows $16/mo and only then shows "Save 20%")
     (function(){
       const pill = document.getElementById('billingPill');
       const monthly = document.getElementById('btnMonthly');
@@ -525,13 +526,21 @@
         if (isAnnual){
           proM.setAttribute('data-state','out'); proM.setAttribute('aria-hidden','true');
           proA.setAttribute('data-state','in');  proA.removeAttribute('aria-hidden');
-          save.style.opacity = '1';
+
+          // Show "Save 20%" only on annual
+          save.classList.remove('hidden');
+          save.removeAttribute('aria-hidden');
+
           note.textContent = 'Billed yearly — $16/month (paid annually)';
           proCopy.textContent = 'Billed yearly — $16/month (save 20%)';
         }else{
           proM.setAttribute('data-state','in');  proM.removeAttribute('aria-hidden');
           proA.setAttribute('data-state','out'); proA.setAttribute('aria-hidden','true');
-          save.style.opacity = '0.85';
+
+          // Hide "Save 20%" on monthly
+          save.classList.add('hidden');
+          save.setAttribute('aria-hidden','true');
+
           note.textContent = 'Billed monthly';
           proCopy.textContent = 'Billed monthly — cancel anytime';
         }
