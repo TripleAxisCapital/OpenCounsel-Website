@@ -1315,7 +1315,7 @@
       max-width:100%;
     }
     .bubble{
-      display:block; margin:0 auto;
+      display:block; margin:0 auto; position:relative; isolation:isolate;
       width:var(--oc-bubble-width,560px); max-width:100%;
       background:#f7f7f7;
       border:1px solid rgba(0,0,0,.10);
@@ -1323,10 +1323,26 @@
       padding:14px 16px;
       line-height:1.45; font-size:15px; color:inherit;
       box-sizing:border-box;
-      opacity:0; filter:blur(10px); transform:scale(.997) translateZ(0);
-      will-change:opacity, filter, transform;
+      /* Bubble is always present: never fades, scales, or moves */
+      opacity:1; filter:none; transform:none;
+      will-change:height;
+      transition:height 280ms cubic-bezier(.2,.7,0,1);
     }
-    .content{ display:inline; }
+
+    /* Only the message content animates */
+    .content{
+      display:inline-block;
+      opacity:0; filter:blur(8px);
+      will-change:opacity, filter;
+    }
+
+    /* Invisible in-DOM sizer to lock the bubble height up-front */
+    .sizer{
+      position:absolute; left:0; right:0; top:0;
+      visibility:hidden; pointer-events:none;
+      opacity:0; filter:none; transform:none;
+      white-space:normal;
+    }
 
     .caret{
       display:inline-block; width:1.5px; height:1em;
@@ -1352,11 +1368,13 @@
     @media (prefers-reduced-motion:reduce){
       .pii.pulse::before{animation:none !important}
       .caret{display:none}
+      .content{opacity:1 !important; filter:none !important}
     }
   </style>
 
   <div class="bubble" aria-label="PII is redacted locally before sending">
     <span class="content"></span>
+    <div class="sizer" aria-hidden="true"></div>
   </div>
 </template>
 
@@ -1396,6 +1414,7 @@
 
       this.bubble=root.querySelector('.bubble');
       this.content=root.querySelector('.content');
+      this.sizer=root.querySelector('.sizer');
 
       this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.play=this.play.bind(this);
@@ -1405,6 +1424,10 @@
       this._loopT=null;
       this._anims={in:null,out:null};
       this._hasRun=false;
+
+      // Recompute locked height when width changes (e.g., responsive)
+      this._ro = new ResizeObserver(()=> this._ensureStableHeight());
+      this._ro.observe(this.bubble);
     }
 
     msType(base){ return Math.max(1, Math.round(base/(TYPING_SPEED||1))); }
@@ -1414,7 +1437,12 @@
       // Autoplay when visible
       this._io=new IntersectionObserver((entries)=>{
         for(const e of entries){
-          if(e.isIntersecting){ setTimeout(()=>this.play(),120); this._io.disconnect(); break; }
+          if(e.isIntersecting){
+            this._ensureStableHeight();
+            setTimeout(()=>this.play(),120);
+            this._io.disconnect();
+            break;
+          }
         }
       },{threshold:.35});
       this._io.observe(this);
@@ -1427,6 +1455,7 @@
       this.removeEventListener('click', this._onClick);
       if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
       this._cancelAnims();
+      this._ro?.disconnect();
     }
 
     _cancelAnims(){
@@ -1435,25 +1464,68 @@
       this._anims.in=this._anims.out=null;
     }
 
-    _prepInvisible(){
-      this.bubble.style.opacity='0';
-      this.bubble.style.filter='blur(10px)';
-      this.bubble.style.transform='scale(.997) translateZ(0)';
+    _prepContentInvisible(){
+      this.content.style.opacity='0';
+      this.content.style.filter='blur(8px)';
     }
-    _prepVisible(){
-      this.bubble.style.opacity='1';
-      this.bubble.style.filter='none';
-      this.bubble.style.transform='scale(1) translateZ(0)';
+    _prepContentVisible(){
+      this.content.style.opacity='1';
+      this.content.style.filter='none';
     }
 
     reset(){
-      // Do NOT flash; we only clear content. Visibility is controlled by fades.
+      // Do NOT touch bubble sizing/visibility; we only clear content
       this._runId++;
       if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
       this._cancelAnims();
       while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
       this.nameEl=this.emailEl=this.phoneEl=null;
     }
+
+    /* ------- Lock bubble height so it never grows/shrinks during typing ------- */
+    _finalFragment({scrubbed=true}={}){
+      const frag=document.createDocumentFragment();
+      for(const seg of SCRIPT){
+        if(seg.type==='text'){
+          frag.appendChild(document.createTextNode(seg.text));
+        }else{
+          const span=document.createElement('span');
+          span.className=`pii ${seg.cls} ${scrubbed?'scrub':''}`;
+          const map={
+            name: scrubbed? CONFIG.nameScrubbed: CONFIG.nameOriginal,
+            email: scrubbed? CONFIG.emailScrubbed: CONFIG.emailOriginal,
+            phone: scrubbed? CONFIG.phoneScrubbed: CONFIG.phoneOriginal
+          };
+          span.textContent = map[seg.key] ?? seg.text;
+          frag.appendChild(span);
+        }
+      }
+      return frag;
+    }
+
+    _measureHeight(scrubbed){
+      // Prepare sizer with the desired final content
+      this.sizer.replaceChildren();
+      this.sizer.appendChild(this._finalFragment({scrubbed}));
+      // Height of content; bubble must include its own padding
+      const cs=getComputedStyle(this.bubble);
+      const padTop=parseFloat(cs.paddingTop)||0, padBot=parseFloat(cs.paddingBottom)||0;
+      const total=Math.ceil(this.sizer.scrollHeight + padTop + padBot);
+      return total;
+    }
+
+    _ensureStableHeight(){
+      // Take max of original vs scrubbed text (whichever is taller)
+      const h1=this._measureHeight(false);
+      const h2=this._measureHeight(true);
+      const H=Math.max(h1,h2);
+      // Only update if changed to avoid layout thrash
+      if(this._lockedH !== H){
+        this._lockedH = H;
+        this.bubble.style.height = H + 'px';
+      }
+    }
+    /* ------------------------------------------------------------------------ */
 
     // --- Core typing: ALWAYS insert new nodes *before the caret* to preserve order ---
     async typeScript(runId){
@@ -1510,66 +1582,66 @@
     }
 
     async _fadeIn(runId, isRestart){
-      if(this.reduced){ this._prepVisible(); return; }
-      this._prepInvisible(); // start from invisible state without flashes
+      // Animate ONLY the message content. Bubble remains constant.
+      if(this.reduced){ this._prepContentVisible(); return; }
+      this._prepContentInvisible();
       const easeOut='cubic-bezier(.20,.70,0,1)';
-      this._anims.in=this.bubble.animate(
+      this._anims.in=this.content.animate(
         isRestart
           ? [
-              { opacity:0, filter:'blur(10px)', transform:'scale(.997) translateZ(0)' },
-              { opacity:1, filter:'blur(0px)',  transform:'scale(1) translateZ(0)' }
+              { opacity:0, filter:'blur(10px)' },
+              { opacity:1, filter:'blur(0px)' }
             ]
           : [
-              { opacity:0, filter:'blur(6px)', transform:'scale(.998) translateZ(0)' },
-              { opacity:1, filter:'blur(0px)', transform:'scale(1) translateZ(0)' }
+              { opacity:0, filter:'blur(8px)' },
+              { opacity:1, filter:'blur(0px)' }
             ],
         { duration:this.msFx(isRestart? 420:340), easing:easeOut, fill:'forwards' }
       );
       try{ await this._anims.in.finished; }catch(_){}
       if(runId!==this._runId) return;
-      this._prepVisible();
+      this._prepContentVisible();
     }
 
     async _fadeOut(runId){
-      if(this.reduced){ this._prepInvisible(); return; }
+      if(this.reduced){ this._prepContentInvisible(); return; }
       const easeIn='cubic-bezier(.4,0,.2,1)'; // graceful fade-out
-      this._anims.out=this.bubble.animate(
+      this._anims.out=this.content.animate(
         [
-          { opacity:1, filter:'blur(0px)', transform:'scale(1) translateZ(0)' },
-          { opacity:0, filter:'blur(6px)', transform:'scale(.997) translateZ(0)' }
+          { opacity:1, filter:'blur(0px)' },
+          { opacity:0, filter:'blur(6px)' }
         ],
         { duration:this.msFx(260), easing:easeIn, fill:'forwards' }
       );
       try{ await this._anims.out.finished; }catch(_){}
       if(runId!==this._runId) return;
-      this._prepInvisible();
+      this._prepContentInvisible();
     }
 
     async play(force=false, isRestart=false){
       if(this._running && !force) return;
       this._running=true;
       this.reset();
+
+      // Lock height before any animation to prevent bubble resizing
+      this._ensureStableHeight();
+
       const runId=this._runId;
       const delayFx=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msFx(t)));
 
-      // Entrance (no jumps, blur→crisp)
+      // Entrance (only the message appears; bubble remains static)
       await this._fadeIn(runId, isRestart || this._hasRun);
       if(runId!==this._runId) return;
 
       // Streamed typing
       if(this.reduced){
-        const frag=document.createDocumentFragment();
-        const makeText=(t)=>frag.appendChild(document.createTextNode(t));
-        for(const seg of SCRIPT){
-          if(seg.type==='text') makeText(seg.text);
-          else{
-            const el=document.createElement('span'); el.className=`pii ${seg.cls}`; el.textContent=seg.text;
-            if(seg.key==='name') this.nameEl=el;
-            if(seg.key==='email') this.emailEl=el;
-            if(seg.key==='phone') this.phoneEl=el;
-            frag.appendChild(el);
-          }
-        }
+        const frag=this._finalFragment({scrubbed:false});
+        // also store element refs for effects
+        frag.querySelectorAll?.('.pii').forEach(el=>{
+          if(el.classList.contains('name'))  this.nameEl=el;
+          if(el.classList.contains('email')) this.emailEl=el;
+          if(el.classList.contains('phone')) this.phoneEl=el;
+        });
         this.content.appendChild(frag);
       }else{
         await this.typeScript(runId);
@@ -1614,13 +1686,13 @@
       this._running=false;
       this._hasRun=true;
 
-      /* ---- Rest 3s (visible), then smooth fade-out, then blur-fade-in restart ---- */
+      /* ---- Rest 3s (visible), then smooth content fade-out, then blur-fade-in restart ---- */
       if (this._loopT) { clearTimeout(this._loopT); }
       this._loopT = setTimeout(async () => {
         if (!this.isConnected || runId !== this._runId || this._running) return;
-        await this._fadeOut(runId);
+        await this._fadeOut(runId);            // fade only the message
         if (!this.isConnected || runId !== this._runId) return;
-        this.play(true, /*isRestart*/ true);
+        this.play(true, /*isRestart*/ true);   // then restart with a fresh blur-fade-in
       }, 3000);
     }
   }
