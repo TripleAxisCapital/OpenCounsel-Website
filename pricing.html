@@ -62,7 +62,7 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===== Animated ONX header logo (blue/green site gradient) ===== */
+    /* ===== Animated ONX logo (same blue/green animation as site) ===== */
     .logo-anim{
       display:inline-block;
       width: var(--logo-size,40px);
@@ -74,11 +74,12 @@
               mask: url('/logo.svg') no-repeat center / contain;
     }
 
-    /* ===== Pill header behavior EXACTLY like index.html ===== */
+    /* ===== Header: normal → floating pill on scroll (match index.html behavior) ===== */
     .oc-header{ background:#fff; padding-top:0; padding-bottom:0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
     .oc-header .header-bar{
-      background: transparent; border:0; border-radius:0px; box-shadow:none;
-      -webkit-backdrop-filter:none; backdrop-filter:none; transition:
+      background: transparent; border:0; border-radius:0; box-shadow:none;
+      -webkit-backdrop-filter:none; backdrop-filter:none;
+      transition:
         border-color .36s ease,
         background-color .36s ease,
         border-radius .36s cubic-bezier(.2,.8,.2,1),
@@ -90,36 +91,40 @@
     .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
     @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
     .oc-header.is-float .header-bar{
-      background: rgba(255,255,255,.96); border:0; border-radius: var(--header-radius);
+      background: rgba(255,255,255,.96);
+      border-radius: var(--header-radius);
       box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
       -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
 
-    /* Header layout & paddings (same knobs as index) */
+    /* 🛠 Pill layout + centering logic (copied from index.html) */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
+    /* Base (mobile) full-width header; pill dimensions are applied only when .is-float adds bg/rounded */
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
-      /* mobile sizing */
-      width: min(var(--pill-max-w,1200px), calc(100% - (2 * var(--pill-outer-x-mobile,35px))));
+      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
       margin-inline: auto;
-      padding-left: var(--pill-inner-x-mobile,30px);
-      padding-right: var(--pill-inner-x-mobile,30px);
-      height: var(--pill-height-mobile, 2.75rem);
-      display: flex; align-items: center; border-radius: 999px;
+      padding-left: var(--pill-inner-x-mobile);
+      padding-right: var(--pill-inner-x-mobile);
+      height: var(--pill-height-mobile);
+      display: flex; align-items: center; justify-content: space-between;
+      border-radius: 0; /* becomes rounded when .is-float */
     }
-    #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile, 6px); }
-    #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile, 6px); }
+    /* Element-specific paddings (mobile) */
+    #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
+    #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
 
+    /* Desktop */
     @media (min-width: 768px) {
       #siteHeader .header-bar {
-        width: min(var(--pill-max-w,1200px), calc(100% - (2 * var(--pill-outer-x-desktop,0px))));
-        padding-left: var(--pill-inner-x-desktop,12px);
-        padding-right: var(--pill-inner-x-desktop,12px);
-        height: var(--pill-height-desktop, 3.5rem);
+        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+        padding-left: var(--pill-inner-x-desktop);
+        padding-right: var(--pill-inner-x-desktop);
+        height: var(--pill-height-desktop);
       }
-      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop, 12px); }
-      #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop, 12px); }
+      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
+      #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
     }
 
     .nav-link{ font-weight:700; letter-spacing:-.01em; transition: opacity .2s ease, transform .2s ease; }
@@ -164,12 +169,11 @@
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
-  <!-- Drop-in 12px spacer (same as index) -->
-  <div aria-hidden="true" style="height:12px;"></div>
 
-  <!-- HEADER — identical behavior to index: full → floating pill on scroll -->
+  <!-- HEADER (normal → pill on scroll; logo + download stay inside with equal edge padding) -->
   <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
     style="
+      /* 🔧 Controls (match index.html) */
       --pill-inner-x-mobile: 30px;
       --pill-inner-x-desktop: 12px;
       --pill-outer-x-mobile: 35px;
@@ -178,13 +182,14 @@
       --pill-height-desktop: 3.5rem;
       --pill-max-w: 1200px;
 
-      --logo-pad-left-mobile: 6px;
+      /* Independent element paddings to keep equal edge spacing */
+      --logo-pad-left-mobile: 12px;
       --logo-pad-left-desktop: 12px;
-      --download-pad-right-mobile: 6px;
+      --download-pad-right-mobile: 12px;
       --download-pad-right-desktop: 12px;
     ">
     <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
-      <!-- Left: Logo with the same inner padding as the pill uses (matches index) -->
+      <!-- Left (logo with equal edge padding) -->
       <div class="flex items-center gap-3 logo-pad">
         <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
           <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
@@ -192,13 +197,14 @@
         </a>
       </div>
 
-      <!-- Centered nav -->
+      <!-- Centered nav (stays centered inside pill) -->
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link font-extrabold text-black" href="oc-pro.html">ONX Pro</a>
-        <a class="nav-link grad-text" href="models.html">Models</a>
+        <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
+        <a class="nav-link text-oc-ink" href="models.html">Models</a>
+        <a class="nav-link text-oc-ink" href="download.html">Download</a>
       </nav>
 
-      <!-- Right: Download button wrapper with symmetric pill padding (matches index) -->
+      <!-- Right (download button with equal edge padding) -->
       <div class="flex items-center gap-2 download-pad">
         <a
           href="download.html"
@@ -211,56 +217,17 @@
           <i class="ph ph-download text-base" aria-hidden="true"></i>
           <span>Download</span>
         </a>
-
-        <!-- Mobile Hamburger (optional; included for parity, can be wired later) -->
-        <button id="hamburgerBtn"
-          class="md:hidden rounded-xl bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
-          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
-          <span class="hamburger inline-flex flex-col justify-center gap-1.5 w-8 h-7">
-            <span class="block h-[3px] w-full rounded-full bg-neutral-500"></span>
-            <span class="block h-[3px] w-full rounded-full bg-neutral-500"></span>
-            <span class="block h-[3px] w-full rounded-full bg-neutral-500"></span>
-          </span>
-        </button>
       </div>
     </div>
-
-    <!-- Header pill layout helper (same CSS block as index, scoped to header) -->
-    <style>
-      #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
-      /* Base (mobile) */
-      #siteHeader .header-bar {
-        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
-        padding-left: var(--pill-inner-x-mobile);
-        padding-right: var(--pill-inner-x-mobile);
-        height: var(--pill-height-mobile);
-        border-radius: 999px;
-      }
-      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
-      #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
-
-      /* Desktop */
-      @media (min-width: 768px) {
-        #siteHeader .header-bar {
-          width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-          padding-left: var(--pill-inner-x-desktop);
-          padding-right: var(--pill-inner-x-desktop);
-          height: var(--pill-height-desktop);
-        }
-        #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
-        #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
-      }
-    </style>
   </header>
 
-  <!-- HEADER MODE CONTROLLER (adds .is-float on scroll just like index) -->
+  <!-- HEADER behavior script (exactly like index.html) -->
   <script>
     (function(){
       try{
         var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
         if(!header) return;
-        var last = -1;
-        var THRESH = 8;
+        var last = -1, THRESH = 8;
         var onScroll = function(){
           var y = window.scrollY || document.documentElement.scrollTop || 0;
           if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
@@ -358,7 +325,7 @@
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-m" data-state="in">
               $20<span class="text-lg align-top">/mo</span>
             </div>
-            <!-- Annual (now shows *$16/mo* as requested) -->
+            <!-- Annual: changed from 192/yr → 16/month -->
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-a" data-state="out" aria-hidden="true">
               $16<span class="text-lg align-top">/mo</span>
             </div>
@@ -511,7 +478,7 @@
   </section>
 
   <!-- FOOTER -->
-  <footer class="border-t border-neutral-200/70">
+  <footer class="border-top border-neutral-200/70">
     <div class="mx-auto max-w-[1200px] oc-container py-10 flex items-center flex-col gap-5 text-oc-ink/60 text-sm">
       <div class="text-center"><span class="font-semibold text-black">ONX</span> © <span id="yr"></span> ONX</div>
       <div class="flex items-center gap-4">
@@ -527,7 +494,7 @@
     // Year
     (function(){ const yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear(); })();
 
-    // Billing toggle logic — with precise pill positioning and updated annual price ($16/mo)
+    // Billing toggle logic (+ annual shows $16/mo)
     (function(){
       const pill = document.getElementById('billingPill');
       const monthly = document.getElementById('btnMonthly');
@@ -539,15 +506,13 @@
       const proM = document.querySelector('[data-plan="pro-m"]');
       const proA = document.querySelector('[data-plan="pro-a"]');
 
-      let isAnnual = false;
-
       function setState(annualMode){
-        isAnnual = !!annualMode;
+        const isAnnual = !!annualMode;
 
         monthly.setAttribute('aria-selected', String(!isAnnual));
         annual.setAttribute('aria-selected', String(isAnnual));
 
-        // Move pill precisely to button width
+        // Move pill to active button with precise geometry
         const mRect = monthly.getBoundingClientRect();
         const aRect = annual.getBoundingClientRect();
         const parentRect = monthly.parentElement.getBoundingClientRect();
@@ -561,8 +526,8 @@
           proM.setAttribute('data-state','out'); proM.setAttribute('aria-hidden','true');
           proA.setAttribute('data-state','in');  proA.removeAttribute('aria-hidden');
           save.style.opacity = '1';
-          note.textContent = 'Billed yearly';
-          proCopy.textContent = 'Billed yearly — save 20%';
+          note.textContent = 'Billed yearly — $16/month (paid annually)';
+          proCopy.textContent = 'Billed yearly — $16/month (save 20%)';
         }else{
           proM.setAttribute('data-state','in');  proM.removeAttribute('aria-hidden');
           proA.setAttribute('data-state','out'); proA.setAttribute('aria-hidden','true');
@@ -571,7 +536,7 @@
           proCopy.textContent = 'Billed monthly — cancel anytime';
         }
 
-        // Update CTA target (optional query)
+        // Update CTA query
         const proCta = document.getElementById('proCta');
         if (proCta){
           const base = 'oc-pro.html';
@@ -583,14 +548,12 @@
         if (location.hash !== h) history.replaceState(null,'', h);
       }
 
-      // Initial pill geometry after layout
-      function initPill(){ setTimeout(()=> setState(location.hash.toLowerCase()==='#annual'), 0); }
+      const init = ()=> setTimeout(()=> setState(location.hash.toLowerCase()==='#annual'), 0);
+      window.addEventListener('load', init, { once:true });
+      window.addEventListener('resize', init);
 
       monthly.addEventListener('click', () => setState(false));
       annual.addEventListener('click',  () => setState(true));
-
-      window.addEventListener('load', initPill, { once:true });
-      window.addEventListener('resize', initPill);
     })();
   </script>
 </body>
