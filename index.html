@@ -1323,9 +1323,8 @@
       padding:14px 16px;
       line-height:1.45; font-size:15px; color:inherit;
       box-sizing:border-box;
-      opacity:0;
+      opacity:0; filter:blur(10px); transform:scale(.997) translateZ(0);
       will-change:opacity, filter, transform;
-      transform:translateZ(0); /* GPU hint for super-smooth fades */
     }
     .content{ display:inline; }
 
@@ -1338,7 +1337,7 @@
     }
     @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 
-    /* Subtle detect pulse + scrub finish */
+    /* Detect pulse + scrub finish */
     .pii{position:relative; white-space:nowrap; border-radius:8px; padding:0 2px;}
     .pii.pulse::before{
       content:""; position:absolute; inset:-1px -2px; border-radius:10px;
@@ -1401,10 +1400,11 @@
       this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.play=this.play.bind(this);
       this.reset=this.reset.bind(this);
-      this._onClick=()=>this.play(true);
+      this._onClick=()=>this.play(true, true);
       this._runId=0;
       this._loopT=null;
-      this._hasRun=false; // tracks first vs restart for special entrance
+      this._anims={in:null,out:null};
+      this._hasRun=false;
     }
 
     msType(base){ return Math.max(1, Math.round(base/(TYPING_SPEED||1))); }
@@ -1426,14 +1426,31 @@
       if(this._io) this._io.disconnect();
       this.removeEventListener('click', this._onClick);
       if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
+      this._cancelAnims();
+    }
+
+    _cancelAnims(){
+      try{ this._anims.in?.cancel(); }catch(_){}
+      try{ this._anims.out?.cancel(); }catch(_){}
+      this._anims.in=this._anims.out=null;
+    }
+
+    _prepInvisible(){
+      this.bubble.style.opacity='0';
+      this.bubble.style.filter='blur(10px)';
+      this.bubble.style.transform='scale(.997) translateZ(0)';
+    }
+    _prepVisible(){
+      this.bubble.style.opacity='1';
+      this.bubble.style.filter='none';
+      this.bubble.style.transform='scale(1) translateZ(0)';
     }
 
     reset(){
+      // Do NOT flash; we only clear content. Visibility is controlled by fades.
       this._runId++;
       if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
-      this.bubble.style.opacity=0;
-      this.bubble.style.filter='none';
-      this.bubble.style.transform='translateZ(0)';
+      this._cancelAnims();
       while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
       this.nameEl=this.emailEl=this.phoneEl=null;
     }
@@ -1492,42 +1509,40 @@
       caret.remove();
     }
 
-    async _entrance(isRestart, runId){
-      if(this.reduced){
-        this.bubble.style.opacity=1;
-        return;
-      }
-      // Apple-style ease (gentle, confident)
+    async _fadeIn(runId, isRestart){
+      if(this.reduced){ this._prepVisible(); return; }
+      this._prepInvisible(); // start from invisible state without flashes
       const easeOut='cubic-bezier(.20,.70,0,1)';
+      this._anims.in=this.bubble.animate(
+        isRestart
+          ? [
+              { opacity:0, filter:'blur(10px)', transform:'scale(.997) translateZ(0)' },
+              { opacity:1, filter:'blur(0px)',  transform:'scale(1) translateZ(0)' }
+            ]
+          : [
+              { opacity:0, filter:'blur(6px)', transform:'scale(.998) translateZ(0)' },
+              { opacity:1, filter:'blur(0px)', transform:'scale(1) translateZ(0)' }
+            ],
+        { duration:this.msFx(isRestart? 420:340), easing:easeOut, fill:'forwards' }
+      );
+      try{ await this._anims.in.finished; }catch(_){}
+      if(runId!==this._runId) return;
+      this._prepVisible();
+    }
 
-      if(isRestart){
-        // Blur-to-crisp re-entrance with a whisper of scale & lift
-        const anim=this.bubble.animate(
-          [
-            { opacity:0, filter:'blur(10px)', transform:'translateY(2px) scale(0.997)' },
-            { opacity:1, filter:'blur(0px)',  transform:'translateY(0) scale(1)' }
-          ],
-          { duration:this.msFx(420), easing:easeOut, fill:'forwards' }
-        );
-        // Ensure state consistency even if cancelled
-        try { await anim.finished; } catch(_) {}
-        if(runId!==this._runId) return;
-        this.bubble.style.opacity=1;
-        this.bubble.style.filter='none';
-        this.bubble.style.transform='translateZ(0)';
-      }else{
-        const anim=this.bubble.animate(
-          [
-            { opacity:0, transform:'translateY(0)' },
-            { opacity:1, transform:'translateY(0)' }
-          ],
-          { duration:this.msFx(300), easing:easeOut, fill:'forwards' }
-        );
-        try { await anim.finished; } catch(_) {}
-        if(runId!==this._runId) return;
-        this.bubble.style.opacity=1;
-        this.bubble.style.transform='translateZ(0)';
-      }
+    async _fadeOut(runId){
+      if(this.reduced){ this._prepInvisible(); return; }
+      const easeIn='cubic-bezier(.4,0,.2,1)'; // graceful fade-out
+      this._anims.out=this.bubble.animate(
+        [
+          { opacity:1, filter:'blur(0px)', transform:'scale(1) translateZ(0)' },
+          { opacity:0, filter:'blur(6px)', transform:'scale(.997) translateZ(0)' }
+        ],
+        { duration:this.msFx(260), easing:easeIn, fill:'forwards' }
+      );
+      try{ await this._anims.out.finished; }catch(_){}
+      if(runId!==this._runId) return;
+      this._prepInvisible();
     }
 
     async play(force=false, isRestart=false){
@@ -1537,13 +1552,12 @@
       const runId=this._runId;
       const delayFx=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msFx(t)));
 
-      // Entrance (blur-in on restarts, gentle fade on first load)
-      await this._entrance(isRestart || this._hasRun, runId);
+      // Entrance (no jumps, blur→crisp)
+      await this._fadeIn(runId, isRestart || this._hasRun);
       if(runId!==this._runId) return;
 
       // Streamed typing
       if(this.reduced){
-        // Build final DOM in correct order (before-caret logic mirrored)
         const frag=document.createDocumentFragment();
         const makeText=(t)=>frag.appendChild(document.createTextNode(t));
         for(const seg of SCRIPT){
@@ -1562,7 +1576,7 @@
       }
       if(runId!==this._runId) return;
 
-      // Detect pulses
+      // Detect pulses (subtle)
       if(!this.reduced){
         [this.nameEl,this.emailEl,this.phoneEl].forEach((el,i)=>{
           if(!el) return;
@@ -1600,11 +1614,13 @@
       this._running=false;
       this._hasRun=true;
 
-      /* ---- Auto-restart after a 3s rest with blur-fade entrance ---- */
+      /* ---- Rest 3s (visible), then smooth fade-out, then blur-fade-in restart ---- */
       if (this._loopT) { clearTimeout(this._loopT); }
-      this._loopT = setTimeout(() => {
-        if (!this.isConnected) return;
-        if (runId === this._runId && !this._running) this.play(true, /*isRestart*/ true);
+      this._loopT = setTimeout(async () => {
+        if (!this.isConnected || runId !== this._runId || this._running) return;
+        await this._fadeOut(runId);
+        if (!this.isConnected || runId !== this._runId) return;
+        this.play(true, /*isRestart*/ true);
       }, 3000);
     }
   }
