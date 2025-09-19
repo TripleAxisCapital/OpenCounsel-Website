@@ -3,7 +3,7 @@
 <html lang="en" class="scroll-smooth">
 <head>
   <meta charset="utf-8" />
-  <title>Pricing — The AI Workspace. Without Limits.</title>
+  <title>Pricing — ONX · The AI Workspace. Without Limits.</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="description" content="Simple, transparent pricing for ONX. The AI Workspace—private, polished, and powerful." />
   <link rel="canonical" href="https://www.opencounsel.ca/pricing.html" />
@@ -62,7 +62,7 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===== Animated ONX header logo (matches blue/green site gradient) ===== */
+    /* ===== Animated ONX header logo (blue/green site gradient) ===== */
     .logo-anim{
       display:inline-block;
       width: var(--logo-size,40px);
@@ -74,27 +74,52 @@
               mask: url('/logo.svg') no-repeat center / contain;
     }
 
-    /* ===== Header: persistent pill (logo stays inside) → subtle upgrade on scroll ===== */
-    .oc-header{ background: transparent; }
-    #siteHeader .oc-container{ padding-inline: 0 !important; } /* exact centering */
-    #siteHeader .header-bar{
-      width: min(1200px, calc(100% - 2*24px));
-      height: 3.5rem;
-      margin-inline:auto;
-      padding-inline: 14px;
-      display:flex; align-items:center; justify-content:space-between;
-      border-radius: 999px;
-      background: rgba(255,255,255,.96);          /* pill is always visible */
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 24px -8px rgba(0,0,0,0.18);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-      transition: box-shadow .36s ease, transform .36s ease, background-color .36s ease;
+    /* ===== Pill header behavior EXACTLY like index.html ===== */
+    .oc-header{ background:#fff; padding-top:0; padding-bottom:0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
+    .oc-header .header-bar{
+      background: transparent; border:0; border-radius:0px; box-shadow:none;
+      -webkit-backdrop-filter:none; backdrop-filter:none; transition:
+        border-color .36s ease,
+        background-color .36s ease,
+        border-radius .36s cubic-bezier(.2,.8,.2,1),
+        box-shadow .36s ease,
+        -webkit-backdrop-filter .36s ease,
+        backdrop-filter .36s ease,
+        transform .36s ease;
     }
-    @media (min-width:768px){
-      #siteHeader .header-bar{ width: min(1200px, calc(100% - 2*0px)); padding-inline: 18px; }
-    }
+    .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
+    @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
     .oc-header.is-float .header-bar{
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 14px 34px -8px rgba(0,0,0,0.22);
-      transform: translateY(-1px);
+      background: rgba(255,255,255,.96); border:0; border-radius: var(--header-radius);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    }
+
+    /* Header layout & paddings (same knobs as index) */
+    #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
+    #siteHeader .header-bar {
+      position: relative;
+      box-sizing: border-box;
+      /* mobile sizing */
+      width: min(var(--pill-max-w,1200px), calc(100% - (2 * var(--pill-outer-x-mobile,35px))));
+      margin-inline: auto;
+      padding-left: var(--pill-inner-x-mobile,30px);
+      padding-right: var(--pill-inner-x-mobile,30px);
+      height: var(--pill-height-mobile, 2.75rem);
+      display: flex; align-items: center; border-radius: 999px;
+    }
+    #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile, 6px); }
+    #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile, 6px); }
+
+    @media (min-width: 768px) {
+      #siteHeader .header-bar {
+        width: min(var(--pill-max-w,1200px), calc(100% - (2 * var(--pill-outer-x-desktop,0px))));
+        padding-left: var(--pill-inner-x-desktop,12px);
+        padding-right: var(--pill-inner-x-desktop,12px);
+        height: var(--pill-height-desktop, 3.5rem);
+      }
+      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop, 12px); }
+      #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop, 12px); }
     }
 
     .nav-link{ font-weight:700; letter-spacing:-.01em; transition: opacity .2s ease, transform .2s ease; }
@@ -139,34 +164,114 @@
 </head>
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
+  <!-- Drop-in 12px spacer (same as index) -->
+  <div aria-hidden="true" style="height:12px;"></div>
 
-  <!-- HEADER (persistent pill with animated ONX logo inside) -->
-  <header id="siteHeader" class="oc-header sticky top-0 z-50">
-    <div class="header-bar relative mx-auto oc-container">
-      <!-- Left: Logo (animated blue/green like rest of site) -->
-      <a href="index.html" class="inline-flex items-center gap-2" aria-label="ONX home">
-        <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
-        <span class="sr-only">ONX</span>
-      </a>
+  <!-- HEADER — identical behavior to index: full → floating pill on scroll -->
+  <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
+    style="
+      --pill-inner-x-mobile: 30px;
+      --pill-inner-x-desktop: 12px;
+      --pill-outer-x-mobile: 35px;
+      --pill-outer-x-desktop: 0px;
+      --pill-height-mobile: 2.75rem;
+      --pill-height-desktop: 3.5rem;
+      --pill-max-w: 1200px;
 
-      <!-- Center Nav -->
+      --logo-pad-left-mobile: 6px;
+      --logo-pad-left-desktop: 12px;
+      --download-pad-right-mobile: 6px;
+      --download-pad-right-desktop: 12px;
+    ">
+    <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
+      <!-- Left: Logo with the same inner padding as the pill uses (matches index) -->
+      <div class="flex items-center gap-3 logo-pad">
+        <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
+          <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
+          <span class="sr-only">ONX</span>
+        </a>
+      </div>
+
+      <!-- Centered nav -->
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
-        <a class="nav-link text-oc-ink" href="models.html">Models</a>
-        <a class="nav-link text-oc-ink" href="download.html">Download</a>
+        <a class="nav-link font-extrabold text-black" href="oc-pro.html">ONX Pro</a>
+        <a class="nav-link grad-text" href="models.html">Models</a>
       </nav>
 
-      <!-- Right: Download -->
-      <div class="absolute right-4 md:right-5 inset-y-0 my-auto flex items-center">
-        <a href="download.html"
-           class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-xl hover:shadow-2xl transition-all duration-300 ease-out g-grad"
-           aria-label="Download">
+      <!-- Right: Download button wrapper with symmetric pill padding (matches index) -->
+      <div class="flex items-center gap-2 download-pad">
+        <a
+          href="download.html"
+          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
+                 g-grad grad-anim"
+          aria-label="Download" title="Download">
           <i class="ph ph-download text-base" aria-hidden="true"></i>
           <span>Download</span>
         </a>
+
+        <!-- Mobile Hamburger (optional; included for parity, can be wired later) -->
+        <button id="hamburgerBtn"
+          class="md:hidden rounded-xl bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+          aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+          <span class="hamburger inline-flex flex-col justify-center gap-1.5 w-8 h-7">
+            <span class="block h-[3px] w-full rounded-full bg-neutral-500"></span>
+            <span class="block h-[3px] w-full rounded-full bg-neutral-500"></span>
+            <span class="block h-[3px] w-full rounded-full bg-neutral-500"></span>
+          </span>
+        </button>
       </div>
     </div>
+
+    <!-- Header pill layout helper (same CSS block as index, scoped to header) -->
+    <style>
+      #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
+      /* Base (mobile) */
+      #siteHeader .header-bar {
+        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+        padding-left: var(--pill-inner-x-mobile);
+        padding-right: var(--pill-inner-x-mobile);
+        height: var(--pill-height-mobile);
+        border-radius: 999px;
+      }
+      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
+      #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
+
+      /* Desktop */
+      @media (min-width: 768px) {
+        #siteHeader .header-bar {
+          width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+          padding-left: var(--pill-inner-x-desktop);
+          padding-right: var(--pill-inner-x-desktop);
+          height: var(--pill-height-desktop);
+        }
+        #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
+        #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
+      }
+    </style>
   </header>
+
+  <!-- HEADER MODE CONTROLLER (adds .is-float on scroll just like index) -->
+  <script>
+    (function(){
+      try{
+        var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
+        if(!header) return;
+        var last = -1;
+        var THRESH = 8;
+        var onScroll = function(){
+          var y = window.scrollY || document.documentElement.scrollTop || 0;
+          if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
+          else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
+          if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive:true });
+      }catch(_){}
+    })();
+  </script>
 
   <!-- HERO -->
   <section class="mx-auto max-w-[1200px] oc-container pt-12 md:pt-16">
@@ -253,9 +358,9 @@
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-m" data-state="in">
               $20<span class="text-lg align-top">/mo</span>
             </div>
-            <!-- Annual (hidden initially) -->
+            <!-- Annual (now shows *$16/mo* as requested) -->
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-a" data-state="out" aria-hidden="true">
-              $192<span class="text-lg align-top">/yr</span>
+              $16<span class="text-lg align-top">/mo</span>
             </div>
           </div>
           <div id="proBillCopy" class="text-sm text-white/80">Billed monthly — cancel anytime</div>
@@ -419,23 +524,10 @@
   </footer>
 
   <script>
-    // Header float accent on scroll
-    (function(){
-      const header = document.getElementById('siteHeader');
-      if(!header) return;
-      const THRESH = 6;
-      const onScroll = () => {
-        const y = window.scrollY || document.documentElement.scrollTop || 0;
-        header.classList.toggle('is-float', y > THRESH);
-      };
-      onScroll();
-      window.addEventListener('scroll', onScroll, { passive:true });
-    })();
-
     // Year
     (function(){ const yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear(); })();
 
-    // Billing toggle logic
+    // Billing toggle logic — with precise pill positioning and updated annual price ($16/mo)
     (function(){
       const pill = document.getElementById('billingPill');
       const monthly = document.getElementById('btnMonthly');
