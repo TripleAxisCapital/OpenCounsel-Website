@@ -977,3 +977,276 @@
     </div>
   </div>
 </section>
+
+
+
+
+
+
+
+
+
+<!-- HEADER --------------------------------------------------------full-width at top → floating pill on scroll) -->
+
+<!-- Drop-in 12px spacer (no content needed) -->
+<div aria-hidden="true" style="height:12px;"></div>
+
+<header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
+  style="
+    /* 🔧 Controls */
+    --pill-inner-x-mobile: 30px;         /* inside L/R padding (mobile)  */
+    --pill-inner-x-desktop: 12px;        /* inside L/R padding (desktop) */
+    --pill-outer-x-mobile: 35px;         /* outer inset L/R (mobile)     */
+    --pill-outer-x-desktop: 0px;         /* outer inset L/R (desktop)    */
+    --pill-height-mobile: 2.75rem;       /* pill height (mobile)         */
+    --pill-height-desktop: 3.5rem;       /* pill height (desktop)        */
+    --pill-max-w: 1200px;                /* max width cap for the pill   */
+
+    /* 🆕 Independent element paddings */
+    --logo-pad-left-mobile: 6px;         /* left padding before logo (mobile)   */
+    --logo-pad-left-desktop: 12px;       /* left padding before logo (desktop)  */
+    --download-pad-right-mobile: 6px;    /* right padding after Download (mobile)  */
+    --download-pad-right-desktop: 12px;  /* right padding after Download (desktop) */
+  "
+>
+  <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
+    <!-- 🆕 Left wrapper gets adjustable left padding for the logo -->
+    <div class="flex items-center gap-3 logo-pad">
+      <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
+        <span class="logo-anim" role="img" aria-label="ONX"></span>
+      </a>
+    </div>
+
+    <!-- Centered nav stays inside the pill -->
+    <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+      <a class="nav-link font-extrabold text-black" href="oc-pro.html">ONX Pro</a>
+      <a class="nav-link grad-anim bg-clip-text text-transparent font-medium" href="pricing.html">Pricing</a>
+      <!-- ONX-News link removed from here -->
+    </nav>
+
+    <!-- 🆕 Right wrapper gets adjustable right padding for the Download + ONX-News buttons -->
+    <div class="flex items-center gap-2 download-pad">
+      <!-- 🆕 New ONX-News button (just left of Download) -->
+      <a
+        href="ONX-News.html"
+        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-neutral-900
+               hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-oc-accent/50
+               transition-all duration-200 ease-out"
+        aria-label="ONX-News" title="ONX-News"
+      >
+        <i class="ph ph-newspaper text-base" aria-hidden="true"></i>
+        <span>ONX-News</span>
+      </a>
+
+      <!-- Desktop Download button (unchanged) -->
+      <a
+        href="download.html"
+        class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+               focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+               shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+               transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
+               g-grad grad-anim"
+        style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+        aria-label="Download" title="Download"
+      >
+        <i class="ph ph-download text-base" aria-hidden="true"></i>
+        <span>Download</span>
+      </a>
+
+      <!-- Mobile Hamburger -->
+      <button id="hamburgerBtn"
+        class="md:hidden rounded-xl tap-boost bg-transparent focus:outline-none focus:ring-2 focus:ring-oc-accent"
+        aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+        <span class="hamburger" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 🛠 Pill layout + centering logic -->
+  <style>
+    /* Neutralize container padding specifically for this header so centering is exact */
+    #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
+
+    /* Base (mobile) */
+    #siteHeader .header-bar {
+      position: relative;
+      box-sizing: border-box;
+      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+      margin-inline: auto;
+      padding-left: var(--pill-inner-x-mobile);
+      padding-right: var(--pill-inner-x-mobile);
+      height: var(--pill-height-mobile);
+      display: flex;
+      align-items: center;
+      border-radius: 999px;
+    }
+
+    /* 🆕 Element-specific paddings (mobile) */
+    #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
+    #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
+
+    /* Desktop (≥768px) */
+    @media (min-width: 768px) {
+      #siteHeader .header-bar {
+        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+        padding-left: var(--pill-inner-x-desktop);
+        padding-right: var(--pill-inner-x-desktop);
+        height: var(--pill-height-desktop);
+      }
+      #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
+      #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
+    }
+  </style>
+
+  <!-- MOBILE MENU (unchanged) -->
+  <div id="mobileMenu" aria-hidden="true">
+    <div class="menu-scrim"></div>
+    <aside class="menu-panel">
+      <div class="drawer-head">
+        <a href="index.html" class="drawer-title">ONX</a>
+        <button id="closeMenuBtn" class="drawer-close" aria-label="Close menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="#0A0D10" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- UPDATED MOBILE MENU LINKS -->
+      <nav class="drawer-nav mt-2">
+        <a href="oc-pro.html" style="background:none;-webkit-text-fill-color:#0A0D10;color:#0A0D10;font-weight:700">ONX Pro</a>
+        <a href="Models.html">Models</a>
+        <a href="ONX-News.html">ONX-News</a>
+        <div class="drawer-sep"></div>
+        <a
+          href="download.html"
+          class="drawer-cta relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                 transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0
+                 grad-anim mt-2 w-full justify-center"
+          style="--from:var(--grad-from); --via:var(--grad-via); --to:var(--grad-to); --speed:16s; --angle:135deg;"
+        >
+          <i class="ph ph-download text-xl"></i>
+          <span>Download</span>
+        </a>
+      </nav>
+    </aside>
+  </div>
+</header>
+
+<!-- Drop-in 12px spacer -->
+<div aria-hidden="true" style="height:12px;"></div>
+
+<!-- Header mode controller -->
+<script>
+  (function(){
+    try{
+      var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
+      if(!header) return;
+      var last = -1;
+      var THRESH = 8;
+      var onScroll = function(){
+        var y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
+        else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
+        if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive:true });
+    }catch(_){}
+  })();
+</script>
+<!-- HEADER END -------------------------------------------------------->
+
+
+
+
+
+
+
+
+
+  <!-- HEADER (flat → pill on scroll) -->
+  <header id="siteHeader" class="oc-header sticky top-0 z-50"
+    style="
+      /* ▼ Adjust these to control WIDTH and VERTICAL PADDING */
+      --header-width-flat: 75%;              /* width before scroll */
+      --header-max-w: 1200px;                 /* pill max width after scroll */
+      --header-flat-pad-top: 0rem;            /* top padding before scroll */
+      --header-flat-pad-bottom: 0rem;         /* bottom padding before scroll */
+      --header-float-pad-top-mobile: .75rem;  /* top padding after scroll (mobile) */
+      --header-float-pad-bottom-mobile: .25rem; /* bottom padding after scroll (mobile) */
+      --header-float-pad-top-desktop: 1rem;   /* top padding after scroll (desktop) */
+      --header-float-pad-bottom-desktop: .25rem; /* bottom padding after scroll (desktop) */
+
+      /* Existing controls (left/right spacing + heights) */
+      --pill-inner-x-mobile: 30px;
+      --pill-inner-x-desktop: 12px;
+      --pill-outer-x-mobile: 35px;
+      --pill-outer-x-desktop: 0px;
+      --pill-height-mobile: 2.75rem;
+      --pill-height-desktop: 3.5rem;
+      --pill-max-w: 1200px; /* kept for backward compatibility */
+
+      /* Equal edge padding for logo and CTA */
+      --logo-pad-left-mobile: 12px;
+      --logo-pad-left-desktop: 12px;
+      --download-pad-right-mobile: 12px;
+      --download-pad-right-desktop: 12px;
+    ">
+    <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
+      <!-- Left -->
+      <div class="flex items-center gap-3 logo-pad">
+        <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
+          <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
+          <span class="sr-only">ONX</span>
+        </a>
+      </div>
+
+      <!-- Centered nav -->
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
+        <a class="nav-link text-oc-ink" href="models.html">Models</a>
+      </nav>
+
+      <!-- Right: ONX-News + Download -->
+      <div class="flex items-center gap-4 download-pad">
+        <a href="news.html" class="inline-flex items-center gap-2 text-sm font-semibold text-oc-ink hover:opacity-80">
+          <i class="ph ph-newspaper text-[16px]" aria-hidden="true"></i>
+          <span>ONX-News</span>
+        </a>
+        <a
+          href="download.html"
+          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
+                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
+                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
+                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
+                 g-grad grad-anim"
+          aria-label="Download" title="Download">
+          <i class="ph ph-download text-base" aria-hidden="true"></i>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HEADER behavior script -->
+  <script>
+    (function(){
+      try{
+        var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
+        if(!header) return;
+        var last = -1, THRESH = 8;
+        var onScroll = function(){
+          var y = window.scrollY || document.documentElement.scrollTop || 0;
+          if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
+          else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
+          if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
+        };
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive:true });
+      }catch(_){}
+    })();
+  </script>

@@ -190,88 +190,29 @@
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
 
-  <!-- HEADER (flat → pill on scroll) -->
-  <header id="siteHeader" class="oc-header sticky top-0 z-50"
-    style="
-      /* ▼ Adjust these to control WIDTH and VERTICAL PADDING */
-      --header-width-flat: 75%;              /* width before scroll */
-      --header-max-w: 1200px;                 /* pill max width after scroll */
-      --header-flat-pad-top: 0rem;            /* top padding before scroll */
-      --header-flat-pad-bottom: 0rem;         /* bottom padding before scroll */
-      --header-float-pad-top-mobile: .75rem;  /* top padding after scroll (mobile) */
-      --header-float-pad-bottom-mobile: .25rem; /* bottom padding after scroll (mobile) */
-      --header-float-pad-top-desktop: 1rem;   /* top padding after scroll (desktop) */
-      --header-float-pad-bottom-desktop: .25rem; /* bottom padding after scroll (desktop) */
 
-      /* Existing controls (left/right spacing + heights) */
-      --pill-inner-x-mobile: 30px;
-      --pill-inner-x-desktop: 12px;
-      --pill-outer-x-mobile: 35px;
-      --pill-outer-x-desktop: 0px;
-      --pill-height-mobile: 2.75rem;
-      --pill-height-desktop: 3.5rem;
-      --pill-max-w: 1200px; /* kept for backward compatibility */
 
-      /* Equal edge padding for logo and CTA */
-      --logo-pad-left-mobile: 12px;
-      --logo-pad-left-desktop: 12px;
-      --download-pad-right-mobile: 12px;
-      --download-pad-right-desktop: 12px;
-    ">
-    <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
-      <!-- Left -->
-      <div class="flex items-center gap-3 logo-pad">
-        <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
-          <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
-          <span class="sr-only">ONX</span>
-        </a>
-      </div>
+     <!-- Load the header component -->
+  <script type="module" src="/assets/onx-header.js"></script>
 
-      <!-- Centered nav -->
-      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
-        <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
-        <a class="nav-link text-oc-ink" href="models.html">Models</a>
-      </nav>
+  <!-- Place the header here -->
+  <onx-header
+    width-flat="75%"
+    max-w="1200px"
+    pad-flat-top="0rem"
+    pad-flat-bottom="0rem"
+    pad-float-top-mobile=".75rem"
+    pad-float-bottom-mobile=".25rem"
+    pad-float-top-desktop="1rem"
+    pad-float-bottom-desktop=".25rem"
+    threshold="8">
 
-      <!-- Right: ONX-News + Download -->
-      <div class="flex items-center gap-4 download-pad">
-        <a href="news.html" class="inline-flex items-center gap-2 text-sm font-semibold text-oc-ink hover:opacity-80">
-          <i class="ph ph-newspaper text-[16px]" aria-hidden="true"></i>
-          <span>ONX-News</span>
-        </a>
-        <a
-          href="download.html"
-          class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
-                 focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                 shadow-xl shadow-black/20 hover:shadow-2xl hover:shadow-black/30
-                 transition-all duration-300 ease-out hover:-translate-y-[1px] active:translate-y-0
-                 g-grad grad-anim"
-          aria-label="Download" title="Download">
-          <i class="ph ph-download text-base" aria-hidden="true"></i>
-          <span>Download</span>
-        </a>
-      </div>
-    </div>
-  </header>
+    <!-- Extra center nav links -->
 
-  <!-- HEADER behavior script -->
-  <script>
-    (function(){
-      try{
-        var header = document.getElementById('siteHeader') || document.querySelector('header.oc-header');
-        if(!header) return;
-        var last = -1, THRESH = 8;
-        var onScroll = function(){
-          var y = window.scrollY || document.documentElement.scrollTop || 0;
-          if (y > THRESH && !header.classList.contains('is-float')) header.classList.add('is-float');
-          else if (y <= THRESH && header.classList.contains('is-float')) header.classList.remove('is-float');
-          if ((y>THRESH?1:0) !== last){ last = (y>THRESH?1:0); }
-        };
-        onScroll();
-        window.addEventListener('scroll', onScroll, { passive:true });
-      }catch(_){}
-    })();
-  </script>
+    <!-- Extra right-side action -->
+  </onx-header>
+
+  
 
   <!-- HERO -->
   <section class="mx-auto max-w-[1200px] oc-container pt-12 md:pt-16">
