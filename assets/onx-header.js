@@ -61,7 +61,7 @@ class ONXHeader extends HTMLElement {
           --download-pad-right-desktop: 12px;
 
           --header-radius: 28px;
-          --logo-size: 60px;
+          --logo-size: 65px;
 
           position: sticky; top: 0; z-index: 50;
           display:block;
