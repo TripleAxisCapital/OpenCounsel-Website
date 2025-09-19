@@ -1305,8 +1305,6 @@
   </article>
 </section>
 
-
-
 <template id="oc-pii-bubble-template">
   <style>
     :host{
@@ -1403,6 +1401,7 @@
       this.reset=this.reset.bind(this);
       this._onClick=()=>this.play(true);
       this._runId=0;
+      this._loopT=null;
     }
 
     msType(base){ return Math.max(1, Math.round(base/(TYPING_SPEED||1))); }
@@ -1423,10 +1422,12 @@
     disconnectedCallback(){
       if(this._io) this._io.disconnect();
       this.removeEventListener('click', this._onClick);
+      if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
     }
 
     reset(){
       this._runId++;
+      if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
       this.bubble.style.opacity=0;
       while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
       this.nameEl=this.emailEl=this.phoneEl=null;
@@ -1561,14 +1562,20 @@
       await swap(this.phoneEl, CONFIG.phoneScrubbed);
 
       this._running=false;
+
+      /* ---- Auto-restart after a 3s rest ---- */
+      if (this._loopT) { clearTimeout(this._loopT); }
+      this._loopT = setTimeout(() => {
+        if (!this.isConnected) return;
+        // Only restart if nothing else has started in the meantime
+        if (runId === this._runId && !this._running) this.play(true);
+      }, 3000);
     }
   }
 
   customElements.define('oc-pii-bubble', OCPiiBubble);
 })();
 </script>
-
-
 
 
 
