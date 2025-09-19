@@ -6,7 +6,10 @@ class ONXHeader extends HTMLElement {
     this._onScroll = this._onScroll.bind(this);
     this._toggleMobile = this._toggleMobile.bind(this);
     this._closeOnEsc = this._closeOnEsc.bind(this);
+    this._onResize = this._onResize.bind(this);
+    this._trapTab = this._trapTab.bind(this);
     this._threshold = parseInt(this.getAttribute("threshold") || "8", 10);
+    this._prevFocus = null;
   }
 
   connectedCallback() {
@@ -84,7 +87,6 @@ class ONXHeader extends HTMLElement {
           background-size: 300% 300%;
           animation: gradientShift var(--speed,16s) ease-in-out infinite;
         }
-        /* Text variant that uses the SAME tokens/animation as the button/logo */
         .text-grad{
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300%;
@@ -112,11 +114,11 @@ class ONXHeader extends HTMLElement {
           position: relative; box-sizing: border-box;
           width: var(--header-width-flat);
           margin-inline: auto;
-          display:flex; align-items:center; justify-content:space-between; /* centers children vertically */
+          display:flex; align-items:center; justify-content:space-between;
           height: var(--pill-height-mobile);
           padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
           background: transparent; border: 0; border-radius: 0; box-shadow: none;
-          line-height: 1; /* removes baseline creep */
+          line-height: 1;
           -webkit-backdrop-filter: none; backdrop-filter: none;
           transition:
             width .36s cubic-bezier(.2,.8,.2,1),
@@ -126,7 +128,8 @@ class ONXHeader extends HTMLElement {
             -webkit-backdrop-filter .36s ease,
             backdrop-filter .36s ease;
         }
-        /* Ensure the ONX block is perfectly centered vertically */
+
+        /* Perfect vertical centering for ONX block */
         .logo-pad{
           height:100%;
           padding-left: var(--logo-pad-left-mobile);
@@ -142,9 +145,6 @@ class ONXHeader extends HTMLElement {
           display:none; align-items:center; gap:2rem;
           font-size:.925rem; font-weight:700; letter-spacing:-.01em;
         }
-        /* Apply shared gradient to ALL center nav links except the black Pro link */
-        .center .nav-link:not(.nav-link--black){ composes: text-grad; }
-        /* Fallback if "composes" unsupported (Shadow DOM CSS): duplicate rules */
         .center .nav-link:not(.nav-link--black){
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300%;
@@ -157,15 +157,12 @@ class ONXHeader extends HTMLElement {
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
-          .header-bar{
-            height: var(--pill-height-desktop);
-            padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop);
-          }
+          .header-bar{ height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
           .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
           .right-area{ padding-right: var(--download-pad-right-desktop); }
           .center{ display:flex; }
-          .hamburger{ display:none !important; }          /* no hamburger on desktop */
-          .desktop-actions{ display:flex !important; }    /* show Download + News on desktop */
+          .hamburger{ display:none !important; }
+          .desktop-actions{ display:flex !important; }
         }
 
         /* Pill state on scroll */
@@ -195,9 +192,8 @@ class ONXHeader extends HTMLElement {
 
         .nav-link{ font-weight:700; letter-spacing:-.01em; }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
-        .nav-link--pro{ font-weight:800 !important; } /* ONX Pro always bolder/black */
+        .nav-link--pro{ font-weight:800 !important; }
 
-        /* Desktop right-side defaults */
         .news-link{
           display:none; align-items:center; gap:.5rem;
           font-size:.9rem; font-weight:700; color:#0A0D10;
@@ -216,25 +212,24 @@ class ONXHeader extends HTMLElement {
           .news-link{ display:inline-flex; }
         }
 
-        /* ===== Mobile-specific UI ===== */
-        /* Sleek, minimal hamburger — scalable & glitch-free */
+        /* ===== Mobile-specific UI (Apple-grade) ===== */
         .hamburger{
           --hb-size: clamp(40px, 6vw, 48px);
           --hb-line: 2px;
           --hb-w: calc(var(--hb-size) * .56);
           --hb-h: calc(var(--hb-size) * .38);
           --hb-color:#0A0D10;
-
           display:inline-flex; align-items:center; justify-content:center;
           width:var(--hb-size); height:var(--hb-size);
-          background: transparent; border: none; border-radius: 0; box-shadow: none; padding: 0;
-          color: var(--hb-color);
-          transition: transform .2s ease;
+          background: transparent; border: none; border-radius: 12px; /* subtle hit shape */
+          padding: 0; color: var(--hb-color);
+          transition: transform .16s ease, background-color .16s ease;
           -webkit-tap-highlight-color: transparent;
           touch-action: manipulation;
         }
-        .hamburger:active{ transform: translateY(1px); }
-        .hamburger:focus, .hamburger:focus-visible{ outline: none; box-shadow: none; }
+        .hamburger:hover{ background: rgba(0,0,0,.04); }
+        .hamburger:active{ transform: translateY(1px) scale(.98); }
+        .hamburger:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(0,128,255,.25); }
 
         .hamburger .lines{
           position:relative; width:var(--hb-w); height:var(--hb-h); display:block;
@@ -252,7 +247,7 @@ class ONXHeader extends HTMLElement {
         .hamburger .lines span{ top:50%; transform:translateY(-50%); }
         .hamburger .lines::after{ bottom:0; }
 
-        /* X animation — move top/bottom to center then rotate */
+        /* X animation */
         :host(.mobile-open) .hamburger .lines::before{
           top:50%; transform: translateY(calc(-.5 * var(--hb-line))) rotate(45deg);
         }
@@ -268,12 +263,13 @@ class ONXHeader extends HTMLElement {
         }
         :host(.mobile-open) .backdrop{ opacity:1; pointer-events:auto; }
 
-        /* Sheet */
+        /* Sheet — fully contained, scrollable, safe-area aware */
         .sheet{
           position:fixed;
           top: max(12px, env(safe-area-inset-top));
           left: max(12px, env(safe-area-inset-left));
           right: max(12px, env(safe-area-inset-right));
+          margin-bottom: max(12px, env(safe-area-inset-bottom));
           background:rgba(255,255,255,.98);
           border-radius: 22px;
           border:1px solid rgba(0,0,0,.06);
@@ -281,10 +277,21 @@ class ONXHeader extends HTMLElement {
           transform: translateY(-10px); opacity:0; pointer-events:none;
           transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
           -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+          display:flex; flex-direction:column;
+          max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+          overflow: clip; /* clips shadows/bleed perfectly to rounded corners */
+          contain: paint; /* perf + precise clipping */
+          z-index: 2147483647; /* ensure it’s above site chrome */
         }
         :host(.mobile-open) .sheet{ transform: translateY(0); opacity:1; pointer-events:auto; }
 
-        .sheet-inner{ padding: 14px; }
+        .sheet-inner{
+          padding: 14px;
+          overflow: auto;
+          overscroll-behavior: contain;
+          -webkit-overflow-scrolling: touch;
+        }
+
         .mobile-row{
           display:flex; align-items:center; justify-content:space-between;
           padding: 8px 6px 10px 10px;
@@ -305,10 +312,27 @@ class ONXHeader extends HTMLElement {
 
         .mobile-link--pro{ font-weight:800 !important; }
 
+        /* Actions area — normalize any slotted buttons to be fully contained */
         .mobile-actions{
           display:flex; flex-direction:column; gap:.5rem; padding: 10px 8px 12px;
         }
         .mobile-actions .btn{ justify-content:center; width:100%; border-radius:14px; padding:.75rem 1rem; }
+        /* Hard containment & reset for any cloned/slotted actions */
+        .mobile-extra-actions a,
+        .mobile-extra-actions button{
+          position: static !important;
+          float: none !important;
+          display: inline-flex !important;
+          align-items: center; justify-content: center;
+          width: 100% !important; max-width: 100% !important;
+          margin: 0 !important; inset: auto !important;
+          box-sizing: border-box !important;
+          border-radius: 14px !important;
+          padding: .75rem 1rem !important;
+          text-align: center !important;
+          white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis;
+        }
 
         @media (prefers-reduced-motion: reduce){
           .sheet, .backdrop, .hamburger .lines::before,
@@ -335,7 +359,7 @@ class ONXHeader extends HTMLElement {
 
           <!-- Right -->
           <div class="right-area">
-            <!-- Desktop actions (no hamburger on desktop) -->
+            <!-- Desktop actions -->
             <div class="desktop-actions">
               <a class="news-link" href="/news.html" aria-label="ONX News">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h14a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
@@ -357,7 +381,7 @@ class ONXHeader extends HTMLElement {
       </div>
 
       <!-- Mobile menu -->
-      <div class="backdrop" part="backdrop"></div>
+      <div class="backdrop" part="backdrop" aria-hidden="true"></div>
       <div id="onxMobileMenu" class="sheet" role="dialog" aria-modal="true" aria-label="Menu">
         <div class="sheet-inner">
           <div class="mobile-row">
@@ -370,7 +394,7 @@ class ONXHeader extends HTMLElement {
             </button>
           </div>
 
-          <nav class="mobile-nav">
+          <nav class="mobile-nav" aria-label="Mobile">
             <!-- built-in defaults -->
             <a class="mobile-link mobile-link--pro" href="/oc-pro.html">ONX Pro <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
             <a class="mobile-link" href="/models.html">Models <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
@@ -389,34 +413,44 @@ class ONXHeader extends HTMLElement {
       </div>
     `;
 
-    // Events
+    // Cache important nodes
     this._btns = this._root.querySelectorAll(".hamburger");
     this._backdrop = this._root.querySelector(".backdrop");
     this._sheet = this._root.getElementById("onxMobileMenu");
+    this._sheetInner = this._root.querySelector(".sheet-inner");
+    this._toggleBtn = this._root.querySelector('.right-area .hamburger');
+
+    // Events
     this._btns.forEach(b => b.addEventListener("click", this._toggleMobile));
-    this._backdrop.addEventListener("click", this._toggleMobile);
+    this._backdrop.addEventListener("click", () => this._toggleMobile(false), { passive: true });
+    // Prevent background scrolling on iOS behind the sheet
+    this._backdrop.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
     window.addEventListener("keydown", this._closeOnEsc);
+    window.addEventListener("resize", this._onResize, { passive: true });
 
     // Clone slotted nav + actions into mobile panel
-    this._cloneSlotted("#onx-slot-nav", 'nav');
-    this._cloneSlotted("#onx-slot-actions", 'actions');
+    this._cloneSlotted('nav');
+    this._cloneSlotted('actions');
 
+    // Scroll + initial state
     window.addEventListener("scroll", this._onScroll, { passive: true });
-    this._onScroll(); // initial
+    this._onScroll();
   }
 
   disconnectedCallback() {
     window.removeEventListener("scroll", this._onScroll);
     window.removeEventListener("keydown", this._closeOnEsc);
+    window.removeEventListener("resize", this._onResize);
     if (this._btns) this._btns.forEach(b => b.removeEventListener("click", this._toggleMobile));
     if (this._backdrop) this._backdrop.removeEventListener("click", this._toggleMobile);
   }
 
-  _cloneSlotted(id, name){
-    let navSlot = this._root.querySelector(`slot[name="\${name}"]`);
-    if (!navSlot) return;
-    navSlot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
-    navSlot.addEventListener('slotchange', () => this._cloneNow(name));
+  /* ===== Cloning (nav & actions) into the mobile sheet ===== */
+  _cloneSlotted(name){
+    const slot = this._root.querySelector(`slot[name="${name}"]`);
+    if (!slot) return;
+    slot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
+    slot.addEventListener('slotchange', () => this._cloneNow(name));
     this._cloneNow(name);
   }
 
@@ -424,6 +458,7 @@ class ONXHeader extends HTMLElement {
     const slot = this._root.querySelector(name === 'nav' ? '#onx-slot-nav' : '#onx-slot-actions');
     if (!slot) return;
     const assigned = slot.assignedElements({ flatten: true });
+
     if (name === 'nav'){
       const container = this._root.querySelector('.mobile-extra');
       container.innerHTML = '';
@@ -432,7 +467,7 @@ class ONXHeader extends HTMLElement {
         const a = document.createElement('a');
         a.className = 'mobile-link';
         a.href = node.getAttribute('href') || '#';
-        a.textContent = node.textContent.trim();
+        a.textContent = (node.textContent || '').trim();
         if (node.classList.contains('nav-link--pro')) a.classList.add('mobile-link--pro');
         const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24');
@@ -444,28 +479,74 @@ class ONXHeader extends HTMLElement {
         a.addEventListener('click', () => this._toggleMobile(false));
         container.appendChild(a);
       });
-    }else{
+    } else {
       const acts = this._root.querySelector('.mobile-extra-actions');
       acts.innerHTML = '';
       assigned.forEach(node => {
+        // Normalize any kind of action (button / anchor)
         const clone = node.cloneNode(true);
+        // Ensure it looks/behaves like our contained button
         clone.classList.add('btn');
         clone.style.justifyContent = 'center';
-        clone.addEventListener('click', () => this._toggleMobile(false));
+        clone.removeAttribute('target'); // keep within same tab for mobile sheet
+        // Always close menu when tapping an action
+        clone.addEventListener('click', () => this._toggleMobile(false), { passive: true });
         acts.appendChild(clone);
       });
     }
   }
 
+  /* ===== Accessibility: focus trap ===== */
+  _focusables(){
+    return this._sheet?.querySelectorAll(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"]), input, select, textarea'
+    ) || [];
+  }
+  _trapTab(e){
+    if (!this.classList.contains('mobile-open') || e.key !== 'Tab') return;
+    const nodes = Array.from(this._focusables());
+    if (!nodes.length) return;
+    const first = nodes[0], last = nodes[nodes.length - 1];
+    if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+  }
+
+  /* ===== Open/Close ===== */
   _toggleMobile(force){
     const open = typeof force === 'boolean' ? force : !this.classList.contains('mobile-open');
+    const wasOpen = this.classList.contains('mobile-open');
+    if (open === wasOpen) return;
+
     this.classList.toggle('mobile-open', open);
     this._btns?.forEach(b => b.setAttribute('aria-expanded', String(open)));
+
+    // Lock background scroll (html/body) when open
     document.documentElement.style.overflow = open ? 'hidden' : '';
     document.body.style.overflow = open ? 'hidden' : '';
+    document.body.style.touchAction = open ? 'none' : '';
+
+    if (open){
+      // Save previous focus and trap focus inside sheet
+      this._prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      const first = this._focusables()[0];
+      (first instanceof HTMLElement ? first : this._toggleBtn)?.focus({ preventScroll: true });
+      window.addEventListener('keydown', this._trapTab);
+      // Ensure sheet scroll starts at top
+      this._sheetInner?.scrollTo({ top: 0, behavior: 'instant' });
+    }else{
+      window.removeEventListener('keydown', this._trapTab);
+      // Restore focus to the hamburger toggle
+      (this._toggleBtn || this._prevFocus)?.focus?.({ preventScroll: true });
+      this._prevFocus = null;
+    }
   }
 
   _closeOnEsc(e){ if (e.key === 'Escape') this._toggleMobile(false); }
+
+  _onResize(){
+    // Auto-close menu on desktop to avoid scroll/overflow lock getting stuck
+    if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
+  }
 
   _onScroll() {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
