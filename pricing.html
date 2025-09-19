@@ -9,6 +9,7 @@
   <link rel="canonical" href="https://www.opencounsel.ca/pricing.html" />
   <meta name="theme-color" content="#0B1B2B" />
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any" />
+
   <!-- Fonts + Icons + Tailwind -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin />
@@ -61,34 +62,41 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===== Header: full → floating pill on scroll ===== */
-    .oc-header{ background:#fff; padding-block: 0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
-    .oc-header .header-bar{
-      background: transparent; border:0; border-radius:0; box-shadow:none;
-      transition: border-color .36s ease, background-color .36s ease, border-radius .36s cubic-bezier(.2,.8,.2,1),
-                  box-shadow .36s ease, -webkit-backdrop-filter .36s ease, backdrop-filter .36s ease, transform .36s ease;
+    /* ===== Animated ONX header logo (matches blue/green site gradient) ===== */
+    .logo-anim{
+      display:inline-block;
+      width: var(--logo-size,40px);
+      height: var(--logo-size,40px);
+      background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      -webkit-mask: url('/logo.svg') no-repeat center / contain;
+              mask: url('/logo.svg') no-repeat center / contain;
     }
-    .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
-    @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
-    .oc-header.is-float .header-bar{
-      background: rgba(255,255,255,.96);
-      border-radius: var(--header-radius);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    }
-    /* Header pill sizing */
-    #siteHeader .oc-container{ padding-inline: 0 !important; }
+
+    /* ===== Header: persistent pill (logo stays inside) → subtle upgrade on scroll ===== */
+    .oc-header{ background: transparent; }
+    #siteHeader .oc-container{ padding-inline: 0 !important; } /* exact centering */
     #siteHeader .header-bar{
       width: min(1200px, calc(100% - 2*24px));
-      height: 3.25rem; margin-inline:auto; padding-inline: 14px;
-      display:flex; align-items:center; border-radius: 999px;
+      height: 3.5rem;
+      margin-inline:auto;
+      padding-inline: 14px;
+      display:flex; align-items:center; justify-content:space-between;
+      border-radius: 999px;
+      background: rgba(255,255,255,.96);          /* pill is always visible */
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 24px -8px rgba(0,0,0,0.18);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      transition: box-shadow .36s ease, transform .36s ease, background-color .36s ease;
     }
     @media (min-width:768px){
-      #siteHeader .header-bar{
-        width: min(1200px, calc(100% - 2*0px));
-        height: 3.5rem; padding-inline: 18px;
-      }
+      #siteHeader .header-bar{ width: min(1200px, calc(100% - 2*0px)); padding-inline: 18px; }
     }
+    .oc-header.is-float .header-bar{
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 14px 34px -8px rgba(0,0,0,0.22);
+      transform: translateY(-1px);
+    }
+
     .nav-link{ font-weight:700; letter-spacing:-.01em; transition: opacity .2s ease, transform .2s ease; }
     .nav-link:hover{ opacity:.9; transform: translateY(-1px); }
 
@@ -132,13 +140,12 @@
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
 
-  <!-- HEADER (same structure so styling matches site) -->
-  <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white">
-    <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
-      <!-- Left: Logo -->
+  <!-- HEADER (persistent pill with animated ONX logo inside) -->
+  <header id="siteHeader" class="oc-header sticky top-0 z-50">
+    <div class="header-bar relative mx-auto oc-container">
+      <!-- Left: Logo (animated blue/green like rest of site) -->
       <a href="index.html" class="inline-flex items-center gap-2" aria-label="ONX home">
-        <span class="inline-block w-[40px] h-[40px] bg-black rounded-xl"
-              style="-webkit-mask:url('/logo.svg') no-repeat center/contain; mask:url('/logo.svg') no-repeat center/contain;"></span>
+        <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
         <span class="sr-only">ONX</span>
       </a>
 
@@ -150,7 +157,7 @@
       </nav>
 
       <!-- Right: Download -->
-      <div class="flex items-center gap-2">
+      <div class="absolute right-4 md:right-5 inset-y-0 my-auto flex items-center">
         <a href="download.html"
            class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-xl hover:shadow-2xl transition-all duration-300 ease-out g-grad"
            aria-label="Download">
@@ -412,15 +419,14 @@
   </footer>
 
   <script>
-    // Header float on scroll
+    // Header float accent on scroll
     (function(){
       const header = document.getElementById('siteHeader');
       if(!header) return;
-      const THRESH = 8;
+      const THRESH = 6;
       const onScroll = () => {
         const y = window.scrollY || document.documentElement.scrollTop || 0;
-        if (y > THRESH) header.classList.add('is-float');
-        else header.classList.remove('is-float');
+        header.classList.toggle('is-float', y > THRESH);
       };
       onScroll();
       window.addEventListener('scroll', onScroll, { passive:true });
@@ -449,11 +455,14 @@
         monthly.setAttribute('aria-selected', String(!isAnnual));
         annual.setAttribute('aria-selected', String(isAnnual));
 
-        // Move pill
-        const left = isAnnual ? (monthly.offsetWidth + 8) : 4; // approx
-        const width = isAnnual ? annual.offsetWidth : monthly.offsetWidth;
-        pill.style.left = (isAnnual ? (pill.parentElement.clientWidth - width - 4) : 4) + 'px';
-        pill.style.width = width + 'px';
+        // Move pill precisely to button width
+        const mRect = monthly.getBoundingClientRect();
+        const aRect = annual.getBoundingClientRect();
+        const parentRect = monthly.parentElement.getBoundingClientRect();
+        const left = isAnnual ? (aRect.left - parentRect.left) : (mRect.left - parentRect.left);
+        const width = isAnnual ? aRect.width : mRect.width;
+        pill.style.left = Math.max(4,left) + 'px';
+        pill.style.width = Math.max(80, width) + 'px';
 
         // Price swap (fade)
         if (isAnnual){
@@ -470,7 +479,7 @@
           proCopy.textContent = 'Billed monthly — cancel anytime';
         }
 
-        // Update CTA target (optional: add query for backend)
+        // Update CTA target (optional query)
         const proCta = document.getElementById('proCta');
         if (proCta){
           const base = 'oc-pro.html';
