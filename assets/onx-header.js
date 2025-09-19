@@ -8,7 +8,7 @@ class ONXHeader extends HTMLElement {
   }
 
   connectedCallback() {
-    // Apply per-instance CSS variable overrides from attributes
+    // Allow per-instance CSS variable overrides via attributes
     const varMap = {
       "width-flat": "--header-width-flat",
       "max-w": "--header-max-w",
@@ -18,6 +18,13 @@ class ONXHeader extends HTMLElement {
       "pad-float-bottom-mobile": "--header-float-pad-bottom-mobile",
       "pad-float-top-desktop": "--header-float-pad-top-desktop",
       "pad-float-bottom-desktop": "--header-float-pad-bottom-desktop",
+      "pill-inner-x-mobile": "--pill-inner-x-mobile",
+      "pill-inner-x-desktop": "--pill-inner-x-desktop",
+      "pill-outer-x-mobile": "--pill-outer-x-mobile",
+      "pill-outer-x-desktop": "--pill-outer-x-desktop",
+      "pill-height-mobile": "--pill-height-mobile",
+      "pill-height-desktop": "--pill-height-desktop",
+      "logo-size": "--logo-size",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -27,10 +34,11 @@ class ONXHeader extends HTMLElement {
     this._root.innerHTML = `
       <style>
         :host{
+          /* Brand gradient tokens */
           --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
           --angle:135deg; --speed:16s;
 
-          /* Tunables (can be overridden on the tag) */
+          /* Tunables (overridable on the tag) */
           --header-width-flat: 100%;
           --header-max-w: 1200px;
           --header-flat-pad-top: 0rem;
@@ -53,8 +61,22 @@ class ONXHeader extends HTMLElement {
           --download-pad-right-desktop: 12px;
 
           --header-radius: 28px;
+          --logo-size: 40px;
+
           position: sticky; top: 0; z-index: 50;
           display:block;
+        }
+
+        /* Reset link underlines inside header */
+        a { text-decoration: none; color: inherit; }
+
+        /* Accessibility helper — FIXES the duplicate “ONX” you saw */
+        .sr-only {
+          position: absolute !important;
+          width: 1px; height: 1px;
+          padding: 0; margin: -1px;
+          overflow: hidden; clip: rect(0,0,0,0);
+          white-space: nowrap; border: 0;
         }
 
         /* Gradient utilities */
@@ -72,9 +94,9 @@ class ONXHeader extends HTMLElement {
           -webkit-text-fill-color: transparent; color: transparent;
         }
 
-        /* Logo mask */
+        /* Masked ONX logo (animated) */
         .logo-anim{
-          display:inline-block; width: var(--logo-size,40px); height: var(--logo-size,40px);
+          display:inline-block; width: var(--logo-size); height: var(--logo-size);
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
           -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain;
@@ -108,11 +130,13 @@ class ONXHeader extends HTMLElement {
 
         .center{
           position:absolute; left:50%; transform:translateX(-50%);
-          display:flex; align-items:center; gap:2rem; font-size:.875rem; font-weight:700; letter-spacing:-.01em;
+          display:flex; align-items:center; gap:2rem;
+          font-size:.875rem; font-weight:700; letter-spacing:-.01em;
         }
 
+        .nav-link{ font-weight:700; letter-spacing:-.01em; }
         .logo-pad{ padding-left: var(--logo-pad-left-mobile); }
-        .download-pad{ padding-right: var(--download-pad-right-mobile); }
+        .download-pad{ padding-right: var(--download-pad-right-mobile); display:flex; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
           .header-bar{
@@ -152,7 +176,6 @@ class ONXHeader extends HTMLElement {
         .news-link{
           display:inline-flex; align-items:center; gap:.5rem;
           font-size:.875rem; font-weight:700; color:#0A0D10;
-          opacity:1; text-decoration:none;
         }
         .news-link:hover{ opacity:.8; }
 
@@ -161,14 +184,21 @@ class ONXHeader extends HTMLElement {
           color:#fff; font-size:.875rem; font-weight:700;
           border-radius: 16px; padding:.5rem 1rem;
           box-shadow: 0 18px 30px rgba(0,0,0,.2);
-          text-decoration:none;
           transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
         }
         .btn:hover{ transform: translateY(-1px); box-shadow: 0 26px 40px rgba(0,0,0,.28); }
         .btn:active{ transform: translateY(0); }
 
-        /* Simple icon sizing for inline SVGs */
         .icon{ width: 18px; height: 18px; display:inline-block; }
+
+        /* --- Slots so you can add links/buttons without editing JS --- */
+        ::slotted(a[slot="nav"]) {
+          font-size:.875rem; font-weight:700; letter-spacing:-.01em;
+          color:#2a5e5b;
+        }
+        ::slotted([slot="actions"]) {
+          display:inline-flex; align-items:center; gap:.5rem;
+        }
       </style>
 
       <div class="oc-header">
@@ -176,23 +206,25 @@ class ONXHeader extends HTMLElement {
           <!-- Left -->
           <div class="logo-pad" style="display:flex;align-items:center;gap:.75rem;">
             <a href="/index.html" aria-label="ONX home" style="display:inline-flex;align-items:center;">
-              <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
+              <span class="logo-anim" aria-hidden="true"></span>
               <span class="sr-only">ONX</span>
             </a>
           </div>
 
           <!-- Center -->
           <nav class="center" aria-label="Primary">
-            <a href="/oc-pro.html" class="grad-text" style="text-decoration:none;">ONX Pro</a>
-            <a href="/models.html" style="text-decoration:none; color:#2a5e5b; font-weight:700;">Models</a>
+            <a href="/oc-pro.html" class="nav-link grad-text">ONX Pro</a>
+            <a href="/models.html" class="nav-link" style="color:#2a5e5b;">Models</a>
+            <slot name="nav"></slot>
           </nav>
 
           <!-- Right -->
-          <div class="download-pad" style="display:flex;align-items:center;gap:1rem;">
+          <div class="download-pad">
             <a class="news-link" href="/news.html" aria-label="ONX News">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h14a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
               <span>ONX-News</span>
             </a>
+            <slot name="actions"></slot>
             <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
               <span>Download</span>
@@ -203,8 +235,7 @@ class ONXHeader extends HTMLElement {
     `;
 
     window.addEventListener("scroll", this._onScroll, { passive: true });
-    // initial state
-    this._onScroll();
+    this._onScroll(); // initial
   }
 
   disconnectedCallback() {
