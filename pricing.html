@@ -51,6 +51,7 @@
       background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
       background-size: 300% 300%;
       animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      will-change: background-position;
     }
     .grad-text{
       background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
@@ -61,20 +62,26 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===== Animated ONX logo ===== */
+    /* ===== Animated ONX logo (mask wordmark) ===== */
     .logo-anim{
       display:inline-block;
-      width: var(--logo-size,40px); height: var(--logo-size,40px);
+      width: var(--logo-size,40px);
+      height: var(--logo-size,40px);
       background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
-      background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
-      -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain;
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      -webkit-mask: url('/logo.svg') no-repeat center / contain;
+              mask: url('/logo.svg') no-repeat center / contain;
     }
 
-    /* ===== HEADER — normal (flat) → pill on scroll ===== */
+    /* ===== Header: match home — flat → pill on scroll ===== */
     .oc-header{ background: transparent; padding-top:0; padding-bottom:0; }
     .oc-header .header-bar{
-      /* flat state: blended with page */
-      background: transparent; border: 0; border-radius: 0; box-shadow: none;
+      /* Flat (blended) */
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
       -webkit-backdrop-filter: none; backdrop-filter: none;
       transition:
         width .36s cubic-bezier(.2,.8,.2,1),
@@ -88,7 +95,7 @@
     .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
     @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
     .oc-header.is-float .header-bar{
-      /* pill state */
+      /* Pill (home page style) */
       background: rgba(255,255,255,.96);
       border: 1px solid rgba(0,0,0,0.02);
       border-radius: var(--header-radius);
@@ -96,26 +103,36 @@
       -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
 
-    /* Layout + centering */
+    /* 🛠 Pill layout + centering (flat = full width; float = centered) */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
-    #siteHeader .header-bar{
-      position: relative; box-sizing: border-box;
-      width: 100%; /* flat = full width */
+
+    /* Base (mobile) */
+    #siteHeader .header-bar {
+      position: relative;
+      box-sizing: border-box;
+      width: 100%; /* flat */
       margin-inline: auto;
-      padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
-      height: var(--pill-height-mobile); display:flex; align-items:center; justify-content:space-between;
+      padding-left: var(--pill-inner-x-mobile);
+      padding-right: var(--pill-inner-x-mobile);
+      height: var(--pill-height-mobile);
+      display: flex; align-items: center; justify-content: space-between;
     }
-    #siteHeader.is-float .header-bar{
+    #siteHeader.is-float .header-bar {
       width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
     }
+
+    /* Equal edge paddings */
     #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
     #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
-    @media (min-width:768px){
-      #siteHeader .header-bar{
+
+    /* Desktop */
+    @media (min-width: 768px) {
+      #siteHeader .header-bar {
         height: var(--pill-height-desktop);
-        padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop);
+        padding-left: var(--pill-inner-x-desktop);
+        padding-right: var(--pill-inner-x-desktop);
       }
-      #siteHeader.is-float .header-bar{
+      #siteHeader.is-float .header-bar {
         width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
       }
       #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
@@ -130,7 +147,7 @@
     @media (hover:hover){ .tilt:hover{ transform: translateY(-2px) scale(1.01); } }
     .flag{ font-size:11px; letter-spacing:.16em; }
 
-    /* ===== Pro Card Sheen ===== */
+    /* ===== Pro Card Sheen (Apple-grade) ===== */
     .sheen{ position:relative; overflow:hidden; isolation:isolate; }
     .sheen::before, .sheen::after{ content:""; position:absolute; inset:-16%; border-radius:inherit; pointer-events:none; }
     .sheen::before{
@@ -155,7 +172,7 @@
     .price-amount[data-state="out"]{ opacity:0; transform: translateY(6px); position:absolute; inset:0; }
     .price-amount[data-state="in"]{ opacity:1; transform: translateY(0); position:relative; }
 
-    /* ===== FAQ ===== */
+    /* ===== FAQ (minimal accordion) ===== */
     details{ border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px 16px; background:#fff; }
     details + details{ margin-top:10px; }
     summary{ cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -165,9 +182,10 @@
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
 
-  <!-- HEADER (flat → pill on scroll) -->
+  <!-- HEADER (match home: flat → pill on scroll) -->
   <header id="siteHeader" class="oc-header sticky top-0 z-50"
     style="
+      /* 🔧 Controls */
       --pill-inner-x-mobile: 30px;
       --pill-inner-x-desktop: 12px;
       --pill-outer-x-mobile: 35px;
@@ -176,13 +194,14 @@
       --pill-height-desktop: 3.5rem;
       --pill-max-w: 1200px;
 
+      /* Edge paddings parity */
       --logo-pad-left-mobile: 12px;
       --logo-pad-left-desktop: 12px;
       --download-pad-right-mobile: 12px;
       --download-pad-right-desktop: 12px;
     ">
     <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
-      <!-- Left -->
+      <!-- Left (logo with equal edge padding) -->
       <div class="flex items-center gap-3 logo-pad">
         <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
           <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
@@ -190,15 +209,18 @@
         </a>
       </div>
 
-      <!-- Centered nav -->
+      <!-- Centered nav (home: ONX Pro + Models only) -->
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
         <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
         <a class="nav-link text-oc-ink" href="models.html">Models</a>
-        <a class="nav-link text-oc-ink" href="download.html">Download</a>
       </nav>
 
-      <!-- Right -->
-      <div class="flex items-center gap-2 download-pad">
+      <!-- Right (home: ONX-News link + Download button) -->
+      <div class="flex items-center gap-4 download-pad">
+        <a href="news.html" class="inline-flex items-center gap-2 text-sm font-semibold text-oc-ink hover:opacity-80">
+          <i class="ph ph-newspaper text-[16px]" aria-hidden="true"></i>
+          <span>ONX-News</span>
+        </a>
         <a
           href="download.html"
           class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white
@@ -214,7 +236,7 @@
     </div>
   </header>
 
-  <!-- HEADER behavior script -->
+  <!-- HEADER behavior script (same as home) -->
   <script>
     (function(){
       try{
@@ -253,7 +275,7 @@
             <span id="billingPill"
                   class="billing-pill absolute top-1 left-1 h-[34px] w-[84px] rounded-full bg-white shadow"></span>
           </div>
-          <!-- Show only on Annual -->
+          <!-- Only show this badge when ANNUAL is selected -->
           <span id="saveBadge" aria-hidden="true"
                 class="hidden ml-3 inline-flex items-center gap-1 rounded-full bg-white/90 text-oc-ink text-xs font-semibold px-3 py-1 shadow">
             <i class="ph ph-sparkle text-sm"></i> Save 20%
@@ -319,7 +341,7 @@
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-m" data-state="in">
               $20<span class="text-lg align-top">/mo</span>
             </div>
-            <!-- Annual -->
+            <!-- Annual: $16/mo -->
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-a" data-state="out" aria-hidden="true">
               $16<span class="text-lg align-top">/mo</span>
             </div>
@@ -347,7 +369,7 @@
     </div>
   </section>
 
-  <!-- COMPARISON -->
+  <!-- COMPARISON (compact, readable) -->
   <section class="mx-auto max-w-[1200px] oc-container pb-4 md:pb-10">
     <div class="rounded-2xl border border-neutral-200 bg-white p-6 md:p-8 shadow-card">
       <h4 class="text-lg md:text-xl font-semibold tracking-tight">Compare plans</h4>
