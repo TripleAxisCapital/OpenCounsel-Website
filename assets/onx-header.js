@@ -456,7 +456,7 @@ class ONXHeader extends HTMLElement {
           <!-- Center (desktop) -->
           <nav class="center" aria-label="Primary">
             <a href="/oc-pro.html" class="nav-link nav-link--black nav-link--pro">ONX Pro</a>
-            <a href="/models.html" class="nav-link">Models</a>
+            <a href="/pricing.html" class="nav-link">Pricing</a>
             <!-- injected desktop links go here -->
             <span class="center-extra"></span>
             <!-- per-page slotted links still supported -->
@@ -503,7 +503,7 @@ class ONXHeader extends HTMLElement {
           <nav class="mobile-nav" aria-label="Mobile">
             <!-- built-in defaults -->
             <a class="mobile-link mobile-link--pro" href="/oc-pro.html">ONX Pro <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-            <a class="mobile-link" href="/models.html">Models <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
+            <a class="mobile-link" href="/pricing.html">Pricing <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
             <!-- injected mobile links -->
             <div class="mobile-extra"></div>
           </nav>
