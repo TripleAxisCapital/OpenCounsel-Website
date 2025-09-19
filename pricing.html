@@ -74,16 +74,17 @@
               mask: url('/logo.svg') no-repeat center / contain;
     }
 
-    /* ===== Header (PILL at all times) ===== */
-    .oc-header{ background:#fff; padding-top:0; padding-bottom:0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
+    /* ===== Header: normal → pill on scroll (exact behavior) ===== */
+    .oc-header{ background:transparent; padding-top:0; padding-bottom:0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
     .oc-header .header-bar{
-      /* make it a pill always */
-      background: rgba(255,255,255,.96);
-      border: 1px solid rgba(0,0,0,0.02);
-      border-radius: var(--header-radius);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+      /* Normal (blended) */
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      -webkit-backdrop-filter: none; backdrop-filter: none;
       transition:
+        width .36s cubic-bezier(.2,.8,.2,1),
         border-color .36s ease,
         background-color .36s ease,
         border-radius .36s cubic-bezier(.2,.8,.2,1),
@@ -92,33 +93,44 @@
         backdrop-filter .36s ease,
         transform .36s ease;
     }
-    /* Keep float spacing behavior if you still want tighter top padding on scroll */
     .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
     @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
+    .oc-header.is-float .header-bar{
+      /* Pill */
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(0,0,0,0.02);
+      border-radius: var(--header-radius);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    }
 
-    /* 🛠 Pill layout + centering logic (copied from index.html) */
+    /* 🛠 Layout + centering (normal = full width; float = centered pill) */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
+
+    /* Base (mobile) */
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
-      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+      width: 100%; /* full-width while not floating */
       margin-inline: auto;
       padding-left: var(--pill-inner-x-mobile);
       padding-right: var(--pill-inner-x-mobile);
       height: var(--pill-height-mobile);
       display: flex; align-items: center; justify-content: space-between;
     }
+    #siteHeader.is-float .header-bar {
+      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+    }
+
     /* Element-specific paddings (mobile) */
     #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
     #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
 
     /* Desktop */
     @media (min-width: 768px) {
-      #siteHeader .header-bar {
+      #siteHeader .header-bar { height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
+      #siteHeader.is-float .header-bar {
         width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-        padding-left: var(--pill-inner-x-desktop);
-        padding-right: var(--pill-inner-x-desktop);
-        height: var(--pill-height-desktop);
       }
       #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
       #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
@@ -167,9 +179,10 @@
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
 
-  <!-- HEADER (pill at all times; logo + download stay inside with equal edge padding) -->
-  <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
+  <!-- HEADER (normal → pill on scroll; logo + download stay inside with equal edge padding) -->
+  <header id="siteHeader" class="oc-header sticky top-0 z-50"
     style="
+      /* 🔧 Controls */
       --pill-inner-x-mobile: 30px;
       --pill-inner-x-desktop: 12px;
       --pill-outer-x-mobile: 35px;
@@ -178,6 +191,7 @@
       --pill-height-desktop: 3.5rem;
       --pill-max-w: 1200px;
 
+      /* Edge padding parity */
       --logo-pad-left-mobile: 12px;
       --logo-pad-left-desktop: 12px;
       --download-pad-right-mobile: 12px;
@@ -216,7 +230,7 @@
     </div>
   </header>
 
-  <!-- HEADER behavior script (kept; now mainly controls spacing on scroll) -->
+  <!-- HEADER behavior script -->
   <script>
     (function(){
       try{
@@ -321,7 +335,7 @@
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-m" data-state="in">
               $20<span class="text-lg align-top">/mo</span>
             </div>
-            <!-- Annual: changed from 192/yr → 16/month -->
+            <!-- Annual: $16/mo equivalent -->
             <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-a" data-state="out" aria-hidden="true">
               $16<span class="text-lg align-top">/mo</span>
             </div>
@@ -510,10 +524,10 @@
 
         // Move pill to active button with precise geometry
         const mRect = monthly.getBoundingClientRect();
-        theRect = annual.getBoundingClientRect();
+        const aRect = annual.getBoundingClientRect();
         const parentRect = monthly.parentElement.getBoundingClientRect();
-        const left = isAnnual ? (theRect.left - parentRect.left) : (mRect.left - parentRect.left);
-        const width = isAnnual ? theRect.width : mRect.width;
+        const left = isAnnual ? (aRect.left - parentRect.left) : (mRect.left - parentRect.left);
+        const width = isAnnual ? aRect.width : mRect.width;
         pill.style.left = Math.max(4,left) + 'px';
         pill.style.width = Math.max(80, width) + 'px';
 
