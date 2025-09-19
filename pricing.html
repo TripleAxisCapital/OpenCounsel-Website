@@ -62,7 +62,7 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* ===== Animated ONX logo (mask wordmark) ===== */
+    /* ===== Animated ONX logo ===== */
     .logo-anim{
       display:inline-block;
       width: var(--logo-size,40px);
@@ -74,14 +74,16 @@
               mask: url('/logo.svg') no-repeat center / contain;
     }
 
-    /* ===== Header: match home — flat → pill on scroll ===== */
-    .oc-header{ background: transparent; padding-top:0; padding-bottom:0; }
-    .oc-header .header-bar{
-      /* Flat (blended) */
+    /* ===== Header: flat (blended) → pill on scroll ===== */
+    .oc-header{
       background: transparent;
-      border: 0;
-      border-radius: 0;
-      box-shadow: none;
+      padding-top: var(--header-flat-pad-top, 0);
+      padding-bottom: var(--header-flat-pad-bottom, 0);
+      transition: padding .36s cubic-bezier(.2,.8,.2,1);
+    }
+    .oc-header .header-bar{
+      /* Flat */
+      background: transparent; border: 0; border-radius: 0; box-shadow: none;
       -webkit-backdrop-filter: none; backdrop-filter: none;
       transition:
         width .36s cubic-bezier(.2,.8,.2,1),
@@ -92,10 +94,19 @@
         backdrop-filter .36s ease;
       will-change: width, background-color, border-radius, box-shadow;
     }
-    .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
-    @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
+    .oc-header.is-float{
+      background: transparent;
+      padding-top: var(--header-float-pad-top-mobile, .75rem);
+      padding-bottom: var(--header-float-pad-bottom-mobile, .25rem);
+    }
+    @media (min-width:768px){
+      .oc-header.is-float{
+        padding-top: var(--header-float-pad-top-desktop, 1rem);
+        padding-bottom: var(--header-float-pad-bottom-desktop, var(--header-float-pad-bottom-mobile, .25rem));
+      }
+    }
     .oc-header.is-float .header-bar{
-      /* Pill (home page style) */
+      /* Pill */
       background: rgba(255,255,255,.96);
       border: 1px solid rgba(0,0,0,0.02);
       border-radius: var(--header-radius);
@@ -103,22 +114,20 @@
       -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
 
-    /* 🛠 Pill layout + centering (flat = full width; float = centered) */
+    /* 🛠 Layout + centering (flat = full width; float = centered pill) */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
 
-    /* Base (mobile) */
-    #siteHeader .header-bar {
-      position: relative;
-      box-sizing: border-box;
-      width: 100%; /* flat */
+    /* Mobile base */
+    #siteHeader .header-bar{
+      position: relative; box-sizing: border-box;
+      width: var(--header-width-flat, 100%); /* controllable flat width */
       margin-inline: auto;
-      padding-left: var(--pill-inner-x-mobile);
-      padding-right: var(--pill-inner-x-mobile);
+      padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
       height: var(--pill-height-mobile);
-      display: flex; align-items: center; justify-content: space-between;
+      display:flex; align-items:center; justify-content:space-between;
     }
-    #siteHeader.is-float .header-bar {
-      width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+    #siteHeader.is-float .header-bar{
+      width: min(var(--header-max-w, var(--pill-max-w)), calc(100% - (2 * var(--pill-outer-x-mobile))));
     }
 
     /* Equal edge paddings */
@@ -126,14 +135,13 @@
     #siteHeader .download-pad { padding-right: var(--download-pad-right-mobile); }
 
     /* Desktop */
-    @media (min-width: 768px) {
-      #siteHeader .header-bar {
+    @media (min-width:768px){
+      #siteHeader .header-bar{
         height: var(--pill-height-desktop);
-        padding-left: var(--pill-inner-x-desktop);
-        padding-right: var(--pill-inner-x-desktop);
+        padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop);
       }
-      #siteHeader.is-float .header-bar {
-        width: min(var(--pill-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+      #siteHeader.is-float .header-bar{
+        width: min(var(--header-max-w, var(--pill-max-w)), calc(100% - (2 * var(--pill-outer-x-desktop))));
       }
       #siteHeader .logo-pad { padding-left: var(--logo-pad-left-desktop); }
       #siteHeader .download-pad { padding-right: var(--download-pad-right-desktop); }
@@ -147,7 +155,7 @@
     @media (hover:hover){ .tilt:hover{ transform: translateY(-2px) scale(1.01); } }
     .flag{ font-size:11px; letter-spacing:.16em; }
 
-    /* ===== Pro Card Sheen (Apple-grade) ===== */
+    /* ===== Pro Card Sheen ===== */
     .sheen{ position:relative; overflow:hidden; isolation:isolate; }
     .sheen::before, .sheen::after{ content:""; position:absolute; inset:-16%; border-radius:inherit; pointer-events:none; }
     .sheen::before{
@@ -172,7 +180,7 @@
     .price-amount[data-state="out"]{ opacity:0; transform: translateY(6px); position:absolute; inset:0; }
     .price-amount[data-state="in"]{ opacity:1; transform: translateY(0); position:relative; }
 
-    /* ===== FAQ (minimal accordion) ===== */
+    /* ===== FAQ ===== */
     details{ border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px 16px; background:#fff; }
     details + details{ margin-top:10px; }
     summary{ cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -182,26 +190,36 @@
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
 
-  <!-- HEADER (match home: flat → pill on scroll) -->
+  <!-- HEADER (flat → pill on scroll) -->
   <header id="siteHeader" class="oc-header sticky top-0 z-50"
     style="
-      /* 🔧 Controls */
+      /* ▼ Adjust these to control WIDTH and VERTICAL PADDING */
+      --header-width-flat: 100%;              /* width before scroll */
+      --header-max-w: 1200px;                 /* pill max width after scroll */
+      --header-flat-pad-top: 0rem;            /* top padding before scroll */
+      --header-flat-pad-bottom: 0rem;         /* bottom padding before scroll */
+      --header-float-pad-top-mobile: .75rem;  /* top padding after scroll (mobile) */
+      --header-float-pad-bottom-mobile: .25rem; /* bottom padding after scroll (mobile) */
+      --header-float-pad-top-desktop: 1rem;   /* top padding after scroll (desktop) */
+      --header-float-pad-bottom-desktop: .25rem; /* bottom padding after scroll (desktop) */
+
+      /* Existing controls (left/right spacing + heights) */
       --pill-inner-x-mobile: 30px;
       --pill-inner-x-desktop: 12px;
       --pill-outer-x-mobile: 35px;
       --pill-outer-x-desktop: 0px;
       --pill-height-mobile: 2.75rem;
       --pill-height-desktop: 3.5rem;
-      --pill-max-w: 1200px;
+      --pill-max-w: 1200px; /* kept for backward compatibility */
 
-      /* Edge paddings parity */
+      /* Equal edge padding for logo and CTA */
       --logo-pad-left-mobile: 12px;
       --logo-pad-left-desktop: 12px;
       --download-pad-right-mobile: 12px;
       --download-pad-right-desktop: 12px;
     ">
     <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
-      <!-- Left (logo with equal edge padding) -->
+      <!-- Left -->
       <div class="flex items-center gap-3 logo-pad">
         <a href="index.html" class="inline-flex items-center" aria-label="ONX home">
           <span class="logo-anim" aria-hidden="true" style="--logo-size:40px"></span>
@@ -209,13 +227,13 @@
         </a>
       </div>
 
-      <!-- Centered nav (home: ONX Pro + Models only) -->
+      <!-- Centered nav -->
       <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
         <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
         <a class="nav-link text-oc-ink" href="models.html">Models</a>
       </nav>
 
-      <!-- Right (home: ONX-News link + Download button) -->
+      <!-- Right: ONX-News + Download -->
       <div class="flex items-center gap-4 download-pad">
         <a href="news.html" class="inline-flex items-center gap-2 text-sm font-semibold text-oc-ink hover:opacity-80">
           <i class="ph ph-newspaper text-[16px]" aria-hidden="true"></i>
@@ -236,7 +254,7 @@
     </div>
   </header>
 
-  <!-- HEADER behavior script (same as home) -->
+  <!-- HEADER behavior script -->
   <script>
     (function(){
       try{
