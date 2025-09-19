@@ -36,7 +36,7 @@ class ONXHeader extends HTMLElement {
     this._root.innerHTML = `
       <style>
         :host{
-          /* Brand gradient tokens */
+          /* Single source of truth for gradient animation */
           --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
           --angle:135deg; --speed:16s;
 
@@ -77,20 +77,23 @@ class ONXHeader extends HTMLElement {
           white-space: nowrap; border: 0;
         }
 
+        /* Gradient animation (shared by logo, nav links, button) */
         @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
         .g-grad, .grad-anim{
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300%;
           animation: gradientShift var(--speed,16s) ease-in-out infinite;
         }
-        .grad-text{
-          background: linear-gradient(135deg, #2da6a0, #0aa1ff);
+        /* Text variant that uses the SAME tokens/animation as the button/logo */
+        .text-grad{
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300%;
-          animation: gradientShift 16s ease-in-out infinite;
+          animation: gradientShift var(--speed,16s) ease-in-out infinite;
           -webkit-background-clip:text; background-clip:text;
           -webkit-text-fill-color: transparent; color: transparent;
         }
 
+        /* Logo mark (animated gradient inside SVG mask) */
         .logo-anim{
           display:inline-block; width: var(--logo-size); height: var(--logo-size);
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
@@ -109,10 +112,11 @@ class ONXHeader extends HTMLElement {
           position: relative; box-sizing: border-box;
           width: var(--header-width-flat);
           margin-inline: auto;
-          display:flex; align-items:center; justify-content:space-between;
+          display:flex; align-items:center; justify-content:space-between; /* centers children vertically */
           height: var(--pill-height-mobile);
           padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
           background: transparent; border: 0; border-radius: 0; box-shadow: none;
+          line-height: 1; /* removes baseline creep */
           -webkit-backdrop-filter: none; backdrop-filter: none;
           transition:
             width .36s cubic-bezier(.2,.8,.2,1),
@@ -122,14 +126,31 @@ class ONXHeader extends HTMLElement {
             -webkit-backdrop-filter .36s ease,
             backdrop-filter .36s ease;
         }
-        .logo-pad{ padding-left: var(--logo-pad-left-mobile); display:flex; align-items:center; gap:.75rem; }
-        .right-area{ padding-right: var(--download-pad-right-mobile); display:flex; align-items:center; gap:1rem; }
+        /* Ensure the ONX block is perfectly centered vertically */
+        .logo-pad{
+          height:100%;
+          padding-left: var(--logo-pad-left-mobile);
+          display:flex; align-items:center; gap:.75rem;
+        }
+        .logo-pad a{ display:flex; align-items:center; line-height:1; }
+
+        .right-area{ height:100%; padding-right: var(--download-pad-right-mobile); display:flex; align-items:center; gap:1rem; }
 
         /* Desktop center nav */
         .center{
           position:absolute; left:50%; transform:translateX(-50%);
           display:none; align-items:center; gap:2rem;
           font-size:.925rem; font-weight:700; letter-spacing:-.01em;
+        }
+        /* Apply shared gradient to ALL center nav links except the black Pro link */
+        .center .nav-link:not(.nav-link--black){ composes: text-grad; }
+        /* Fallback if "composes" unsupported (Shadow DOM CSS): duplicate rules */
+        .center .nav-link:not(.nav-link--black){
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
+          background-size: 300% 300%;
+          animation: gradientShift var(--speed,16s) ease-in-out infinite;
+          -webkit-background-clip:text; background-clip:text;
+          -webkit-text-fill-color: transparent; color: transparent;
         }
 
         /* Desktop */
@@ -174,7 +195,7 @@ class ONXHeader extends HTMLElement {
 
         .nav-link{ font-weight:700; letter-spacing:-.01em; }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
-        .nav-link--pro{ font-weight:800 !important; } /* ONX Pro always bolder */
+        .nav-link--pro{ font-weight:800 !important; } /* ONX Pro always bolder/black */
 
         /* Desktop right-side defaults */
         .news-link{
@@ -308,7 +329,7 @@ class ONXHeader extends HTMLElement {
           <!-- Center (desktop) -->
           <nav class="center" aria-label="Primary">
             <a href="/oc-pro.html" class="nav-link nav-link--black nav-link--pro">ONX Pro</a>
-            <a href="/models.html" class="nav-link grad-text">Models</a>
+            <a href="/models.html" class="nav-link">Models</a>
             <slot name="nav"></slot>
           </nav>
 
@@ -392,7 +413,7 @@ class ONXHeader extends HTMLElement {
   }
 
   _cloneSlotted(id, name){
-    let navSlot = this._root.querySelector(`slot[name="${name}"]`);
+    let navSlot = this._root.querySelector(`slot[name="\${name}"]`);
     if (!navSlot) return;
     navSlot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
     navSlot.addEventListener('slotchange', () => this._cloneNow(name));
