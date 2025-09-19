@@ -1,4 +1,24 @@
 // /assets/onx-header.js
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   EDIT HERE — EASY NAV LINKS (optional)
+   Add items to ONX_HEADER_LINKS and they will appear in BOTH:
+   • Desktop header center nav
+   • Mobile sheet menu
+   You can also keep using <a slot="nav" ...> per-page; both methods coexist.
+   Example:
+   ONX_HEADER_LINKS.push({ label: "News", href: "/news.html", black: false, pro: false });
+   ──────────────────────────────────────────────────────────────────────────── */
+const ONX_HEADER_LINKS = [
+  // { label: "News", href: "/news.html", black: false, pro: false },
+  // { label: "Docs", href: "/docs.html", black: true,  pro: false },
+];
+
+/* Usage for ONX Pro page theme (page-scoped):
+   <onx-header theme="ONXPro"></onx-header>
+   Accepts: theme="ONXPro" | "onxpro" | "pro"
+*/
+
 class ONXHeader extends HTMLElement {
   constructor() {
     super();
@@ -167,6 +187,7 @@ class ONXHeader extends HTMLElement {
           -webkit-background-clip:text; background-clip:text;
           -webkit-text-fill-color: transparent; color: transparent;
         }
+        .center .center-extra{ display: contents; } /* placeholder container for injected links */
 
         /* Desktop */
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
@@ -291,7 +312,6 @@ class ONXHeader extends HTMLElement {
           border-radius: 22px;
           border:1px solid rgba(0,0,0,.06);
           box-shadow: 0 18px 40px rgba(0,0,0,.2);
-          /* Remove translate open/close slide */
           opacity:0; pointer-events:none;
           transition: opacity .18s ease;
           -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
@@ -341,7 +361,7 @@ class ONXHeader extends HTMLElement {
           width:100%;
           border-radius:14px;
           padding:.75rem 1rem;
-          box-sizing: border-box; /* ← prevents horizontal bleed */
+          box-sizing: border-box; /* prevents horizontal bleed */
         }
         /* Hard containment & reset for any cloned/slotted actions */
         .mobile-extra-actions a,
@@ -372,6 +392,51 @@ class ONXHeader extends HTMLElement {
           transform: none !important;
         }
 
+        /* ===== ONXPro THEME (page-scoped via theme="ONXPro" | "onxpro" | "pro") ===== */
+        :host([theme="ONXPro"]) .header-bar,
+        :host([theme="onxpro"]) .header-bar,
+        :host([theme="pro"]) .header-bar{
+          background:#0A0D10;
+          border:1px solid rgba(255,255,255,.06);
+          box-shadow: 0 18px 38px -18px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.06);
+        }
+        :host([theme="ONXPro"].is-float) .header-bar,
+        :host([theme="onxpro"].is-float) .header-bar,
+        :host([theme="pro"].is-float) .header-bar{
+          background:#0A0D10;
+        }
+
+        /* Desktop nav → white */
+        :host([theme="ONXPro"]) .center .nav-link,
+        :host([theme="onxpro"]) .center .nav-link,
+        :host([theme="pro"]) .center .nav-link{
+          background:none !important;
+          -webkit-text-fill-color: initial !important;
+          color:#fff !important;
+        }
+        :host([theme="ONXPro"]) .news-link,
+        :host([theme="onxpro"]) .news-link,
+        :host([theme="pro"]) .news-link{ color:#fff !important; }
+
+        /* Download button → white bg, black text (desktop + mobile) */
+        :host([theme="ONXPro"]) .desktop-actions .btn,
+        :host([theme="onxpro"]) .desktop-actions .btn,
+        :host([theme="pro"]) .desktop-actions .btn,
+        :host([theme="ONXPro"]) .mobile-actions .btn,
+        :host([theme="onxpro"]) .mobile-actions .btn,
+        :host([theme="pro"]) .mobile-actions .btn{
+          background:#fff !important;
+          color:#0A0D10 !important;
+          animation:none !important;
+        }
+
+        /* Hamburger lines → white on dark header */
+        :host([theme="ONXPro"]) .hamburger,
+        :host([theme="onxpro"]) .hamburger,
+        :host([theme="pro"]) .hamburger{
+          color:#fff;
+        }
+
         @media (prefers-reduced-motion: reduce){
           .sheet, .backdrop, .hamburger .lines::before,
           .hamburger .lines::after, .hamburger .lines span { transition:none; }
@@ -391,7 +456,10 @@ class ONXHeader extends HTMLElement {
           <!-- Center (desktop) -->
           <nav class="center" aria-label="Primary">
             <a href="/oc-pro.html" class="nav-link nav-link--black nav-link--pro">ONX Pro</a>
-            <a href="/pricing.html" class="nav-link">Pricing</a>
+            <a href="/models.html" class="nav-link">Models</a>
+            <!-- injected desktop links go here -->
+            <span class="center-extra"></span>
+            <!-- per-page slotted links still supported -->
             <slot name="nav"></slot>
           </nav>
 
@@ -435,8 +503,8 @@ class ONXHeader extends HTMLElement {
           <nav class="mobile-nav" aria-label="Mobile">
             <!-- built-in defaults -->
             <a class="mobile-link mobile-link--pro" href="/oc-pro.html">ONX Pro <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-            <a class="mobile-link" href="/pricing.html">Pricing <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-            <!-- slotted / cloned go here -->
+            <a class="mobile-link" href="/models.html">Models <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
+            <!-- injected mobile links -->
             <div class="mobile-extra"></div>
           </nav>
 
@@ -473,6 +541,9 @@ class ONXHeader extends HTMLElement {
       this._sheetInner?.addEventListener(evt, blockScroll, { passive: false });
     });
 
+    // Inject global-config links into desktop + mobile
+    this._renderExtraLinks(ONX_HEADER_LINKS);
+
     // Clone slotted nav + actions into mobile panel
     this._cloneSlotted('nav');
     this._cloneSlotted('actions');
@@ -490,9 +561,48 @@ class ONXHeader extends HTMLElement {
     if (this._backdrop) this._backdrop.removeEventListener("click", this._toggleMobile);
   }
 
+  /* ===== Inject global-config links ===== */
+  _renderExtraLinks(list = []) {
+    if (!Array.isArray(list) || !list.length) return;
+
+    const centerExtra = this._root.querySelector('.center-extra');
+    const mobileExtra = this._root.querySelector('.mobile-extra');
+    if (!centerExtra || !mobileExtra) return;
+
+    // Clear previous (in case of re-connect)
+    centerExtra.innerHTML = '';
+    mobileExtra.innerHTML = '';
+
+    list.forEach(item => {
+      if (!item || !item.label || !item.href) return;
+
+      // Desktop link
+      const a = document.createElement('a');
+      a.className = 'nav-link' + (item.black ? ' nav-link--black' : '') + (item.pro ? ' nav-link--pro' : '');
+      a.href = item.href;
+      a.textContent = item.label;
+      centerExtra.appendChild(a);
+
+      // Mobile link
+      const m = document.createElement('a');
+      m.className = 'mobile-link' + (item.pro ? ' mobile-link--pro' : '');
+      m.href = item.href;
+      m.textContent = item.label;
+      const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24');
+      chev.setAttribute('fill','none'); chev.setAttribute('stroke','currentColor');
+      chev.setAttribute('stroke-width','1.8'); chev.setAttribute('stroke-linecap','round'); chev.setAttribute('stroke-linejoin','round');
+      const p = document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d','m9 6 6 6-6 6');
+      chev.appendChild(p);
+      m.appendChild(chev);
+      m.addEventListener('click', () => this._toggleMobile(false));
+      mobileExtra.appendChild(m);
+    });
+  }
+
   /* ===== Cloning (nav & actions) into the mobile sheet ===== */
   _cloneSlotted(name){
-    const slot = this._root.querySelector(`slot[name="${name}"]`); // fixed template string
+    const slot = this._root.querySelector(`slot[name="${name}"]`);
     if (!slot) return;
     slot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
     slot.addEventListener('slotchange', () => this._cloneNow(name));
@@ -506,7 +616,7 @@ class ONXHeader extends HTMLElement {
 
     if (name === 'nav'){
       const container = this._root.querySelector('.mobile-extra');
-      container.innerHTML = '';
+      // Do not clear here—preserve global-config links; append slotted after them
       assigned.forEach(node => {
         if (!(node instanceof HTMLAnchorElement)) return;
         const a = document.createElement('a');
@@ -523,6 +633,15 @@ class ONXHeader extends HTMLElement {
         a.appendChild(chev);
         a.addEventListener('click', () => this._toggleMobile(false));
         container.appendChild(a);
+
+        // Also mirror slotted links into desktop after the injected ones
+        const centerExtra = this._root.querySelector('.center-extra');
+        if (centerExtra) {
+          const d = node.cloneNode(true);
+          // normalize class
+          if (!d.classList.contains('nav-link')) d.classList.add('nav-link');
+          centerExtra.appendChild(d);
+        }
       });
     } else {
       const acts = this._root.querySelector('.mobile-extra-actions');
