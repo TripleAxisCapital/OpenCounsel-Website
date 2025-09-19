@@ -1323,7 +1323,9 @@
       padding:14px 16px;
       line-height:1.45; font-size:15px; color:inherit;
       box-sizing:border-box;
-      opacity:0; will-change:opacity;
+      opacity:0;
+      will-change:opacity, filter, transform;
+      transform:translateZ(0); /* GPU hint for super-smooth fades */
     }
     .content{ display:inline; }
 
@@ -1402,6 +1404,7 @@
       this._onClick=()=>this.play(true);
       this._runId=0;
       this._loopT=null;
+      this._hasRun=false; // tracks first vs restart for special entrance
     }
 
     msType(base){ return Math.max(1, Math.round(base/(TYPING_SPEED||1))); }
@@ -1429,6 +1432,8 @@
       this._runId++;
       if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
       this.bubble.style.opacity=0;
+      this.bubble.style.filter='none';
+      this.bubble.style.transform='translateZ(0)';
       while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
       this.nameEl=this.emailEl=this.phoneEl=null;
     }
@@ -1487,23 +1492,54 @@
       caret.remove();
     }
 
-    async play(force=false){
+    async _entrance(isRestart, runId){
+      if(this.reduced){
+        this.bubble.style.opacity=1;
+        return;
+      }
+      // Apple-style ease (gentle, confident)
+      const easeOut='cubic-bezier(.20,.70,0,1)';
+
+      if(isRestart){
+        // Blur-to-crisp re-entrance with a whisper of scale & lift
+        const anim=this.bubble.animate(
+          [
+            { opacity:0, filter:'blur(10px)', transform:'translateY(2px) scale(0.997)' },
+            { opacity:1, filter:'blur(0px)',  transform:'translateY(0) scale(1)' }
+          ],
+          { duration:this.msFx(420), easing:easeOut, fill:'forwards' }
+        );
+        // Ensure state consistency even if cancelled
+        try { await anim.finished; } catch(_) {}
+        if(runId!==this._runId) return;
+        this.bubble.style.opacity=1;
+        this.bubble.style.filter='none';
+        this.bubble.style.transform='translateZ(0)';
+      }else{
+        const anim=this.bubble.animate(
+          [
+            { opacity:0, transform:'translateY(0)' },
+            { opacity:1, transform:'translateY(0)' }
+          ],
+          { duration:this.msFx(300), easing:easeOut, fill:'forwards' }
+        );
+        try { await anim.finished; } catch(_) {}
+        if(runId!==this._runId) return;
+        this.bubble.style.opacity=1;
+        this.bubble.style.transform='translateZ(0)';
+      }
+    }
+
+    async play(force=false, isRestart=false){
       if(this._running && !force) return;
       this._running=true;
       this.reset();
       const runId=this._runId;
       const delayFx=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msFx(t)));
 
-      // Fade in bubble (no movement)
-      if(this.reduced){ this.bubble.style.opacity=1; }
-      else{
-        this.bubble.animate([{opacity:0},{opacity:1}], {
-          duration:this.msFx(300),
-          easing:'cubic-bezier(.2,.7,.2,1)',
-          fill:'forwards'
-        });
-        await delayFx(310);
-      }
+      // Entrance (blur-in on restarts, gentle fade on first load)
+      await this._entrance(isRestart || this._hasRun, runId);
+      if(runId!==this._runId) return;
 
       // Streamed typing
       if(this.reduced){
@@ -1562,13 +1598,13 @@
       await swap(this.phoneEl, CONFIG.phoneScrubbed);
 
       this._running=false;
+      this._hasRun=true;
 
-      /* ---- Auto-restart after a 3s rest ---- */
+      /* ---- Auto-restart after a 3s rest with blur-fade entrance ---- */
       if (this._loopT) { clearTimeout(this._loopT); }
       this._loopT = setTimeout(() => {
         if (!this.isConnected) return;
-        // Only restart if nothing else has started in the meantime
-        if (runId === this._runId && !this._running) this.play(true);
+        if (runId === this._runId && !this._running) this.play(true, /*isRestart*/ true);
       }, 3000);
     }
   }
