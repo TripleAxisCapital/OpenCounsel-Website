@@ -57,6 +57,8 @@ class ONXHeader extends HTMLElement {
       "nav-letter-spacing": "--nav-letter-spacing",
       "nav-gap": "--nav-gap",
       "mobile-link-padding": "--mobile-link-padding",
+      // NEW: precise line-height control to prevent descender clipping
+      "nav-line-height": "--nav-line-height",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -102,9 +104,13 @@ class ONXHeader extends HTMLElement {
           --nav-letter-spacing: -.01em;
           --nav-gap: 2rem;
           --mobile-link-padding: 12px 12px;
+          /* NEW: prevent descender clipping (e.g., "g" in Pricing) */
+          --nav-line-height: 1.25;
 
           position: sticky; top: 0; z-index: 50;
           display:block;
+          -webkit-font-smoothing: antialiased;
+          text-rendering: optimizeLegibility;
         }
 
         a { text-decoration: none; color: inherit; }
@@ -153,7 +159,7 @@ class ONXHeader extends HTMLElement {
           height: var(--pill-height-mobile);
           padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
           background: transparent; border: 0; border-radius: 0; box-shadow: none;
-          line-height: 1;
+          line-height: 1; /* child links override with --nav-line-height */
           -webkit-backdrop-filter: none; backdrop-filter: none;
           transition:
             width .36s cubic-bezier(.2,.8,.2,1),
@@ -179,6 +185,7 @@ class ONXHeader extends HTMLElement {
           position:absolute; left:50%; transform:translateX(-50%);
           display:none; align-items:center; gap: var(--nav-gap);
           font-size: var(--nav-font-size); font-weight: var(--nav-font-weight); letter-spacing: var(--nav-letter-spacing);
+          line-height: var(--nav-line-height); /* NEW */
         }
         .center .nav-link:not(.nav-link--black){
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
@@ -186,6 +193,8 @@ class ONXHeader extends HTMLElement {
           animation: gradientShift var(--speed,16s) ease-in-out infinite;
           -webkit-background-clip:text; background-clip:text;
           -webkit-text-fill-color: transparent; color: transparent;
+          /* NEW: tiny bottom padding ensures descenders aren't visually clipped by WebKit's text clipping with background-clip:text */
+          padding-bottom: .06em;
         }
         .center .center-extra{ display: contents; } /* placeholder container for injected links */
 
@@ -226,7 +235,13 @@ class ONXHeader extends HTMLElement {
           }
         }
 
-        .nav-link{ font-weight: var(--nav-font-weight); letter-spacing: var(--nav-letter-spacing); font-size: var(--nav-font-size); }
+        .nav-link{
+          font-weight: var(--nav-font-weight);
+          letter-spacing: var(--nav-letter-spacing);
+          font-size: var(--nav-font-size);
+          line-height: var(--nav-line-height); /* NEW */
+          display: inline-block; /* helps avoid glyph cropping in some engines */
+        }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
         .nav-link--pro{ font-weight:800 !important; }
 
@@ -346,6 +361,7 @@ class ONXHeader extends HTMLElement {
           display:flex; align-items:center; justify-content:space-between;
           padding: var(--mobile-link-padding); border-radius: 14px;
           color:#0A0D10; font-weight: var(--nav-font-weight); font-size: var(--nav-font-size); letter-spacing: var(--nav-letter-spacing);
+          line-height: var(--nav-line-height); /* NEW */
         }
         .mobile-link:hover{ background:#f7f8f9; }
         .mobile-link .chev{ width:18px; height:18px; opacity:.4; }
@@ -413,6 +429,7 @@ class ONXHeader extends HTMLElement {
           background:none !important;
           -webkit-text-fill-color: initial !important;
           color:#fff !important;
+          padding-bottom: 0 !important; /* ensure no extra offset in Pro theme */
         }
         :host([theme="ONXPro"]) .news-link,
         :host([theme="onxpro"]) .news-link,
@@ -602,7 +619,7 @@ class ONXHeader extends HTMLElement {
 
   /* ===== Cloning (nav & actions) into the mobile sheet ===== */
   _cloneSlotted(name){
-    const slot = this._root.querySelector(`slot[name="${name}"]`);
+    const slot = this._root.querySelector(`slot[name="\${name}"]`);
     if (!slot) return;
     slot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
     slot.addEventListener('slotchange', () => this._cloneNow(name));
