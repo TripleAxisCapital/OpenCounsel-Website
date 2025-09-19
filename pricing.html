@@ -1,0 +1,496 @@
+<!-- pricing.html — ONX Pricing (Apple-style, production-grade) -->
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="utf-8" />
+  <title>Pricing — ONX · The AI Workspace. Without Limits.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="Simple, transparent pricing for ONX. The AI Workspace—private, polished, and powerful." />
+  <link rel="canonical" href="https://www.opencounsel.ca/pricing.html" />
+  <meta name="theme-color" content="#0B1B2B" />
+  <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any" />
+  <!-- Fonts + Icons + Tailwind -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
+          colors: {
+            oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#00CFFF' }
+          },
+          boxShadow: {
+            card:'0 8px 34px rgba(16,24,40,0.08)',
+            cardHover:'0 14px 44px rgba(16,24,40,0.12)',
+            glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ===== Primitives / Tokens ===== */
+    :root{
+      --pad-mobile-x: 24px; --pad-desktop-x: 32px;
+      --header-h: 56px; --header-radius: 28px;
+      --grad-from:#0B1B2Bcc; --grad-via:#0E6F5Ccc; --grad-to:#00CFFFcc;
+      --angle:135deg; --speed:16s;
+    }
+    html, body { max-width: 100%; overflow-x: clip !important; }
+    .oc-container{ padding-inline: var(--pad-mobile-x); }
+    @media (min-width:1024px){ .oc-container{ padding-inline: var(--pad-desktop-x); } }
+
+    .g-grad, .grad-anim{
+      background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      will-change: background-position;
+    }
+    .grad-text{
+      background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
+      background-size: 300% 300%;
+      animation: gradientShift var(--speed,16s) ease-in-out infinite;
+      -webkit-background-clip:text; background-clip:text;
+      -webkit-text-fill-color: transparent; color: transparent;
+    }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* ===== Header: full → floating pill on scroll ===== */
+    .oc-header{ background:#fff; padding-block: 0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
+    .oc-header .header-bar{
+      background: transparent; border:0; border-radius:0; box-shadow:none;
+      transition: border-color .36s ease, background-color .36s ease, border-radius .36s cubic-bezier(.2,.8,.2,1),
+                  box-shadow .36s ease, -webkit-backdrop-filter .36s ease, backdrop-filter .36s ease, transform .36s ease;
+    }
+    .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
+    @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
+    .oc-header.is-float .header-bar{
+      background: rgba(255,255,255,.96);
+      border-radius: var(--header-radius);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    }
+    /* Header pill sizing */
+    #siteHeader .oc-container{ padding-inline: 0 !important; }
+    #siteHeader .header-bar{
+      width: min(1200px, calc(100% - 2*24px));
+      height: 3.25rem; margin-inline:auto; padding-inline: 14px;
+      display:flex; align-items:center; border-radius: 999px;
+    }
+    @media (min-width:768px){
+      #siteHeader .header-bar{
+        width: min(1200px, calc(100% - 2*0px));
+        height: 3.5rem; padding-inline: 18px;
+      }
+    }
+    .nav-link{ font-weight:700; letter-spacing:-.01em; transition: opacity .2s ease, transform .2s ease; }
+    .nav-link:hover{ opacity:.9; transform: translateY(-1px); }
+
+    /* ===== Cards Polish ===== */
+    .tilt{ transition: transform .25s ease, box-shadow .25s ease; }
+    @media (hover:hover){ .tilt:hover{ transform: translateY(-2px) scale(1.01); } }
+    .flag{ font-size:11px; letter-spacing:.16em; }
+
+    /* ===== Pro Card Sheen (Apple-grade) ===== */
+    .sheen{ position:relative; overflow:hidden; isolation:isolate; }
+    .sheen::before, .sheen::after{ content:""; position:absolute; inset:-16%; border-radius:inherit; pointer-events:none; }
+    .sheen::before{
+      background: linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 60%);
+      transform: translateX(-140%) skewX(-12deg);
+      animation: sheenAmbient 8s linear infinite;
+    }
+    .sheen::after{
+      background: linear-gradient(120deg, rgba(255,255,255,0) 48%, rgba(255,255,255,.18) 50%, rgba(255,255,255,0) 52%);
+      filter: blur(10px) saturate(110%);
+      transform: translateX(-160%) skewX(-14deg);
+      animation: sheenPass 7s cubic-bezier(.16,1,.3,1) infinite;
+    }
+    @keyframes sheenAmbient{ from{transform:translateX(-140%) skewX(-12deg)} to{transform:translateX(140%) skewX(-12deg)} }
+    @keyframes sheenPass{ 0%{transform:translateX(-160%) skewX(-14deg)} 45%{transform:translateX(120%) skewX(-14deg)} 100%{transform:translateX(160%) skewX(-14deg)} }
+    @media (prefers-reduced-motion:reduce){ .sheen::before,.sheen::after{ animation:none; opacity:.12; transform:none; } }
+
+    /* ===== Pricing Toggle ===== */
+    .billing-toggle{ background: rgba(0,0,0,.06); }
+    .billing-pill{ transition: transform .28s cubic-bezier(.2,.8,.2,1), width .28s, left .28s; }
+    .price-amount{ transition: opacity .2s ease, transform .2s ease; will-change: opacity, transform; }
+    .price-amount[data-state="out"]{ opacity:0; transform: translateY(6px); position:absolute; inset:0; }
+    .price-amount[data-state="in"]{ opacity:1; transform: translateY(0); position:relative; }
+
+    /* ===== FAQ (minimal accordion) ===== */
+    details{ border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:14px 16px; background:#fff; }
+    details + details{ margin-top:10px; }
+    summary{ cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    summary::-webkit-details-marker{ display:none; }
+  </style>
+</head>
+
+<body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
+
+  <!-- HEADER (same structure so styling matches site) -->
+  <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white">
+    <div class="header-bar relative mx-auto oc-container flex items-center justify-between">
+      <!-- Left: Logo -->
+      <a href="index.html" class="inline-flex items-center gap-2" aria-label="ONX home">
+        <span class="inline-block w-[40px] h-[40px] bg-black rounded-xl"
+              style="-webkit-mask:url('/logo.svg') no-repeat center/contain; mask:url('/logo.svg') no-repeat center/contain;"></span>
+        <span class="sr-only">ONX</span>
+      </a>
+
+      <!-- Center Nav -->
+      <nav class="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 text-sm">
+        <a class="nav-link grad-text" href="oc-pro.html">ONX Pro</a>
+        <a class="nav-link text-oc-ink" href="models.html">Models</a>
+        <a class="nav-link text-oc-ink" href="download.html">Download</a>
+      </nav>
+
+      <!-- Right: Download -->
+      <div class="flex items-center gap-2">
+        <a href="download.html"
+           class="hidden md:inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold text-white shadow-xl hover:shadow-2xl transition-all duration-300 ease-out g-grad"
+           aria-label="Download">
+          <i class="ph ph-download text-base" aria-hidden="true"></i>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="mx-auto max-w-[1200px] oc-container pt-12 md:pt-16">
+    <div class="rounded-3xl border border-oc-line g-grad grad-anim overflow-hidden">
+      <div class="px-6 md:px-12 py-14 md:py-20 text-center">
+        <h1 class="text-white text-4xl md:text-6xl font-semibold tracking-tight">Pricing</h1>
+        <p class="mt-3 text-white/85 text-lg md:text-xl">Simple. Transparent. <span class="whitespace-nowrap">No lock-in.</span></p>
+
+        <!-- Billing Toggle -->
+        <div class="mt-7 flex items-center justify-center">
+          <div id="billingToggle"
+               class="billing-toggle relative inline-flex items-center rounded-full p-1 select-none"
+               role="tablist" aria-label="Billing cycle">
+            <button id="btnMonthly" role="tab" aria-selected="true"
+              class="relative z-10 px-4 py-2 text-sm font-semibold rounded-full">Monthly</button>
+            <button id="btnAnnual" role="tab" aria-selected="false"
+              class="relative z-10 px-4 py-2 text-sm font-semibold rounded-full">Annual</button>
+            <!-- Slider -->
+            <span id="billingPill"
+                  class="billing-pill absolute top-1 left-1 h-[34px] w-[84px] rounded-full bg-white shadow"></span>
+          </div>
+          <span id="saveBadge"
+                class="ml-3 inline-flex items-center gap-1 rounded-full bg-white/90 text-oc-ink text-xs font-semibold px-3 py-1 shadow">
+            <i class="ph ph-sparkle text-sm"></i> Save 20%
+          </span>
+        </div>
+
+        <p id="billNote" class="mt-2 text-white/70 text-xs">Billed monthly</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANS -->
+  <section class="mx-auto max-w-[1200px] oc-container py-10 md:py-14">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch">
+      <!-- ONX (Free) -->
+      <article class="tilt rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-card hover:shadow-cardHover flex flex-col">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-semibold tracking-tight text-neutral-900">ONX</h3>
+          <span class="flag inline-flex items-center gap-1 rounded-full bg-neutral-900 text-white px-2.5 py-1">Free</span>
+        </div>
+
+        <div class="mt-4">
+          <div class="relative h-[48px]">
+            <div class="price-amount text-4xl font-semibold tracking-tight text-neutral-900" data-plan="free" data-state="in">$0</div>
+          </div>
+          <div class="text-sm text-neutral-600">Forever — core features included</div>
+        </div>
+
+        <ul class="mt-5 space-y-3 text-sm text-neutral-800/90">
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Unlimited local AI</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Limited cloud power</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Local database creation</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Verified answers with citations</span></li>
+        </ul>
+
+        <div class="mt-6">
+          <a href="download.html"
+             class="w-full h-11 inline-flex items-center justify-center rounded-xl bg-neutral-900 text-white text-sm font-medium tracking-tight shadow-sm ring-1 ring-black/10 hover:bg-neutral-800 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40">
+            Get ONX
+          </a>
+        </div>
+
+        <!-- Privacy mini -->
+        <div class="mt-5 grid grid-cols-3 gap-2 text-xs">
+          <div class="flex items-center gap-1.5"><i class="ph ph-shield-check text-sm"></i> No PII</div>
+          <div class="flex items-center gap-1.5"><i class="ph ph-database text-sm"></i> No records</div>
+          <div class="flex items-center gap-1.5"><i class="ph ph-lock text-sm"></i> Redacts & encrypts</div>
+        </div>
+      </article>
+
+      <!-- ONX PRO -->
+      <article class="tilt sheen rounded-2xl border border-white/10 bg-neutral-950 text-white p-6 md:p-7 shadow-[0_16px_54px_rgba(0,0,0,.30)] hover:shadow-[0_22px_66px_rgba(0,0,0,.40)] flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-semibold tracking-tight">ONX PRO</h3>
+          <span class="flag inline-flex items-center gap-1 rounded-full bg-white/10 text-white px-2.5 py-1">
+            <i class="ph ph-stars text-sm"></i> Most Popular
+          </span>
+        </div>
+
+        <div class="mt-4">
+          <div class="relative h-[48px]">
+            <!-- Monthly -->
+            <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-m" data-state="in">
+              $20<span class="text-lg align-top">/mo</span>
+            </div>
+            <!-- Annual (hidden initially) -->
+            <div class="price-amount text-4xl font-semibold tracking-tight" data-plan="pro-a" data-state="out" aria-hidden="true">
+              $192<span class="text-lg align-top">/yr</span>
+            </div>
+          </div>
+          <div id="proBillCopy" class="text-sm text-white/80">Billed monthly — cancel anytime</div>
+        </div>
+
+        <ul class="mt-5 space-y-3 text-sm text-white/90">
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Deeper reasoning & larger context</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Utilize cloud power on demand</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Private databases for accurate knowledge</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Uncensored to remove all limits</span></li>
+          <li class="flex items-start gap-2"><i class="ph ph-check text-[18px] mt-[2px]"></i><span>Access to agentic assistant</span></li>
+        </ul>
+
+        <div class="mt-6 flex flex-col gap-2">
+          <a id="proCta"
+             href="oc-pro.html"
+             class="w-full h-11 inline-flex items-center justify-center rounded-xl bg-white text-neutral-950 text-sm font-medium tracking-tight shadow-sm ring-1 ring-white/20 hover:bg-white/90 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40">
+            Get ONX PRO
+          </a>
+          <p class="text-xs text-white/60 text-center">Secure checkout • Cancel anytime</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- COMPARISON (compact, readable) -->
+  <section class="mx-auto max-w-[1200px] oc-container pb-4 md:pb-10">
+    <div class="rounded-2xl border border-neutral-200 bg-white p-6 md:p-8 shadow-card">
+      <h4 class="text-lg md:text-xl font-semibold tracking-tight">Compare plans</h4>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-neutral-500">
+              <th class="py-3 pr-4"></th>
+              <th class="py-3 pr-4">ONX</th>
+              <th class="py-3">ONX PRO</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200">
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Local AI (unlimited)</td>
+              <td class="py-3 pr-4"><i class="ph ph-check"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Cloud power</td>
+              <td class="py-3 pr-4"><i class="ph ph-minus"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Larger context window</td>
+              <td class="py-3 pr-4"><i class="ph ph-minus"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Private databases</td>
+              <td class="py-3 pr-4"><i class="ph ph-minus"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Agentic assistant</td>
+              <td class="py-3 pr-4"><i class="ph ph-minus"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Uncensored mode</td>
+              <td class="py-3 pr-4"><i class="ph ph-minus"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+            <tr>
+              <td class="py-3 pr-4 text-neutral-700">Priority updates & support</td>
+              <td class="py-3 pr-4"><i class="ph ph-minus"></i></td>
+              <td class="py-3"><i class="ph ph-check"></i></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mt-4 text-xs text-neutral-500">Both plans are privacy-first: <span class="font-medium text-neutral-700">No PII</span>, <span class="font-medium text-neutral-700">No records</span>, and <span class="font-medium text-neutral-700">Redacts & encrypts</span>.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="mx-auto max-w-[900px] oc-container py-10 md:py-14">
+    <h4 class="text-center text-2xl md:text-3xl font-semibold tracking-tight">Frequently asked questions</h4>
+    <div class="mt-6 md:mt-8">
+      <details>
+        <summary>
+          <span class="font-semibold">Do you store my data?</span>
+          <i class="ph ph-caret-down text-neutral-500"></i>
+        </summary>
+        <p class="mt-2 text-sm text-neutral-700 leading-relaxed">
+          No. ONX is privacy-first: personal details are removed locally, requests are encrypted, and your content isn’t stored.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          <span class="font-semibold">What’s included in ONX PRO?</span>
+          <i class="ph ph-caret-down text-neutral-500"></i>
+        </summary>
+        <p class="mt-2 text-sm text-neutral-700 leading-relaxed">
+          Deeper reasoning, larger context, on-demand cloud power, private databases, an agentic assistant, uncensored mode, and priority updates.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          <span class="font-semibold">Can I switch or cancel anytime?</span>
+          <i class="ph ph-caret-down text-neutral-500"></i>
+        </summary>
+        <p class="mt-2 text-sm text-neutral-700 leading-relaxed">
+          Yes. You can upgrade, downgrade, or cancel at any time. Changes apply to the next billing cycle.
+        </p>
+      </details>
+
+      <details>
+        <summary>
+          <span class="font-semibold">Do you offer team or enterprise plans?</span>
+          <i class="ph ph-caret-down text-neutral-500"></i>
+        </summary>
+        <p class="mt-2 text-sm text-neutral-700 leading-relaxed">
+          Yes. Contact us for volume licensing and private-cloud deployments tailored to your needs.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="mx-auto max-w-[1200px] oc-container pb-16">
+    <div class="g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
+      <div class="p-8 md:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h2 class="text-2xl md:text-3xl font-semibold text-white">Become Limitless.</h2>
+          <p class="mt-1 text-white/80">Choose a plan and start building with ONX today.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="download.html"
+             class="inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50">
+            <i class="ph ph-apple-logo"></i> Get ONX
+          </a>
+          <a href="oc-pro.html"
+             class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 text-white px-4 py-2 font-medium hover:bg-white/20 focus:ring-2 focus:ring-white/40">
+            <i class="ph ph-stars"></i> Get ONX PRO
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-neutral-200/70">
+    <div class="mx-auto max-w-[1200px] oc-container py-10 flex items-center flex-col gap-5 text-oc-ink/60 text-sm">
+      <div class="text-center"><span class="font-semibold text-black">ONX</span> © <span id="yr"></span> ONX</div>
+      <div class="flex items-center gap-4">
+        <a class="hover:text-oc-ink" href="contact.html">Contact</a>
+        <a class="hover:text-oc-ink" href="privacy.html">Privacy</a>
+        <a class="hover:text-oc-ink" href="terms.html">Terms</a>
+        <a class="hover:text-oc-ink" href="download.html">Download</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Header float on scroll
+    (function(){
+      const header = document.getElementById('siteHeader');
+      if(!header) return;
+      const THRESH = 8;
+      const onScroll = () => {
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        if (y > THRESH) header.classList.add('is-float');
+        else header.classList.remove('is-float');
+      };
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive:true });
+    })();
+
+    // Year
+    (function(){ const yr=document.getElementById('yr'); if(yr) yr.textContent=new Date().getFullYear(); })();
+
+    // Billing toggle logic
+    (function(){
+      const pill = document.getElementById('billingPill');
+      const monthly = document.getElementById('btnMonthly');
+      const annual  = document.getElementById('btnAnnual');
+      const save    = document.getElementById('saveBadge');
+      const note    = document.getElementById('billNote');
+      const proCopy = document.getElementById('proBillCopy');
+
+      const proM = document.querySelector('[data-plan="pro-m"]');
+      const proA = document.querySelector('[data-plan="pro-a"]');
+
+      let isAnnual = false;
+
+      function setState(annualMode){
+        isAnnual = !!annualMode;
+
+        monthly.setAttribute('aria-selected', String(!isAnnual));
+        annual.setAttribute('aria-selected', String(isAnnual));
+
+        // Move pill
+        const left = isAnnual ? (monthly.offsetWidth + 8) : 4; // approx
+        const width = isAnnual ? annual.offsetWidth : monthly.offsetWidth;
+        pill.style.left = (isAnnual ? (pill.parentElement.clientWidth - width - 4) : 4) + 'px';
+        pill.style.width = width + 'px';
+
+        // Price swap (fade)
+        if (isAnnual){
+          proM.setAttribute('data-state','out'); proM.setAttribute('aria-hidden','true');
+          proA.setAttribute('data-state','in');  proA.removeAttribute('aria-hidden');
+          save.style.opacity = '1';
+          note.textContent = 'Billed yearly';
+          proCopy.textContent = 'Billed yearly — save 20%';
+        }else{
+          proM.setAttribute('data-state','in');  proM.removeAttribute('aria-hidden');
+          proA.setAttribute('data-state','out'); proA.setAttribute('aria-hidden','true');
+          save.style.opacity = '0.85';
+          note.textContent = 'Billed monthly';
+          proCopy.textContent = 'Billed monthly — cancel anytime';
+        }
+
+        // Update CTA target (optional: add query for backend)
+        const proCta = document.getElementById('proCta');
+        if (proCta){
+          const base = 'oc-pro.html';
+          proCta.href = isAnnual ? `${base}?cycle=annual` : `${base}?cycle=monthly`;
+        }
+
+        // Persist hash
+        const h = isAnnual ? '#annual' : '#monthly';
+        if (location.hash !== h) history.replaceState(null,'', h);
+      }
+
+      // Initial pill geometry after layout
+      function initPill(){ setTimeout(()=> setState(location.hash.toLowerCase()==='#annual'), 0); }
+
+      monthly.addEventListener('click', () => setState(false));
+      annual.addEventListener('click',  () => setState(true));
+
+      window.addEventListener('load', initPill, { once:true });
+      window.addEventListener('resize', initPill);
+    })();
+  </script>
+</body>
+</html>
