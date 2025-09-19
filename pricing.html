@@ -74,11 +74,15 @@
               mask: url('/logo.svg') no-repeat center / contain;
     }
 
-    /* ===== Header: normal → floating pill on scroll (match index.html behavior) ===== */
+    /* ===== Header (PILL at all times) ===== */
     .oc-header{ background:#fff; padding-top:0; padding-bottom:0; transition: padding .36s cubic-bezier(.2,.8,.2,1), background-color .36s ease; }
     .oc-header .header-bar{
-      background: transparent; border:0; border-radius:0; box-shadow:none;
-      -webkit-backdrop-filter:none; backdrop-filter:none;
+      /* make it a pill always */
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(0,0,0,0.02);
+      border-radius: var(--header-radius);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
       transition:
         border-color .36s ease,
         background-color .36s ease,
@@ -88,18 +92,12 @@
         backdrop-filter .36s ease,
         transform .36s ease;
     }
+    /* Keep float spacing behavior if you still want tighter top padding on scroll */
     .oc-header.is-float{ background: transparent; padding-top:.75rem; padding-bottom:.25rem; }
     @media (min-width:768px){ .oc-header.is-float{ padding-top:1rem; } }
-    .oc-header.is-float .header-bar{
-      background: rgba(255,255,255,.96);
-      border-radius: var(--header-radius);
-      box-shadow: 0 1px 0 rgba(0,0,0,0.06), 0 10px 30px -6px rgba(0,0,0,0.18);
-      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-    }
 
     /* 🛠 Pill layout + centering logic (copied from index.html) */
     #siteHeader .oc-container { padding-left: 0 !important; padding-right: 0 !important; }
-    /* Base (mobile) full-width header; pill dimensions are applied only when .is-float adds bg/rounded */
     #siteHeader .header-bar {
       position: relative;
       box-sizing: border-box;
@@ -109,7 +107,6 @@
       padding-right: var(--pill-inner-x-mobile);
       height: var(--pill-height-mobile);
       display: flex; align-items: center; justify-content: space-between;
-      border-radius: 0; /* becomes rounded when .is-float */
     }
     /* Element-specific paddings (mobile) */
     #siteHeader .logo-pad { padding-left: var(--logo-pad-left-mobile); }
@@ -170,10 +167,9 @@
 
 <body class="bg-white text-oc-ink font-sans antialiased selection:bg-oc-accent selection:text-white">
 
-  <!-- HEADER (normal → pill on scroll; logo + download stay inside with equal edge padding) -->
+  <!-- HEADER (pill at all times; logo + download stay inside with equal edge padding) -->
   <header id="siteHeader" class="oc-header sticky top-0 z-50 bg-white"
     style="
-      /* 🔧 Controls (match index.html) */
       --pill-inner-x-mobile: 30px;
       --pill-inner-x-desktop: 12px;
       --pill-outer-x-mobile: 35px;
@@ -182,7 +178,6 @@
       --pill-height-desktop: 3.5rem;
       --pill-max-w: 1200px;
 
-      /* Independent element paddings to keep equal edge spacing */
       --logo-pad-left-mobile: 12px;
       --logo-pad-left-desktop: 12px;
       --download-pad-right-mobile: 12px;
@@ -221,7 +216,7 @@
     </div>
   </header>
 
-  <!-- HEADER behavior script (exactly like index.html) -->
+  <!-- HEADER behavior script (kept; now mainly controls spacing on scroll) -->
   <script>
     (function(){
       try{
@@ -260,7 +255,7 @@
             <span id="billingPill"
                   class="billing-pill absolute top-1 left-1 h-[34px] w-[84px] rounded-full bg-white shadow"></span>
           </div>
-          <!-- ▼▼ Only show this badge when ANNUAL is selected ▼▼ -->
+          <!-- Only show this badge when ANNUAL is selected -->
           <span id="saveBadge" aria-hidden="true"
                 class="hidden ml-3 inline-flex items-center gap-1 rounded-full bg-white/90 text-oc-ink text-xs font-semibold px-3 py-1 shadow">
             <i class="ph ph-sparkle text-sm"></i> Save 20%
@@ -515,10 +510,10 @@
 
         // Move pill to active button with precise geometry
         const mRect = monthly.getBoundingClientRect();
-        const aRect = annual.getBoundingClientRect();
+        theRect = annual.getBoundingClientRect();
         const parentRect = monthly.parentElement.getBoundingClientRect();
-        const left = isAnnual ? (aRect.left - parentRect.left) : (mRect.left - parentRect.left);
-        const width = isAnnual ? aRect.width : mRect.width;
+        const left = isAnnual ? (theRect.left - parentRect.left) : (mRect.left - parentRect.left);
+        const width = isAnnual ? theRect.width : mRect.width;
         pill.style.left = Math.max(4,left) + 'px';
         pill.style.width = Math.max(80, width) + 'px';
 
