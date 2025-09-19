@@ -179,6 +179,8 @@ class ONXHeader extends HTMLElement {
           color:#0A0D10 !important;
           background:none !important; -webkit-text-fill-color: initial !important;
         }
+        /* Always-bolder ONX Pro (desktop) */
+        .nav-link--pro{ font-weight:800 !important; }
 
         /* Desktop right-side defaults */
         .news-link{
@@ -200,19 +202,23 @@ class ONXHeader extends HTMLElement {
         }
 
         /* ===== Mobile-specific UI ===== */
+        /* Sleek, minimal hamburger — no border, box, or outline */
         .hamburger{
           display:inline-flex; align-items:center; justify-content:center;
-          width:40px; height:40px; border-radius:12px; border:1px solid rgba(0,0,0,.06);
-          background:#fff; box-shadow: 0 4px 14px rgba(0,0,0,.06);
-          transition: box-shadow .2s ease, transform .2s ease;
+          width:40px; height:40px;
+          background: transparent; border: none; border-radius: 0; box-shadow: none; padding: 0;
+          color:#0A0D10; /* lines use currentColor */
+          transition: transform .2s ease;
         }
         .hamburger:active{ transform: translateY(1px); }
+        .hamburger:focus, .hamburger:focus-visible{ outline: none; box-shadow: none; }
+
         .hamburger .lines{ position:relative; width:20px; height:14px; }
         .hamburger .lines::before,
         .hamburger .lines::after,
         .hamburger .lines span{
           content:""; position:absolute; left:0; right:0; height:2px; border-radius:2px;
-          background:#9aa1a6;
+          background: currentColor;
           transition: transform .2s ease, opacity .2s ease;
         }
         .hamburger .lines::before{ top:0; }
@@ -260,7 +266,10 @@ class ONXHeader extends HTMLElement {
           color:#0A0D10; font-weight:700; font-size:1rem;
         }
         .mobile-link:hover{ background:#f7f8f9; }
-        .chev{ width:18px; height:18px; opacity:.4; }
+        .mobile-link .chev{ width:18px; height:18px; opacity:.4; }
+
+        /* Always-bolder ONX Pro (mobile) */
+        .mobile-link--pro{ font-weight:800 !important; }
 
         .mobile-actions{
           display:flex; flex-direction:column; gap:.5rem; padding: 10px 8px 12px;
@@ -285,8 +294,8 @@ class ONXHeader extends HTMLElement {
 
           <!-- Center (desktop) -->
           <nav class="center" aria-label="Primary">
-            <!-- ONX Pro: solid black; others: gradient -->
-            <a href="/oc-pro.html" class="nav-link nav-link--black">ONX Pro</a>
+            <!-- ONX Pro: solid black; always bolder -->
+            <a href="/oc-pro.html" class="nav-link nav-link--black nav-link--pro">ONX Pro</a>
             <a href="/models.html" class="nav-link grad-text">Models</a>
             <slot name="nav"></slot>
           </nav>
@@ -330,7 +339,7 @@ class ONXHeader extends HTMLElement {
 
           <nav class="mobile-nav">
             <!-- built-in defaults -->
-            <a class="mobile-link" href="/oc-pro.html">ONX Pro <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
+            <a class="mobile-link mobile-link--pro" href="/oc-pro.html">ONX Pro <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
             <a class="mobile-link" href="/models.html">Models <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
             <!-- slotted / cloned go here -->
             <div class="mobile-extra"></div>
@@ -372,10 +381,8 @@ class ONXHeader extends HTMLElement {
 
   _cloneSlotted(id, name){
     // Prepare probes
-    // Insert "named" slots so we can find assigned nodes reliably
-    let navSlot = this._root.querySelector(`slot[name="${name}"]`);
+    let navSlot = this._root.querySelector(`slot[name="\${name}"]`);
     if (!navSlot) return; // nothing to clone
-    // Ensure an id for future work (optional)
     navSlot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
 
     navSlot.addEventListener('slotchange', () => this._cloneNow(name));
@@ -395,6 +402,8 @@ class ONXHeader extends HTMLElement {
         a.className = 'mobile-link';
         a.href = node.getAttribute('href') || '#';
         a.textContent = node.textContent.trim();
+        /* Preserve "Pro" boldness if source link is marked as pro */
+        if (node.classList.contains('nav-link--pro')) a.classList.add('mobile-link--pro');
         const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24');
         chev.setAttribute('fill','none'); chev.setAttribute('stroke','currentColor');
@@ -410,7 +419,6 @@ class ONXHeader extends HTMLElement {
       acts.innerHTML = '';
       assigned.forEach(node => {
         const clone = node.cloneNode(true);
-        // Make sure custom action fills width neatly
         clone.classList.add('btn');
         clone.style.justifyContent = 'center';
         clone.addEventListener('click', () => this._toggleMobile(false));
