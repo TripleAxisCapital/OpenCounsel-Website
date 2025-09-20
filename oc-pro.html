@@ -19,8 +19,8 @@
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
   <link rel="preload" as="image" href="/logo.svg">
-  <!-- NEW: ensure the Pro mark is preloaded for FCP -->
-  <link rel="preload" as="image" href="/logoPro.svg" fetchpriority="high">
+  <!-- NEW: preload the Pro logo used in hero -->
+  <link rel="preload" as="image" href="/logoPro.svg" type="image/svg+xml">
 
   <!-- Icons -->
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any">
@@ -120,15 +120,10 @@
       --seg-thumb-shadow: 0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06);
 
       /* === New: fast-first-paint tuning === */
-      /* Reworked hero logo sizing to improve mobile rendering */
-      --hero-logo-w: clamp(220px, 80vw, 720px);       /* width-first scaling */
-      --hero-logo-aspect: 4 / 1;                      /* default ratio; adjust if your SVG is wider/narrower */
-      --page-blur-dur: 420ms;                         /* ensure visible in <501ms */
+      /* Tweaked for better mobile fit while staying large on desktop */
+      --hero-logo-size: clamp(160px, 58vw, 560px);
+      --page-blur-dur: 420ms;
     }
-    @media (min-width: 768px){
-      :root { --hero-logo-w: clamp(260px, 54vw, 720px); }
-    }
-
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
     .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
@@ -159,44 +154,21 @@
         linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06)) padding-box,
         linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box; }
 
-    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
+    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain; }
 
-    /* === Faster hero logo reveal + improved sizing using the actual SVG (white) === */
+    /* === Faster hero logo reveal + bigger size === */
     .hero-logo-white,.hero-logo-pro{
       display:inline-block;
-      width: var(--hero-logo-w);
-      aspect-ratio: var(--hero-logo-aspect);
-      height: auto;
-      background:#ffffff; /* ensures WHITE logo */
+      width: var(--hero-logo-size);
+      height: var(--hero-logo-size);
+      background:#ffffff; /* ensure WHITE logo */
       opacity:0; filter:blur(6px);
       transform: translateY(6px) scale(.985);
-      animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
+      animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards;
       will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle;
-      /* stronger rendering on mobile */
-      image-rendering: -webkit-optimize-contrast;
     }
-    .hero-logo-white{
-      -webkit-mask: url('/logo.svg'); mask: url('/logo.svg');
-      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
-      -webkit-mask-position:center; mask-position:center;
-      -webkit-mask-size:contain; mask-size:contain;
-    }
-    .hero-logo-pro{
-      -webkit-mask: url('/logoPro.svg'); mask: url('/logoPro.svg');
-      -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
-      -webkit-mask-position:center; mask-position:center;
-      -webkit-mask-size:contain; mask-size:contain;
-    }
-    /* Fallback for browsers without CSS mask support: display the SVG and invert to white */
-    @supports not ((-webkit-mask: url("")) or (mask: url(""))) {
-      .hero-logo-pro { background: none; }
-      .hero-logo-pro::before {
-        content:""; display:block; width:100%; height:100%;
-        background: url('/logoPro.svg') center / contain no-repeat;
-        filter: brightness(0) invert(1); /* make it white */
-      }
-    }
-
+    .hero-logo-white{ -webkit-mask:url('/logo.svg') no-repeat center / contain; mask:url('/logo.svg') no-repeat center / contain; }
+    .hero-logo-pro  { -webkit-mask:url('/logoPro.svg') no-repeat center / contain; mask:url('/logoPro.svg') no-repeat center / contain; }
     .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
     @keyframes heroLogoReveal {
       0%  { opacity:0; filter:blur(6px);  transform: translateY(6px) scale(.985); }
@@ -242,7 +214,7 @@
         radial-gradient(60% 60% at 50% 40%, var(--glow-c1), transparent 70%),
         radial-gradient(55% 55% at 40% 60%, var(--glow-c2), transparent 70%);
       filter: blur(var(--glow-blur)); opacity: 0; z-index: 0; pointer-events: none;
-      animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
+      animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards;
     }
     .hero-logo-glow.glow-pulse {
       animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards,
@@ -326,7 +298,7 @@
       padding: var(--btn-pad-y) var(--btn-pad-x);
       border-radius: var(--btn-radius);
       font-weight: 600; line-height: 1; text-decoration: none;
-      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .25s.ease, background-color .25s ease, border-color .25s ease, color .25s ease;
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .25s ease, background-color .25s ease, border-color .25s ease, color .25s ease;
       position: relative; isolation:isolate;
       will-change: transform, box-shadow;
     }
@@ -387,20 +359,13 @@
             --chat-b-border-assistant: rgba(255,255,255,.10); --chat-b-bg: rgba(255,255,255,.06);
             --chat-b-bg-user: rgba(255,255,255,.08); --chat-b-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px rgba(0,0,0,.32);
             --chat-b-maxw: min(72ch, 560px); }
+
     .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; opacity: var(--hero-bubbles-opacity, 1); filter: brightness(var(--hero-bubbles-brightness, 1)); }
     .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none;
       backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
-    .hero-bubble { position:absolute; border-radius: var(--chat-b-radius); border: 1px solid var(--chat-b-border); background: var(--chat-b-bg); box-shadow: var(--chat-b-shadow); will-change: transform, opacity, filter; transform: translateZ(0); isolation:isolate; overflow:hidden; width: max-content; max-width: var(--chat-b-maxw);
-      animation: bubbleFloat var(--dur,20s) linear var(--delay,0s) infinite, bubbleBreathe calc(var(--dur,20s) / 2.2) ease-in-out var(--delay,0s) infinite; }
-    .hero-bubble.user{ background: var(--chat-b-bg-user); border-color: var(--chat-b-border); }
-    .hero-bubble.assistant{ background: var(--chat-b-bg); border-color: var(--chat-b-border-assistant); }
-    .hero-bubble .content{ position:relative; display:block; padding: var(--chat-b-pad-y) var(--chat-b-pad-x); }
-    .hero-bubble[data-size="sm"] .content { padding: var(--chat-b-pad-y-sm) var(--chat-b-pad-x-sm); }
-    .hero-bubble[data-size="lg"] .content { padding: var(--chat-b-pad-y-lg) var(--chat-b-pad-x-lg); }
-    .hero-bubble .bubble-text{ color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92)); font-weight:500; font-size: var(--chat-b-font); line-height: var(--chat-b-lh); margin:0; }
-    @keyframes bubbleFloat { 0%{ transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 } 10%{ opacity:.80 } 90%{ opacity:.85 } 100%{ transform: translateY(calc(var(--y-start, 16vh) + var(--y-travel, -120vh))) translateX(var(--x-drift, 0px)) scale(var(--scale,1)); opacity:0 } }
-    @keyframes bubbleBreathe { 0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.14)) drop-shadow(0 10px 22px rgba(0,0,0,.32)); } 50% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 14px 34px rgba(0,0,0,.40)); } }
-    @media (prefers-reduced-motion: reduce){ .hero-bubble{ animation:none !important; } }
+
+    /* Ensure no text flash in hero title; acts as a neutral container for the logo */
+    #home .hero-title { line-height:0; display:inline-flex; align-items:center; justify-content:center; color:transparent; }
   </style>
   <style id="oc-hero-bold-rotator"> .hero-sub1 .hero-word { font-weight: 800; } </style>
 </head>
@@ -423,7 +388,7 @@
     threshold="8">
   </onx-header>
 
-  <!-- HERO (now shows logoPro.svg instead of text) -->
+  <!-- HERO (uses logoPro.svg on both desktop + mobile) -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
     <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
                 h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
@@ -434,13 +399,12 @@
       <div class="hero-mid-blur" aria-hidden="true"></div>
 
       <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
-        <!-- REPLACED TEXT "ONX" WITH THE ACTUAL PRO LOGO (WHITE) -->
+        <!-- INITIAL markup uses logoPro (white). JS will also rebuild this, keeping logoPro. -->
         <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">
           <span class="hero-logo-wrap">
             <span class="hero-logo-pro" role="img" aria-label="ONX-Pro"></span>
           </span>
         </span>
-
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html"
@@ -561,7 +525,7 @@
   })();
   </script>
 
-  <!-- HERO typing (unchanged behavior; already uses hero-logo-pro) -->
+  <!-- HERO typing (unchanged logic; still builds with logoPro) -->
   <script>
   (()=>{
     window.OC_HERO = Object.assign({
