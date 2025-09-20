@@ -888,7 +888,7 @@ class ONXHeader extends HTMLElement {
       // Apply horizontally on mobile:
       // - Set the pill inner padding (both sides) to topGap
       // - Zero the extra per-side paddings to avoid double-counting
-      const extra = 6; // px
+      const extra = 10; // px
 this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
 
       this.style.setProperty('--logo-pad-left-mobile', `0px`);
