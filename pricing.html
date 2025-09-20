@@ -198,6 +198,51 @@
     details + details{ margin-top:10px; }
     summary{ cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:10px; }
     summary::-webkit-details-marker{ display:none; }
+
+    /* ===== Reveal primitives (from hero page) ===== */
+    .scroll-fade { isolation:isolate; }
+    .scroll-fade > * {
+      filter: blur(16px);
+      opacity:.65;
+      transform: translateY(8px);
+      transition: filter 1100ms cubic-bezier(.16,1,.3,1),
+                  opacity 1100ms cubic-bezier(.16,1,.3,1),
+                  transform 1100ms cubic-bezier(.16,1,.3,1);
+      will-change: filter, opacity, transform;
+      backface-visibility:hidden;
+      transform:translateZ(0);
+    }
+    .scroll-fade.in-view > * { filter: blur(0); opacity:1; transform: translateY(0); }
+
+    .reveal{
+      opacity:0; transform:translateY(14px); filter:blur(6px);
+      transition: opacity .9s cubic-bezier(.2,.8,.2,1),
+                  transform .9s cubic-bezier(.2,.8,.2,1),
+                  filter .9s;
+      will-change: opacity, transform, filter;
+      backface-visibility:hidden;
+    }
+    .reveal.in{ opacity:1; transform:translateY(0); filter:blur(0); }
+
+    .reveal-up{ transform:translateY(14px); }
+    .reveal-down{ transform:translateY(-14px); }
+    .reveal-left{ transform:translateX(14px); }
+    .reveal-right{ transform:translateX(-14px); }
+    .reveal-up.in,.reveal-down.in,.reveal-left.in,.reveal-right.in{ transform:none; }
+
+    @keyframes fadeUp { from{opacity:0; transform:translateY(14px); filter:blur(6px);} to{opacity:1; transform:none; filter:none;} }
+    @supports (animation-timeline: view()) {
+      .reveal-sync{
+        animation-name: fadeUp;
+        animation-timeline: view();
+        animation-range: entry 0% cover 35%;
+        animation-fill-mode: both;
+      }
+    }
+    @media (prefers-reduced-motion: reduce){
+      .reveal{ transition:none !important; opacity:1 !important; transform:none !important; filter:none !important; }
+      .scroll-fade > *{ transition:none !important; filter:none !important; opacity:1 !important; transform:none !important; }
+    }
   </style>
 </head>
 
@@ -229,13 +274,13 @@
 
   <!-- HERO -->
   <section class="mx-auto max-w-[1200px] oc-container pt-12 md:pt-16">
-    <div class="rounded-3xl border border-oc-line g-grad grad-anim overflow-hidden">
-      <div class="px-6 md:px-12 py-14 md:py-20 text-center">
-        <h1 class="text-white text-4xl md:text-6xl font-semibold tracking-tight">Pricing</h1>
-        <p class="mt-3 text-white/85 text-lg md:text-xl">Simple. Transparent. <span class="whitespace-nowrap">No lock-in.</span></p>
+    <div class="rounded-3xl border border-oc-line g-grad grad-anim overflow-hidden reveal">
+      <div class="px-6 md:px-12 py-14 md:py-20 text-center" data-reveal-stagger="80">
+        <h1 class="text-white text-4xl md:text-6xl font-semibold tracking-tight reveal">Pricing</h1>
+        <p class="mt-3 text-white/85 text-lg md:text-xl reveal">Simple. Transparent. <span class="whitespace-nowrap">No lock-in.</span></p>
 
         <!-- Billing Toggle -->
-        <div class="mt-7 flex items-center justify-center">
+        <div class="mt-7 flex items-center justify-center reveal">
           <div id="billingToggle"
                class="billing-toggle relative inline-flex items-center rounded-full p-1 select-none"
                role="tablist" aria-label="Billing cycle">
@@ -250,16 +295,16 @@
           
         </div>
 
-        <p id="billNote" class="mt-2 text-white/70 text-xs">Billed monthly</p>
+        <p id="billNote" class="mt-2 text-white/70 text-xs reveal">Billed monthly</p>
       </div>
     </div>
   </section>
 
   <!-- PLANS -->
   <section class="mx-auto max-w-[1200px] oc-container py-10 md:py-14">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-stretch" data-reveal-stagger="120">
       <!-- ONX (Free) -->
-      <article class="tilt rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-card hover:shadow-cardHover flex flex-col">
+      <article class="tilt rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-card hover:shadow-cardHover flex flex-col scroll-fade reveal">
         <div class="flex items-center justify-between">
           <h3 class="text-xl font-semibold tracking-tight text-neutral-900">ONX</h3>
           <span class="flag inline-flex items-center gap-1 rounded-full bg-neutral-900 text-white px-2.5 py-1">Free</span>
@@ -295,7 +340,7 @@
       </article>
 
       <!-- ONX PRO -->
-      <article class="tilt sheen rounded-2xl border border-white/10 bg-neutral-950 text-white p-6 md:p-7 shadow-[0_16px_54px_rgba(0,0,0,.30)] hover:shadow-[0_22px_66px_rgba(0,0,0,.40)] flex flex-col overflow-hidden">
+      <article class="tilt sheen rounded-2xl border border-white/10 bg-neutral-950 text-white p-6 md:p-7 shadow-[0_16px_54px_rgba(0,0,0,.30)] hover:shadow-[0_22px_66px_rgba(0,0,0,.40)] flex flex-col overflow-hidden scroll-fade reveal">
         <div class="flex items-center justify-between">
           <h3 class="text-xl font-semibold tracking-tight">ONX PRO</h3>
           <span class="flag inline-flex items-center gap-1 rounded-full bg-white/10 text-white px-2.5 py-1">
@@ -339,9 +384,9 @@
 
   <!-- COMPARISON (compact, readable) -->
   <section class="mx-auto max-w-[1200px] oc-container pb-4 md:pb-10">
-    <div class="rounded-2xl border border-neutral-200 bg-white p-6 md:p-8 shadow-card">
-      <h4 class="text-lg md:text-xl font-semibold tracking-tight">Compare plans</h4>
-      <div class="mt-4 overflow-x-auto">
+    <div class="rounded-2xl border border-neutral-200 bg-white p-6 md:p-8 shadow-card" data-reveal-stagger="80">
+      <h4 class="text-lg md:text-xl font-semibold tracking-tight reveal">Compare plans</h4>
+      <div class="mt-4 overflow-x-auto reveal-left reveal">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-neutral-500">
@@ -389,15 +434,15 @@
           </tbody>
         </table>
       </div>
-      <p class="mt-4 text-xs text-neutral-500">Both plans are privacy-first: <span class="font-medium text-neutral-700">No PII</span>, <span class="font-medium text-neutral-700">No records</span>, and <span class="font-medium text-neutral-700">Redacts & encrypts</span>.</p>
+      <p class="mt-4 text-xs text-neutral-500 reveal">Both plans are privacy-first: <span class="font-medium text-neutral-700">No PII</span>, <span class="font-medium text-neutral-700">No records</span>, and <span class="font-medium text-neutral-700">Redacts & encrypts</span>.</p>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="mx-auto max-w-[900px] oc-container py-10 md:py-14">
-    <h4 class="text-center text-2xl md:text-3xl font-semibold tracking-tight">Frequently asked questions</h4>
-    <div class="mt-6 md:mt-8">
-      <details>
+  <section class="mx-auto max-w-[900px] oc-container py-10 md:py-14" data-reveal-stagger="90">
+    <h4 class="text-center text-2xl md:text-3xl font-semibold tracking-tight reveal">Frequently asked questions</h4>
+    <div class="mt-6 md:mt-8" data-reveal-stagger="90">
+      <details class="reveal scroll-fade">
         <summary>
           <span class="font-semibold">Do you store my data?</span>
           <i class="ph ph-caret-down text-neutral-500"></i>
@@ -407,7 +452,7 @@
         </p>
       </details>
 
-      <details>
+      <details class="reveal scroll-fade">
         <summary>
           <span class="font-semibold">What’s included in ONX PRO?</span>
           <i class="ph ph-caret-down text-neutral-500"></i>
@@ -417,7 +462,7 @@
         </p>
       </details>
 
-      <details>
+      <details class="reveal scroll-fade">
         <summary>
           <span class="font-semibold">Can I switch or cancel anytime?</span>
           <i class="ph ph-caret-down text-neutral-500"></i>
@@ -427,7 +472,7 @@
         </p>
       </details>
 
-      <details>
+      <details class="reveal scroll-fade">
         <summary>
           <span class="font-semibold">Do you offer team or enterprise plans?</span>
           <i class="ph ph-caret-down text-neutral-500"></i>
@@ -441,13 +486,13 @@
 
   <!-- Bottom CTA -->
   <section class="mx-auto max-w-[1200px] oc-container pb-16">
-    <div class="g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line">
-      <div class="p-8 md:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div>
+    <div class="g-grad grad-anim rounded-3xl overflow-hidden border border-oc-line reveal">
+      <div class="p-8 md:p-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6" data-reveal-stagger="80">
+        <div class="reveal">
           <h2 class="text-2xl md:text-3xl font-semibold text-white">Become Limitless.</h2>
           <p class="mt-1 text-white/80">Choose a plan and start building with ONX today.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3 reveal">
           <a href="download.html"
              class="inline-flex items-center gap-2 rounded-xl bg-white text-oc-ink px-4 py-2 font-medium hover:bg-gray-100 focus:ring-2 focus:ring-white/50">
             <i class="ph ph-apple-logo"></i> Get ONX
@@ -473,6 +518,51 @@
       </div>
     </div>
   </footer>
+
+  <!-- Reveal on scroll (IO + stagger) -->
+  <script>
+    (function(){
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Stagger support: set transition-delays on grouped children
+      document.querySelectorAll('[data-reveal-stagger]').forEach(group=>{
+        const step = Math.max(0, parseInt(group.getAttribute('data-reveal-stagger'),10) || 90);
+        const kids = group.querySelectorAll('.reveal');
+        kids.forEach((el,i)=>{ el.style.transitionDelay = (i*step)+'ms'; });
+        if (group.classList.contains('scroll-fade')) {
+          Array.from(group.children).forEach((child,i)=>{
+            child.style.transitionDelay = (i*step)+'ms';
+          });
+        }
+      });
+
+      const targets = Array.from(document.querySelectorAll('.reveal, .scroll-fade'));
+      if (!targets.length) return;
+
+      // If reduced motion or no IO support, apply immediately
+      if (prefersReduced || !('IntersectionObserver' in window)) {
+        targets.forEach(t=>{
+          t.classList.add('in','in-view');
+        });
+        return;
+      }
+
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(({target, isIntersecting})=>{
+          const wantsReplay = target.hasAttribute('data-reveal-replay');
+          if (isIntersecting){
+            if (target.classList.contains('reveal')) target.classList.add('in');
+            if (target.classList.contains('scroll-fade')) target.classList.add('in-view');
+            if (!wantsReplay) io.unobserve(target);
+          } else if (wantsReplay){
+            target.classList.remove('in','in-view');
+          }
+        });
+      }, { threshold: 0.18, rootMargin: '0px 0px -6% 0px' });
+
+      targets.forEach(el=> io.observe(el));
+    })();
+  </script>
 
   <script>
     // Year
@@ -511,8 +601,7 @@
           proA.setAttribute('data-state','in');  proA.removeAttribute('aria-hidden');
 
           // Show "Save 20%" only on annual
-          save.classList.remove('hidden');
-          save.removeAttribute('aria-hidden');
+          if (save){ save.classList.remove('hidden'); save.removeAttribute('aria-hidden'); }
 
           note.textContent = 'Billed yearly — $16/month (paid annually)';
           proCopy.textContent = 'Billed yearly — $16/month (save 20%)';
@@ -521,8 +610,7 @@
           proA.setAttribute('data-state','out'); proA.setAttribute('aria-hidden','true');
 
           // Hide "Save 20%" on monthly
-          save.classList.add('hidden');
-          save.setAttribute('aria-hidden','true');
+          if (save){ save.classList.add('hidden'); save.setAttribute('aria-hidden','true'); }
 
           note.textContent = 'Billed monthly';
           proCopy.textContent = 'Billed monthly — cancel anytime';
