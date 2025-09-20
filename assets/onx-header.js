@@ -17,6 +17,7 @@ const ONX_HEADER_LINKS = [
 /* Usage for ONX Pro page theme (page-scoped):
    <onx-header theme="ONXPro"></onx-header>
    Accepts: theme="ONXPro" | "onxpro" | "pro"
+   NEW:     theme="ONXProLight" | "onxpro-light" | "pro-light"  (or just add the boolean attribute: invert)
 */
 
 class ONXHeader extends HTMLElement {
@@ -458,6 +459,83 @@ class ONXHeader extends HTMLElement {
           .sheet, .backdrop, .hamburger .lines::before,
           .hamburger .lines::after, .hamburger .lines span { transition:none; }
         }
+
+        /* =====================================================================
+           LIGHT / INVERTED VARIANT (Built-in; works with [invert] OR *Light themes)
+           - White header (flat + float)
+           - Black nav/link text
+           - Black buttons with white text
+           - Black logo
+           - No outline (no border, no box-shadow) on the header pill
+           ===================================================================== */
+        :host([invert]) .header-bar,
+        :host([theme="ONXProLight"]) .header-bar,
+        :host([theme="onxpro-light"]) .header-bar,
+        :host([theme="pro-light"]) .header-bar{
+          background:#ffffff !important;
+          color:#0A0D10 !important;
+          border:none !important;
+          box-shadow:none !important;   /* no outline */
+          border-radius: var(--header-radius);
+          -webkit-backdrop-filter: none !important;
+          backdrop-filter: none !important;
+        }
+        :host([invert].is-float) .header-bar,
+        :host([theme="ONXProLight"].is-float) .header-bar,
+        :host([theme="onxpro-light"].is-float) .header-bar,
+        :host([theme="pro-light"].is-float) .header-bar{
+          background:#ffffff !important;
+          border:none !important;
+          box-shadow:none !important;   /* still no outline when floating */
+        }
+
+        /* Center nav (desktop) → black text */
+        :host([invert]) .center .nav-link,
+        :host([theme="ONXProLight"]) .center .nav-link,
+        :host([theme="onxpro-light"]) .center .nav-link,
+        :host([theme="pro-light"]) .center .nav-link{
+          background:none !important;
+          -webkit-text-fill-color: initial !important;
+          color:#0A0D10 !important;
+          padding-bottom: 0 !important;
+        }
+        :host([invert]) .news-link,
+        :host([theme="ONXProLight"]) .news-link,
+        :host([theme="onxpro-light"]) .news-link,
+        :host([theme="pro-light"]) .news-link{
+          color:#0A0D10 !important;
+        }
+
+        /* Buttons → black bg, white text (desktop + mobile) */
+        :host([invert]) .desktop-actions .btn,
+        :host([invert]) .mobile-actions .btn,
+        :host([theme="ONXProLight"]) .desktop-actions .btn,
+        :host([theme="ONXProLight"]) .mobile-actions .btn,
+        :host([theme="onxpro-light"]) .desktop-actions .btn,
+        :host([theme="onxpro-light"]) .mobile-actions .btn,
+        :host([theme="pro-light"]) .desktop-actions .btn,
+        :host([theme="pro-light"]) .mobile-actions .btn{
+          background:#0A0D10 !important;
+          color:#ffffff !important;
+          animation:none !important;
+        }
+
+        /* Hamburger / icons → black */
+        :host([invert]) .hamburger,
+        :host([theme="ONXProLight"]) .hamburger,
+        :host([theme="onxpro-light"]) .hamburger,
+        :host([theme="pro-light"]) .hamburger{
+          color:#0A0D10 !important;
+        }
+
+        /* Logo → solid black (no gradient, no animation) */
+        :host([invert]) .logo-anim,
+        :host([theme="ONXProLight"]) .logo-anim,
+        :host([theme="onxpro-light"]) .logo-anim,
+        :host([theme="pro-light"]) .logo-anim{
+          background:#000000 !important;
+          animation:none !important;
+        }
       </style>
 
       <div class="oc-header">
@@ -619,7 +697,7 @@ class ONXHeader extends HTMLElement {
 
   /* ===== Cloning (nav & actions) into the mobile sheet ===== */
   _cloneSlotted(name){
-    const slot = this._root.querySelector(`slot[name="\${name}"]`);
+    const slot = this._root.querySelector(`slot[name="${name}"]`);
     if (!slot) return;
     slot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
     slot.addEventListener('slotchange', () => this._cloneNow(name));
