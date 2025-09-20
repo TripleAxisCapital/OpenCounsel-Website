@@ -1,4 +1,4 @@
-<!-- ONX-Pro: Dark Mode Page (production, no "cores", pricing toggle) -->
+]<!-- ONX-Pro: Dark Mode Page (production, no "cores", pricing toggle) -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -19,6 +19,8 @@
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
   <link rel="preload" as="image" href="/logo.svg">
+  <!-- Ensure the Pro logo is fetched ASAP for the hero -->
+  <link rel="preload" as="image" href="/logoPro.svg" fetchpriority="high">
 
   <!-- Icons -->
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any">
@@ -82,7 +84,7 @@
     }
   </script>
 
-  <!-- Base styles (kept hero/header styles) + unified button shape -->
+  <!-- Base styles (unchanged except hero logo handling) -->
   <style>
     :root {
       --pad-mobile-x: 24px; --pad-desktop-x: 32px; --hamburger-inset: 13px;
@@ -97,18 +99,18 @@
       --hero-bubble-base-alpha: .08; --hero-bubble-user-alpha: .10; --hero-bubble-user-border-alpha: .14;
       --hero-bubble-assist-alpha: .06; --hero-bubble-assist-border-alpha: .10; --hero-bubble-text-alpha: .92;
 
-      /* Unified CTA gradient tokens (auto-filled from hero CTA by script) */
+      /* Unified CTA gradient tokens */
       --cta-from:#0e0e0ecc; --cta-via:#141414cc; --cta-to:#ffffff;
       --cta-speed:16s; --cta-angle:135deg;
 
-      /* Unified button shape (matches the hero button) */
+      /* Button shape */
       --btn-radius: 16px;
       --btn-pad-y: 12px;
       --btn-pad-x: 24px;
       --btn-shadow: 0 20px 44px rgba(0,0,0,.45);
       --btn-shadow-hover: 0 28px 60px rgba(0,0,0,.55);
 
-      /* Segmented control tokens (minimal / no gradient) */
+      /* Segmented control tokens */
       --seg-radius: 14px;
       --seg-pad: 6px;
       --seg-bg: rgba(255,255,255,.06);
@@ -117,10 +119,15 @@
       --seg-thumb: #ffffff;
       --seg-thumb-shadow: 0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06);
 
-      /* === New: fast-first-paint tuning === */
-      --hero-logo-size: clamp(220px, 54vw, 560px);   /* BIGGER hero logo */
-      --page-blur-dur: 420ms;                        /* ensure visible in <501ms */
+      /* Fast-first-paint tuning */
+      --hero-logo-size: clamp(220px, 54vw, 560px);
+      --page-blur-dur: 420ms;
     }
+    /* Slightly smaller on phones so it reads cleanly */
+    @media (max-width: 767px){
+      :root { --hero-logo-size: clamp(200px, 68vw, 520px); }
+    }
+
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
     .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
@@ -132,7 +139,7 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* === Universal CTA skin (same animation as hero) — left intact for hero / primary dark buttons === */
+    /* CTA skins */
     .cta-anim {
       background: linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to));
       background-size:300% 300%;
@@ -153,19 +160,21 @@
 
     .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
 
-    /* === Faster hero logo reveal + bigger size === */
-    .hero-logo-white,.hero-logo-pro{
+    /* --- HERO LOGO: show the actual SVG, not a mask --- */
+    .hero-logo-img{
       display:inline-block;
-      width: var(--hero-logo-size, clamp(140px, 45vw, 400px));
-      height: var(--hero-logo-size, clamp(140px, 45vw, 400px));
-      background:#ffffff; opacity:0; filter:blur(6px);
+      width: var(--hero-logo-size);
+      height: auto;
+      opacity:0; filter: blur(6px); /* fast reveal */
       transform: translateY(6px) scale(.985);
-      animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
-      will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle;
+      animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards;
+      vertical-align: middle; position: relative; z-index: 1;
+      image-rendering: -webkit-optimize-contrast;
     }
-    .hero-logo-white{ -webkit-mask:url('logo.svg') no-repeat center / contain; mask:url('logo.svg') no-repeat center / contain; }
-    .hero-logo-pro  { -webkit-mask:url('logoPro.svg') no-repeat center / contain; mask:url('logoPro.svg') no-repeat center / contain; }
-    .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
+    /* Guarantee white mark even if the file isn’t white */
+    .hero-logo-img.is-white { filter: blur(6px) brightness(0) invert(1); }
+    .no-hero-glow .hero-logo-img{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
+
     @keyframes heroLogoReveal {
       0%  { opacity:0; filter:blur(6px);  transform: translateY(6px) scale(.985); }
       60% { opacity:1; filter:blur(1.5px); transform: translateY(0)   scale(1);    }
@@ -210,7 +219,7 @@
         radial-gradient(60% 60% at 50% 40%, var(--glow-c1), transparent 70%),
         radial-gradient(55% 55% at 40% 60%, var(--glow-c2), transparent 70%);
       filter: blur(var(--glow-blur)); opacity: 0; z-index: 0; pointer-events: none;
-      animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
+      animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards;
     }
     .hero-logo-glow.glow-pulse {
       animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards,
@@ -219,7 +228,7 @@
     @keyframes heroGlowReveal { 0%{opacity:0; filter:blur(40px)} 60%{opacity:var(--glow-opacity); filter:blur(16px)} 100%{opacity:var(--glow-opacity); filter:blur(var(--glow-blur))} }
     @keyframes heroGlowPulse { 0%,100%{ transform:scale(1); filter:blur(var(--glow-blur)); opacity:var(--glow-opacity);} 50%{ transform:scale(1.03); filter:blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05);} }
 
-    /* === Faster page fade so first paint < 501ms === */
+    /* Fast page fade */
     .page-blur{
       position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
       background: rgba(0,0,0,.28); z-index:9999; pointer-events:none;
@@ -239,7 +248,7 @@
     }
     .scroll-fade.in-view > * { filter: blur(0); opacity:1; transform: translateY(0); }
 
-    /* === Reveal primitives (fast) === */
+    /* Reveal primitives */
     .reveal{
       opacity:0; transform:translateY(14px); filter:blur(6px);
       transition: opacity .45s cubic-bezier(.2,.8,.2,1),
@@ -249,14 +258,12 @@
     }
     .reveal.in{ opacity:1; transform:translateY(0); filter:blur(0); }
 
-    /* Direction helpers (optional) */
     .reveal-up{ transform:translateY(14px); }
     .reveal-down{ transform:translateY(-14px); }
     .reveal-left{ transform:translateX(14px); }
     .reveal-right{ transform:translateX(-14px); }
     .reveal-up.in,.reveal-down.in,.reveal-left.in,.reveal-right.in{ transform:none; }
 
-    /* Scroll-synced variant */
     @keyframes fadeUp { from{opacity:0; transform:translateY(14px); filter:blur(6px);} to{opacity:1; transform:none; filter:none;} }
     @supports (animation-timeline: view()) {
       .reveal-sync{
@@ -288,7 +295,7 @@
     .fine { color: rgba(255,255,255,.56); }
     .hair { height:1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0)); }
 
-    /* === Buttons: unified shape === */
+    /* Buttons */
     .btn {
       display:inline-flex; align-items:center; gap:.5rem;
       padding: var(--btn-pad-y) var(--btn-pad-x);
@@ -301,53 +308,28 @@
     .btn:hover { transform: translateY(-2px); }
     .btn:active { transform: translateY(0); }
 
-    /* Gradient primary (kept for hero / dark) */
     .btn-primary { color:#fff; box-shadow: var(--btn-shadow); }
     .btn-primary:hover { box-shadow: var(--btn-shadow-hover); }
-
-    /* Minimal solid variants (Apple-like) */
     .btn-white { background:#fff; color:#000; border:1px solid #fff; box-shadow: 0 10px 26px rgba(0,0,0,.18); }
     .btn-white:hover { box-shadow: 0 16px 36px rgba(0,0,0,.28); }
     .btn-black { background:#0a0a0a; color:#fff; border:1px solid rgba(255,255,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.32); }
     .btn-black:hover { border-color: rgba(255,255,255,.28); box-shadow: 0 16px 40px rgba(0,0,0,.44); }
 
-    /* Subtle outline for low-emphasis links */
     .btn-ghost { color:#fff; border:1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.04); }
     .btn-ghost:hover { border-color: rgba(255,255,255,.26); background: rgba(255,255,255,.06); }
 
-    /* === Minimal, no-gradient segmented control === */
-    .seg {
-      position:relative; display:inline-flex; align-items:center; gap:8px;
-      padding: var(--seg-pad);
-      border-radius: var(--seg-radius);
-      background: var(--seg-bg);
-      border: 1px solid var(--seg-border);
-      -webkit-backdrop-filter: saturate(140%) blur(4px);
-      backdrop-filter: saturate(140%) blur(4px);
-    }
-    .seg button {
-      appearance:none; border:0; background:transparent; color:#fff; font-weight:600;
-      padding: 10px 16px; border-radius: calc(var(--seg-radius) - 4px);
-      cursor:pointer; opacity:.78; position:relative; z-index:1;
-      transition: opacity .2s ease, transform .2s cubic-bezier(.2,.8,.2,1), color .2s ease;
-      white-space:nowrap; line-height:1;
-    }
+    /* Segmented control */
+    .seg { position:relative; display:inline-flex; align-items:center; gap:8px; padding: var(--seg-pad); border-radius: var(--seg-radius); background: var(--seg-bg); border: 1px solid var(--seg-border); -webkit-backdrop-filter: saturate(140%) blur(4px); backdrop-filter: saturate(140%) blur(4px); }
+    .seg button { appearance:none; border:0; background:transparent; color:#fff; font-weight:600; padding: 10px 16px; border-radius: calc(var(--seg-radius) - 4px); cursor:pointer; opacity:.78; position:relative; z-index:1; transition: opacity .2s ease, transform .2s cubic-bezier(.2,.8,.2,1), color .2s ease; white-space:nowrap; line-height:1; }
     .seg button:hover { opacity:1; transform: translateY(-1px); }
     .seg button[aria-pressed="true"] { opacity:1; color:#000; }
-    .seg .thumb {
-      position:absolute; top: var(--seg-pad); bottom: var(--seg-pad); left: var(--seg-pad);
-      width: calc(50% - var(--seg-pad)); border-radius: calc(var(--seg-radius) - 4px);
-      background: var(--seg-thumb);
-      box-shadow: var(--seg-thumb-shadow);
-      will-change: transform, width;
-      transition: transform .32s cubic-bezier(.2,.8,.2,1), width .32s cubic-bezier(.2,.8,.2,1);
-    }
+    .seg .thumb { position:absolute; top: var(--seg-pad); bottom: var(--seg-pad); left: var(--seg-pad); width: calc(50% - var(--seg-pad)); border-radius: calc(var(--seg-radius) - 4px); background: var(--seg-thumb); box-shadow: var(--seg-thumb-shadow); will-change: transform, width; transition: transform .32s cubic-bezier(.2,.8,.2,1), width .32s cubic-bezier(.2,.8,.2,1); }
   </style>
 
-  <!-- Load the header component (UNCHANGED per request) -->
+  <!-- Load the header component (UNCHANGED) -->
   <script type="module" src="/assets/onx-header.js"></script>
 
-  <!-- HERO styles (kept) -->
+  <!-- HERO styles (unchanged) -->
   <style>
     :root { --hero-mid-blur: 4px; --chat-b-radius: 12px; --chat-b-font: 14px; --chat-b-lh: 1.4;
             --chat-b-pad-y: 9px; --chat-b-pad-x: 12px; --chat-b-pad-y-sm: 8px; --chat-b-pad-x-sm: 10px;
@@ -356,8 +338,7 @@
             --chat-b-bg-user: rgba(255,255,255,.08); --chat-b-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px rgba(0,0,0,.32);
             --chat-b-maxw: min(72ch, 560px); }
     .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; opacity: var(--hero-bubbles-opacity, 1); filter: brightness(var(--hero-bubbles-brightness, 1)); }
-    .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none;
-      backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
+    .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none; backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
     .hero-bubble { position:absolute; border-radius: var(--chat-b-radius); border: 1px solid var(--chat-b-border); background: var(--chat-b-bg); box-shadow: var(--chat-b-shadow); will-change: transform, opacity, filter; transform: translateZ(0); isolation:isolate; overflow:hidden; width: max-content; max-width: var(--chat-b-maxw);
       animation: bubbleFloat var(--dur,20s) linear var(--delay,0s) infinite, bubbleBreathe calc(var(--dur,20s) / 2.2) ease-in-out var(--delay,0s) infinite; }
     .hero-bubble.user{ background: var(--chat-b-bg-user); border-color: var(--chat-b-border); }
@@ -377,7 +358,7 @@
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- ONX HEADER (UNCHANGED per request) -->
+  <!-- ONX HEADER (UNCHANGED) -->
   <onx-header invert
     width-flat="75%"
     theme="ONXPro"
@@ -391,7 +372,7 @@
     threshold="8">
   </onx-header>
 
-  <!-- HERO (unchanged) -->
+  <!-- HERO -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
     <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
                 h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
@@ -402,7 +383,18 @@
       <div class="hero-mid-blur" aria-hidden="true"></div>
 
       <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
-        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">ONX</span>
+        <!-- Use the actual logoPro.svg (no mask, no text) -->
+        <span class="hero-title block">
+          <span class="hero-logo-wrap">
+            <img
+              src="/logoPro.svg"
+              alt="ONX-Pro"
+              width="560" height="560"
+              decoding="async" fetchpriority="high"
+              class="hero-logo-img is-white" />
+          </span>
+        </span>
+
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html"
@@ -457,7 +449,7 @@
   })();
   </script>
 
-  <!-- HERO bubbles JS (unchanged logic) -->
+  <!-- HERO bubbles JS (unchanged) -->
   <script>
   (()=>{
     const hero = document.querySelector('#home .hero-card');
@@ -523,7 +515,7 @@
   })();
   </script>
 
-  <!-- HERO typing (unchanged) -->
+  <!-- HERO typing (kept; now injects the <img> as well) -->
   <script>
   (()=>{
     window.OC_HERO = Object.assign({
@@ -564,10 +556,12 @@
       const MOBILE_LINE2_HTML = 'for the 1%';
       const isMobile=window.matchMedia('(max-width: 767px)').matches;
 
+      // Rebuild title with the actual image (not a mask)
       titleEl.innerHTML='';
       const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
       if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
-      const logo=document.createElement('span'); logo.className='hero-logo-pro'; logo.setAttribute('role','img'); logo.setAttribute('aria-label','ONX-Pro'); wrapSpan.appendChild(logo);
+      const logoImg = new Image(); logoImg.src='/logoPro.svg'; logoImg.alt='ONX-Pro'; logoImg.width=560; logoImg.height=560; logoImg.decoding='async'; logoImg.className='hero-logo-img is-white';
+      wrapSpan.appendChild(logoImg);
 
       if(prefersReduced){
         if(sub1El){
@@ -629,7 +623,7 @@
   })();
   </script>
 
-  <!-- ==== Minimal, Apple-style body content (no "cores") ==== -->
+  <!-- ==== Minimal, Apple-style body content ==== -->
 
   <!-- Value Prop -->
   <section class="section section-clip">
@@ -649,7 +643,7 @@
     </div>
   </section>
 
-  <!-- Showcase (Apple-style hero card) -->
+  <!-- Showcase -->
   <section class="section">
     <div class="mx-auto max-w-[1200px] oc-container">
       <div class="rounded-3xl border border-white/10 overflow-hidden bg-white/[.02]">
@@ -712,12 +706,11 @@
     </div>
   </section>
 
-  <!-- Pricing with Yearly/Monthly toggle -->
+  <!-- Pricing -->
   <section class="section">
     <div class="mx-auto max-w-[900px] oc-container text-center">
       <h2 class="text-[28px] md:text-[40px] font-semibold tracking-tight reveal">Simple pricing</h2>
 
-      <!-- Segmented control (Minimal, no gradient) -->
       <div class="mt-4 flex justify-center reveal">
         <div id="billingSeg" class="seg" role="tablist" aria-label="Billing period" data-mode="yearly">
           <span class="thumb" aria-hidden="true"></span>
@@ -752,7 +745,6 @@
         </ul>
 
         <div class="mt-7 flex items-center justify-center gap-3">
-          <!-- White primary CTA, black secondary for contrast -->
           <a href="download.html" class="btn btn-white"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
           <a href="privacy.html" class="btn btn-black">Privacy</a>
         </div>
@@ -804,12 +796,11 @@
     </div>
   </section>
 
-  <!-- Reveal on scroll (upgraded) -->
+  <!-- Reveal on scroll (unchanged) -->
   <script>
     (function(){
       const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      // Stagger support: set transition-delays on grouped children
       document.querySelectorAll('[data-reveal-stagger]').forEach(group=>{
         const step = Math.max(0, parseInt(group.getAttribute('data-reveal-stagger'),10) || 90);
         const kids = group.querySelectorAll('.reveal');
@@ -848,7 +839,7 @@
     })();
   </script>
 
-  <!-- Page blur fade (<= 500ms to visible) -->
+  <!-- Page blur fade -->
   <script>
   (()=>{
     window.addEventListener('load', ()=>{
@@ -856,17 +847,16 @@
       if(!pageBlur) return;
       pageBlur.classList.add('hide');
       document.dispatchEvent(new Event('oc:page-blur-fade'));
-      // Remove after the longest transition ends, plus a small cushion
       const d = getComputedStyle(pageBlur).transitionDuration
         .split(',')
         .map(s => parseFloat(s) * 1000)
         .reduce((a,b)=>Math.max(a,b), 0) || 420;
-      setTimeout(()=>pageBlur.remove(), Math.min(500, d + 60)); // keep under ~500ms total
+      setTimeout(()=>pageBlur.remove(), Math.min(500, d + 60));
     });
   })();
   </script>
 
-  <!-- Pricing toggle logic + minimal segmented control -->
+  <!-- Pricing toggle -->
   <script>
     (function(){
       const seg = document.getElementById('billingSeg');
@@ -904,7 +894,6 @@
       yearly.addEventListener('click', ()=> setMode('yearly'));
       monthly.addEventListener('click', ()=> setMode('monthly'));
 
-      // Keyboard support
       seg.addEventListener('keydown', (e)=>{
         const current = seg.getAttribute('data-mode') || 'yearly';
         if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
@@ -920,10 +909,9 @@
     })();
   </script>
 
-  <!-- === Unify CTA animation across controls, BUT exclude solid white/black buttons === -->
+  <!-- Unify CTA animation across controls -->
   <script>
     (function(){
-      // Read hero CTA CSS variables and propagate to :root so gradient CTAs match hero
       const cta = document.getElementById('heroCtaBtn');
       const root = document.documentElement;
       if (cta && root && cta.style) {
@@ -940,14 +928,10 @@
         if (angle)root.style.setProperty('--cta-angle',angle);
       }
 
-      // Add gradient skin to primary/btn only when NOT white/black variants
       const add = (el, cls)=> el && !el.classList.contains(cls) && el.classList.add(cls);
       document.querySelectorAll('a.btn-primary:not(.btn-white):not(.btn-black), button.btn-primary:not(.btn-white):not(.btn-black), a.btn:not(.btn-white):not(.btn-black), button.btn:not(.btn-white):not(.btn-black)').forEach(el=> add(el,'cta-anim'));
-
-      // Keep ghost outline animation
       document.querySelectorAll('a.btn-ghost, button.btn-ghost').forEach(el=> add(el,'cta-anim-ghost'));
 
-      // Footer hover polish
       document.querySelectorAll('footer a').forEach(a=>{
         a.addEventListener('mouseenter', ()=> a.style.textDecoration='none');
         a.addEventListener('mouseover', ()=> a.style.opacity='.95');
