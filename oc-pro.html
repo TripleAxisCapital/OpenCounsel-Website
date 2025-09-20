@@ -1,4 +1,4 @@
-<!-- ONX-Pro: Dark Mode Page (production, no "cores", pricing toggle) -->
+<!-- ONX-Pro: Apple-style product page (clean, minimal, cinematic) -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -13,29 +13,25 @@
   <link rel="alternate" href="https://www.opencounsel.ca/oc-pro/" hreflang="x-default">
   <link rel="alternate" href="https://www.opencounsel.ca/en/oc-pro/" hreflang="en">
 
-  <!-- Preloads/Assets -->
-  <link rel="preconnect" href="https://cdn.opencounsel.ca" crossorigin>
-  <link rel="dns-prefetch" href="//cdn.opencounsel.ca">
+  <!-- Assets -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
-  <link rel="preload" as="image" href="/logo.svg">
-
-  <!-- Icons -->
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any">
 
   <!-- Open Graph / X -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="ONX">
   <meta property="og:title" content="ONX-Pro — The AI Workspace. Without Limits.">
-  <meta property="og:description" content="Black-label AI workspace. Private, polished, and powerful.">
+  <meta property="og:description" content="Black-label AI workspace. Private, polished, powerful.">
   <meta property="og:url" content="https://www.opencounsel.ca/oc-pro/">
   <meta property="og:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+  <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@OpenCounselAI">
   <meta name="twitter:title" content="ONX-Pro — The AI Workspace. Without Limits.">
-  <meta name="twitter:description" content="Black-label AI workspace. Private, polished, and powerful.">
+  <meta name="twitter:description" content="Black-label AI workspace. Private, polished, powerful.">
   <meta name="twitter:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
 
   <!-- Pretty URL (client-side mask) -->
@@ -49,271 +45,91 @@
     }catch(_){}})(location, window.ONX);
   </script>
 
-  <!-- Feature flags -->
-  <script>
-    window.OC_ENABLE_HERO_LOGO_GLOW = false;
-    (function(d){ try{ if(!window.OC_ENABLE_HERO_LOGO_GLOW) d.documentElement.classList.add('no-hero-glow'); }catch(_){}})(document);
-  </script>
-
-  <!-- === Hero bubbles global config ======================================= -->
-  <script>
-    window.OC_HERO_BUBBLES = { countMobile: 9, countDesktop: 16, speedMultiplier: 1.0 };
-  </script>
-  <!-- ===================================================================== -->
-
-  <!-- Fonts + Icons + Tailwind -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Tailwind + Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
-          colors: { oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' } },
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','-apple-system'] },
+          colors: { ink:'#0a0a0a' },
           boxShadow: {
-            card:'0 6px 30px rgba(16,24,40,0.08)',
-            glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)'
+            card:'0 20px 60px rgba(0,0,0,.35)',
+            ring:'inset 0 0 0 1px rgba(255,255,255,.08)'
           }
         }
       }
     }
   </script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
-  <!-- Base styles (kept hero/header styles) + unified button shape -->
+  <!-- Global styles -->
   <style>
-    :root {
-      --pad-mobile-x: 24px; --pad-desktop-x: 32px; --hamburger-inset: 13px;
-      --line:#E7EDF2; --brand-angle:135deg; --brand-1:#0B1B2B; --brand-2:#0E6F5C; --brand-3:#00CFFF; --lilac:#E7E7FF;
-      --demo-stage-h-sm: 360px; --demo-stage-h-lg: 440px;
-      --hero-shine-duration: 5.5s; --hero-shine-ease: linear; --hero-shine-angle: 90deg;
-      --hero-shine-base:#e6e6e6; --hero-shine-peak:#ffffff; --hero-shine-softness: 3.5%;
-      --hero-shine-bg-size-x: 260%; --hero-shine-direction: reverse;
-      --logo-width:64px; --logo-height:64px;
-
-      --hero-bubbles-brightness: 1; --hero-bubbles-opacity: 1; --hero-bubble-alpha-scale: 1;
-      --hero-bubble-base-alpha: .08; --hero-bubble-user-alpha: .10; --hero-bubble-user-border-alpha: .14;
-      --hero-bubble-assist-alpha: .06; --hero-bubble-assist-border-alpha: .10; --hero-bubble-text-alpha: .92;
-
-      /* Unified CTA gradient tokens (auto-filled from hero CTA by script) */
-      --cta-from:#0e0e0ecc; --cta-via:#141414cc; --cta-to:#ffffff;
-      --cta-speed:16s; --cta-angle:135deg;
-
-      /* Unified button shape (matches the hero button) */
-      --btn-radius: 16px;
-      --btn-pad-y: 12px;
-      --btn-pad-x: 24px;
-      --btn-shadow: 0 20px 44px rgba(0,0,0,.45);
-      --btn-shadow-hover: 0 28px 60px rgba(0,0,0,.55);
-
-      /* Segmented control tokens (minimal / no gradient) */
-      --seg-radius: 14px;
-      --seg-pad: 6px;
-      --seg-bg: rgba(255,255,255,.06);
-      --seg-border: rgba(255,255,255,.14);
-      --seg-hover: rgba(255,255,255,.10);
-      --seg-thumb: #ffffff;
-      --seg-thumb-shadow: 0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06);
+    :root{
+      --header-h:56px;
+      --pad-x: clamp(20px, 4vw, 40px);
+      --r-xl: 28px; --r-lg: 20px; --r-md: 14px;
+      --hair: rgba(255,255,255,.14);
     }
-    html, body { max-width:100%; overflow-x: clip !important; }
-    .section-clip { position: relative; overflow-x: clip; }
-    .oc-container { padding-left: var(--pad-mobile-x); padding-right: var(--pad-mobile-x); }
-    ::selection{background:#5B8CFF;color:#fff}
-
-    .g-grad, .grad-anim{
-      background: linear-gradient(var(--angle, 135deg), var(--from, #000000), var(--via, #0a0a0a), var(--to, #1a1a1a));
-      background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
-    }
-    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-
-    /* === Universal CTA skin (same animation as hero) — left intact for hero/primary dark buttons === */
-    .cta-anim {
-      background: linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to));
-      background-size:300% 300%;
-      animation: gradientShift var(--cta-speed) ease-in-out infinite;
-      will-change: background-position;
-    }
-    .cta-anim-ghost {
-      background:
-        linear-gradient(#0000,#0000) padding-box,
-        linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box;
-      border:1px solid transparent;
-      background-size: 100% 100%, 300% 300%;
-      animation: gradientShift var(--cta-speed) ease-in-out infinite;
-    }
-    .cta-anim-ghost:hover { background:
-        linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06)) padding-box,
-        linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box; }
-
-    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
-    .hero-logo-white,.hero-logo-pro{ display:inline-block; width: var(--hero-logo-size, clamp(140px, 45vw, 400px)); height: var(--hero-logo-size, clamp(140px, 45vw, 400px)); background:#ffffff; opacity:0; filter:blur(8px); transform: translateY(6px) scale(.985); animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle; }
-    .hero-logo-white{ -webkit-mask:url('logo.svg') no-repeat center / contain; mask:url('logo.svg') no-repeat center / contain; }
-    .hero-logo-pro  { -webkit-mask:url('logoPro.svg') no-repeat center / contain; mask:url('logoPro.svg') no-repeat center / contain; }
-    .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
-    @keyframes heroLogoReveal { 0%{opacity:0; filter:blur(8px); transform: translateY(6px) scale(.985);} 60%{opacity:1; filter:blur(1.5px); transform: translateY(0) scale(1);} 100%{opacity:1; filter:blur(0); transform: translateY(0) scale(1);} }
-
-    .hero-caret{ display:inline-block; height:1em; vertical-align:-0.12em; margin-left:.05em; border-right: var(--caret-w, 2px) solid var(--caret-color, rgba(255,255,255,.9)); animation: heroBlink var(--caret-blink, 900ms) steps(1) infinite; pointer-events:none; }
-    #home .hero-sub1{ margin-top: 1px !important; }
-    @media (min-width: 768px){ #home .hero-sub1{ margin-top: 3px !important; } }
-    @keyframes heroBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
-    #home .hero-line1, #home .hero-line2 { display:block; }
-
-    #home .hero-line1 .seg-fullshine {
-      position: relative;
-      background-image:
-        linear-gradient(var(--hero-shine-angle, 90deg),
-          rgba(255,255,255,0) 0%,
-          rgba(255,255,255,0) calc(50% - var(--hero-shine-softness, 3.5%)),
-          rgba(255,255,255,0.98) 50%,
-          rgba(255,255,255,0) calc(50% + var(--hero-shine-softness, 3.5%)),
-          rgba(255,255,255,0) 100%
-        ),
-        linear-gradient(var(--hero-shine-base, #e6e6e6), var(--hero-shine-base, #e6e6e6));
-      background-size: var(--hero-shine-bg-size-x, 240%) 100%, 100% 100%;
-      background-repeat: no-repeat; background-position: -150% 0, 0 0;
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
-      animation: heroShine var(--hero-shine-duration, 5.5s) var(--hero-shine-ease, linear) infinite;
-      animation-direction: var(--hero-shine-direction, normal);
-      will-change: background-position;
-    }
-    @keyframes heroShine { 0%{ background-position:-150% 0,0 0 } 100%{ background-position:150% 0,0 0 } }
-    @media (prefers-reduced-motion: reduce){
-      #home .hero-line1 .seg-fullshine { animation:none; -webkit-text-fill-color:#fff; color:#fff; background:none; }
-    }
-
-    .hero-logo-wrap { position: relative; display: inline-block; }
-    .hero-logo-glow {
-      --glow-c1: rgba(0,207,255,.40); --glow-c2: rgba(14,111,92,.28);
-      --glow-opacity: .55; --glow-blur: 30px;
-      position: absolute; inset: -16%; border-radius: 9999px;
-      background:
-        radial-gradient(60% 60% at 50% 40%, var(--glow-c1), transparent 70%),
-        radial-gradient(55% 55% at 40% 60%, var(--glow-c2), transparent 70%);
-      filter: blur(var(--glow-blur)); opacity: 0; z-index: 0; pointer-events: none;
-      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards;
-    }
-    .hero-logo-glow.glow-pulse {
-      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards,
-                 heroGlowPulse var(--glow-pulse-dur, 6s) ease-in-out infinite 1.1s;
-    }
-    @keyframes heroGlowReveal { 0%{opacity:0; filter:blur(40px)} 60%{opacity:var(--glow-opacity); filter:blur(16px)} 100%{opacity:var(--glow-opacity); filter:blur(var(--glow-blur))} }
-    @keyframes heroGlowPulse { 0%,100%{ transform:scale(1); filter:blur(var(--glow-blur)); opacity:var(--glow-opacity);} 50%{ transform:scale(1.03); filter:blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05);} }
-
-    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background: rgba(0,0,0,.28); z-index:9999; pointer-events:none; transition: backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
-    .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
-
-    .scroll-fade { isolation:isolate; }
-    .scroll-fade > * { filter: blur(16px); opacity:.65; transform: translateY(8px); transition: filter 1100ms cubic-bezier(.16,1,.3,1), opacity 1100ms cubic-bezier(.16,1,.3,1), transform 1100ms cubic-bezier(.16,1,.3,1); will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0); }
-    .scroll-fade.in-view > * { filter: blur(0); opacity:1; transform: translateY(0); }
-
-    :root{ --from:#000000cc; --via:#0a0a0acc; --to:#1a1a1acc; --speed:16s; --angle:135deg; --grad-from:#000000cc; --grad-via:#0a0a0acc; --grad-to:#1a1a1acc; --line: rgba(255,255,255,.12); }
-    body { background:#000; color:#eaeaea; }
-    .tap-boost{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-
-    .section { padding: 64px 0; }
-    @media (min-width: 768px) { .section { padding: 96px 0; } }
-
-    .card {
-      border-radius: 18px; border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
-      box-shadow: 0 10px 30px rgba(0,0,0,.18);
-    }
-    .muted { color: rgba(255,255,255,.72); }
-    .fine { color: rgba(255,255,255,.56); }
-    .hair { height:1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0)); }
-
-    /* === Buttons: unified shape === */
-    .btn {
-      display:inline-flex; align-items:center; gap:.5rem;
-      padding: var(--btn-pad-y) var(--btn-pad-x);
-      border-radius: var(--btn-radius);
-      font-weight: 600; line-height: 1; text-decoration: none;
-      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .25s ease, background-color .25s ease, border-color .25s ease, color .25s ease;
-      position: relative; isolation:isolate;
-      will-change: transform, box-shadow;
-    }
-    .btn:hover { transform: translateY(-2px); }
-    .btn:active { transform: translateY(0); }
-
-    /* Gradient primary (kept for hero / dark) */
-    .btn-primary { color:#fff; box-shadow: var(--btn-shadow); }
-    .btn-primary:hover { box-shadow: var(--btn-shadow-hover); }
-
-    /* Minimal solid variants (Apple-like) */
-    .btn-white { background:#fff; color:#000; border:1px solid #fff; box-shadow: 0 10px 26px rgba(0,0,0,.18); }
-    .btn-white:hover { box-shadow: 0 16px 36px rgba(0,0,0,.28); }
-    .btn-black { background:#0a0a0a; color:#fff; border:1px solid rgba(255,255,255,.18); box-shadow: 0 10px 26px rgba(0,0,0,.32); }
-    .btn-black:hover { border-color: rgba(255,255,255,.28); box-shadow: 0 16px 40px rgba(0,0,0,.44); }
-
-    /* Subtle outline for low-emphasis links */
-    .btn-ghost { color:#fff; border:1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.04); }
-    .btn-ghost:hover { border-color: rgba(255,255,255,.26); background: rgba(255,255,255,.06); }
-
-    /* === Minimal, no-gradient segmented control === */
-    .seg {
-      position:relative; display:inline-flex; align-items:center; gap:8px;
-      padding: var(--seg-pad);
-      border-radius: var(--seg-radius);
-      background: var(--seg-bg);
-      border: 1px solid var(--seg-border);
-      -webkit-backdrop-filter: saturate(140%) blur(4px);
-      backdrop-filter: saturate(140%) blur(4px);
-    }
-    .seg button {
-      appearance:none; border:0; background:transparent; color:#fff; font-weight:600;
-      padding: 10px 16px; border-radius: calc(var(--seg-radius) - 4px);
-      cursor:pointer; opacity:.78; position:relative; z-index:1;
-      transition: opacity .2s ease, transform .2s cubic-bezier(.2,.8,.2,1), color .2s ease;
-      white-space:nowrap; line-height:1;
-    }
-    .seg button:hover { opacity:1; transform: translateY(-1px); }
-    .seg button[aria-pressed="true"] { opacity:1; color:#000; }
-    .seg .thumb {
-      position:absolute; top: var(--seg-pad); bottom: var(--seg-pad); left: var(--seg-pad);
-      width: calc(50% - var(--seg-pad)); border-radius: calc(var(--seg-radius) - 4px);
-      background: var(--seg-thumb);
-      box-shadow: var(--seg-thumb-shadow);
-      will-change: transform, width;
-      transition: transform .32s cubic-bezier(.2,.8,.2,1), width .32s cubic-bezier(.2,.8,.2,1);
+    html,body{background:#000;color:#fff}
+    ::selection{background:#fff;color:#000}
+    .container{max-width:1200px;margin:0 auto;padding:0 var(--pad-x)}
+    .section{padding: clamp(56px, 10vw, 120px) 0}
+    .hairline{height:1px;background:linear-gradient(90deg,transparent,var(--hair),transparent)}
+    .muted{color:rgba(255,255,255,.78)}
+    .fine{color:rgba(255,255,255,.6)}
+    /* Buttons */
+    .btn{display:inline-flex;align-items:center;gap:.6rem;padding:.9rem 1.4rem;border-radius:16px;font-weight:600;line-height:1;transition:transform .25s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease}
+    .btn:hover{transform:translateY(-2px)}
+    .btn:active{transform:translateY(0)}
+    .btn-white{background:#fff;color:#000;border:1px solid #fff;box-shadow:0 12px 28px rgba(0,0,0,.35)}
+    .btn-white:hover{box-shadow:0 18px 40px rgba(0,0,0,.45)}
+    .btn-black{background:#0b0b0b;color:#fff;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 28px rgba(0,0,0,.5)}
+    .btn-black:hover{border-color:rgba(255,255,255,.26)}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,.18);color:#fff}
+    .btn-ghost:hover{background:rgba(255,255,255,.06)}
+    /* Cards */
+    .card{border-radius:20px;border:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));box-shadow:var(--shadow,0 10px 30px rgba(0,0,0,.25))}
+    /* Segmented (no gradients; crisp, Apple-like) */
+    .seg{position:relative;display:inline-flex;gap:8px;padding:6px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);backdrop-filter:saturate(140%) blur(4px)}
+    .seg button{appearance:none;border:0;background:transparent;color:#fff;font-weight:600;padding:10px 16px;border-radius:10px;cursor:pointer;opacity:.8;transition:opacity .2s ease, transform .2s ease, color .2s ease;position:relative;z-index:1}
+    .seg button:hover{opacity:1;transform:translateY(-1px)}
+    .seg .thumb{position:absolute;inset:auto auto 6px 6px;height:calc(100% - 12px);width:calc(50% - 6px);border-radius:10px;background:#fff;box-shadow:0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06);transition:transform .32s cubic-bezier(.2,.8,.2,1),width .32s cubic-bezier(.2,.8,.2,1)}
+    .seg[data-mode="monthly"] .thumb{transform:translateX(calc(100% + 6px))}
+    .seg [aria-pressed="true"]{opacity:1;color:#000}
+    /* Cinematic image frame */
+    .frame{border-radius:28px;overflow:hidden;position:relative}
+    .frame::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), inset 0 0 80px rgba(255,255,255,.05);pointer-events:none}
+    /* Reveal on view */
+    .reveal{opacity:0;transform:translateY(14px);filter:blur(6px);transition:opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1), filter .9s}
+    .reveal.in{opacity:1;transform:translateY(0);filter:blur(0)}
+    /* Type scale */
+    .display{letter-spacing:-.02em}
+    .kicker{font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.72);font-size:.8rem}
+    /* Reduce motion */
+    @media (prefers-reduced-motion:reduce){
+      .reveal{transition:none;opacity:1;transform:none;filter:none}
+      .btn:hover{transform:none}
     }
   </style>
 
-  <!-- Load the header component (UNCHANGED per request) -->
+  <!-- Load the header component (unchanged) -->
   <script type="module" src="/assets/onx-header.js"></script>
-
-  <!-- HERO styles (kept) -->
-  <style>
-    :root { --hero-mid-blur: 4px; --chat-b-radius: 12px; --chat-b-font: 14px; --chat-b-lh: 1.4;
-            --chat-b-pad-y: 9px; --chat-b-pad-x: 12px; --chat-b-pad-y-sm: 8px; --chat-b-pad-x-sm: 10px;
-            --chat-b-pad-y-lg: 10px; --chat-b-pad-x-lg: 14px; --chat-b-border: rgba(255,255,255,.14);
-            --chat-b-border-assistant: rgba(255,255,255,.10); --chat-b-bg: rgba(255,255,255,.06);
-            --chat-b-bg-user: rgba(255,255,255,.08); --chat-b-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px rgba(0,0,0,.32);
-            --chat-b-maxw: min(72ch, 560px); }
-    .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; opacity: var(--hero-bubbles-opacity, 1); filter: brightness(var(--hero-bubbles-brightness, 1)); }
-    .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none;
-      backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
-    .hero-bubble { position:absolute; border-radius: var(--chat-b-radius); border: 1px solid var(--chat-b-border); background: var(--chat-b-bg); box-shadow: var(--chat-b-shadow); will-change: transform, opacity, filter; transform: translateZ(0); isolation:isolate; overflow:hidden; width: max-content; max-width: var(--chat-b-maxw);
-      animation: bubbleFloat var(--dur,20s) linear var(--delay,0s) infinite, bubbleBreathe calc(var(--dur,20s) / 2.2) ease-in-out var(--delay,0s) infinite; }
-    .hero-bubble.user{ background: var(--chat-b-bg-user); border-color: var(--chat-b-border); }
-    .hero-bubble.assistant{ background: var(--chat-b-bg); border-color: var(--chat-b-border-assistant); }
-    .hero-bubble .content{ position:relative; display:block; padding: var(--chat-b-pad-y) var(--chat-b-pad-x); }
-    .hero-bubble[data-size="sm"] .content { padding: var(--chat-b-pad-y-sm) var(--chat-b-pad-x-sm); }
-    .hero-bubble[data-size="lg"] .content { padding: var(--chat-b-pad-y-lg) var(--chat-b-pad-x-lg); }
-    .hero-bubble .bubble-text{ color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92)); font-weight:500; font-size: var(--chat-b-font); line-height: var(--chat-b-lh); margin:0; }
-    @keyframes bubbleFloat { 0%{ transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 } 10%{ opacity:.80 } 90%{ opacity:.85 } 100%{ transform: translateY(calc(var(--y-start, 16vh) + var(--y-travel, -120vh))) translateX(var(--x-drift, 0px)) scale(var(--scale,1)); opacity:0 } }
-    @keyframes bubbleBreathe { 0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.14)) drop-shadow(0 10px 22px rgba(0,0,0,.32)); } 50% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 14px 34px rgba(0,0,0,.40)); } }
-    @media (prefers-reduced-motion: reduce){ .hero-bubble{ animation:none !important; } }
-  </style>
-  <style id="oc-hero-bold-rotator"> .hero-sub1 .hero-word { font-weight: 800; } </style>
 </head>
 
-<body class="bg-black text-white font-sans antialiased">
-  <!-- FULL-PAGE BLUR OVERLAY -->
-  <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
+<body class="antialiased">
+  <!-- Measure header height (kept) -->
+  <script>
+    (function setHeaderVar(){
+      const pick=()=>document.querySelector('onx-header, header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
+      const set=()=>{ const el=pick(); const h=el? el.getBoundingClientRect().height : 56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px'); };
+      set(); window.addEventListener('resize', set, {passive:true});
+      if('ResizeObserver' in window){ const ro=new ResizeObserver(set); const el=pick(); if(el) ro.observe(el); }
+      window.addEventListener('load', set, {once:true});
+    })();
+  </script>
 
-  <!-- ONX HEADER (UNCHANGED per request) -->
+  <!-- ONX HEADER (unchanged) -->
   <onx-header invert
     width-flat="75%"
     theme="ONXPro"
@@ -327,334 +143,133 @@
     threshold="8">
   </onx-header>
 
-  <!-- HERO (unchanged) -->
-  <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
-    <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
-                h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
-                lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
-                flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
-         style="border-color: rgba(255,255,255,.12)">
-      <div class="hero-bubbles" aria-hidden="true"></div>
-      <div class="hero-mid-blur" aria-hidden="true"></div>
-
-      <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
-        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">ONX</span>
-        <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
-        <div class="mt-8 flex justify-center">
-          <a id="heroCtaBtn" href="download.html"
-             class="hero-cta hero-cta-fade btn btn-primary cta-anim relative text-base md:text-lg
-                    focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                    hover:-translate-y-[2px] active:translate-y-0"
-             style="--from:#0e0e0ecc; --via:#141414cc; --to:#ffffff; --speed:16s; --angle:135deg;"
-             aria-label="Download">
-            <span class="pointer-events-none absolute inset-0 -z-10 rounded-[var(--btn-radius)] blur-xl opacity-50" style="background: radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.18), rgba(0,0,0,0));"></span>
-            <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
-            <span class="hero-cta-text">Download</span>
-          </a>
+  <!-- HERO — full-bleed, cinematic -->
+  <section class="relative" style="padding-top:calc(84px + var(--header-h)); padding-bottom: clamp(80px, 16vw, 140px);">
+    <div class="container">
+      <div class="text-center reveal">
+        <h1 class="display font-semibold leading-[1.04] text-[40px] md:text-[64px] lg:text-[80px]">ONX-Pro</h1>
+        <p class="mt-3 text-xl md:text-2xl muted">Power meets privacy.<br class="hidden md:block"> The AI workspace — without limits.</p>
+        <div class="mt-7 flex items-center justify-center gap-3">
+          <a href="download.html" class="btn btn-white"><i class="ph ph-download-simple"></i> Download</a>
+          <a href="#learn" class="btn btn-black">Learn more</a>
         </div>
       </div>
 
-      <oc-down-arrow id="heroArrow" aria-hidden="true" class="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-6 md:bottom-24 opacity-0 transition-opacity duration-700 ease-out" size="56" thickness="3" alpha="0.85" amp="12%" bounce="2s" breathe="4s" style="z-index:3"></oc-down-arrow>
-    </div>
-  </section>
-
-  <!-- Measure header height for hero spacing (unchanged) -->
-  <script>
-    (function setHeaderVar(){
-      const pick=()=>document.querySelector('onx-header, header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
-      const set=()=>{ const el=pick(); const h=el? el.getBoundingClientRect().height : 56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px'); };
-      const init=()=>{ set(); };
-      init();
-      window.addEventListener('resize,', set, {passive:true});
-      window.addEventListener('orientationchange', set, {passive:true});
-      const el=pick();
-      if(el && 'ResizeObserver' in window){ const ro=new ResizeObserver(set); ro.observe(el); }
-      let n=0; const t=setInterval(()=>{ set(); if(++n>20) clearInterval(t); }, 100);
-      window.addEventListener('load', set, {once:true});
-    })();
-  </script>
-
-  <!-- Arrow reveal timing (unchanged) -->
-  <script>
-  (()=>{
-    const ARROW_AFTER_CTA_MS = 40;
-    const arrow=document.getElementById('heroArrow'); const ctaBtn=document.getElementById('heroCtaBtn'); const ctaTxt=document.querySelector('#home .hero-cta-text');
-    if(!arrow||!ctaBtn) return; const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const reveal = ()=>{ arrow.classList.remove('opacity-0'); arrow.classList.add('opacity-100'); };
-    document.addEventListener('oc:cta-text-done', ()=>{ if(prefersReduced){reveal();return;} setTimeout(reveal, ARROW_AFTER_CTA_MS); }, {once:true});
-    const onCtaInView=()=>{ if(prefersReduced){reveal();return;} if(!ctaTxt){ setTimeout(reveal,10); return; }
-      let lastChange=Date.now(); const mo=new MutationObserver(()=>{ lastChange=Date.now(); }); mo.observe(ctaTxt,{childList:true,characterData:true,subtree:true});
-      const checkStable=()=>{ const idleMs=Date.now()-lastChange; if((ctaTxt.textContent||'').trim() && idleMs>10){ mo.disconnect(); reveal(); return true; } return false; };
-      const tick=()=>{ if(!checkStable()) requestAnimationFrame(tick); }; requestAnimationFrame(tick);
-      setTimeout(()=>{ try{mo.disconnect();}catch(e){} if(arrow.classList.contains('opacity-0')) reveal(); },6000);
-    };
-    const io=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ onCtaInView(); io.disconnect(); break; } } }, { threshold:.35 });
-    io.observe(ctaBtn);
-  })();
-  </script>
-
-  <!-- HERO bubbles JS (unchanged logic) -->
-  <script>
-  (()=>{
-    const hero = document.querySelector('#home .hero-card');
-    const layer = hero?.querySelector('.hero-bubbles');
-    if (!hero || !layer) return;
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (prefersReduced.matches) return;
-
-    const isMobile = window.matchMedia('(max-width: 768px)').matches;
-    const BCFG = window.OC_HERO_BUBBLES || {};
-    const TARGET_COUNT = Math.max(0, Math.min(64, isMobile ? (BCFG.countMobile ?? 9) : (BCFG.countDesktop ?? 16)));
-    const SPEED = Math.max(0.05, Number(BCFG.speedMultiplier || 1));
-
-    const QUESTIONS = [
-      "What’s the hard truth no one says?","What breaks first at 10× scale?","Which metric is lying to us?",
-      "What single change 10×’s activation?","What small experiment has outsized upside?","What would we build if starting over?",
-      "What are customers silently telling us?","What’s our fastest path to profit?","What would a world-class team do now?",
-      "Where are we wasting the most money?","What’s the real bottleneck right now?","How do I dominate the industry?"
-    ];
-    const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
-
-    function makeBubble(i){
-      const b = document.createElement('div');
-      b.className = 'hero-bubble ' + (i % 2 ? 'assistant' : 'user');
-
-      const r = Math.random();
-      const size = (r < .35) ? 'sm' : (r < .78 ? 'md' : 'lg');
-      b.setAttribute('data-size', size);
-
-      const leftPct = rand(6, 94);
-      b.style.left = `${leftPct}%`;
-      b.style.top = `calc(100% + ${rand(4,24)}vh)`;
-
-      const drift = rand(-50, 50);
-      const travel = -rand(90, 140);
-
-      const baseSec = rand(16, 24) + (r < .35 ? 2 : 0);
-      const dur = (baseSec / SPEED).toFixed(2) + 's';
-
-      const delay = (-rand(0, 2200)/100) + 's';
-      const scale = (r > .82) ? 1.02 : 1.0;
-
-      b.style.setProperty('--x-drift', drift+'px');
-      b.style.setProperty('--y-travel', travel+'vh');
-      b.style.setProperty('--dur', dur);
-      b.style.setProperty('--delay', delay);
-      b.style.setProperty('--scale', scale);
-
-      const content = document.createElement('div'); content.className = 'content';
-      const span = document.createElement('span'); span.className = 'bubble-text';
-      const q = QUESTIONS[(i + rand(0, QUESTIONS.length-1)) % QUESTIONS.length];
-      span.textContent = q; content.appendChild(span); b.appendChild(content);
-      return b;
-    }
-
-    for (let i=0;i<TARGET_COUNT;i++) layer.appendChild(makeBubble(i));
-
-    if (prefersReduced.addEventListener) {
-      prefersReduced.addEventListener('change', (e)=>{ if(e.matches){ layer.innerHTML=''; } });
-    } else if (prefersReduced.addListener) {
-      prefersReduced.addListener((e)=>{ if(e.matches){ layer.innerHTML=''; } });
-    }
-  })();
-  </script>
-
-  <!-- HERO typing (unchanged) -->
-  <script>
-  (()=>{
-    window.OC_HERO = Object.assign({
-      enabled:true, waitForBlur:true, startOnView:true, startDelayMs:0, streamSpeed:1.0,
-      line1CharMin:18, line1CharMax:22, lineCharMin:18, lineCharMax:22, buttonCharMin:5, buttonCharMax:10
-    }, window.OC_HERO || {});
-    window.OC_HERO_GLOW = Object.assign({
-      enabled: !!window.OC_ENABLE_HERO_LOGO_GLOW, pulse:true, pulseDur:'6s',
-      color1:'rgba(255,255,255,.25)', color2:'rgba(255,255,255,.12)', opacity:.45, blurPx:30, insetPct:16
-    }, window.OC_HERO_GLOW || {});
-
-    function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-    async function streamHTML(el, html, charMin=10, charMax=18){
-      const container = document.createElement('div'); container.innerHTML = html.trim();
-      async function walk(src, dst){
-        const kids = Array.from(src.childNodes);
-        for(const child of kids){
-          if(child.nodeType === Node.TEXT_NODE){
-            const text = child.textContent || '';
-            const spLocal = (ms)=>{ const c=window.OC_HERO||{}; const f=(typeof c.streamSpeed==='number'&&c.streamSpeed>0)?c.streamSpeed:1.0; return ms*f; };
-            await new Promise(res=>{ let i=0; const tn=document.createTextNode(''); dst.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, i++); if(i<=text.length) setTimeout(tick, spLocal(rand(charMin,charMax))); else res(); })(); });
-          } else if (child.nodeType === Node.ELEMENT_NODE){
-            const clone = child.cloneNode(false); dst.appendChild(clone); await walk(child, clone);
-          }
-        }
-      }
-      el.innerHTML=''; await walk(container, el);
-    }
-
-    (function heroTyping(){
-      const cfg = window.OC_HERO || {}; if(!cfg.enabled) return;
-      const hero=document.getElementById('home'); if(!hero) return;
-      const titleEl=hero.querySelector('.hero-title'); const sub1El=hero.querySelector('.hero-sub1'); const ctaTxt=hero.querySelector('.hero-cta-text'); const ctaBtn=hero.querySelector('#heroCtaBtn');
-      if(!titleEl||!ctaTxt||!ctaBtn) return; const prefersReduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const bTxt=ctaTxt.textContent||'';
-      const TAGLINE_FULL_HTML = '<span class="hero-word">Uncensored AI</span> - for the 1%';
-      const MOBILE_LINE1_HTML = '<span class="hero-word">Uncensored AI</span> -';
-      const MOBILE_LINE2_HTML = 'for the 1%';
-      const isMobile=window.matchMedia('(max-width: 767px)').matches;
-
-      titleEl.innerHTML='';
-      const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
-      if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
-      const logo=document.createElement('span'); logo.className='hero-logo-pro'; logo.setAttribute('role','img'); logo.setAttribute('aria-label','ONX-Pro'); wrapSpan.appendChild(logo);
-
-      if(prefersReduced){
-        if(sub1El){
-          sub1El.innerHTML = isMobile
-            ? `<span class="hero-line1">${MOBILE_LINE1_HTML}</span><span class="hero-line2">${MOBILE_LINE2_HTML}</span>`
-            : `<span class="hero-line1">${TAGLINE_FULL_HTML}</span>`;
-        }
-        ctaBtn.classList.add('cta-visible'); document.dispatchEvent(new Event('oc:cta-text-done')); return;
-      }
-
-      if(sub1El) sub1El.textContent=''; ctaTxt.textContent=''; ctaBtn.classList.remove('cta-visible');
-      function spH(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
-      function typeHero(el, text, min, max){ return new Promise(resolve=>{ let i=0; const tn=document.createTextNode(''); el.textContent=''; el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })(); }); }
-      const wait=(ms)=>new Promise(r=>setTimeout(r, ms));
-      function afterTransition(el, fallbackMs = 900){
-        return new Promise((resolve)=>{
-          let done=false; const finish=()=>{ if(done) return; done=true; resolve(); };
-          const onEnd=(e)=>{ if(e.target===el) finish(); };
-          el.addEventListener('transitionend', onEnd, { once:true });
-          setTimeout(()=>{ el.removeEventListener('transitionend', onEnd); finish(); }, fallbackMs);
-        });
-      }
-
-      async function run(){
-        await wait(Math.max(0, cfg.startDelayMs|0));
-        if(sub1El){
-          const min=(cfg.line1CharMin ?? cfg.lineCharMin)|0; const max=(cfg.line1CharMax ?? cfg.lineCharMax)|0;
-          if(isMobile){
-            sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine l1"></span></span><span class="hero-line2"><span class="seg-fullshine l2"></span></span>';
-            const l1=sub1El.querySelector('.l1'); const l2=sub1El.querySelector('.l2');
-            await streamHTML(l1, MOBILE_LINE1_HTML, min, max);
-            await streamHTML(l2, MOBILE_LINE2_HTML, min, max);
-          } else {
-            sub1El.innerHTML='<span class="hero-line1"><span class="seg-fullshine"></span></span>';
-            const seg=sub1El.querySelector('.seg-fullshine');
-            await streamHTML(seg, TAGLINE_FULL_HTML, min, max);
-          }
-        }
-        await wait(cfg.staggerMs|0);
-        ctaBtn.classList.add('cta-visible');
-        document.dispatchEvent(new Event('oc:cta-visible'));
-        await afterTransition(ctaBtn, 900);
-        await wait(60);
-        document.dispatchEvent(new Event('oc:cta-text-start'));
-        await typeHero(ctaTxt, bTxt, cfg.buttonCharMin|0, cfg.buttonCharMax|0);
-        document.dispatchEvent(new Event('oc:cta-text-done'));
-      }
-
-      let started=false; let inView=!cfg.startOnView; let blurReady=!cfg.waitForBlur;
-      function tryStart(){ if(!started && inView && blurReady){ started=true; run(); } }
-      if(cfg.startOnView){
-        const ob=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting){ inView=true; tryStart(); ob.disconnect(); break; } } }, {threshold:.35});
-        ob.observe(hero);
-      }
-      if(cfg.waitForBlur){
-        document.addEventListener('oc:page-blur-fade', ()=>{ blurReady=true; tryStart(); }, {once:true});
-      } else { blurReady=true; tryStart(); }
-    })();
-  })();
-  </script>
-
-  <!-- ==== Minimal, Apple-style body content (no "cores") ==== -->
-
-  <!-- Value Prop -->
-  <section class="section section-clip">
-    <div class="mx-auto max-w-[1100px] oc-container text-center scroll-fade reveal">
-      <h2 class="text-[34px] md:text-[48px] lg:text-[56px] leading-[1.06] font-semibold tracking-tight">
-        Built for ship-fast teams.<br class="hidden md:block"> Private. Accurate. Uncensored.
-      </h2>
-      <div class="mx-auto mt-5 h-px w-24 hair"></div>
-      <p class="mt-5 text-lg md:text-xl muted max-w-3xl mx-auto">
-        ONX-Pro is your black-label AI workspace — pairing curated, vetted knowledge with on-tap tools and a fast, predictable UX.
-        It runs on your machine, cites its sources, and doesn’t get in your way.
-      </p>
-      <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" class="btn btn-white"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
-        <a href="privacy.html" class="btn btn-black">Privacy</a>
+      <div class="mt-10 md:mt-14 frame reveal">
+        <!-- If you have a hero video, drop it in; image fallback below -->
+        <video class="w-full h-[48vh] md:h-[64vh] object-cover" autoplay muted playsinline loop poster="/images/og/opencounsel-hero.jpg">
+          <source src="/videos/onx-pro-hero.mp4" type="video/mp4">
+          <img src="/images/og/opencounsel-hero.jpg" alt="ONX-Pro in action" class="w-full h-[48vh] md:h-[64vh] object-cover">
+        </video>
       </div>
     </div>
   </section>
 
-  <!-- Showcase (Apple-style hero card) -->
+  <!-- Three marquee benefits -->
+  <section id="learn" class="section">
+    <div class="container">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card p-7 reveal">
+          <div class="kicker">Precision</div>
+          <h3 class="mt-2 text-2xl font-semibold">Analysis that holds up.</h3>
+          <p class="mt-3 muted">Reason deeply with curated sources. Every answer is cited, reproducible, and ready to ship.</p>
+        </div>
+        <div class="card p-7 reveal">
+          <div class="kicker">Privacy</div>
+          <h3 class="mt-2 text-2xl font-semibold">Local-first. Yours only.</h3>
+          <p class="mt-3 muted">Your data stays on your machine. No harvesting, no leaks. Offline-friendly by design.</p>
+        </div>
+        <div class="card p-7 reveal">
+          <div class="kicker">Pace</div>
+          <h3 class="mt-2 text-2xl font-semibold">Built for teams that ship.</h3>
+          <p class="mt-3 muted">A focused, predictable UX with pro tools for web, stats, and finance — right where you work.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Split panel — Apple-style story block -->
   <section class="section">
-    <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="rounded-3xl border border-white/10 overflow-hidden bg-white/[.02]">
-        <div class="grid grid-cols-1 md:grid-cols-2">
-          <div class="p-8 md:p-12 lg:p-16 flex items-center">
-            <div>
-              <h3 class="text-[28px] md:text-[36px] font-semibold tracking-tight">Work that ships.</h3>
-              <p class="mt-3 text-white/80 text-lg leading-relaxed">
-                Research deeper, decide faster, and export polished outputs. Local-first privacy, transparent citations, and tools that just work.
-              </p>
-              <div class="mt-6 flex items-center gap-3">
-                <a href="download.html" class="btn btn-white">Download</a>
-                <a href="learn-more.html" class="btn btn-black">Learn more</a>
-              </div>
-            </div>
-          </div>
-          <div class="relative">
-            <img src="/images/oc-pro-demo.jpg" alt="ONX-Pro demo" loading="lazy" decoding="async"
-                 class="block w-full h-full object-cover">
-            <div class="pointer-events-none absolute inset-0 ring-1 ring-white/10"></div>
+    <div class="container">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+        <div class="reveal">
+          <div class="kicker">Design</div>
+          <h2 class="mt-2 display text-[32px] md:text-[48px] font-semibold leading-[1.06]">Private by default.<br>Effortless by nature.</h2>
+          <div class="mt-5 hairline"></div>
+          <p class="mt-5 text-lg muted">ONX-Pro pairs an elegant, minimal interface with tooling that respects your time. Start a thread, search the web, run an analysis — without context switching.</p>
+          <ul class="mt-6 space-y-2 fine">
+            <li class="flex gap-2"><i class="ph ph-check-circle text-lg"></i> Transparent citations</li>
+            <li class="flex gap-2"><i class="ph ph-check-circle text-lg"></i> Export to briefs & decks</li>
+            <li class="flex gap-2"><i class="ph ph-check-circle text-lg"></i> Keyboard-first, fast</li>
+          </ul>
+          <div class="mt-7 flex gap-3">
+            <a href="download.html" class="btn btn-white">Download</a>
+            <a href="privacy.html" class="btn btn-ghost">Privacy</a>
           </div>
         </div>
-      </div>
-      <div class="mt-4 text-center fine">Drop in a video or animated capture here for launch.</div>
-    </div>
-  </section>
-
-  <!-- What You Get -->
-  <section class="section">
-    <div class="mx-auto max-w-[1100px] oc-container">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="card p-6 md:p-7 scroll-fade reveal">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">
-              <i class="ph ph-brain text-lg" aria-hidden="true"></i>
-            </div>
-            <h3 class="text-xl font-semibold">Deep Analysis</h3>
-          </div>
-          <p class="mt-3 muted">Reason through briefs, analysis, and technical work with precision — fast, context-aware, reproducible.</p>
-        </div>
-        <div class="card p-6 md:p-7 scroll-fade reveal">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">
-              <i class="ph ph-books text-lg" aria-hidden="true"></i>
-            </div>
-            <h3 class="text-xl font-semibold">Curated Knowledge</h3>
-          </div>
-          <p class="mt-3 muted">Expert-maintained collections with citations — legal, finance, science, and industry sources you can trust.</p>
-        </div>
-        <div class="card p-6 md:p-7 scroll-fade reveal">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">
-              <i class="ph ph-squares-four text-lg" aria-hidden="true"></i>
-            </div>
-            <h3 class="text-xl font-semibold">Pro Tools</h3>
-          </div>
-          <p class="mt-3 muted">Web search, stats, and finance — run analyses in place and move work forward, not sideways.</p>
+        <div class="frame reveal">
+          <img src="/images/oc-pro-demo.jpg" alt="ONX-Pro workspace" class="w-full h-[360px] md:h-[520px] object-cover">
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Pricing with Yearly/Monthly toggle -->
+  <!-- Metrics row -->
   <section class="section">
-    <div class="mx-auto max-w-[900px] oc-container text-center">
-      <h2 class="text-[28px] md:text-[40px] font-semibold tracking-tight">Simple pricing</h2>
+    <div class="container">
+      <div class="card p-8 md:p-12 reveal">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+          <div>
+            <div class="text-5xl md:text-6xl font-semibold">10×</div>
+            <div class="fine mt-2">Faster research loops</div>
+          </div>
+          <div>
+            <div class="text-5xl md:text-6xl font-semibold">0</div>
+            <div class="fine mt-2">Data sent to our servers</div>
+          </div>
+          <div>
+            <div class="text-5xl md:text-6xl font-semibold">100%</div>
+            <div class="fine mt-2">Citations in every output</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-      <!-- Segmented control (Minimal, no gradient) -->
-      <div class="mt-4 flex justify-center">
+  <!-- Tools strip -->
+  <section class="section">
+    <div class="container">
+      <div class="reveal text-center">
+        <div class="kicker">Tools</div>
+        <h2 class="mt-2 display text-[28px] md:text-[40px] font-semibold">Everything you need. Nothing you don’t.</h2>
+        <p class="mt-3 muted max-w-3xl mx-auto">Web search. Stats. Finance. Run analyses in place and move work forward — not sideways.</p>
+      </div>
+      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card p-7 reveal">
+          <h3 class="text-xl font-semibold">Web</h3>
+          <p class="mt-2 fine">High-signal search with traceable sources.</p>
+        </div>
+        <div class="card p-7 reveal">
+          <h3 class="text-xl font-semibold">Stats</h3>
+          <p class="mt-2 fine">From quick checks to deeper modeling.</p>
+        </div>
+        <div class="card p-7 reveal">
+          <h3 class="text-xl font-semibold">Finance</h3>
+          <p class="mt-2 fine">Market context and company fundamentals on tap.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing (minimal segmented control; no gradient) -->
+  <section class="section">
+    <div class="container text-center">
+      <div class="reveal">
+        <div class="kicker">Pricing</div>
+        <h2 class="mt-2 display text-[28px] md:text-[40px] font-semibold">Simple.</h2>
+      </div>
+
+      <div class="mt-4 flex justify-center reveal">
         <div id="billingSeg" class="seg" role="tablist" aria-label="Billing period" data-mode="yearly">
           <span class="thumb" aria-hidden="true"></span>
           <button id="segYearly" role="tab" aria-selected="true" aria-pressed="true">Yearly</button>
@@ -662,23 +277,23 @@
         </div>
       </div>
 
-      <p id="billingNote" class="mt-2 fine">Annual plan — <span class="text-white font-medium">$16/month</span> billed yearly.</p>
+      <p id="billingNote" class="mt-2 fine reveal">Annual plan — <span class="text-white font-medium">$16/month</span> billed yearly.</p>
 
-      <div class="mx-auto mt-6 max-w-[640px] card p-6 md:p-7">
-        <div class="flex items-center justify-between">
+      <div class="mx-auto mt-6 max-w-[680px] card p-7 md:p-9 reveal">
+        <div class="flex items-center justify-between gap-6">
           <div class="text-left">
             <div class="text-xl font-semibold">ONX-Pro</div>
             <div class="fine mt-1">Everything you need for private, accurate, uncensored work.</div>
           </div>
           <div class="text-right">
-            <div class="text-2xl font-semibold">
+            <div class="text-3xl md:text-4xl font-semibold">
               $<span id="priceValue">16</span><span class="text-base font-medium fine">/mo</span>
             </div>
             <div id="priceSub" class="fine mt-1">Billed annually</div>
           </div>
         </div>
 
-        <div class="hair my-6"></div>
+        <div class="my-6 hairline"></div>
 
         <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-left fine">
           <li class="flex items-center gap-2"><i class="ph ph-check-circle"></i> Curated, cited knowledge</li>
@@ -688,7 +303,6 @@
         </ul>
 
         <div class="mt-7 flex items-center justify-center gap-3">
-          <!-- White primary CTA, black secondary for contrast -->
           <a href="download.html" class="btn btn-white"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
           <a href="privacy.html" class="btn btn-black">Privacy</a>
         </div>
@@ -698,29 +312,22 @@
 
   <!-- FAQ -->
   <section class="section">
-    <div class="mx-auto max-w-[900px] oc-container">
-      <h2 class="text-[22px] md:text-[28px] font-semibold tracking-tight">Questions</h2>
-      <div class="mt-2 hair"></div>
-      <div class="mt-2">
-        <details class="faq scroll-fade reveal">
-          <summary>
-            <span class="text-base md:text-lg">Does ONX-Pro store my data?</span>
-            <i class="ph ph-plus icon text-lg"></i>
-          </summary>
-          <p class="mt-3 fine">No. ONX-Pro is private by design: sources stay local, and outputs include citations. You stay in control.</p>
+    <div class="container">
+      <div class="reveal">
+        <h2 class="display text-[22px] md:text-[28px] font-semibold">Questions</h2>
+        <div class="mt-2 hairline"></div>
+      </div>
+      <div class="mt-4 space-y-4">
+        <details class="card p-5 reveal">
+          <summary class="cursor-pointer font-medium text-lg">Does ONX-Pro store my data?</summary>
+          <p class="mt-3 fine">No. ONX-Pro is private by design: sources stay local and outputs include citations. You stay in control.</p>
         </details>
-        <details class="faq scroll-fade reveal">
-          <summary>
-            <span class="text-base md:text-lg">What makes it different?</span>
-            <i class="ph ph-plus icon text-lg"></i>
-          </summary>
-          <p class="mt-3 fine">Curated knowledge, on-tap tools, and a fast, predictable UX — designed to produce defensible, shippable work.</p>
+        <details class="card p-5 reveal">
+          <summary class="cursor-pointer font-medium text-lg">What makes it different?</summary>
+          <p class="mt-3 fine">Curated knowledge, on-tap tools, and a focused UX — designed for defensible, shippable work.</p>
         </details>
-        <details class="faq scroll-fade reveal">
-          <summary>
-            <span class="text-base md:text-lg">Can I work offline?</span>
-            <i class="ph ph-plus icon text-lg"></i>
-          </summary>
+        <details class="card p-5 reveal">
+          <summary class="cursor-pointer font-medium text-lg">Can I work offline?</summary>
           <p class="mt-3 fine">Yes. ONX-Pro supports offline-friendly workflows and does not require cloud storage of your data.</p>
         </details>
       </div>
@@ -729,143 +336,22 @@
 
   <!-- Closing CTA -->
   <section class="section">
-    <div class="mx-auto max-w-[1100px] oc-container text-center">
-      <h2 class="text-3xl md:text-5xl font-semibold tracking-tight">Own your AI. Level up your work.</h2>
-      <p class="mt-3 text-lg muted max-w-2xl mx-auto">
-        The black-label workspace for teams that ship. Private, accurate, uncensored.
-      </p>
-      <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" class="btn btn-white"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+    <div class="container text-center">
+      <div class="reveal">
+        <h2 class="display text-3xl md:text-5xl font-semibold">Own your AI.</h2>
+        <p class="mt-3 text-lg muted max-w-2xl mx-auto">The black-label workspace for teams that ship. Private. Accurate. Uncensored.</p>
+        <div class="mt-7 flex items-center justify-center gap-3">
+          <a href="download.html" class="btn btn-white"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+          <a href="#learn" class="btn btn-black">See how it works</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Reveal on scroll -->
-  <script>
-    (function(){
-      const els = Array.from(document.querySelectorAll('.reveal, .scroll-fade'));
-      if (!els.length) return;
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{
-          if (e.isIntersecting){
-            e.target.classList.add('in','in-view');
-            io.unobserve(e.target);
-          }
-        });
-      }, { threshold:.18 });
-      els.forEach(el=> io.observe(el));
-    })();
-  </script>
-
-  <!-- Page blur fade -->
-  <script>
-  (()=>{
-    window.addEventListener('load', ()=>{
-      const pageBlur=document.getElementById('pageBlur');
-      if(!pageBlur) return;
-      pageBlur.classList.add('hide');
-      document.dispatchEvent(new Event('oc:page-blur-fade'));
-      setTimeout(()=>pageBlur.remove(), 1300);
-    });
-  })();
-  </script>
-
-  <!-- Pricing toggle logic + minimal segmented control -->
-  <script>
-    (function(){
-      const seg = document.getElementById('billingSeg');
-      if(!seg) return;
-      const yearly = document.getElementById('segYearly');
-      const monthly = document.getElementById('segMonthly');
-      const thumb = seg.querySelector('.thumb');
-      const priceValue = document.getElementById('priceValue');
-      const priceSub = document.getElementById('priceSub');
-      const billingNote = document.getElementById('billingNote');
-
-      function positionThumb(target){
-        if(!target || !thumb) return;
-        const x = target.offsetLeft;
-        const w = target.offsetWidth;
-        thumb.style.width = Math.max(24, w) + 'px';
-        thumb.style.transform = `translateX(${x}px)`;
-      }
-      function setPressed(btn, pressed){
-        btn.setAttribute('aria-pressed', String(pressed));
-        btn.setAttribute('aria-selected', String(pressed));
-      }
-      function setMode(mode){
-        const isYearly = mode === 'yearly';
-        seg.setAttribute('data-mode', mode);
-        setPressed(yearly, isYearly);
-        setPressed(monthly, !isYearly);
-        priceValue.textContent = isYearly ? '16' : '20';
-        priceSub.textContent = isYearly ? 'Billed annually' : 'Billed monthly';
-        billingNote.innerHTML = isYearly
-          ? 'Annual plan — <span class="text-white font-medium">$16/month</span> billed yearly.'
-          : 'Monthly plan — <span class="text-white font-medium">$20/month</span> billed monthly.';
-        positionThumb(isYearly ? yearly : monthly);
-      }
-      yearly.addEventListener('click', ()=> setMode('yearly'));
-      monthly.addEventListener('click', ()=> setMode('monthly'));
-
-      // Keyboard support
-      seg.addEventListener('keydown', (e)=>{
-        const current = seg.getAttribute('data-mode') || 'yearly';
-        if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
-          e.preventDefault();
-          setMode(current === 'yearly' ? 'monthly' : 'yearly');
-        }
-      });
-
-      const ro = new ResizeObserver(()=> positionThumb(seg.getAttribute('data-mode') === 'monthly' ? monthly : yearly));
-      ro.observe(seg);
-
-      setTimeout(()=> setMode('yearly'), 0);
-    })();
-  </script>
-
-  <!-- === Unify CTA animation across controls, BUT exclude solid white/black buttons === -->
-  <script>
-    (function(){
-      // Read hero CTA CSS variables and propagate to :root so gradient CTAs match hero
-      const cta = document.getElementById('heroCtaBtn');
-      const root = document.documentElement;
-      if (cta && root && cta.style) {
-        const getVar = (name, fallback)=> cta.style.getPropertyValue(name)?.trim() || fallback;
-        const from = getVar('--from', getComputedStyle(root).getPropertyValue('--cta-from'));
-        const via  = getVar('--via',  getComputedStyle(root).getPropertyValue('--cta-via'));
-        const to   = getVar('--to',   getComputedStyle(root).getPropertyValue('--cta-to'));
-        const speed= getVar('--speed',getComputedStyle(root).getPropertyValue('--cta-speed'));
-        const angle= getVar('--angle',getComputedStyle(root).getPropertyValue('--cta-angle'));
-        if (from) root.style.setProperty('--cta-from', from);
-        if (via)  root.style.setProperty('--cta-via',  via);
-        if (to)   root.style.setProperty('--cta-to',   to);
-        if (speed)root.style.setProperty('--cta-speed',speed);
-        if (angle)root.style.setProperty('--cta-angle',angle);
-      }
-
-      // Add gradient skin to primary/btn only when NOT white/black variants
-      const add = (el, cls)=> el && !el.classList.contains(cls) && el.classList.add(cls);
-      document.querySelectorAll('a.btn-primary:not(.btn-white):not(.btn-black), button.btn-primary:not(.btn-white):not(.btn-black), a.btn:not(.btn-white):not(.btn-black), button.btn:not(.btn-white):not(.btn-black)').forEach(el=> add(el,'cta-anim'));
-
-      // Keep ghost outline animation
-      document.querySelectorAll('a.btn-ghost, button.btn-ghost').forEach(el=> add(el,'cta-anim-ghost'));
-
-      // Footer hover polish
-      document.querySelectorAll('footer a').forEach(a=>{
-        a.addEventListener('mouseenter', ()=> a.style.textDecoration='none');
-        a.addEventListener('mouseover', ()=> a.style.opacity='.95');
-        a.addEventListener('mouseout',  ()=> a.style.opacity='1');
-      });
-    })();
-  </script>
-
-  <!-- Footer (minimal) -->
-  <footer>
-    <div class="mx-auto max-w-[1100px] oc-container py-12 flex items-center flex-col gap-6 text-white/60 text-sm">
-      <div class="text-center">
-        <span class="font-semibold text-white">ONX</span> © <span id="yr"></span> ONX
-      </div>
+  <!-- Footer -->
+  <footer class="py-12">
+    <div class="container flex items-center flex-col gap-6 text-white/70 text-sm">
+      <div class="text-center"><span class="font-semibold text-white">ONX</span> © <span id="yr"></span> ONX</div>
       <div class="flex items-center gap-3 flex-wrap justify-center">
         <a class="btn btn-ghost" href="contact.html">Contact</a>
         <a class="btn btn-ghost" href="privacy.html">Privacy</a>
@@ -874,58 +360,52 @@
       </div>
     </div>
   </footer>
-  <script>(function(){ var y=document.getElementById('yr'); if(y) y.textContent=new Date().getFullYear(); })();</script>
 
-  <!-- Down arrow component (unchanged) -->
+  <!-- Reveal on scroll -->
   <script>
-  (() => {
-    class OCDownArrow extends HTMLElement {
-      static get observedAttributes() { return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to']; }
-      constructor(){ super(); this.attachShadow({mode:'open'}); }
-      connectedCallback(){ this.render(); }
-      attributeChangedCallback(){ this.render(); }
-      render(){
-        const dir = (this.getAttribute('dir') || 'down').toLowerCase();
-        const size = Math.max(8, parseInt(this.getAttribute('size') || '72', 10));
-        const thickness = Math.max(1, parseFloat(this.getAttribute('thickness') || '7'));
-        const alpha = Math.min(1, Math.max(0, parseFloat(this.getAttribute('alpha') ?? '0.85')));
-        const amp = (this.getAttribute('amp') || '14%').trim();
-        const bounceDur = (this.getAttribute('bounce') || '1.8s').trim();
-        const breatheDur= (this.getAttribute('breathe') || '3.6s').trim();
-        const from = this.getAttribute('from') || '#ffffff';
-        const via  = this.getAttribute('via')  || from;
-        const to   = this.getAttribute('to')   || from;
-        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
-        const gid = 'grad_' + Math.random().toString(36).slice(2);
-        const animateTag = reduce ? '' : `<animateTransform attributeName="gradientTransform" type="translate" from="0 -1" to="0 1" dur="8s" repeatCount="indefinite" />`;
-        this.shadowRoot.innerHTML = `
-          <style>
-            :host { display:inline-block; line-height:0; }
-            .wrap { --amp: ${amp}; opacity: ${alpha}; will-change: transform, filter, opacity; ${reduce ? '' : `animation: oc-bounce ${bounceDur} ease-in-out infinite, oc-breathe ${breatheDur} ease-in-out infinite;`} backface-visibility: hidden; transform: translateZ(0); }
-            @keyframes oc-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(var(--amp))} }
-            @keyframes oc-breathe { 0%,100%{ filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 16px 40px rgba(255,255,255,.22)) } 50%{ filter: drop-shadow(0 6px 18px rgba(255,255,255,.40)) drop-shadow(0 22px 54px rgba(255,255,255,.30)) } }
-            svg { width:${size}px; height:${size}px; overflow:visible; }
-            .stroke { stroke: url(#${gid}); stroke-width:${thickness}; stroke-linecap:round; stroke-linejoin:round; fill:none; }
-          </style>
-          <div class="wrap" part="wrap" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img" aria-label="Down arrow" style="transform: rotate(${rotation}deg);">
-              <defs>
-                <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
-                  <stop offset="0%"   stop-color="${from}" />
-                  <stop offset="50%"  stop-color="${via}" />
-                  <stop offset="100%" stop-color="${to}" />
-                  ${animateTag}
-                </linearGradient>
-              </defs>
-              <path class="stroke" d="M12 32 H44" />
-              <path class="stroke" d="M44 20 L56 32 L44 44" />
-            </svg>
-          </div>`;
-      }
-    }
-    if (!customElements.get('oc-down-arrow')) customElements.define('oc-down-arrow', OCDownArrow);
-  })();
+    (function(){
+      const els=[...document.querySelectorAll('.reveal')];
+      if(!('IntersectionObserver' in window)||!els.length){els.forEach(e=>e.classList.add('in'));return;}
+      const io=new IntersectionObserver((entries)=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.18});
+      els.forEach(el=>io.observe(el));
+    })();
   </script>
+
+  <!-- Pricing toggle (minimal, no gradient) -->
+  <script>
+    (function(){
+      const seg=document.getElementById('billingSeg');
+      if(!seg) return;
+      const yearly=document.getElementById('segYearly');
+      const monthly=document.getElementById('segMonthly');
+      const priceValue=document.getElementById('priceValue');
+      const priceSub=document.getElementById('priceSub');
+      const billingNote=document.getElementById('billingNote');
+
+      function setPressed(btn, pressed){
+        btn.setAttribute('aria-pressed', String(pressed));
+        btn.setAttribute('aria-selected', String(pressed));
+      }
+      function setMode(mode){
+        const isYearly = mode==='yearly';
+        seg.setAttribute('data-mode', mode);
+        setPressed(yearly, isYearly); setPressed(monthly, !isYearly);
+        priceValue.textContent = isYearly ? '16' : '20';
+        priceSub.textContent   = isYearly ? 'Billed annually' : 'Billed monthly';
+        billingNote.innerHTML  = isYearly
+          ? 'Annual plan — <span class="text-white font-medium">$16/month</span> billed yearly.'
+          : 'Monthly plan — <span class="text-white font-medium">$20/month</span> billed monthly.';
+      }
+      yearly.addEventListener('click', ()=>setMode('yearly'));
+      monthly.addEventListener('click', ()=>setMode('monthly'));
+      seg.addEventListener('keydown', (e)=>{
+        const m=seg.getAttribute('data-mode')||'yearly';
+        if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault(); setMode(m==='yearly'?'monthly':'yearly');}
+      });
+      setMode('yearly');
+    })();
+  </script>
+
+  <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
 </body>
 </html>
