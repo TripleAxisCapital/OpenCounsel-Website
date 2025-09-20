@@ -19,8 +19,6 @@
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
   <link rel="preload" as="image" href="/logo.svg">
-  <!-- NEW: ensure mobile uses the exact Pro logo file -->
-  <link rel="preload" as="image" href="/logoPro.svg">
 
   <!-- Icons -->
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any">
@@ -153,7 +151,7 @@
         linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06)) padding-box,
         linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box; }
 
-    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain; }
+    .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
 
     /* === Faster hero logo reveal + bigger size === */
     .hero-logo-white,.hero-logo-pro{
@@ -165,40 +163,9 @@
       animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
       will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle;
     }
-    /* IMPORTANT: use absolute URLs + longhands for iOS Safari */
-    .hero-logo-white{
-      -webkit-mask-image: url('/logo.svg');
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-position: center;
-      -webkit-mask-size: contain;
-      mask-image: url('/logo.svg');
-      mask-repeat: no-repeat;
-      mask-position: center;
-      mask-size: contain;
-    }
-    .hero-logo-pro{
-      -webkit-mask-image: url('/logoPro.svg');
-      -webkit-mask-repeat: no-repeat;
-      -webkit-mask-position: center;
-      -webkit-mask-size: contain;
-      mask-image: url('/logoPro.svg');
-      mask-repeat: no-repeat;
-      mask-position: center;
-      mask-size: contain;
-    }
-    /* Fallback image class (used only if mask unsupported) */
-    .hero-logo-img{
-      display:inline-block;
-      width: var(--hero-logo-size, clamp(140px, 45vw, 400px));
-      height: var(--hero-logo-size, clamp(140px, 45vw, 400px));
-      object-fit: contain; object-position: center;
-      opacity:0; filter:blur(6px);
-      transform: translateY(6px) scale(.985);
-      animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards;
-      will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle;
-    }
-
-    .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro, .no-hero-glow .hero-logo-img{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
+    .hero-logo-white{ -webkit-mask:url('logo.svg') no-repeat center / contain; mask:url('logo.svg') no-repeat center / contain; }
+    .hero-logo-pro  { -webkit-mask:url('logoPro.svg') no-repeat center / contain; mask:url('logoPro.svg') no-repeat center / contain; }
+    .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
     @keyframes heroLogoReveal {
       0%  { opacity:0; filter:blur(6px);  transform: translateY(6px) scale(.985); }
       60% { opacity:1; filter:blur(1.5px); transform: translateY(0)   scale(1);    }
@@ -424,7 +391,7 @@
     threshold="8">
   </onx-header>
 
-  <!-- HERO (unchanged structure) -->
+  <!-- HERO (unchanged) -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
     <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
                 h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
@@ -435,7 +402,6 @@
       <div class="hero-mid-blur" aria-hidden="true"></div>
 
       <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
-        <!-- Title placeholder; JS swaps to SVG-masked logo (now robust on mobile) -->
         <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">ONX</span>
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
@@ -456,15 +422,14 @@
     </div>
   </section>
 
-  <!-- Measure header height for hero spacing (unchanged logic; fixed event name) -->
+  <!-- Measure header height for hero spacing (unchanged) -->
   <script>
     (function setHeaderVar(){
       const pick=()=>document.querySelector('onx-header, header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
       const set=()=>{ const el=pick(); const h=el? el.getBoundingClientRect().height : 56; document.documentElement.style.setProperty('--header-h', Math.round(h)+'px'); };
       const init=()=>{ set(); };
       init();
-      /* FIX: remove stray comma so mobile Safari doesn't choke on listeners ordering */
-      window.addEventListener('resize', set, {passive:true});
+      window.addEventListener('resize,', set, {passive:true});
       window.addEventListener('orientationchange', set, {passive:true});
       const el=pick();
       if(el && 'ResizeObserver' in window){ const ro=new ResizeObserver(set); ro.observe(el); }
@@ -558,7 +523,7 @@
   })();
   </script>
 
-  <!-- HERO typing (unchanged features; ADDED mobile-safe logo injection + mask fallback) -->
+  <!-- HERO typing (unchanged) -->
   <script>
   (()=>{
     window.OC_HERO = Object.assign({
@@ -599,48 +564,10 @@
       const MOBILE_LINE2_HTML = 'for the 1%';
       const isMobile=window.matchMedia('(max-width: 767px)').matches;
 
-      // --- Insert robust logo that works on mobile (mask when available, <img> fallback) ---
-      function supportsMask(){
-        try {
-          return CSS.supports('mask-image', 'url("/logoPro.svg")') || CSS.supports('-webkit-mask-image', 'url("/logoPro.svg")');
-        } catch { return false; }
-      }
-      function makeLogoEl(){
-        if (supportsMask()){
-          const span=document.createElement('span');
-          span.className='hero-logo-pro';
-          span.setAttribute('role','img');
-          span.setAttribute('aria-label','ONX-Pro');
-          return span;
-        } else {
-          const img=document.createElement('img');
-          img.src='/logoPro.svg';
-          img.alt='ONX-Pro';
-          img.className='hero-logo-img';
-          return img;
-        }
-      }
-
       titleEl.innerHTML='';
       const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
       if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
-      const logoEl=makeLogoEl();
-      wrapSpan.appendChild(logoEl);
-      // If the mask path fails to load for any reason, swap to <img> fallback
-      if (logoEl instanceof HTMLSpanElement){
-        const testImg = new Image();
-        testImg.onload = ()=>{/* ok */};
-        testImg.onerror = ()=>{
-          try {
-            const img=document.createElement('img');
-            img.src='/logoPro.svg';
-            img.alt='ONX-Pro';
-            img.className='hero-logo-img';
-            wrapSpan.replaceChild(img, logoEl);
-          } catch(_){}
-        };
-        testImg.src = '/logoPro.svg';
-      }
+      const logo=document.createElement('span'); logo.className='hero-logo-pro'; logo.setAttribute('role','img'); logo.setAttribute('aria-label','ONX-Pro'); wrapSpan.appendChild(logo);
 
       if(prefersReduced){
         if(sub1El){
@@ -679,7 +606,7 @@
             await streamHTML(seg, TAGLINE_FULL_HTML, min, max);
           }
         }
-        await wait((cfg.staggerMs|0) || 0);
+        await wait(cfg.staggerMs|0);
         ctaBtn.classList.add('cta-visible');
         document.dispatchEvent(new Event('oc:cta-visible'));
         await afterTransition(ctaBtn, 900);
@@ -1096,14 +1023,5 @@
     if (!customElements.get('oc-down-arrow')) customElements.define('oc-down-arrow', OCDownArrow);
   })();
   </script>
-
-  <!-- Noscript fallback to guarantee the Pro logo renders on mobile without JS -->
-  <noscript>
-    <style>
-      #home .hero-title { display:block; }
-      #home .hero-title::before { content:""; display:inline-block; width:var(--hero-logo-size, 54vw); height:var(--hero-logo-size, 54vw); background: center / contain no-repeat url("/logoPro.svg"); }
-      #home .hero-title { color: transparent !important; }
-    </style>
-  </noscript>
 </body>
 </html>
