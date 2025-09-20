@@ -60,6 +60,9 @@ class ONXHeader extends HTMLElement {
       "mobile-link-padding": "--mobile-link-padding",
       // NEW: precise line-height control to prevent descender clipping
       "nav-line-height": "--nav-line-height",
+      // NEW: GLOBAL VARS (requested) — download button vertical padding
+      "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
+      "download-btn-pad-y-mobile": "--download-btn-pad-y-mobile",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -101,12 +104,17 @@ class ONXHeader extends HTMLElement {
 
           /* Global nav controls (header + mobile) */
           --nav-font-size: .95rem;
-          --nav-font-weight: 700;
+          /* REQUESTED: make default nav not bold */
+          --nav-font-weight: 400;
           --nav-letter-spacing: -.01em;
           --nav-gap: 2rem;
           --mobile-link-padding: 12px 12px;
           /* NEW: prevent descender clipping (e.g., "g" in Pricing) */
           --nav-line-height: 1.25;
+
+          /* NEW (REQUESTED): global download button padding controls */
+          --download-btn-pad-y-desktop: .35rem;
+          --download-btn-pad-y-mobile: .50rem;
 
           position: sticky; top: 0; z-index: 50;
           display:block;
@@ -242,9 +250,22 @@ class ONXHeader extends HTMLElement {
           font-size: var(--nav-font-size);
           line-height: var(--nav-line-height); /* NEW */
           display: inline-block; /* helps avoid glyph cropping in some engines */
+          position: relative; /* for hover underline */
+          transition: transform .2s cubic-bezier(.2,.8,.2,1);
         }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
+        /* REQUESTED: ONX Pro bold */
         .nav-link--pro{ font-weight:800 !important; }
+
+        /* REQUESTED: Apple-style hover (subtle lift + soft underline grow) */
+        .center .nav-link::after{
+          content:""; position:absolute; left:10%; right:10%; bottom:-.28em; height:2px;
+          background: currentColor; opacity:.22;
+          transform: scaleX(0); transform-origin: 50% 50%;
+          transition: transform .28s ease, opacity .28s ease;
+        }
+        .center .nav-link:hover{ transform: translateY(-1px); }
+        .center .nav-link:hover::after{ transform: scaleX(1); opacity:.5; }
 
         .news-link{
           display:none; align-items:center; gap:.5rem;
@@ -256,9 +277,24 @@ class ONXHeader extends HTMLElement {
           border-radius: 16px; padding:.55rem 1rem;
           box-shadow: 0 18px 30px rgba(0,0,0,.18);
           transition: transform .2s ease, box-shadow .2s ease;
+          box-sizing: border-box; /* ensures precise height calc works */
         }
         .btn:hover{ transform: translateY(-1px); box-shadow: 0 26px 40px rgba(0,0,0,.26); }
         .icon{ width: 18px; height: 18px; display:inline-block; }
+
+        /* NEW (REQUESTED): Download button auto-fits the header height */
+        /* Mobile header area (if you ever show a header button there) */
+        .right-area .btn{
+          padding-block: var(--download-btn-pad-y-mobile);
+        }
+        @media (min-width:768px){
+          .desktop-actions .btn{
+            /* Make the button's total height match the header bar height,
+               leaving adjustable padding defined by global var */
+            height: calc(var(--pill-height-desktop) - (2 * var(--download-btn-pad-y-desktop)));
+            padding-block: var(--download-btn-pad-y-desktop);
+          }
+        }
 
         @media (min-width:768px){
           .news-link{ display:inline-flex; }
@@ -363,8 +399,9 @@ class ONXHeader extends HTMLElement {
           padding: var(--mobile-link-padding); border-radius: 14px;
           color:#0A0D10; font-weight: var(--nav-font-weight); font-size: var(--nav-font-size); letter-spacing: var(--nav-letter-spacing);
           line-height: var(--nav-line-height); /* NEW */
+          transition: background-color .18s ease, transform .18s ease;
         }
-        .mobile-link:hover{ background:#f7f8f9; }
+        .mobile-link:hover{ background:#f7f8f9; transform: translateY(-1px); }
         .mobile-link .chev{ width:18px; height:18px; opacity:.4; }
 
         .mobile-link--pro{ font-weight:800 !important; }
@@ -423,7 +460,7 @@ class ONXHeader extends HTMLElement {
           background:#0A0D10;
         }
 
-        /* Desktop nav → white */
+        /* Desktop nav → white for ONXPro theme (unchanged) */
         :host([theme="ONXPro"]) .center .nav-link,
         :host([theme="onxpro"]) .center .nav-link,
         :host([theme="pro"]) .center .nav-link{
@@ -489,7 +526,14 @@ class ONXHeader extends HTMLElement {
           box-shadow:none !important;   /* still no outline when floating */
         }
 
-        /* Center nav (desktop) → black text */
+        /* Center nav (desktop) → black text for light/default themes (REQUESTED) */
+        :host(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .center .nav-link{
+          background:none !important;
+          -webkit-text-fill-color: initial !important;
+          color:#0A0D10 !important;
+          padding-bottom: 0 !important;
+        }
+
         :host([invert]) .center .nav-link,
         :host([theme="ONXProLight"]) .center .nav-link,
         :host([theme="onxpro-light"]) .center .nav-link,
@@ -499,6 +543,7 @@ class ONXHeader extends HTMLElement {
           color:#0A0D10 !important;
           padding-bottom: 0 !important;
         }
+
         :host([invert]) .news-link,
         :host([theme="ONXProLight"]) .news-link,
         :host([theme="onxpro-light"]) .news-link,
