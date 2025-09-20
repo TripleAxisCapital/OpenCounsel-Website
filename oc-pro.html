@@ -1,4 +1,4 @@
-<!-- ONX-Pro: Dark Mode Page (production) -->
+<!-- ONX-Pro: Dark Mode Page (production, simplified body) -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -32,7 +32,6 @@
   <meta property="og:image" content="https://www.opencounsel.ca/images/og/opencounsel-1200x630.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:site" content="@OpenCounselAI">
   <meta name="twitter:title" content="ONX-Pro — The AI Workspace. Without Limits.">
@@ -58,11 +57,7 @@
 
   <!-- === Hero bubbles global config ======================================= -->
   <script>
-    window.OC_HERO_BUBBLES = {
-      countMobile: 9,      // bubbles on screen at once (mobile)
-      countDesktop: 16,    // bubbles on screen at once (desktop)
-      speedMultiplier: 1.0 // global speed multiplier for bubble animations
-    };
+    window.OC_HERO_BUBBLES = { countMobile: 9, countDesktop: 16, speedMultiplier: 1.0 };
   </script>
   <!-- ===================================================================== -->
 
@@ -77,9 +72,7 @@
       theme: {
         extend: {
           fontFamily: { sans: ['Inter','ui-sans-serif','system-ui'] },
-          colors: {
-            oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' }
-          },
+          colors: { oc: { ink:'#0A0D10', soft:'#F5F7F9', line:'#E7EDF2', accent:'#5B8CFF', lilac:'#E7E7FF' } },
           boxShadow: {
             card:'0 6px 30px rgba(16,24,40,0.08)',
             glow:'0 0 0 1px rgba(255,255,255,.06), 0 10px 30px rgba(16,24,40,.18)'
@@ -89,7 +82,7 @@
     }
   </script>
 
-  <!-- Base styles -->
+  <!-- Base styles (unchanged hero/header styles retained) -->
   <style>
     :root {
       --pad-mobile-x: 24px; --pad-desktop-x: 32px; --hamburger-inset: 13px;
@@ -100,16 +93,9 @@
       --hero-shine-bg-size-x: 260%; --hero-shine-direction: reverse;
       --logo-width:64px; --logo-height:64px;
 
-      /* Global controls for hero chat bubbles brightness/dimness */
-      --hero-bubbles-brightness: 1;
-      --hero-bubbles-opacity: 1;
-      --hero-bubble-alpha-scale: 1;
-      --hero-bubble-base-alpha: .08;
-      --hero-bubble-user-alpha: .10;
-      --hero-bubble-user-border-alpha: .14;
-      --hero-bubble-assist-alpha: .06;
-      --hero-bubble-assist-border-alpha: .10;
-      --hero-bubble-text-alpha: .92;
+      --hero-bubbles-brightness: 1; --hero-bubbles-opacity: 1; --hero-bubble-alpha-scale: 1;
+      --hero-bubble-base-alpha: .08; --hero-bubble-user-alpha: .10; --hero-bubble-user-border-alpha: .14;
+      --hero-bubble-assist-alpha: .06; --hero-bubble-assist-border-alpha: .10; --hero-bubble-text-alpha: .92;
     }
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
@@ -137,7 +123,7 @@
     @keyframes heroBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
     #home .hero-line1, #home .hero-line2 { display:block; }
 
-    /* Hero shimmer sweep for the first line */
+    /* Hero shimmer */
     #home .hero-line1 .seg-fullshine {
       position: relative;
       background-image:
@@ -158,21 +144,16 @@
       animation-direction: var(--hero-shine-direction, normal);
       will-change: background-position;
     }
-    @keyframes heroShine {
-      0%   { background-position: -150% 0, 0 0; }
-      100% { background-position:  150% 0, 0 0; }
-    }
+    @keyframes heroShine { 0%{ background-position:-150% 0,0 0 } 100%{ background-position:150% 0,0 0 } }
     @media (prefers-reduced-motion: reduce) {
-      #home .hero-line1 .seg-fullshine { animation: none; -webkit-text-fill-color: #fff; color: #fff; background: none; }
+      #home .hero-line1 .seg-fullshine { animation:none; -webkit-text-fill-color:#fff; color:#fff; background:none; }
     }
 
-    /* Logo glow container and animation */
+    /* Logo glow */
     .hero-logo-wrap { position: relative; display: inline-block; }
     .hero-logo-glow {
-      --glow-c1: rgba(0,207,255,.40);
-      --glow-c2: rgba(14,111,92,.28);
-      --glow-opacity: .55;
-      --glow-blur: 30px;
+      --glow-c1: rgba(0,207,255,.40); --glow-c2: rgba(14,111,92,.28);
+      --glow-opacity: .55; --glow-blur: 30px;
       position: absolute; inset: -16%; border-radius: 9999px;
       background:
         radial-gradient(60% 60% at 50% 40%, var(--glow-c1), rgba(0,0,0,0) 70%),
@@ -188,105 +169,86 @@
     @keyframes heroGlowPulse { 0%,100%{ transform:scale(1); filter:blur(var(--glow-blur)); opacity:var(--glow-opacity);} 50%{ transform:scale(1.03); filter:blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05);} }
     .no-hero-glow .hero-logo-glow{ display:none !important; }
 
-    /* Page blur + mobile menu (dark overrides later) */
+    /* Page blur + bubbles */
     .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background: rgba(0,0,0,.28); z-index:9999; pointer-events:none; transition: backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
 
-    /* Scroll fade primitives */
     .scroll-fade { isolation:isolate; }
     .scroll-fade > * { filter: blur(16px); opacity:.65; transform: translateY(8px); transition: filter 1100ms cubic-bezier(.16,1,.3,1), opacity 1100ms cubic-bezier(.16,1,.3,1), transform 1100ms cubic-bezier(.16,1,.3,1); will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0); }
     .scroll-fade.in-view > * { filter: blur(0); opacity:1; transform: translateY(0); }
 
-    /* Dark mode overrides */
-    :root{
-      --from:#000000cc; --via:#0a0a0acc; --to:#1a1a1acc; --speed:16s; --angle:135deg;
-      --grad-from:#000000cc; --grad-via:#0a0a0acc; --grad-to:#1a1a1acc;
-      --line: rgba(255,255,255,.12);
-    }
+    :root{ --from:#000000cc; --via:#0a0a0acc; --to:#1a1a1acc; --speed:16s; --angle:135deg; --grad-from:#000000cc; --grad-via:#0a0a0acc; --grad-to:#1a1a1acc; --line: rgba(255,255,255,.12); }
     body { background:#000; color:#eaeaea; }
-
-    /* Small helpers */
     .tap-boost{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+    /* Minimal section primitives */
+    .section { padding: 64px 0; }
+    @media (min-width: 768px) { .section { padding: 96px 0; } }
+
+    .card {
+      border-radius: 18px; border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    .muted { color: rgba(255,255,255,.72); }
+    .fine { color: rgba(255,255,255,.56); }
+    .hair { height:1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0)); }
+    .btn-primary {
+      @apply inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold;
+      color:#fff; background: linear-gradient(135deg,#0e0e0e,#141414,#ffffff);
+      box-shadow: 0 20px 44px rgba(0,0,0,.45);
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .3s ease;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 28px 60px rgba(0,0,0,.55); }
+    .btn-ghost {
+      @apply inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold;
+      color:#fff; border:1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06);
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24); }
+
+    /* Demo stage */
+    .stage {
+      border-radius: 22px; border:1px solid rgba(255,255,255,.10);
+      background: radial-gradient(60% 60% at 50% 30%, rgba(255,255,255,.06), rgba(255,255,255,.02) 70%);
+      overflow:hidden; position:relative;
+      height: var(--demo-stage-h-sm);
+    }
+    @media (min-width: 1024px){ .stage { height: var(--demo-stage-h-lg); } }
+    .stage-media { position:absolute; inset:0; display:grid; place-items:center; }
+    .stage-media img, .stage-media video { width:100%; height:100%; object-fit:cover; opacity:.95; }
+
+    /* FAQ */
+    details.faq { border-bottom: 1px solid rgba(255,255,255,.10); padding: 18px 0; }
+    details.faq[open] summary .icon { transform: rotate(45deg); }
+    summary { cursor: pointer; list-style: none; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    summary::-webkit-details-marker{ display:none; }
   </style>
 
   <!-- Load the header component -->
   <script type="module" src="/assets/onx-header.js"></script>
 
-  <!-- HERO bubbles: ChatGPT-style message blocks floating subtly behind content -->
+  <!-- HERO (unchanged) -->
   <style>
-    :root {
-      --hero-mid-blur: 4px;
-      --chat-b-radius: 12px;
-      --chat-b-font: 14px;
-      --chat-b-lh: 1.4;
-      --chat-b-pad-y: 9px;
-      --chat-b-pad-x: 12px;
-      --chat-b-pad-y-sm: 8px;
-      --chat-b-pad-x-sm: 10px;
-      --chat-b-pad-y-lg: 10px;
-      --chat-b-pad-x-lg: 14px;
-      --chat-b-border: rgba(255,255,255,.14);
-      --chat-b-border-assistant: rgba(255,255,255,.10);
-      --chat-b-bg: rgba(255,255,255,.06);
-      --chat-b-bg-user: rgba(255,255,255,.08);
-      --chat-b-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px rgba(0,0,0,.32);
-      --chat-b-maxw: min(72ch, 560px);
-    }
-
-    .hero-bubbles {
-      position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden;
-      opacity: var(--hero-bubbles-opacity, 1);
-      filter: brightness(var(--hero-bubbles-brightness, 1));
-    }
-    .hero-mid-blur {
-      position:absolute; inset:0; z-index:2; pointer-events:none;
-      backdrop-filter: blur(var(--hero-mid-blur, 0px));
-      -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px));
-    }
-    .hero-bubble {
-      position:absolute;
-      border-radius: var(--chat-b-radius);
-      border: 1px solid var(--chat-b-border);
-      background: var(--chat-b-bg);
-      box-shadow: var(--chat-b-shadow);
-      will-change: transform, opacity, filter;
-      transform: translateZ(0);
-      isolation:isolate;
-      overflow:hidden;
-      width: max-content;
-      max-width: var(--chat-b-maxw);
-      animation: bubbleFloat var(--dur,20s) linear var(--delay,0s) infinite,
-                 bubbleBreathe calc(var(--dur,20s) / 2.2) ease-in-out var(--delay,0s) infinite;
-    }
-    .hero-bubble.user { background: var(--chat-b-bg-user); border-color: var(--chat-b-border); }
-    .hero-bubble.assistant { background: var(--chat-b-bg); border-color: var(--chat-b-border-assistant); }
-    .hero-bubble::after{ content:none !important; display:none !important; }
-    .hero-bubble .content { position:relative; display:block; padding: var(--chat-b-pad-y) var(--chat-b-pad-x); }
+    :root { --hero-mid-blur: 4px; --chat-b-radius: 12px; --chat-b-font: 14px; --chat-b-lh: 1.4;
+            --chat-b-pad-y: 9px; --chat-b-pad-x: 12px; --chat-b-pad-y-sm: 8px; --chat-b-pad-x-sm: 10px;
+            --chat-b-pad-y-lg: 10px; --chat-b-pad-x-lg: 14px; --chat-b-border: rgba(255,255,255,.14);
+            --chat-b-border-assistant: rgba(255,255,255,.10); --chat-b-bg: rgba(255,255,255,.06);
+            --chat-b-bg-user: rgba(255,255,255,.08); --chat-b-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 12px 26px rgba(0,0,0,.32);
+            --chat-b-maxw: min(72ch, 560px); }
+    .hero-bubbles { position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; opacity: var(--hero-bubbles-opacity, 1); filter: brightness(var(--hero-bubbles-brightness, 1)); }
+    .hero-mid-blur { position:absolute; inset:0; z-index:2; pointer-events:none; backdrop-filter: blur(var(--hero-mid-blur, 0px)); -webkit-backdrop-filter: blur(var(--hero-mid-blur, 0px)); }
+    .hero-bubble { position:absolute; border-radius: var(--chat-b-radius); border: 1px solid var(--chat-b-border); background: var(--chat-b-bg); box-shadow: var(--chat-b-shadow); will-change: transform, opacity, filter; transform: translateZ(0); isolation:isolate; overflow:hidden; width: max-content; max-width: var(--chat-b-maxw);
+      animation: bubbleFloat var(--dur,20s) linear var(--delay,0s) infinite, bubbleBreathe calc(var(--dur,20s) / 2.2) ease-in-out var(--delay,0s) infinite; }
+    .hero-bubble.user{ background: var(--chat-b-bg-user); border-color: var(--chat-b-border); }
+    .hero-bubble.assistant{ background: var(--chat-b-bg); border-color: var(--chat-b-border-assistant); }
+    .hero-bubble .content{ position:relative; display:block; padding: var(--chat-b-pad-y) var(--chat-b-pad-x); }
     .hero-bubble[data-size="sm"] .content { padding: var(--chat-b-pad-y-sm) var(--chat-b-pad-x-sm); }
-    .hero-bubble[data-size="md"] .content { padding: var(--chat-b-pad-y) var(--chat-b-pad-x); }
     .hero-bubble[data-size="lg"] .content { padding: var(--chat-b-pad-y-lg) var(--chat-b-pad-x-lg); }
-    .hero-bubble .bubble-text{
-      color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92));
-      font-weight:500; letter-spacing:0;
-      font-size: var(--chat-b-font);
-      line-height: var(--chat-b-lh);
-      white-space:normal; text-align:left; display:block;
-      overflow-wrap:anywhere; word-break:break-word; hyphens:auto; -webkit-hyphens:auto; -ms-hyphens:auto;
-      margin: 0;
-    }
-    @keyframes bubbleFloat {
-      0%   { transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 }
-      10%  { opacity:.80 }
-      90%  { opacity:.85 }
-      100% { transform: translateY(calc(var(--y-start, 16vh) + var(--y-travel, -120vh))) translateX(var(--x-drift, 0px)) scale(var(--scale,1)); opacity:0 }
-    }
-    @keyframes bubbleBreathe {
-      0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.14)) drop-shadow(0 10px 22px rgba(0,0,0,.32)); }
-      50%     { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 14px 34px rgba(0,0,0,.40)); }
-    }
-    @media (prefers-reduced-motion: reduce){
-      .hero-bubble{ animation: none !important; }
-    }
+    .hero-bubble .bubble-text{ color: rgba(232,232,232, var(--hero-bubble-text-alpha, .92)); font-weight:500; font-size: var(--chat-b-font); line-height: var(--chat-b-lh); margin:0; }
+    @keyframes bubbleFloat { 0%{ transform: translateY(var(--y-start, 16vh)) translateX(0) scale(var(--scale,1)); opacity:0 } 10%{ opacity:.80 } 90%{ opacity:.85 } 100%{ transform: translateY(calc(var(--y-start, 16vh) + var(--y-travel, -120vh))) translateX(var(--x-drift, 0px)) scale(var(--scale,1)); opacity:0 } }
+    @keyframes bubbleBreathe { 0%,100% { filter: drop-shadow(0 1px 4px rgba(255,255,255,.14)) drop-shadow(0 10px 22px rgba(0,0,0,.32)); } 50% { filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 14px 34px rgba(0,0,0,.40)); } }
+    @media (prefers-reduced-motion: reduce){ .hero-bubble{ animation:none !important; } }
   </style>
   <style id="oc-hero-bold-rotator"> .hero-sub1 .hero-word { font-weight: 800; } </style>
 </head>
@@ -295,7 +257,7 @@
   <!-- FULL-PAGE BLUR OVERLAY -->
   <div id="pageBlur" class="page-blur" aria-hidden="true"></div>
 
-  <!-- ONX HEADER (ONLY) -->
+  <!-- ONX HEADER (unchanged) -->
   <onx-header invert
     width-flat="75%"
     theme="ONXPro"
@@ -307,22 +269,16 @@
     pad-float-top-desktop="1rem"
     pad-float-bottom-desktop=".25rem"
     threshold="8">
-    <!-- Optional: add slot="nav" links per-page if desired -->
-    <!-- <a slot="nav" href="/oc-pro.html" aria-current="page">ONX-Pro</a> -->
-    <!-- <a slot="nav" href="/cores.html">Cores</a> -->
-    <!-- <a slot="action" href="/download.html" class="btn">Download</a> -->
   </onx-header>
 
-  <!-- HERO -->
+  <!-- HERO (unchanged structure) -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
     <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
                 h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
                 lg:h-[calc(100svh-var(--header-h,56px)-var(--gap-desktop,24px))]
                 flex items-center justify-center text-center px-[var(--pad-mobile-x)] lg:px-[var(--pad-desktop-x)]"
          style="border-color: rgba(255,255,255,.12)">
-      <!-- Floating bubbles layer (behind content) -->
       <div class="hero-bubbles" aria-hidden="true"></div>
-      <!-- Very light blur between bubbles and foreground -->
       <div class="hero-mid-blur" aria-hidden="true"></div>
 
       <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
@@ -347,7 +303,7 @@
     </div>
   </section>
 
-  <!-- Measure header height for hero spacing (supports <onx-header>) -->
+  <!-- Measure header height for hero spacing (unchanged) -->
   <script>
     (function setHeaderVar(){
       const pick=()=>document.querySelector('onx-header, header, #siteHeader, .site-header, nav[role="navigation"], .oc-nav');
@@ -357,16 +313,13 @@
       window.addEventListener('resize', set, {passive:true});
       window.addEventListener('orientationchange', set, {passive:true});
       const el=pick();
-      if(el && 'ResizeObserver' in window){
-        const ro=new ResizeObserver(set); ro.observe(el);
-      }
-      // Safety: re-check a few times during boot in case the web component hydrates later
+      if(el && 'ResizeObserver' in window){ const ro=new ResizeObserver(set); ro.observe(el); }
       let n=0; const t=setInterval(()=>{ set(); if(++n>20) clearInterval(t); }, 100);
       window.addEventListener('load', set, {once:true});
     })();
   </script>
 
-  <!-- Arrow reveal timing -->
+  <!-- Arrow reveal timing (unchanged) -->
   <script>
   (()=>{
     const ARROW_AFTER_CTA_MS = 40;
@@ -385,7 +338,7 @@
   })();
   </script>
 
-  <!-- HERO bubbles JS -->
+  <!-- HERO bubbles JS (unchanged content logic, light copy edits) -->
   <script>
   (()=>{
     const hero = document.querySelector('#home .hero-card');
@@ -400,7 +353,10 @@
     const SPEED = Math.max(0.05, Number(BCFG.speedMultiplier || 1));
 
     const QUESTIONS = [
-      "What are we wrong about?","Which metric is lying to us?","Where are we wasting the most money?","What’s the hard truth no one says?","What would a ruthless competitor do next?","What breaks first at 10× scale?","What would we build if starting over?","Which feature should we kill today?","What can we automate this week?","What would make our best users leave?","What regulation could kill this?","What’s our fastest path to profit?","What single change 10×’s activation?","What’s the real bottleneck right now?","What’s a non-consensus bet we should make?","Who’s our most dangerous competitor—and why?","What small experiment has outsized upside?","What ugly metric are we ignoring?","What are customers silently telling us?","If we had to ship Friday, what cuts?","What would a world-class team do now?","If money wasn’t a limit, what’s the move?","What’s the headline if we fail?","What decision unlocks the most value?","How do I outsmart my competitor?","How do I dominate the industry?","How do I make our product the best?"
+      "What’s the hard truth no one says?","What breaks first at 10× scale?","Which metric is lying to us?",
+      "What single change 10×’s activation?","What small experiment has outsized upside?","What would we build if starting over?",
+      "What are customers silently telling us?","What’s our fastest path to profit?","What would a world-class team do now?",
+      "Where are we wasting the most money?","What’s the real bottleneck right now?","How do I dominate the industry?"
     ];
     const rand = (a,b)=> Math.floor(Math.random()*(b-a+1))+a;
 
@@ -431,20 +387,15 @@
       b.style.setProperty('--delay', delay);
       b.style.setProperty('--scale', scale);
 
-      const content = document.createElement('div');
-      content.className = 'content';
-      const span = document.createElement('span');
-      span.className = 'bubble-text';
+      const content = document.createElement('div'); content.className = 'content';
+      const span = document.createElement('span'); span.className = 'bubble-text';
       const q = QUESTIONS[(i + rand(0, QUESTIONS.length-1)) % QUESTIONS.length];
-      span.textContent = q;
-      content.appendChild(span);
-      b.appendChild(content);
+      span.textContent = q; content.appendChild(span); b.appendChild(content);
       return b;
     }
 
     for (let i=0;i<TARGET_COUNT;i++) layer.appendChild(makeBubble(i));
 
-    // Rebuild on prefers-reduced-motion toggle
     if (prefersReduced.addEventListener) {
       prefersReduced.addEventListener('change', (e)=>{ if(e.matches){ layer.innerHTML=''; } });
     } else if (prefersReduced.addListener) {
@@ -453,145 +404,9 @@
   })();
   </script>
 
-  <!-- FIRST SECTION -->
-  <section id="sly" class="section-clip relative mx-auto max-w-[1200px] oc-container reveal">
-    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute left-1/2 top-[-6rem] h-[22rem] w-[42rem] -translate-x-1/2 rounded-full blur-3xl" style="background: radial-gradient(60% 60% at 50% 40%, rgba(255,255,255,.10), rgba(255,255,255,0) 70%);"></div>
-      <div class="absolute right-[-8%] bottom-[-12%] h-[18rem] w-[18rem] rounded-full blur-3xl" style="background: radial-gradient(55% 55% at 50% 50%, rgba(255,255,255,.08), rgba(255,255,255,0) 70%);"></div>
-    </div>
-    <div class="w-full py-24 md:py-32">
-      <div class="mx-auto max-w-[900px] text-center">
-        <h2 class="sly-title text-white text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight">
-          <span class="inline-block">Built.</span>
-          <span class="inline-block opacity-90">For.</span>
-          <span class="inline-block opacity-90">Real.</span>
-          <span class="inline-block opacity-90">Work.</span>
-        </h2>
-        <div class="mx-auto mt-6 h-px w-24 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-        <p class="sly-sub mt-6 text-[11px] md:text-xs uppercase tracking-[0.32em] text-white/70">Without Limits</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ONX-Pro Stack -->
-  <section class="section pro-stack">
-    <div class="stack-aura" aria-hidden="true"></div>
-    <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="text-center reveal">
-        <span class="stack-kicker"><i class="ph ph-seal-check"></i>ONX-Pro Stack</span>
-        <h2 class="mt-4 text-[30px] md:text-[46px] leading-tight font-semibold">Pro Cores. Pro Databases. Pro Tools.</h2>
-        <p class="mt-3 text-white/75 max-w-2xl mx-auto">Everything you need to reason, research, and ship with confidence — built on curated knowledge and purpose-built tools.</p>
-      </div>
-      <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div class="stack-card reveal">
-          <div class="flex items-center gap-3">
-            <div class="kb-chip"><i class="ph ph-grid-four"></i><span>Pro Cores</span></div>
-          </div>
-          <h3 class="mt-3">Specialized reasoning engines</h3>
-          <p class="mt-1">Expert cores tuned for briefs, analysis, and technical work — switching context without losing precision.</p>
-        </div>
-        <div class="stack-card reveal">
-          <div class="flex items-center gap-3">
-            <div class="kb-chip"><i class="ph ph-database"></i><span>Pro Databases</span></div>
-          </div>
-          <h3 class="mt-3">Curated, vetted knowledge</h3>
-          <p class="mt-1">Private, expert-maintained collections with citations — legal, financial, scientific, and industry datasets.</p>
-        </div>
-        <div class="stack-card reveal">
-          <div class="flex items-center gap-3">
-            <div class="kb-chip"><i class="ph ph-squares-four"></i><span>Pro Tools</span></div>
-          </div>
-          <h3 class="mt-3">Tools that move work forward</h3>
-          <p class="mt-2">
-            <span class="stack-chip mr-2"><i class="ph ph-globe"></i>Web Browser</span>
-            <span class="stack-chip mr-2"><i class="ph ph-chart-line-up"></i>Financial Advisor</span>
-            <span class="stack-chip"><i class="ph ph-sigma"></i>Statistical Analyst</span>
-          </p>
-          <p class="mt-2">On-tap capabilities — search the live web, model scenarios, and run analyses in place.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Essentials -->
-  <section class="section">
-    <div class="mx-auto max-w-[1200px] oc-container">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
-          <h3 class="font-semibold text-xl">Private Knowledge</h3>
-          <p class="mt-2 text-white/70">Accurate, local, and yours. Sources stay on your machine with citations you can trust.</p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
-          <h3 class="font-semibold text-xl">Curated Expert Databases</h3>
-          <p class="mt-2 text-white/70">Proprietary, expert-curated collections with verified sources — legally sound and designed to reduce hallucinations.</p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
-          <h3 class="font-semibold text-xl">Industry-grade Analysis</h3>
-          <p class="mt-2 text-white/70">Regressions, forecasts, and defensible outputs — built for briefs and decks.</p>
-        </div>
-        <div class="rounded-2xl border border-white/10 bg-white/5 p-6 reveal">
-          <h3 class="font-semibold text-xl">Uncensored Chat</h3>
-          <p class="mt-2 text-white/70">No throttles. Ask what you need and move the work forward.</p>
-        </div>
-      </div>
-      <div class="mt-6 text-sm text-white/70 reveal">
-        <span class="inline-flex items-center gap-2 chip"><i class="ph ph-seal-check"></i><span>ONX Databases</span></span>
-        <span class="ml-2">Curated, vetted, and legally sound — provided by ONX.</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Closing CTA -->
-  <section class="section">
-    <div class="mx-auto max-w-[1200px] oc-container text-center">
-      <h2 class="text-3xl md:text-5xl font-semibold headline">Own your AI. Level up your work.</h2>
-      <p class="mt-3 text-lg muted max-w-2xl mx-auto">ONX-Pro pairs private knowledge with industry-grade analysis and an uncensored chat — all on your machine. It’s how the top 1% ship faster.</p>
-      <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" class="inline-flex items-center gap-2 rounded-2xl bg-white text-black px-6 py-3 text-sm font-semibold hover:opacity-90"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
-        <a href="cores.html" class="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/5 text-white px-6 py-3 text-sm font-semibold hover:bg-white/10"><i class="ph ph-grid-four"></i> Explore Cores</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Reveal on scroll -->
-  <script>
-    (function(){
-      const els = Array.from(document.querySelectorAll('.reveal'));
-      if (!els.length) return;
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-      }, { threshold:.18 });
-      els.forEach(el=> io.observe(el));
-    })();
-  </script>
-
-  <!-- FOOTER -->
-  <footer>
-    <div class="mx-auto max-w-[1200px] oc-container py-12 flex items-center flex-col gap-6 text-white/60 text-sm">
-      <div class="text-center">
-        <span class="font-semibold text-white">ONX</span> © <span id="yr"></span> ONX
-      </div>
-      <div class="flex items-center gap-4">
-        <a class="hover:text-white" href="contact.html">Contact</a>
-        <a class="hover:text-white" href="privacy.html">Privacy</a>
-        <a class="hover:text-white" href="terms.html">Terms</a>
-        <a class="hover:text-white" href="download.html">Download</a>
-      </div>
-    </div>
-  </footer>
-
-  <!-- JS: page blur fade + hero typing (header code removed) -->
+  <!-- HERO typing (unchanged) -->
   <script>
   (()=>{
-    // Blur overlay fade on load
-    window.addEventListener('load', ()=>{
-      const pageBlur=document.getElementById('pageBlur'); if(!pageBlur) return;
-      pageBlur.classList.add('hide');
-      document.dispatchEvent(new Event('oc:page-blur-fade'));
-      setTimeout(()=>pageBlur.remove(), 1300);
-    });
-
-    // Hero typing configuration
     window.OC_HERO = Object.assign({
       enabled:true, waitForBlur:true, startOnView:true, startDelayMs:0, streamSpeed:1.0,
       line1CharMin:18, line1CharMax:22, lineCharMin:18, lineCharMax:22, buttonCharMin:5, buttonCharMax:10
@@ -600,20 +415,10 @@
       enabled: !!window.OC_ENABLE_HERO_LOGO_GLOW, pulse:true, pulseDur:'6s',
       color1:'rgba(255,255,255,.25)', color2:'rgba(255,255,255,.12)', opacity:.45, blurPx:30, insetPct:16
     }, window.OC_HERO_GLOW || {});
-    // Mid-layer blur config (global)
-    ;(function(){
-      const cfg = window.OC_HERO_MID_BLUR || {};
-      const val = (cfg.enabled === false) ? '0px' : (cfg.blur || '1px');
-      document.documentElement.style.setProperty('--hero-mid-blur', val);
-    })();
 
-    // Helpers
     function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
-
-    // Stream HTML preserving inline elements
     async function streamHTML(el, html, charMin=10, charMax=18){
-      const container = document.createElement('div');
-      container.innerHTML = html.trim();
+      const container = document.createElement('div'); container.innerHTML = html.trim();
       async function walk(src, dst){
         const kids = Array.from(src.childNodes);
         for(const child of kids){
@@ -626,11 +431,9 @@
           }
         }
       }
-      el.innerHTML='';
-      await walk(container, el);
+      el.innerHTML=''; await walk(container, el);
     }
 
-    // Hero typing runner
     (function heroTyping(){
       const cfg = window.OC_HERO || {}; if(!cfg.enabled) return;
       const hero=document.getElementById('home'); if(!hero) return;
@@ -642,7 +445,6 @@
       const MOBILE_LINE2_HTML = 'for the 1%';
       const isMobile=window.matchMedia('(max-width: 767px)').matches;
 
-      // Title: replace with ONX-Pro logo mask
       titleEl.innerHTML='';
       const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
       if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
@@ -658,7 +460,6 @@
       }
 
       if(sub1El) sub1El.textContent=''; ctaTxt.textContent=''; ctaBtn.classList.remove('cta-visible');
-
       function spH(ms){ const f=(typeof cfg.streamSpeed==='number'&&cfg.streamSpeed>0)?cfg.streamSpeed:1.0; return ms*f; }
       function typeHero(el, text, min, max){ return new Promise(resolve=>{ let i=0; const tn=document.createTextNode(''); el.textContent=''; el.appendChild(tn); (function tick(){ tn.textContent=text.slice(0, ++i); if(i<=text.length) setTimeout(tick, spH(rand(min,max))); else resolve(); })(); }); }
       const wait=(ms)=>new Promise(r=>setTimeout(r, ms));
@@ -709,18 +510,228 @@
   })();
   </script>
 
+  <!-- === Minimal, Apple-style body content ================================= -->
+
+  <!-- Value Prop -->
+  <section class="section section-clip">
+    <div class="mx-auto max-w-[1100px] oc-container text-center scroll-fade reveal">
+      <h2 class="text-[34px] md:text-[48px] lg:text-[56px] leading-[1.06] font-semibold tracking-tight">
+        Built for ship-fast teams.<br class="hidden md:block"> Private. Accurate. Uncensored.
+      </h2>
+      <div class="mx-auto mt-5 h-px w-24 hair"></div>
+      <p class="mt-5 text-lg md:text-xl muted max-w-3xl mx-auto">
+        ONX-Pro is your black-label AI workspace — pairing curated, vetted knowledge with specialized reasoning cores and on-tap tools.
+        It runs on your machine, cites its sources, and doesn’t get in your way.
+      </p>
+    </div>
+  </section>
+
+  <!-- What You Get (3-up) -->
+  <section class="section">
+    <div class="mx-auto max-w-[1100px] oc-container">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="card p-6 md:p-7 scroll-fade reveal">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">
+              <i class="ph ph-grid-four text-lg" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Pro Cores</h3>
+          </div>
+          <p class="mt-3 muted">Specialized reasoning engines tuned for briefs, analysis, and technical work — precise, fast, context-aware.</p>
+        </div>
+        <div class="card p-6 md:p-7 scroll-fade reveal">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">
+              <i class="ph ph-database text-lg" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Pro Databases</h3>
+          </div>
+          <p class="mt-3 muted">Curated, cited, and legally sound collections — legal, finance, scientific, and industry datasets that reduce hallucinations.</p>
+        </div>
+        <div class="card p-6 md:p-7 scroll-fade reveal">
+          <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center">
+              <i class="ph ph-squares-four text-lg" aria-hidden="true"></i>
+            </div>
+            <h3 class="text-xl font-semibold">Pro Tools</h3>
+          </div>
+          <p class="mt-3 muted">
+            Web search, stats, finance — run analyses in place. Everything is designed to move work forward, not sideways.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Demo Stage / Showcase -->
+  <section class="section">
+    <div class="mx-auto max-w-[1100px] oc-container">
+      <div class="stage scroll-fade reveal">
+        <div class="stage-media">
+          <!-- Replace the image/video source with your app demo or screenshot -->
+          <img src="/images/oc-pro-demo.jpg" alt="ONX-Pro demo" loading="lazy" decoding="async">
+        </div>
+      </div>
+      <div class="mt-4 text-center fine">
+        Live demo image placeholder — drop in video or animated capture when ready.
+      </div>
+    </div>
+  </section>
+
+  <!-- Pillars (simple list) -->
+  <section class="section">
+    <div class="mx-auto max-w-[900px] oc-container">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="card p-6 md:p-7 scroll-fade reveal">
+          <h3 class="text-lg font-semibold">Private by design</h3>
+          <p class="mt-2 muted">Local-first. Your sources stay on your machine. Outputs are reproducible and defensible.</p>
+          <ul class="mt-4 space-y-2 text-sm fine">
+            <li class="flex items-start gap-2"><i class="ph ph-seal-check mt-0.5"></i> No PII harvesting</li>
+            <li class="flex items-start gap-2"><i class="ph ph-seal-check mt-0.5"></i> Transparent citations</li>
+            <li class="flex items-start gap-2"><i class="ph ph-seal-check mt-0.5"></i> Offline-friendly workflows</li>
+          </ul>
+        </div>
+        <div class="card p-6 md:p-7 scroll-fade reveal">
+          <h3 class="text-lg font-semibold">Built to ship</h3>
+          <p class="mt-2 muted">Fewer clicks, more outcomes. Reason, research, and draft — then export to decks and docs.</p>
+          <ul class="mt-4 space-y-2 text-sm fine">
+            <li class="flex items-start gap-2"><i class="ph ph-seal-check mt-0.5"></i> Industry-grade analysis</li>
+            <li class="flex items-start gap-2"><i class="ph ph-seal-check mt-0.5"></i> Tool-calling that works</li>
+            <li class="flex items-start gap-2"><i class="ph ph-seal-check mt-0.5"></i> Fast, predictable UX</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing (16/month annual) -->
+  <section class="section">
+    <div class="mx-auto max-w-[900px] oc-container text-center">
+      <h2 class="text-[28px] md:text-[40px] font-semibold tracking-tight">Simple pricing</h2>
+      <p class="mt-2 fine">Annual plan — <span class="text-white font-medium">$16/month</span> billed yearly.</p>
+      <div class="mx-auto mt-6 max-w-[640px] card p-6 md:p-7">
+        <div class="flex items-center justify-between">
+          <div class="text-left">
+            <div class="text-xl font-semibold">ONX-Pro</div>
+            <div class="fine mt-1">All cores, databases, and tools.</div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-semibold">$16<span class="text-base font-medium fine">/mo</span></div>
+            <div class="fine mt-1">Billed annually</div>
+          </div>
+        </div>
+        <div class="hair my-6"></div>
+        <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-left fine">
+          <li class="flex items-center gap-2"><i class="ph ph-check-circle"></i> Pro Cores</li>
+          <li class="flex items-center gap-2"><i class="ph ph-check-circle"></i> Pro Databases</li>
+          <li class="flex items-center gap-2"><i class="ph ph-check-circle"></i> Web + Stats + Finance tools</li>
+          <li class="flex items-center gap-2"><i class="ph ph-check-circle"></i> Local-first, cited outputs</li>
+        </ul>
+        <div class="mt-7 flex items-center justify-center gap-3">
+          <a href="download.html" class="btn-primary"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+          <a href="cores.html" class="btn-ghost"><i class="ph ph-grid-four"></i> Explore Cores</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ (short) -->
+  <section class="section">
+    <div class="mx-auto max-w-[900px] oc-container">
+      <h2 class="text-[22px] md:text-[28px] font-semibold tracking-tight">Questions</h2>
+      <div class="mt-2 hair"></div>
+      <div class="mt-2">
+        <details class="faq scroll-fade reveal">
+          <summary>
+            <span class="text-base md:text-lg">Does ONX-Pro store my data?</span>
+            <i class="ph ph-plus icon text-lg"></i>
+          </summary>
+          <p class="mt-3 fine">No. ONX-Pro is private by design: sources stay local, and outputs include citations. You stay in control.</p>
+        </details>
+        <details class="faq scroll-fade reveal">
+          <summary>
+            <span class="text-base md:text-lg">What makes Pro different?</span>
+            <i class="ph ph-plus icon text-lg"></i>
+          </summary>
+          <p class="mt-3 fine">Specialized reasoning cores, curated databases, and production tools — designed to produce defensible, shippable work.</p>
+        </details>
+        <details class="faq scroll-fade reveal">
+          <summary>
+            <span class="text-base md:text-lg">Can I work offline?</span>
+            <i class="ph ph-plus icon text-lg"></i>
+          </summary>
+          <p class="mt-3 fine">Yes. ONX-Pro supports offline-friendly workflows and does not require cloud storage of your data.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing CTA -->
+  <section class="section">
+    <div class="mx-auto max-w-[1100px] oc-container text-center">
+      <h2 class="text-3xl md:text-5xl font-semibold tracking-tight">Own your AI. Level up your work.</h2>
+      <p class="mt-3 text-lg muted max-w-2xl mx-auto">
+        The black-label workspace for teams that ship. Private, accurate, uncensored.
+      </p>
+      <div class="mt-7 flex items-center justify-center gap-3">
+        <a href="download.html" class="btn-primary"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+        <a href="cores.html" class="btn-ghost"><i class="ph ph-grid-four"></i> Explore Cores</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reveal on scroll -->
   <script>
-    // Set current year in footer
-    (function(){ var y=document.getElementById('yr'); if(y) y.textContent=new Date().getFullYear(); })();
+    (function(){
+      const els = Array.from(document.querySelectorAll('.reveal, .scroll-fade'));
+      if (!els.length) return;
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if (e.isIntersecting){
+            e.target.classList.add('in','in-view');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold:.18 });
+      els.forEach(el=> io.observe(el));
+    })();
   </script>
 
-  <!-- Define <oc-down-arrow> web component -->
+  <!-- JS: page blur fade -->
+  <script>
+  (()=>{
+    window.addEventListener('load', ()=>{
+      const pageBlur=document.getElementById('pageBlur');
+      if(!pageBlur) return;
+      pageBlur.classList.add('hide');
+      document.dispatchEvent(new Event('oc:page-blur-fade'));
+      setTimeout(()=>pageBlur.remove(), 1300);
+    });
+  })();
+  </script>
+
+  <!-- Footer (minimal) -->
+  <footer>
+    <div class="mx-auto max-w-[1100px] oc-container py-12 flex items-center flex-col gap-6 text-white/60 text-sm">
+      <div class="text-center">
+        <span class="font-semibold text-white">ONX</span> © <span id="yr"></span> ONX
+      </div>
+      <div class="flex items-center gap-4">
+        <a class="hover:text-white" href="contact.html">Contact</a>
+        <a class="hover:text-white" href="privacy.html">Privacy</a>
+        <a class="hover:text-white" href="terms.html">Terms</a>
+        <a class="hover:text-white" href="download.html">Download</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>(function(){ var y=document.getElementById('yr'); if(y) y.textContent=new Date().getFullYear(); })();</script>
+
+  <!-- Down arrow component (unchanged) -->
   <script>
   (() => {
     class OCDownArrow extends HTMLElement {
-      static get observedAttributes() {
-        return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to'];
-      }
+      static get observedAttributes() { return ['dir','size','thickness','alpha','amp','bounce','breathe','from','via','to']; }
       constructor(){ super(); this.attachShadow({mode:'open'}); }
       connectedCallback(){ this.render(); }
       attributeChangedCallback(){ this.render(); }
@@ -738,14 +749,13 @@
         const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const rotation = ({ right:0, down:90, left:180, up:-90 }[dir] ?? 90);
         const gid = 'grad_' + Math.random().toString(36).slice(2);
-        const animateTag = reduce ? '' : `
-          <animateTransform attributeName="gradientTransform" type="translate" from="0 -1" to="0 1" dur="8s" repeatCount="indefinite" />`;
+        const animateTag = reduce ? '' : `<animateTransform attributeName="gradientTransform" type="translate" from="0 -1" to="0 1" dur="8s" repeatCount="indefinite" />`;
         this.shadowRoot.innerHTML = `
           <style>
             :host { display:inline-block; line-height:0; }
             .wrap { --amp: ${amp}; opacity: ${alpha}; will-change: transform, filter, opacity; ${reduce ? '' : `animation: oc-bounce ${bounceDur} ease-in-out infinite, oc-breathe ${breatheDur} ease-in-out infinite;`} backface-visibility: hidden; transform: translateZ(0); }
             @keyframes oc-bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(var(--amp))} }
-            @keyframes oc-breathe { 0%,100%{ filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 10px 26px rgba(255,255,255,.15)) } 50%{ filter: drop-shadow(0 6px 18px rgba(255,255,255,.40)) drop-shadow(0 16px 40px rgba(255,255,255,.22)) } }
+            @keyframes oc-breathe { 0%,100%{ filter: drop-shadow(0 2px 8px rgba(255,255,255,.22)) drop-shadow(0 16px 40px rgba(255,255,255,.22)) } 50%{ filter: drop-shadow(0 6px 18px rgba(255,255,255,.40)) drop-shadow(0 22px 54px rgba(255,255,255,.30)) } }
             svg { width:${size}px; height:${size}px; overflow:visible; }
             .stroke { stroke: url(#${gid}); stroke-width:${thickness}; stroke-linecap:round; stroke-linejoin:round; fill:none; }
           </style>
@@ -768,6 +778,5 @@
     if (!customElements.get('oc-down-arrow')) customElements.define('oc-down-arrow', OCDownArrow);
   })();
   </script>
-
 </body>
 </html>
