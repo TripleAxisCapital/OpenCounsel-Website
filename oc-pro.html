@@ -212,6 +212,72 @@
   <!-- Load the header component -->
   <script type="module" src="/assets/onx-header.js"></script>
 
+  <!-- 🔁 HEADER INVERT OVERRIDES (white header, black text/buttons, black logo; no outline) -->
+  <style id="onx-header-invert">
+    /* Prefer CSS variables first (if the component consumes them) */
+    onx-header{
+      /* background + text */
+      --header-bg: #ffffff;
+      --header-text: #0a0d10;
+      --header-link: #0a0d10;
+      --header-link-hover: #000000;
+      --header-border: transparent;
+
+      /* pill state */
+      --header-pill-bg: #ffffff;
+      --header-pill-text: #0a0d10;
+      --header-pill-border: transparent;
+
+      /* buttons inside header */
+      --header-btn-bg: #0a0d10;
+      --header-btn-text: #ffffff;
+      --header-btn-border: transparent;
+
+      /* icons + logo */
+      --header-icon: #0a0d10;
+      --header-logo: #000000;
+
+      color-scheme: light;
+      outline: none !important;
+    }
+
+    /* If the component exposes Shadow Parts, these ensure the look even if vars differ */
+    onx-header::part(bar),
+    onx-header::part(pill){
+      background: var(--header-bg, #fff) !important;
+      color: var(--header-text, #0a0d10) !important;
+      border-color: var(--header-pill-border, transparent) !important;
+      outline: none !important;
+      box-shadow: none !important; /* no outline/glow */
+    }
+    onx-header::part(nav) a{
+      color: var(--header-link, #0a0d10) !important;
+    }
+    onx-header::part(nav) a:hover{
+      color: var(--header-link-hover, #000) !important;
+    }
+    onx-header::part(btn),
+    onx-header::part(action){
+      background: var(--header-btn-bg, #0a0d10) !important;
+      color: var(--header-btn-text, #fff) !important;
+      border-color: var(--header-btn-border, transparent) !important;
+      box-shadow: none !important;
+    }
+    onx-header::part(hamburger){
+      background: var(--header-btn-bg, #0a0d10) !important;
+      color: var(--header-btn-text, #fff) !important;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+    /* Logo as mask or fill — cover both */
+    onx-header::part(logo){
+      background: var(--header-logo, #000) !important; /* for mask-based logos */
+      fill: var(--header-logo, #000) !important;       /* for inline SVG */
+      color: var(--header-logo, #000) !important;
+      filter: none !important;
+    }
+  </style>
+
   <!-- HERO bubbles: ChatGPT-style message blocks floating subtly behind content -->
   <style>
     :root {
