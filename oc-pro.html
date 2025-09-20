@@ -82,7 +82,7 @@
     }
   </script>
 
-  <!-- Base styles (kept hero/header styles) -->
+  <!-- Base styles (kept hero/header styles) + unified button shape -->
   <style>
     :root {
       --pad-mobile-x: 24px; --pad-desktop-x: 32px; --hamburger-inset: 13px;
@@ -100,6 +100,21 @@
       /* Unified CTA gradient tokens (auto-filled from hero CTA by script) */
       --cta-from:#0e0e0ecc; --cta-via:#141414cc; --cta-to:#ffffff;
       --cta-speed:16s; --cta-angle:135deg;
+
+      /* Unified button shape (matches the hero button) */
+      --btn-radius: 16px;
+      --btn-pad-y: 12px;
+      --btn-pad-x: 24px;
+      --btn-shadow: 0 20px 44px rgba(0,0,0,.45);
+      --btn-shadow-hover: 0 28px 60px rgba(0,0,0,.55);
+
+      /* Segmented control tokens */
+      --seg-radius: 14px;
+      --seg-pad: 6px;
+      --seg-bg: rgba(255,255,255,.08);
+      --seg-border: rgba(255,255,255,.14);
+      --seg-hover: rgba(255,255,255,.12);
+      --seg-thumb-shadow: 0 12px 28px rgba(0,0,0,.40);
     }
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
@@ -112,14 +127,13 @@
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 
-    /* === NEW: universal CTA skin that mirrors the hero button === */
+    /* === Universal CTA skin (same animation as hero) === */
     .cta-anim {
       background: linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to));
       background-size:300% 300%;
       animation: gradientShift var(--cta-speed) ease-in-out infinite;
       will-change: background-position;
     }
-    /* Ghost variant: animated gradient stroke with subtle fill on hover */
     .cta-anim-ghost {
       background:
         linear-gradient(#0000,#0000) padding-box,
@@ -209,56 +223,48 @@
     .fine { color: rgba(255,255,255,.56); }
     .hair { height:1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0)); }
 
-    /* Buttons now inherit the hero CTA animation */
-    .btn-primary {
-      @apply inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold;
+    /* === Buttons: same shape as hero download === */
+    .btn, .btn-primary, .btn-ghost {
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding: var(--btn-pad-y) var(--btn-pad-x);
+      border-radius: var(--btn-radius);
+      font-weight: 600; line-height: 1; text-decoration: none;
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .25s ease, background-color .25s ease, border-color .25s ease;
+      box-shadow: var(--btn-shadow);
       color:#fff;
-      box-shadow: 0 20px 44px rgba(0,0,0,.45);
-      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .3s ease;
+      position: relative; isolation:isolate;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 28px 60px rgba(0,0,0,.55); }
-    .btn-ghost {
-      @apply inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold;
-      color:#fff;
-      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), background-color .25s ease, border-color .25s ease, opacity .25s ease;
-    }
-    .btn-ghost:hover { transform: translateY(-1px); }
+    .btn-primary:hover, .btn:hover { transform: translateY(-2px); box-shadow: var(--btn-shadow-hover); }
+    .btn-ghost { border:1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+    .btn-ghost:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.24); }
 
-    .stage {
-      border-radius: 22px; border:1px solid rgba(255,255,255,.10);
-      background: radial-gradient(60% 60% at 50% 30%, rgba(255,255,255,.06), rgba(255,255,255,.02) 70%);
-      overflow:hidden; position:relative;
-      height: var(--demo-stage-h-sm);
-    }
-    @media (min-width: 1024px){ .stage { height: var(--demo-stage-h-lg); } }
-    .stage-media { position:absolute; inset:0; display:grid; place-items:center; }
-    .stage-media img, .stage-media video { width:100%; height:100%; object-fit:cover; opacity:.95; }
-
-    /* FAQ */
-    details.faq { border-bottom: 1px solid rgba(255,255,255,.10); padding: 18px 0; }
-    details.faq[open] summary .icon { transform: rotate(45deg); }
-    summary { cursor: pointer; list-style: none; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-    summary::-webkit-details-marker{ display:none; }
-
-    /* Segmented control */
+    /* === New Segmented control (Apple-like) === */
     .seg {
-      display:inline-flex; padding:4px; border-radius:14px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14);
-      position:relative; gap:4px;
+      position:relative; display:inline-flex; align-items:center; gap:8px;
+      padding: var(--seg-pad);
+      border-radius: var(--seg-radius);
+      background: var(--seg-bg);
+      border: 1px solid var(--seg-border);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+      -webkit-backdrop-filter: saturate(140%) blur(8px);
+      backdrop-filter: saturate(140%) blur(8px);
     }
     .seg button {
-      position:relative; z-index:1; appearance:none; border:0; background:transparent; color:#fff; font-weight:600;
-      padding:8px 14px; border-radius:10px; cursor:pointer; transition: color .25s ease, opacity .25s ease, transform .25s ease;
-      opacity:.75;
+      appearance:none; border:0; background:transparent; color:#fff; font-weight:600;
+      padding: 10px 16px; border-radius: calc(var(--seg-radius) - 4px);
+      cursor:pointer; opacity:.78; position:relative; z-index:1;
+      transition: opacity .2s ease, transform .25s cubic-bezier(.2,.8,.2,1);
+      white-space:nowrap; line-height:1;
     }
     .seg button:hover { opacity:1; transform: translateY(-1px); }
-    .seg button[aria-pressed="true"]{ opacity:1; }
+    .seg button[aria-pressed="true"] { opacity:1; }
     .seg .thumb {
-      position:absolute; inset:4px auto 4px 4px; width:calc(50% - 4px); border-radius:10px;
-      box-shadow: 0 10px 26px rgba(0,0,0,.36);
-      transition: transform .32s cubic-bezier(.2,.8,.2,1), width .32s cubic-bezier(.2,.8,.2,1);
-      will-change: transform, background-position;
+      position:absolute; top: var(--seg-pad); bottom: var(--seg-pad); left: var(--seg-pad);
+      width: calc(50% - var(--seg-pad)); border-radius: calc(var(--seg-radius) - 4px);
+      box-shadow: var(--seg-thumb-shadow);
+      will-change: transform, width, background-position;
+      transition: transform .38s cubic-bezier(.2,.8,.2,1), width .38s cubic-bezier(.2,.8,.2,1);
     }
-    .seg[data-mode="monthly"] .thumb { transform: translateX(100%); }
   </style>
 
   <!-- Load the header component -->
@@ -323,13 +329,12 @@
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html"
-             class="hero-cta hero-cta-fade relative inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold text-white
+             class="hero-cta hero-cta-fade btn btn-primary cta-anim relative text-base md:text-lg
                     focus:outline-none focus-visible:ring-4 focus-visible:ring-white/60
-                    shadow-xl shadow-black/40 hover:shadow-2xl hover:shadow-black/60
-                    transition-all duration-300 ease-out hover:-translate-y-[2px] active:translate-y-0 g-grad grad-anim"
+                    hover:-translate-y-[2px] active:translate-y-0"
              style="--from:#0e0e0ecc; --via:#141414cc; --to:#ffffff; --speed:16s; --angle:135deg;"
              aria-label="Download">
-            <span class="pointer-events-none absolute inset-0 -z-10 rounded-2xl blur-xl opacity-50" style="background: radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.18), rgba(0,0,0,0));"></span>
+            <span class="pointer-events-none absolute inset-0 -z-10 rounded-[var(--btn-radius)] blur-xl opacity-50" style="background: radial-gradient(60% 60% at 50% 50%, rgba(255,255,255,.18), rgba(0,0,0,0));"></span>
             <i id="heroCtaIcon" class="ph ph-apple-logo text-xl" aria-hidden="true"></i>
             <span class="hero-cta-text">Download</span>
           </a>
@@ -643,10 +648,10 @@
     <div class="mx-auto max-w-[900px] oc-container text-center">
       <h2 class="text-[28px] md:text-[40px] font-semibold tracking-tight">Simple pricing</h2>
 
-      <!-- Segmented control -->
+      <!-- Segmented control (redesigned) -->
       <div class="mt-4 flex justify-center">
         <div id="billingSeg" class="seg" role="tablist" aria-label="Billing period" data-mode="yearly">
-          <span class="thumb"></span>
+          <span class="thumb cta-anim" aria-hidden="true"></span>
           <button id="segYearly" role="tab" aria-selected="true" aria-pressed="true">Yearly</button>
           <button id="segMonthly" role="tab" aria-selected="false" aria-pressed="false">Monthly</button>
         </div>
@@ -678,8 +683,8 @@
         </ul>
 
         <div class="mt-7 flex items-center justify-center gap-3">
-          <a href="download.html" class="btn-primary"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
-          <a href="privacy.html" class="btn-ghost">Privacy</a>
+          <a href="download.html" class="btn btn-primary cta-anim"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+          <a href="privacy.html" class="btn btn-ghost cta-anim-ghost">Privacy</a>
         </div>
       </div>
     </div>
@@ -724,7 +729,7 @@
         The black-label workspace for teams that ship. Private, accurate, uncensored.
       </p>
       <div class="mt-7 flex items-center justify-center gap-3">
-        <a href="download.html" class="btn-primary"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+        <a href="download.html" class="btn btn-primary cta-anim"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
       </div>
     </div>
   </section>
@@ -759,38 +764,77 @@
   })();
   </script>
 
-  <!-- Pricing toggle logic -->
+  <!-- Pricing toggle logic + Apple-like segmented thumb sizing/position -->
   <script>
     (function(){
       const seg = document.getElementById('billingSeg');
       const yearly = document.getElementById('segYearly');
       const monthly = document.getElementById('segMonthly');
+      const thumb = seg.querySelector('.thumb');
       const priceValue = document.getElementById('priceValue');
       const priceSub = document.getElementById('priceSub');
       const billingNote = document.getElementById('billingNote');
 
+      function positionThumb(target){
+        if(!target || !thumb) return;
+        const pad = parseFloat(getComputedStyle(seg).getPropertyValue('--seg-pad')) || 6;
+        // Thumb should match button width and align to its left (with container padding)
+        const x = target.offsetLeft;
+        const w = target.offsetWidth;
+        thumb.style.width = Math.max(24, w) + 'px';
+        thumb.style.transform = `translateX(${x}px)`;
+      }
+
+      function setPressed(btn, pressed){
+        btn.setAttribute('aria-pressed', String(pressed));
+        btn.setAttribute('aria-selected', String(pressed));
+      }
+
       function setMode(mode){
         seg.setAttribute('data-mode', mode);
         const isYearly = mode === 'yearly';
-        yearly.setAttribute('aria-pressed', String(isYearly));
-        yearly.setAttribute('aria-selected', String(isYearly));
-        monthly.setAttribute('aria-pressed', String(!isYearly));
-        monthly.setAttribute('aria-selected', String(!isYearly));
+        setPressed(yearly, isYearly);
+        setPressed(monthly, !isYearly);
         priceValue.textContent = isYearly ? '16' : '20';
         priceSub.textContent = isYearly ? 'Billed annually' : 'Billed monthly';
         billingNote.innerHTML = isYearly
           ? 'Annual plan — <span class="text-white font-medium">$16/month</span> billed yearly.'
           : 'Monthly plan — <span class="text-white font-medium">$20/month</span> billed monthly.';
+        positionThumb(isYearly ? yearly : monthly);
+        // Update gradient text fill for active button (match hero motion)
+        [yearly, monthly].forEach(btn=>{
+          const active = btn.getAttribute('aria-pressed') === 'true';
+          if (active){
+            btn.style.backgroundImage = `linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to))`;
+            btn.style.backgroundSize  = `300% 300%`;
+            btn.style.animation       = `gradientShift var(--cta-speed) ease-in-out infinite`;
+            btn.style.webkitBackgroundClip = 'text';
+            btn.style.backgroundClip  = 'text';
+            btn.style.color           = 'transparent';
+          } else {
+            btn.style.removeProperty('background-image');
+            btn.style.removeProperty('background-size');
+            btn.style.removeProperty('animation');
+            btn.style.removeProperty('-webkit-background-clip');
+            btn.style.removeProperty('background-clip');
+            btn.style.color = '#fff';
+          }
+        });
       }
 
       yearly.addEventListener('click', ()=> setMode('yearly'));
       monthly.addEventListener('click', ()=> setMode('monthly'));
-      // Initialize
-      setMode('yearly');
+
+      // Resize observer to keep thumb aligned on layout changes
+      const ro = new ResizeObserver(()=> setMode(seg.getAttribute('data-mode') || 'yearly'));
+      ro.observe(seg);
+
+      // Initialize after DOM is ready
+      setTimeout(()=> setMode('yearly'), 0);
     })();
   </script>
 
-  <!-- === NEW: unify CTA animation across all clickable controls === -->
+  <!-- === Unify CTA animation across all clickable controls (kept + button shape propagation) === -->
   <script>
     (function(){
       // Read hero CTA CSS variables and propagate to :root so everyone can use them
@@ -810,47 +854,13 @@
         if (angle)root.style.setProperty('--cta-angle',angle);
       }
 
-      // Attach the skin to all primary/ghost buttons and the segmented control thumb
+      // Attach skins to all primary/ghost buttons (consistent shape is already enforced by .btn*)
       const add = (el, cls)=> el && !el.classList.contains(cls) && el.classList.add(cls);
-
-      // Buttons (anchors and native buttons with our classes)
-      document.querySelectorAll('a.btn-primary, button.btn-primary').forEach(el=> add(el,'cta-anim'));
+      document.querySelectorAll('a.btn-primary, button.btn-primary, a.btn, button.btn').forEach(el=> add(el,'cta-anim'));
       document.querySelectorAll('a.btn-ghost, button.btn-ghost').forEach(el=> add(el,'cta-anim-ghost'));
 
-      // Pricing segmented thumb uses full animated fill
-      const thumb = document.querySelector('.seg .thumb');
-      if (thumb) add(thumb,'cta-anim');
-
-      // Pressed segment buttons: animated text fill to echo the hero motion
-      const segBtns = document.querySelectorAll('.seg button');
-      segBtns.forEach(btn=>{
-        const applyTextGrad = ()=>{
-          const pressed = btn.getAttribute('aria-pressed') === 'true';
-          if (pressed) {
-            btn.style.backgroundImage = `linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to))`;
-            btn.style.backgroundSize  = `300% 300%`;
-            btn.style.animation       = `gradientShift var(--cta-speed) ease-in-out infinite`;
-            btn.style.webkitBackgroundClip = 'text';
-            btn.style.backgroundClip  = 'text';
-            btn.style.color           = 'transparent';
-          } else {
-            btn.style.removeProperty('background-image');
-            btn.style.removeProperty('background-size');
-            btn.style.removeProperty('animation');
-            btn.style.removeProperty('-webkit-background-clip');
-            btn.style.removeProperty('background-clip');
-            btn.style.color = '#fff';
-          }
-        };
-        applyTextGrad();
-        // React to clicks / mode changes
-        btn.addEventListener('click', ()=> {
-          // let the pricing logic update aria-pressed first
-          requestAnimationFrame(()=> segBtns.forEach(applyTextGrad));
-        });
-      });
-
-      // Any other obvious clickable CTAs (footer links with hover)
+      // Pricing segmented thumb already has cta-anim
+      // Footer hover polish
       document.querySelectorAll('footer a').forEach(a=>{
         a.addEventListener('mouseenter', ()=> a.style.textDecoration='none');
         a.addEventListener('mouseover', ()=> a.style.opacity='.95');
@@ -866,10 +876,10 @@
         <span class="font-semibold text-white">ONX</span> © <span id="yr"></span> ONX
       </div>
       <div class="flex items-center gap-4">
-        <a class="hover:text-white" href="contact.html">Contact</a>
-        <a class="hover:text-white" href="privacy.html">Privacy</a>
-        <a class="hover:text-white" href="terms.html">Terms</a>
-        <a class="hover:text-white" href="download.html">Download</a>
+        <a class="btn-ghost cta-anim-ghost" href="contact.html">Contact</a>
+        <a class="btn-ghost cta-anim-ghost" href="privacy.html">Privacy</a>
+        <a class="btn-ghost cta-anim-ghost" href="terms.html">Terms</a>
+        <a class="btn-primary cta-anim" href="download.html">Download</a>
       </div>
     </div>
   </footer>
