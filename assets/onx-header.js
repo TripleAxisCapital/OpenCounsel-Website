@@ -31,6 +31,9 @@ class ONXHeader extends HTMLElement {
     this._trapTab = this._trapTab.bind(this);
     this._threshold = parseInt(this.getAttribute("threshold") || "8", 10);
     this._prevFocus = null;
+
+    // NEW: bind spacing sync
+    this._syncEdgeGaps = this._syncEdgeGaps.bind(this);
   }
 
   connectedCallback() {
@@ -691,6 +694,9 @@ class ONXHeader extends HTMLElement {
     // Scroll + initial state
     window.addEventListener("scroll", this._onScroll, { passive: true });
     this._onScroll();
+
+    // NEW: sync edge spacing after first paint
+    requestAnimationFrame(this._syncEdgeGaps);
   }
 
   disconnectedCallback() {
@@ -768,7 +774,7 @@ class ONXHeader extends HTMLElement {
         chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24');
         chev.setAttribute('fill','none'); chev.setAttribute('stroke','currentColor');
         chev.setAttribute('stroke-width','1.8'); chev.setAttribute('stroke-linecap','round'); chev.setAttribute('stroke-linejoin','round');
-        const p = document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d','m9 6 6 6-6 6');
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d','m9 6 6 6-6 6');
         chev.appendChild(p);
         a.appendChild(chev);
         a.addEventListener('click', () => this._toggleMobile(false));
@@ -845,12 +851,49 @@ class ONXHeader extends HTMLElement {
   _onResize(){
     // Auto-close menu on desktop to avoid scroll/overflow lock getting stuck
     if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
+    // Recompute mobile spacing on any resize
+    this._syncEdgeGaps();
   }
 
   _onScroll() {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
     if (y > this._threshold) this.classList.add("is-float");
     else this.classList.remove("is-float");
+  }
+
+  /* ===== Mobile edge spacing sync (ONLY spacing change) =====
+     Makes:
+       • Left spacing (pill → logo)  == vertical top gap (pill top → logo top)
+       • Right spacing (hamburger → pill) == same top gap
+     Desktop unaffected. */
+  _syncEdgeGaps(){
+    try{
+      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+      if (!isMobile){
+        // restore defaults on desktop
+        this.style.removeProperty('--pill-inner-x-mobile');
+        this.style.removeProperty('--logo-pad-left-mobile');
+        this.style.removeProperty('--download-pad-right-mobile');
+        return;
+      }
+      const headerBar = this._root.querySelector('.header-bar');
+      const logo = this._root.querySelector('.logo-pad .logo-anim');
+      if (!headerBar || !logo) return;
+
+      // Measure the actual vertical gap from pill top to logo top
+      const hbRect = headerBar.getBoundingClientRect();
+      const logoRect = logo.getBoundingClientRect();
+      const topGap = Math.max(0, logoRect.top - hbRect.top); // px
+
+      // Apply horizontally on mobile:
+      // - Set the pill inner padding (both sides) to topGap
+      // - Zero the extra per-side paddings to avoid double-counting
+      this.style.setProperty('--pill-inner-x-mobile', `${topGap}px`);
+      this.style.setProperty('--logo-pad-left-mobile', `0px`);
+      this.style.setProperty('--download-pad-right-mobile', `0px`);
+    }catch(_e){
+      /* no-op */
+    }
   }
 }
 
