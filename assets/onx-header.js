@@ -88,7 +88,7 @@ class ONXHeader extends HTMLElement {
           --pill-outer-x-mobile: 16px;
           --pill-outer-x-desktop: 0px;
           --pill-height-mobile: 3.0rem;
-          --pill-height-desktop: 3.5rem;
+          --pill-height-desktop: 3.0rem;
 
           --logo-pad-left-mobile: 16px;
           --logo-pad-left-desktop: 12px;
