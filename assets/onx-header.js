@@ -96,7 +96,7 @@ class ONXHeader extends HTMLElement {
           --download-pad-right-desktop: 12px;
 
           --header-radius: 28px;
-          --logo-size: 44px;       /* desktop header logo */
+          --logo-size: 65px;       /* desktop header logo */
           --mobile-logo-size: 32px;/* adjustable mobile logo size */
 
           /* Global nav controls (header + mobile) */
