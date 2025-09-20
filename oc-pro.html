@@ -96,6 +96,10 @@
       --hero-bubbles-brightness: 1; --hero-bubbles-opacity: 1; --hero-bubble-alpha-scale: 1;
       --hero-bubble-base-alpha: .08; --hero-bubble-user-alpha: .10; --hero-bubble-user-border-alpha: .14;
       --hero-bubble-assist-alpha: .06; --hero-bubble-assist-border-alpha: .10; --hero-bubble-text-alpha: .92;
+
+      /* Unified CTA gradient tokens (auto-filled from hero CTA by script) */
+      --cta-from:#0e0e0ecc; --cta-via:#141414cc; --cta-to:#ffffff;
+      --cta-speed:16s; --cta-angle:135deg;
     }
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
@@ -107,6 +111,26 @@
       background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
     }
     @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+    /* === NEW: universal CTA skin that mirrors the hero button === */
+    .cta-anim {
+      background: linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to));
+      background-size:300% 300%;
+      animation: gradientShift var(--cta-speed) ease-in-out infinite;
+      will-change: background-position;
+    }
+    /* Ghost variant: animated gradient stroke with subtle fill on hover */
+    .cta-anim-ghost {
+      background:
+        linear-gradient(#0000,#0000) padding-box,
+        linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box;
+      border:1px solid transparent;
+      background-size: 100% 100%, 300% 300%;
+      animation: gradientShift var(--cta-speed) ease-in-out infinite;
+    }
+    .cta-anim-ghost:hover { background:
+        linear-gradient(rgba(255,255,255,.06),rgba(255,255,255,.06)) padding-box,
+        linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box; }
 
     .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
     .hero-logo-white,.hero-logo-pro{ display:inline-block; width: var(--hero-logo-size, clamp(140px, 45vw, 400px)); height: var(--hero-logo-size, clamp(140px, 45vw, 400px)); background:#ffffff; opacity:0; filter:blur(8px); transform: translateY(6px) scale(.985); animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle; }
@@ -185,19 +209,20 @@
     .fine { color: rgba(255,255,255,.56); }
     .hair { height:1px; background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0)); }
 
+    /* Buttons now inherit the hero CTA animation */
     .btn-primary {
       @apply inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold;
-      color:#fff; background: linear-gradient(135deg,#0e0e0e,#141414,#ffffff);
+      color:#fff;
       box-shadow: 0 20px 44px rgba(0,0,0,.45);
       transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), opacity .3s ease;
     }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 28px 60px rgba(0,0,0,.55); }
     .btn-ghost {
       @apply inline-flex items-center gap-2 rounded-2xl px-6 py-3 font-semibold;
-      color:#fff; border:1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06);
-      transition: background-color .25s ease, border-color .25s ease;
+      color:#fff;
+      transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s cubic-bezier(.16,1,.3,1), background-color .25s ease, border-color .25s ease, opacity .25s ease;
     }
-    .btn-ghost:hover { background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.24); }
+    .btn-ghost:hover { transform: translateY(-1px); }
 
     .stage {
       border-radius: 22px; border:1px solid rgba(255,255,255,.10);
@@ -222,16 +247,16 @@
     }
     .seg button {
       position:relative; z-index:1; appearance:none; border:0; background:transparent; color:#fff; font-weight:600;
-      padding:8px 14px; border-radius:10px; cursor:pointer; transition: color .25s ease, opacity .25s ease;
+      padding:8px 14px; border-radius:10px; cursor:pointer; transition: color .25s ease, opacity .25s ease, transform .25s ease;
       opacity:.75;
     }
+    .seg button:hover { opacity:1; transform: translateY(-1px); }
     .seg button[aria-pressed="true"]{ opacity:1; }
     .seg .thumb {
       position:absolute; inset:4px auto 4px 4px; width:calc(50% - 4px); border-radius:10px;
-      background: linear-gradient(135deg,#0e0e0e,#141414,#ffffff);
       box-shadow: 0 10px 26px rgba(0,0,0,.36);
       transition: transform .32s cubic-bezier(.2,.8,.2,1), width .32s cubic-bezier(.2,.8,.2,1);
-      will-change: transform;
+      will-change: transform, background-position;
     }
     .seg[data-mode="monthly"] .thumb { transform: translateX(100%); }
   </style>
@@ -621,7 +646,7 @@
       <!-- Segmented control -->
       <div class="mt-4 flex justify-center">
         <div id="billingSeg" class="seg" role="tablist" aria-label="Billing period" data-mode="yearly">
-          <span class="thumb" aria-hidden="true"></span>
+          <span class="thumb"></span>
           <button id="segYearly" role="tab" aria-selected="true" aria-pressed="true">Yearly</button>
           <button id="segMonthly" role="tab" aria-selected="false" aria-pressed="false">Monthly</button>
         </div>
@@ -654,6 +679,7 @@
 
         <div class="mt-7 flex items-center justify-center gap-3">
           <a href="download.html" class="btn-primary"><i class="ph ph-download-simple"></i> Get ONX-Pro</a>
+          <a href="privacy.html" class="btn-ghost">Privacy</a>
         </div>
       </div>
     </div>
@@ -761,6 +787,75 @@
       monthly.addEventListener('click', ()=> setMode('monthly'));
       // Initialize
       setMode('yearly');
+    })();
+  </script>
+
+  <!-- === NEW: unify CTA animation across all clickable controls === -->
+  <script>
+    (function(){
+      // Read hero CTA CSS variables and propagate to :root so everyone can use them
+      const cta = document.getElementById('heroCtaBtn');
+      const root = document.documentElement;
+      if (cta && root && cta.style) {
+        const getVar = (name, fallback)=> cta.style.getPropertyValue(name)?.trim() || fallback;
+        const from = getVar('--from', getComputedStyle(root).getPropertyValue('--cta-from'));
+        const via  = getVar('--via',  getComputedStyle(root).getPropertyValue('--cta-via'));
+        const to   = getVar('--to',   getComputedStyle(root).getPropertyValue('--cta-to'));
+        const speed= getVar('--speed',getComputedStyle(root).getPropertyValue('--cta-speed'));
+        const angle= getVar('--angle',getComputedStyle(root).getPropertyValue('--cta-angle'));
+        if (from) root.style.setProperty('--cta-from', from);
+        if (via)  root.style.setProperty('--cta-via',  via);
+        if (to)   root.style.setProperty('--cta-to',   to);
+        if (speed)root.style.setProperty('--cta-speed',speed);
+        if (angle)root.style.setProperty('--cta-angle',angle);
+      }
+
+      // Attach the skin to all primary/ghost buttons and the segmented control thumb
+      const add = (el, cls)=> el && !el.classList.contains(cls) && el.classList.add(cls);
+
+      // Buttons (anchors and native buttons with our classes)
+      document.querySelectorAll('a.btn-primary, button.btn-primary').forEach(el=> add(el,'cta-anim'));
+      document.querySelectorAll('a.btn-ghost, button.btn-ghost').forEach(el=> add(el,'cta-anim-ghost'));
+
+      // Pricing segmented thumb uses full animated fill
+      const thumb = document.querySelector('.seg .thumb');
+      if (thumb) add(thumb,'cta-anim');
+
+      // Pressed segment buttons: animated text fill to echo the hero motion
+      const segBtns = document.querySelectorAll('.seg button');
+      segBtns.forEach(btn=>{
+        const applyTextGrad = ()=>{
+          const pressed = btn.getAttribute('aria-pressed') === 'true';
+          if (pressed) {
+            btn.style.backgroundImage = `linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to))`;
+            btn.style.backgroundSize  = `300% 300%`;
+            btn.style.animation       = `gradientShift var(--cta-speed) ease-in-out infinite`;
+            btn.style.webkitBackgroundClip = 'text';
+            btn.style.backgroundClip  = 'text';
+            btn.style.color           = 'transparent';
+          } else {
+            btn.style.removeProperty('background-image');
+            btn.style.removeProperty('background-size');
+            btn.style.removeProperty('animation');
+            btn.style.removeProperty('-webkit-background-clip');
+            btn.style.removeProperty('background-clip');
+            btn.style.color = '#fff';
+          }
+        };
+        applyTextGrad();
+        // React to clicks / mode changes
+        btn.addEventListener('click', ()=> {
+          // let the pricing logic update aria-pressed first
+          requestAnimationFrame(()=> segBtns.forEach(applyTextGrad));
+        });
+      });
+
+      // Any other obvious clickable CTAs (footer links with hover)
+      document.querySelectorAll('footer a').forEach(a=>{
+        a.addEventListener('mouseenter', ()=> a.style.textDecoration='none');
+        a.addEventListener('mouseover', ()=> a.style.opacity='.95');
+        a.addEventListener('mouseout',  ()=> a.style.opacity='1');
+      });
     })();
   </script>
 
