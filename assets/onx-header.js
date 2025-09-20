@@ -562,10 +562,10 @@ class ONXHeader extends HTMLElement {
           <div class="right-area">
             <!-- Desktop actions -->
             <div class="desktop-actions">
-              <a class="news-link" href="/news.html" aria-label="ONX News">
+              <!-- <a class="news-link" href="/news.html" aria-label="ONX News">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h14a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                 <span>ONX-News</span>
-              </a>
+              </a>. -->
               <slot name="actions"></slot>
               <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
