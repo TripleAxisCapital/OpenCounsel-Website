@@ -34,6 +34,24 @@ class ONXHeader extends HTMLElement {
 
     // NEW: bind spacing sync
     this._syncEdgeGaps = this._syncEdgeGaps.bind(this);
+
+    // NEW: helpers
+    this._isMobile = () => !window.matchMedia('(min-width: 768px)').matches;
+    this._applyScrollState = (y) => {
+      // Mobile should start LARGE (flat/full width) and shrink to pill on scroll.
+      // Desktop already behaves this way via .is-float.
+      if (this._isMobile()) {
+        if (y > this._threshold) {
+          this.classList.add("is-float");   // pill (smaller width)
+        } else {
+          this.classList.remove("is-float"); // large (full-width)
+        }
+      } else {
+        // Desktop unchanged
+        if (y > this._threshold) this.classList.add("is-float");
+        else this.classList.remove("is-float");
+      }
+    };
   }
 
   connectedCallback() {
@@ -676,6 +694,7 @@ class ONXHeader extends HTMLElement {
     this._backdrop.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
     window.addEventListener("keydown", this._closeOnEsc);
     window.addEventListener("resize", this._onResize, { passive: true });
+    window.addEventListener("pageshow", () => this._onScroll(), { passive: true }); // bfcache restore
 
     // HARD-disable any scroll/pan inside the mobile sheet (no x/y movement)
     const blockScroll = (e) => { e.preventDefault(); };
@@ -691,7 +710,10 @@ class ONXHeader extends HTMLElement {
     this._cloneSlotted('nav');
     this._cloneSlotted('actions');
 
-    // Scroll + initial state
+    // Ensure initial state: MOBILE starts LARGE (no pill), DESKTOP unchanged
+    this.classList.remove("is-float"); // guard against SSR/rehydration edge cases
+
+    // Scroll + initial state (applies the correct class right away)
     window.addEventListener("scroll", this._onScroll, { passive: true });
     this._onScroll();
 
@@ -853,12 +875,13 @@ class ONXHeader extends HTMLElement {
     if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
     // Recompute mobile spacing on any resize
     this._syncEdgeGaps();
+    // Re-apply correct header state when crossing breakpoints/orientation
+    this._onScroll();
   }
 
   _onScroll() {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
-    if (y > this._threshold) this.classList.add("is-float");
-    else this.classList.remove("is-float");
+    this._applyScrollState(y);
   }
 
   /* ===== Mobile edge spacing sync (ONLY spacing change) =====
@@ -868,7 +891,7 @@ class ONXHeader extends HTMLElement {
      Desktop unaffected. */
   _syncEdgeGaps(){
     try{
-      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+      const isMobile = this._isMobile();
       if (!isMobile){
         // restore defaults on desktop
         this.style.removeProperty('--pill-inner-x-mobile');
@@ -889,7 +912,7 @@ class ONXHeader extends HTMLElement {
       // - Set the pill inner padding (both sides) to topGap
       // - Zero the extra per-side paddings to avoid double-counting
       const extra = 15; // px
-this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
+      this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
 
       this.style.setProperty('--logo-pad-left-mobile', `0px`);
       this.style.setProperty('--download-pad-right-mobile', `0px`);
