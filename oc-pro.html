@@ -19,8 +19,8 @@
   <link rel="preload" as="font" href="/fonts/InterVariable.woff2" type="font/woff2" crossorigin>
   <link rel="preload" as="image" href="/images/og/opencounsel-hero.jpg" fetchpriority="high">
   <link rel="preload" as="image" href="/logo.svg">
-  <!-- NEW: Preload the Pro logo used in the hero -->
-  <link rel="preload" as="image" href="/logoPro.svg" fetchpriority="high">
+  <!-- NEW: Preload hero PRO logo file for faster/mobile-certain paint -->
+  <link rel="preload" as="image" href="/logoPro.svg">
 
   <!-- Icons -->
   <link rel="icon" href="/logo.svg?v=1" type="image/svg+xml" sizes="any">
@@ -120,12 +120,13 @@
       --seg-thumb-shadow: 0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06);
 
       /* === New: fast-first-paint tuning === */
-      --hero-logo-size: clamp(220px, 54vw, 560px);   /* default size */
+      --hero-logo-size: clamp(220px, 54vw, 560px);   /* BIGGER hero logo */
       --page-blur-dur: 420ms;                        /* ensure visible in <501ms */
     }
-    /* Mobile sizing tweak so the Pro logo reads crisply on small screens */
-    @media (max-width: 767px){
-      :root { --hero-logo-size: clamp(200px, 68vw, 520px); }
+
+    /* Mobile-specific size tuning to improve reliability & fit */
+    @media (max-width: 480px){
+      :root { --hero-logo-size: clamp(160px, 58vw, 360px); }
     }
 
     html, body { max-width:100%; overflow-x: clip !important; }
@@ -165,14 +166,14 @@
       display:inline-block;
       width: var(--hero-logo-size, clamp(140px, 45vw, 400px));
       height: var(--hero-logo-size, clamp(140px, 45vw, 400px));
-      background:#ffffff; /* ensure solid white logo */
+      background:#ffffff; /* ensure WHITE logo fill */
       opacity:0; filter:blur(6px);
       transform: translateY(6px) scale(.985);
       animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
       will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle;
     }
-    .hero-logo-white{ -webkit-mask:url('logo.svg') no-repeat center / contain; mask:url('logo.svg') no-repeat center / contain; }
-    /* Use the Pro mark file for both desktop & mobile */
+    .hero-logo-white{ -webkit-mask:url('/logo.svg') no-repeat center / contain; mask:url('/logo.svg') no-repeat center / contain; }
+    /* UPDATED: explicitly reference logoPro.svg (desktop + mobile) */
     .hero-logo-pro  { -webkit-mask:url('/logoPro.svg') no-repeat center / contain; mask:url('/logoPro.svg') no-repeat center / contain; }
     .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
     @keyframes heroLogoReveal {
@@ -223,7 +224,7 @@
     }
     .hero-logo-glow.glow-pulse {
       animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards,
-                 heroGlowPulse var(--glow-pulse-dur, 6s) ease-in-out infinite 1.1s;
+                heroGlowPulse var(--glow-pulse-dur, 6s) ease-in-out infinite 1.1s;
     }
     @keyframes heroGlowReveal { 0%{opacity:0; filter:blur(40px)} 60%{opacity:var(--glow-opacity); filter:blur(16px)} 100%{opacity:var(--glow-opacity); filter:blur(var(--glow-blur))} }
     @keyframes heroGlowPulse { 0%,100%{ transform:scale(1); filter:blur(var(--glow-blur)); opacity:var(--glow-opacity);} 50%{ transform:scale(1.03); filter:blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05);} }
@@ -400,7 +401,7 @@
     threshold="8">
   </onx-header>
 
-  <!-- HERO (uses logoPro.svg on all devices) -->
+  <!-- HERO (unchanged except logo now file-based from first paint) -->
   <section id="home" class="mx-auto max-w-[1200px] oc-container mt-0 reveal py-0" style="--gap-mobile:24px; --gap-desktop:24px;">
     <div class="hero-card relative g-grad grad-anim rounded-2xl overflow-hidden border box-border
                 h-[calc(100svh-var(--header-h,56px)-var(--gap-mobile,24px))]
@@ -411,14 +412,12 @@
       <div class="hero-mid-blur" aria-hidden="true"></div>
 
       <div class="flex flex-col items-center max-w-2xl relative" style="z-index:3">
-        <!-- CHANGED: render the white Pro logo (no text) immediately -->
-        <span class="hero-title block">
+        <!-- Replaced text with actual PRO logo file so both desktop & mobile use logoPro.svg -->
+        <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">
           <span class="hero-logo-wrap">
-            <!-- solid white via background:#fff, masked by /logoPro.svg -->
             <span class="hero-logo-pro" role="img" aria-label="ONX-Pro"></span>
           </span>
         </span>
-
         <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed"></p>
         <div class="mt-8 flex justify-center">
           <a id="heroCtaBtn" href="download.html"
@@ -539,7 +538,7 @@
   })();
   </script>
 
-  <!-- HERO typing (kept; still uses hero-logo-pro) -->
+  <!-- HERO typing (unchanged logic; now starts from file-based logo already in DOM) -->
   <script>
   (()=>{
     window.OC_HERO = Object.assign({
@@ -580,7 +579,7 @@
       const MOBILE_LINE2_HTML = 'for the 1%';
       const isMobile=window.matchMedia('(max-width: 767px)').matches;
 
-      // Ensure the Pro logo is present (keeps using /logoPro.svg with white fill)
+      // Keep file-based logo; re-attach to ensure glow wrapper exists, but still using logoPro.svg (not text)
       titleEl.innerHTML='';
       const wrapSpan=document.createElement('span'); wrapSpan.className='hero-logo-wrap'; titleEl.appendChild(wrapSpan);
       if((window.OC_HERO_GLOW||{}).enabled){ const glow=document.createElement('span'); glow.className='hero-logo-glow'; wrapSpan.appendChild(glow); }
