@@ -29,8 +29,28 @@ class ONXHeader extends HTMLElement {
     this._closeOnEsc = this._closeOnEsc.bind(this);
     this._onResize = this._onResize.bind(this);
     this._trapTab = this._trapTab.bind(this);
+
+    // Legacy snap threshold (still supported for class toggling),
+    // but the new scroll-linked animation uses float-start/float-end
     this._threshold = parseInt(this.getAttribute("threshold") || "8", 10);
+
+    // NEW: scroll-linked range
+    this._floatStart = parseInt(this.getAttribute("float-start") || "8", 10);     // px
+    this._floatEnd   = parseInt(this.getAttribute("float-end")   || "160", 10);   // px
+
     this._prevFocus = null;
+
+    // rAF state for scroll-linked updates
+    this._tickPending = false;
+    this._lastY = 0;
+
+    // Cached geometry for width interpolation
+    this._geom = {
+      vw: 0,
+      flatWidthPx: 0,
+      pillWidthPx: 0,
+      isDesktop: false,
+    };
   }
 
   connectedCallback() {
@@ -58,11 +78,12 @@ class ONXHeader extends HTMLElement {
       "nav-letter-spacing": "--nav-letter-spacing",
       "nav-gap": "--nav-gap",
       "mobile-link-padding": "--mobile-link-padding",
-      // NEW: precise line-height control to prevent descender clipping
       "nav-line-height": "--nav-line-height",
-      // NEW: GLOBAL VARS (requested) — download button vertical padding
+      // NEW: GLOBAL VARS — download button vertical padding (requested)
       "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
       "download-btn-pad-y-mobile": "--download-btn-pad-y-mobile",
+      // NEW: Global pro weight
+      "nav-pro-weight": "--nav-pro-weight",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -99,22 +120,30 @@ class ONXHeader extends HTMLElement {
           --download-pad-right-desktop: 12px;
 
           --header-radius: 28px;
-          --logo-size: 75px;       /* desktop header logo */
-          --mobile-logo-size: 32px;/* adjustable mobile logo size */
+          --logo-size: 75px;
+          --mobile-logo-size: 32px;
 
           /* Global nav controls (header + mobile) */
           --nav-font-size: .95rem;
-          /* REQUESTED: make default nav not bold */
-          --nav-font-weight: 400;
+          --nav-font-weight: 400;      /* regular by default */
+          --nav-pro-weight: 650;       /* <<< GLOBAL: ONX Pro weight (adjust here) */
           --nav-letter-spacing: -.01em;
           --nav-gap: 2rem;
           --mobile-link-padding: 12px 12px;
-          /* NEW: prevent descender clipping (e.g., "g" in Pricing) */
           --nav-line-height: 1.25;
 
           /* NEW (REQUESTED): global download button padding controls */
-          --download-btn-pad-y-desktop: .35rem;
-          --download-btn-pad-y-mobile: .50rem;
+          --download-btn-pad-y-desktop: .35rem; /* <<< GLOBAL desktop button vertical padding */
+          --download-btn-pad-y-mobile:  .50rem; /* <<< GLOBAL mobile  button vertical padding */
+
+          /* Scroll-linked interpolation variables (0..1) */
+          --p: 0;            /* progress */
+          --invp: calc(1 - var(--p));
+
+          /* These get computed in JS and plugged as px lengths */
+          --bar-width: 100vw;      /* interpolated header width */
+          --pad-top: 0px;          /* interpolated header top padding */
+          --pad-bottom: 0px;       /* interpolated header bottom padding */
 
           position: sticky; top: 0; z-index: 50;
           display:block;
@@ -153,30 +182,34 @@ class ONXHeader extends HTMLElement {
           -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain;
         }
 
-        /* ===== Header shell ===== */
+        /* ===== Header shell (SCROLL-LINKED) ===== */
         .oc-header{
           background: transparent;
-          padding-top: var(--header-flat-pad-top);
-          padding-bottom: var(--header-flat-pad-bottom);
-          transition: padding .36s cubic-bezier(.2,.8,.2,1);
+          /* Interpolated paddings from JS → --pad-top / --pad-bottom */
+          padding-top: var(--pad-top);
+          padding-bottom: var(--pad-bottom);
         }
+
         .header-bar{
           position: relative; box-sizing: border-box;
-          width: var(--header-width-flat);
+          width: var(--bar-width);               /* ← interpolated width */
           margin-inline: auto;
           display:flex; align-items:center; justify-content:space-between;
-          height: var(--pill-height-mobile);
+          height: clamp(2.6rem, 2.85rem, 3.25rem); /* stable height; visual smoothness */
           padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
-          background: transparent; border: 0; border-radius: 0; box-shadow: none;
-          line-height: 1; /* child links override with --nav-line-height */
-          -webkit-backdrop-filter: none; backdrop-filter: none;
-          transition:
-            width .36s cubic-bezier(.2,.8,.2,1),
-            background-color .36s ease,
-            border-radius .36s cubic-bezier(.2,.8,.2,1),
-            box-shadow .36s ease,
-            -webkit-backdrop-filter .36s ease,
-            backdrop-filter .36s ease;
+
+          /* Interpolated pill styling driven by --p (0..1) */
+          background: rgba(255,255,255, calc(.96 * var(--p)));
+          border: 1px solid rgba(0,0,0, calc(.02 * var(--p)));
+          border-radius: calc(var(--header-radius) * var(--p));
+          box-shadow:
+            0 calc(18px * var(--p)) calc(38px * var(--p)) calc(-18px * var(--p)) rgba(0,0,0,.25),
+            0 calc(1px * var(--p)) 0 rgba(0,0,0, calc(.06 * var(--p)));
+          -webkit-backdrop-filter: blur(calc(8px * var(--p)));
+          backdrop-filter: blur(calc(8px * var(--p)));
+
+          line-height: 1;
+          transition: padding-left .2s ease, padding-right .2s ease; /* small perf-tuned transitions */
         }
 
         /* Perfect vertical centering for ONX block */
@@ -194,7 +227,7 @@ class ONXHeader extends HTMLElement {
           position:absolute; left:50%; transform:translateX(-50%);
           display:none; align-items:center; gap: var(--nav-gap);
           font-size: var(--nav-font-size); font-weight: var(--nav-font-weight); letter-spacing: var(--nav-letter-spacing);
-          line-height: var(--nav-line-height); /* NEW */
+          line-height: var(--nav-line-height);
         }
         .center .nav-link:not(.nav-link--black){
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
@@ -202,16 +235,19 @@ class ONXHeader extends HTMLElement {
           animation: gradientShift var(--speed,16s) ease-in-out infinite;
           -webkit-background-clip:text; background-clip:text;
           -webkit-text-fill-color: transparent; color: transparent;
-          /* NEW: tiny bottom padding ensures descenders aren't visually clipped by WebKit's text clipping with background-clip:text */
-          padding-bottom: .06em;
+          padding-bottom: .06em; /* avoid visual clip */
         }
-        .center .center-extra{ display: contents; } /* placeholder container for injected links */
+        .center .center-extra{ display: contents; }
 
         /* Desktop */
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
-          .header-bar{ height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
+          .header-bar{
+            height: var(--pill-height-desktop);
+            padding-left: var(--pill-inner-x-desktop);
+            padding-right: var(--pill-inner-x-desktop);
+          }
           .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
           .right-area{ padding-right: var(--download-pad-right-desktop); }
           .center{ display:flex; }
@@ -219,45 +255,20 @@ class ONXHeader extends HTMLElement {
           .desktop-actions{ display:flex !important; }
         }
 
-        /* Pill state on scroll */
-        :host(.is-float) .oc-header{
-          padding-top: var(--header-float-pad-top-mobile);
-          padding-bottom: var(--header-float-pad-bottom-mobile);
-        }
-        @media (min-width:768px){
-          :host(.is-float) .oc-header{
-            padding-top: var(--header-float-pad-top-desktop);
-            padding-bottom: var(--header-float-pad-bottom-desktop);
-          }
-        }
-        :host(.is-float) .header-bar{
-          background: rgba(255,255,255,.96);
-          border: 1px solid rgba(0,0,0,0.02);
-          border-radius: var(--header-radius);
-          box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
-          -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-          width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
-        }
-        @media (min-width:768px){
-          :host(.is-float) .header-bar{
-            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-          }
-        }
-
         .nav-link{
           font-weight: var(--nav-font-weight);
           letter-spacing: var(--nav-letter-spacing);
           font-size: var(--nav-font-size);
-          line-height: var(--nav-line-height); /* NEW */
-          display: inline-block; /* helps avoid glyph cropping in some engines */
-          position: relative; /* for hover underline */
+          line-height: var(--nav-line-height);
+          display: inline-block;
+          position: relative;
           transition: transform .2s cubic-bezier(.2,.8,.2,1);
         }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
-        /* REQUESTED: ONX Pro bold */
-        .nav-link--pro{ font-weight:800 !important; }
+        /* NEW: ONX Pro uses global variable (less bold by default) */
+        .nav-link--pro{ font-weight: var(--nav-pro-weight) !important; }
 
-        /* REQUESTED: Apple-style hover (subtle lift + soft underline grow) */
+        /* Apple-style hover */
         .center .nav-link::after{
           content:""; position:absolute; left:10%; right:10%; bottom:-.28em; height:2px;
           background: currentColor; opacity:.22;
@@ -277,20 +288,17 @@ class ONXHeader extends HTMLElement {
           border-radius: 16px; padding:.55rem 1rem;
           box-shadow: 0 18px 30px rgba(0,0,0,.18);
           transition: transform .2s ease, box-shadow .2s ease;
-          box-sizing: border-box; /* ensures precise height calc works */
+          box-sizing: border-box;
         }
         .btn:hover{ transform: translateY(-1px); box-shadow: 0 26px 40px rgba(0,0,0,.26); }
         .icon{ width: 18px; height: 18px; display:inline-block; }
 
-        /* NEW (REQUESTED): Download button auto-fits the header height */
-        /* Mobile header area (if you ever show a header button there) */
+        /* NEW (REQUESTED): Download button vertical padding (global) */
         .right-area .btn{
           padding-block: var(--download-btn-pad-y-mobile);
         }
         @media (min-width:768px){
           .desktop-actions .btn{
-            /* Make the button's total height match the header bar height,
-               leaving adjustable padding defined by global var */
             height: calc(var(--pill-height-desktop) - (2 * var(--download-btn-pad-y-desktop)));
             padding-block: var(--download-btn-pad-y-desktop);
           }
@@ -300,7 +308,7 @@ class ONXHeader extends HTMLElement {
           .news-link{ display:inline-flex; }
         }
 
-        /* ===== Mobile-specific UI (Apple-grade) ===== */
+        /* ===== Mobile-specific UI ===== */
         .hamburger{
           --hb-size: clamp(40px, 6vw, 48px);
           --hb-line: 2px;
@@ -317,7 +325,6 @@ class ONXHeader extends HTMLElement {
         }
         .hamburger:hover{ background: rgba(0,0,0,.04); }
         .hamburger:active{ transform: translateY(1px) scale(.98); }
-        /* Remove any outline around the X/hamburger buttons */
         .hamburger:focus{ outline: none; }
         .hamburger:focus-visible{ outline: none; box-shadow: none; }
 
@@ -337,7 +344,6 @@ class ONXHeader extends HTMLElement {
         .hamburger .lines span{ top:50%; transform:translateY(-50%); }
         .hamburger .lines::after{ bottom:0; }
 
-        /* X animation */
         :host(.mobile-open) .hamburger .lines::before{
           top:50%; transform: translateY(calc(-.5 * var(--hb-line))) rotate(45deg);
         }
@@ -346,14 +352,13 @@ class ONXHeader extends HTMLElement {
           bottom:auto; top:50%; transform: translateY(calc(-.5 * var(--hb-line))) rotate(-45deg);
         }
 
-        /* Backdrop */
         .backdrop{
           position:fixed; inset:0; background:rgba(15,23,42,0.28);
           opacity:0; pointer-events:none; transition: opacity .18s ease;
         }
         :host(.mobile-open) .backdrop{ opacity:1; pointer-events:auto; }
 
-        /* Sheet — locked position, NO sliding, NO scroll movement */
+        /* Locked sheet (no sliding, no scroll) */
         .sheet{
           position:fixed;
           top: max(12px, env(safe-area-inset-top));
@@ -369,7 +374,7 @@ class ONXHeader extends HTMLElement {
           -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
           display:flex; flex-direction:column;
           max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-          overflow: clip; /* clips shadows/bleed perfectly to rounded corners */
+          overflow: clip;
           contain: paint;
           z-index: 2147483647;
         }
@@ -377,7 +382,6 @@ class ONXHeader extends HTMLElement {
 
         .sheet-inner{
           padding: 14px;
-          /* Hard-disable scrolling and panning */
           overflow: hidden !important;
           overscroll-behavior: none !important;
           -webkit-overflow-scrolling: auto !important;
@@ -398,15 +402,14 @@ class ONXHeader extends HTMLElement {
           display:flex; align-items:center; justify-content:space-between;
           padding: var(--mobile-link-padding); border-radius: 14px;
           color:#0A0D10; font-weight: var(--nav-font-weight); font-size: var(--nav-font-size); letter-spacing: var(--nav-letter-spacing);
-          line-height: var(--nav-line-height); /* NEW */
+          line-height: var(--nav-line-height);
           transition: background-color .18s ease, transform .18s ease;
         }
         .mobile-link:hover{ background:#f7f8f9; transform: translateY(-1px); }
         .mobile-link .chev{ width:18px; height:18px; opacity:.4; }
 
-        .mobile-link--pro{ font-weight:800 !important; }
+        .mobile-link--pro{ font-weight: var(--nav-pro-weight) !important; }
 
-        /* Actions area — buttons fully contained, no overflow */
         .mobile-actions{
           display:flex; flex-direction:column; gap:.5rem; padding: 10px 8px 12px;
         }
@@ -415,9 +418,8 @@ class ONXHeader extends HTMLElement {
           width:100%;
           border-radius:14px;
           padding:.75rem 1rem;
-          box-sizing: border-box; /* prevents horizontal bleed */
+          box-sizing: border-box;
         }
-        /* Hard containment & reset for any cloned/slotted actions */
         .mobile-extra-actions a,
         .mobile-extra-actions button{
           position: static !important;
@@ -426,7 +428,7 @@ class ONXHeader extends HTMLElement {
           align-items: center; justify-content: center;
           width: 100% !important; max-width: 100% !important;
           margin: 0 !important; inset: auto !important;
-          box-sizing: border-box !important; /* ensure no bleed */
+          box-sizing: border-box !important;
           border-radius: 14px !important;
           padding: .75rem 1rem !important;
           text-align: center !important;
@@ -434,7 +436,6 @@ class ONXHeader extends HTMLElement {
           overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* Close button in sheet: absolutely no outline/background */
         .sheet .hamburger,
         .sheet .hamburger:hover,
         .sheet .hamburger:active,
@@ -446,28 +447,25 @@ class ONXHeader extends HTMLElement {
           transform: none !important;
         }
 
-        /* ===== ONXPro THEME (page-scoped via theme="ONXPro" | "onxpro" | "pro") ===== */
+        /* ===== ONXPro THEME ===== */
+        /* For Pro: background is black, but we still bind opacity & pill-ness to --p for a smooth fade-in */
         :host([theme="ONXPro"]) .header-bar,
         :host([theme="onxpro"]) .header-bar,
         :host([theme="pro"]) .header-bar{
-          background:#0A0D10;
-          border:1px solid rgba(255,255,255,.06);
-          box-shadow: 0 18px 38px -18px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.06);
-        }
-        :host([theme="ONXPro"].is-float) .header-bar,
-        :host([theme="onxpro"].is-float) .header-bar,
-        :host([theme="pro"].is-float) .header-bar{
-          background:#0A0D10;
+          background: rgba(10,13,16, calc(1 * var(--p))) !important;
+          border: 1px solid rgba(255,255,255, calc(.06 * var(--p))) !important;
+          box-shadow: 0 calc(18px * var(--p)) calc(38px * var(--p)) calc(-18px * var(--p)) rgba(0,0,0,.45),
+                      0 calc(1px * var(--p)) 0 rgba(255,255,255, calc(.06 * var(--p)));
         }
 
-        /* Desktop nav → white for ONXPro theme (unchanged) */
+        /* Desktop nav → white for ONXPro theme */
         :host([theme="ONXPro"]) .center .nav-link,
         :host([theme="onxpro"]) .center .nav-link,
         :host([theme="pro"]) .center .nav-link{
           background:none !important;
           -webkit-text-fill-color: initial !important;
           color:#fff !important;
-          padding-bottom: 0 !important; /* ensure no extra offset in Pro theme */
+          padding-bottom: 0 !important;
         }
         :host([theme="ONXPro"]) .news-link,
         :host([theme="onxpro"]) .news-link,
@@ -492,48 +490,21 @@ class ONXHeader extends HTMLElement {
           color:#fff;
         }
 
-        @media (prefers-reduced-motion: reduce){
-          .sheet, .backdrop, .hamburger .lines::before,
-          .hamburger .lines::after, .hamburger .lines span { transition:none; }
-        }
-
         /* =====================================================================
-           LIGHT / INVERTED VARIANT (Built-in; works with [invert] OR *Light themes)
-           - White header (flat + float)
-           - Black nav/link text
-           - Black buttons with white text
-           - Black logo
-           - No outline (no border, no box-shadow) on the header pill
+           LIGHT / INVERTED VARIANT
            ===================================================================== */
         :host([invert]) .header-bar,
         :host([theme="ONXProLight"]) .header-bar,
         :host([theme="onxpro-light"]) .header-bar,
         :host([theme="pro-light"]) .header-bar{
-          background:#ffffff !important;
+          background: rgba(255,255,255, calc(1 * var(--p))) !important;
           color:#0A0D10 !important;
           border:none !important;
-          box-shadow:none !important;   /* no outline */
-          border-radius: var(--header-radius);
+          box-shadow:none !important;
+          border-radius: calc(var(--header-radius) * var(--p));
           -webkit-backdrop-filter: none !important;
           backdrop-filter: none !important;
         }
-        :host([invert].is-float) .header-bar,
-        :host([theme="ONXProLight"].is-float) .header-bar,
-        :host([theme="onxpro-light"].is-float) .header-bar,
-        :host([theme="pro-light"].is-float) .header-bar{
-          background:#ffffff !important;
-          border:none !important;
-          box-shadow:none !important;   /* still no outline when floating */
-        }
-
-        /* Center nav (desktop) → black text for light/default themes (REQUESTED) */
-        :host(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .center .nav-link{
-          background:none !important;
-          -webkit-text-fill-color: initial !important;
-          color:#0A0D10 !important;
-          padding-bottom: 0 !important;
-        }
-
         :host([invert]) .center .nav-link,
         :host([theme="ONXProLight"]) .center .nav-link,
         :host([theme="onxpro-light"]) .center .nav-link,
@@ -543,15 +514,12 @@ class ONXHeader extends HTMLElement {
           color:#0A0D10 !important;
           padding-bottom: 0 !important;
         }
-
         :host([invert]) .news-link,
         :host([theme="ONXProLight"]) .news-link,
         :host([theme="onxpro-light"]) .news-link,
         :host([theme="pro-light"]) .news-link{
           color:#0A0D10 !important;
         }
-
-        /* Buttons → black bg, white text (desktop + mobile) */
         :host([invert]) .desktop-actions .btn,
         :host([invert]) .mobile-actions .btn,
         :host([theme="ONXProLight"]) .desktop-actions .btn,
@@ -564,16 +532,12 @@ class ONXHeader extends HTMLElement {
           color:#ffffff !important;
           animation:none !important;
         }
-
-        /* Hamburger / icons → black */
         :host([invert]) .hamburger,
         :host([theme="ONXProLight"]) .hamburger,
         :host([theme="onxpro-light"]) .hamburger,
         :host([theme="pro-light"]) .hamburger{
           color:#0A0D10 !important;
         }
-
-        /* Logo → solid black (no gradient, no animation) */
         :host([invert]) .logo-anim,
         :host([theme="ONXProLight"]) .logo-anim,
         :host([theme="onxpro-light"]) .logo-anim,
@@ -597,20 +561,13 @@ class ONXHeader extends HTMLElement {
           <nav class="center" aria-label="Primary">
             <a href="/oc-pro.html" class="nav-link nav-link--black nav-link--pro">ONX Pro</a>
             <a href="/pricing.html" class="nav-link">Pricing</a>
-            <!-- injected desktop links go here -->
             <span class="center-extra"></span>
-            <!-- per-page slotted links still supported -->
             <slot name="nav"></slot>
           </nav>
 
           <!-- Right -->
           <div class="right-area">
-            <!-- Desktop actions -->
             <div class="desktop-actions">
-              <!-- <a class="news-link" href="/news.html" aria-label="ONX News">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h14a2 2 0 0 1 2 2v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
-                <span>ONX-News</span>
-              </a>. -->
               <slot name="actions"></slot>
               <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -633,7 +590,7 @@ class ONXHeader extends HTMLElement {
           <div class="mobile-row">
             <div class="mobile-title">
               <span class="logo-anim" aria-hidden="true"></span>
-              <!-- word "ONX" removed (logo only) -->
+              <!-- word "ONX" intentionally omitted (logo only) -->
             </div>
             <button class="hamburger" type="button" aria-label="Close menu">
               <span class="lines"><span></span></span>
@@ -641,10 +598,12 @@ class ONXHeader extends HTMLElement {
           </div>
 
           <nav class="mobile-nav" aria-label="Mobile">
-            <!-- built-in defaults -->
-            <a class="mobile-link mobile-link--pro" href="/oc-pro.html">ONX Pro <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-            <a class="mobile-link" href="/pricing.html">Pricing <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-            <!-- injected mobile links -->
+            <a class="mobile-link mobile-link--pro" href="/oc-pro.html">ONX Pro
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
+            <a class="mobile-link" href="/pricing.html">Pricing
+              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
             <div class="mobile-extra"></div>
           </nav>
 
@@ -669,12 +628,10 @@ class ONXHeader extends HTMLElement {
     // Events
     this._btns.forEach(b => b.addEventListener("click", this._toggleMobile));
     this._backdrop.addEventListener("click", () => this._toggleMobile(false), { passive: true });
-    // Prevent background scrolling on iOS behind the sheet
     this._backdrop.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
     window.addEventListener("keydown", this._closeOnEsc);
     window.addEventListener("resize", this._onResize, { passive: true });
 
-    // HARD-disable any scroll/pan inside the mobile sheet (no x/y movement)
     const blockScroll = (e) => { e.preventDefault(); };
     ["touchmove", "wheel"].forEach(evt => {
       this._sheet?.addEventListener(evt, blockScroll, { passive: false });
@@ -688,7 +645,8 @@ class ONXHeader extends HTMLElement {
     this._cloneSlotted('nav');
     this._cloneSlotted('actions');
 
-    // Scroll + initial state
+    // Initial geometry + scroll state
+    this._recalcStatic();
     window.addEventListener("scroll", this._onScroll, { passive: true });
     this._onScroll();
   }
@@ -709,7 +667,6 @@ class ONXHeader extends HTMLElement {
     const mobileExtra = this._root.querySelector('.mobile-extra');
     if (!centerExtra || !mobileExtra) return;
 
-    // Clear previous (in case of re-connect)
     centerExtra.innerHTML = '';
     mobileExtra.innerHTML = '';
 
@@ -756,7 +713,6 @@ class ONXHeader extends HTMLElement {
 
     if (name === 'nav'){
       const container = this._root.querySelector('.mobile-extra');
-      // Do not clear here—preserve global-config links; append slotted after them
       assigned.forEach(node => {
         if (!(node instanceof HTMLAnchorElement)) return;
         const a = document.createElement('a');
@@ -774,11 +730,10 @@ class ONXHeader extends HTMLElement {
         a.addEventListener('click', () => this._toggleMobile(false));
         container.appendChild(a);
 
-        // Also mirror slotted links into desktop after the injected ones
+        // Mirror slotted links into desktop after injected ones
         const centerExtra = this._root.querySelector('.center-extra');
         if (centerExtra) {
           const d = node.cloneNode(true);
-          // normalize class
           if (!d.classList.contains('nav-link')) d.classList.add('nav-link');
           centerExtra.appendChild(d);
         }
@@ -827,7 +782,6 @@ class ONXHeader extends HTMLElement {
     document.body.style.touchAction = open ? 'none' : '';
 
     if (open){
-      // Save previous focus and trap focus inside sheet
       this._prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       const first = this._focusables()[0];
       (first instanceof HTMLElement ? first : this._toggleBtn)?.focus({ preventScroll: true });
@@ -842,15 +796,99 @@ class ONXHeader extends HTMLElement {
 
   _closeOnEsc(e){ if (e.key === 'Escape') this._toggleMobile(false); }
 
+  /* ===== Geometry helpers for scroll-linked interpolation ===== */
+  _cssPx(varName){
+    const v = getComputedStyle(this).getPropertyValue(varName).trim();
+    if (!v) return 0;
+    if (v.endsWith('px')) return parseFloat(v);
+    if (v.endsWith('%')) {
+      // For our use, only width-flat might be %
+      const pct = parseFloat(v);
+      return (this._geom.vw * pct) / 100;
+    }
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
+
+  _recalcStatic(){
+    this._geom.vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    this._geom.isDesktop = window.matchMedia('(min-width: 768px)').matches;
+
+    // Flat width: 100% of viewport (or from var)
+    const widthFlatPx = this._cssPx('--header-width-flat') || this._geom.vw;
+
+    // Pill width at end of animation:
+    const maxW = this._cssPx('--header-max-w') || 1200;
+    const outerX = this._geom.isDesktop ? this._cssPx('--pill-outer-x-desktop') : this._cssPx('--pill-outer-x-mobile');
+    const pillWidthPx = Math.min(maxW, this._geom.vw - (2 * outerX));
+
+    this._geom.flatWidthPx = widthFlatPx;
+    this._geom.pillWidthPx = Math.max(0, pillWidthPx);
+
+    // Precompute static padding sources for interpolation
+    const padTopFlat    = this._cssPx('--header-flat-pad-top');
+    const padBottomFlat = this._cssPx('--header-flat-pad-bottom');
+
+    const padTopFloat    = this._geom.isDesktop ? this._cssPx('--header-float-pad-top-desktop')    : this._cssPx('--header-float-pad-top-mobile');
+    const padBottomFloat = this._geom.isDesktop ? this._cssPx('--header-float-pad-bottom-desktop') : this._cssPx('--header-float-pad-bottom-mobile');
+
+    this._padSources = {
+      padTopFlat, padBottomFlat, padTopFloat, padBottomFloat
+    };
+
+    // Re-run scroll to refresh interpolants
+    this._requestTick();
+  }
+
+  _lerp(a, b, t){ return a + (b - a) * t; }
+  _clamp01(x){ return x < 0 ? 0 : (x > 1 ? 1 : x); }
+
+  _requestTick(){
+    if (this._tickPending) return;
+    this._tickPending = true;
+    requestAnimationFrame(() => {
+      this._tickPending = false;
+      this._applyScrollState();
+    });
+  }
+
+  _applyScrollState(){
+    const start = Math.min(this._floatStart, this._floatEnd);
+    const end   = Math.max(this._floatStart, this._floatEnd);
+    const t = this._clamp01((this._lastY - start) / (end - start));
+
+    // Maintain legacy class for theme selectors (if you rely on :host(.is-float))
+    if (t > 0.001) this.classList.add("is-float"); else this.classList.remove("is-float");
+
+    // Expose progress to CSS
+    this.style.setProperty('--p', String(t));
+    this.style.setProperty('--invp', String(1 - t));
+
+    // Interpolate width in px to avoid calc(min(...)) arithmetic issues in CSS
+    const w = this._lerp(this._geom.flatWidthPx, this._geom.pillWidthPx, t);
+    this.style.setProperty('--bar-width', `${w}px`);
+
+    // Interpolate header paddings (top/bottom) so the whole block eases perfectly
+    const { padTopFlat, padBottomFlat, padTopFloat, padBottomFloat } = this._padSources || {};
+    if (padTopFlat != null) {
+      const pt = this._lerp(padTopFlat, padTopFloat, t);
+      this.style.setProperty('--pad-top', `${pt}px`);
+    }
+    if (padBottomFlat != null) {
+      const pb = this._lerp(padBottomFlat, padBottomFloat, t);
+      this.style.setProperty('--pad-bottom', `${pb}px`);
+    }
+  }
+
   _onResize(){
     // Auto-close menu on desktop to avoid scroll/overflow lock getting stuck
     if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
+    this._recalcStatic();
   }
 
   _onScroll() {
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    if (y > this._threshold) this.classList.add("is-float");
-    else this.classList.remove("is-float");
+    this._lastY = window.scrollY || document.documentElement.scrollTop || 0;
+    this._requestTick();
   }
 }
 
