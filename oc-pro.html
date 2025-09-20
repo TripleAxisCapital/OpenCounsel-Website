@@ -116,6 +116,10 @@
       --seg-hover: rgba(255,255,255,.10);
       --seg-thumb: #ffffff;
       --seg-thumb-shadow: 0 8px 22px rgba(0,0,0,.32), inset 0 0 0 1px rgba(0,0,0,.06);
+
+      /* === New: fast-first-paint tuning === */
+      --hero-logo-size: clamp(220px, 54vw, 560px);   /* BIGGER hero logo */
+      --page-blur-dur: 420ms;                        /* ensure visible in <501ms */
     }
     html, body { max-width:100%; overflow-x: clip !important; }
     .section-clip { position: relative; overflow-x: clip; }
@@ -148,11 +152,25 @@
         linear-gradient(var(--cta-angle), var(--cta-from), var(--cta-via), var(--cta-to)) border-box; }
 
     .logo-anim{ display:inline-block; width:var(--logo-width); height:var(--logo-height); background: linear-gradient(135deg, var(--grad-from), var(--grad-via), var(--grad-to)); background-size:300% 300%; animation: gradientShift 16s ease-in-out infinite; -webkit-mask: url('logo.svg') no-repeat center / contain; mask: url('logo.svg') no-repeat center / contain; }
-    .hero-logo-white,.hero-logo-pro{ display:inline-block; width: var(--hero-logo-size, clamp(140px, 45vw, 400px)); height: var(--hero-logo-size, clamp(140px, 45vw, 400px)); background:#ffffff; opacity:0; filter:blur(8px); transform: translateY(6px) scale(.985); animation: heroLogoReveal 900ms cubic-bezier(.16,1,.3,1) forwards; will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle; }
+
+    /* === Faster hero logo reveal + bigger size === */
+    .hero-logo-white,.hero-logo-pro{
+      display:inline-block;
+      width: var(--hero-logo-size, clamp(140px, 45vw, 400px));
+      height: var(--hero-logo-size, clamp(140px, 45vw, 400px));
+      background:#ffffff; opacity:0; filter:blur(6px);
+      transform: translateY(6px) scale(.985);
+      animation: heroLogoReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
+      will-change: opacity, transform, filter; position: relative; z-index: 1; vertical-align: middle;
+    }
     .hero-logo-white{ -webkit-mask:url('logo.svg') no-repeat center / contain; mask:url('logo.svg') no-repeat center / contain; }
     .hero-logo-pro  { -webkit-mask:url('logoPro.svg') no-repeat center / contain; mask:url('logoPro.svg') no-repeat center / contain; }
     .no-hero-glow .hero-logo-white, .no-hero-glow .hero-logo-pro{ animation:none!important; opacity:1!important; filter:none!important; transform:none!important; }
-    @keyframes heroLogoReveal { 0%{opacity:0; filter:blur(8px); transform: translateY(6px) scale(.985);} 60%{opacity:1; filter:blur(1.5px); transform: translateY(0) scale(1);} 100%{opacity:1; filter:blur(0); transform: translateY(0) scale(1);} }
+    @keyframes heroLogoReveal {
+      0%  { opacity:0; filter:blur(6px);  transform: translateY(6px) scale(.985); }
+      60% { opacity:1; filter:blur(1.5px); transform: translateY(0)   scale(1);    }
+      100%{ opacity:1; filter:blur(0);     transform: translateY(0)   scale(1);    }
+    }
 
     .hero-caret{ display:inline-block; height:1em; vertical-align:-0.12em; margin-left:.05em; border-right: var(--caret-w, 2px) solid var(--caret-color, rgba(255,255,255,.9)); animation: heroBlink var(--caret-blink, 900ms) steps(1) infinite; pointer-events:none; }
     #home .hero-sub1{ margin-top: 1px !important; }
@@ -192,25 +210,43 @@
         radial-gradient(60% 60% at 50% 40%, var(--glow-c1), transparent 70%),
         radial-gradient(55% 55% at 40% 60%, var(--glow-c2), transparent 70%);
       filter: blur(var(--glow-blur)); opacity: 0; z-index: 0; pointer-events: none;
-      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards;
+      animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards; /* <= 500ms */
     }
     .hero-logo-glow.glow-pulse {
-      animation: heroGlowReveal 900ms cubic-bezier(.16,1,.3,1) forwards,
+      animation: heroGlowReveal 480ms cubic-bezier(.16,1,.3,1) forwards,
                  heroGlowPulse var(--glow-pulse-dur, 6s) ease-in-out infinite 1.1s;
     }
     @keyframes heroGlowReveal { 0%{opacity:0; filter:blur(40px)} 60%{opacity:var(--glow-opacity); filter:blur(16px)} 100%{opacity:var(--glow-opacity); filter:blur(var(--glow-blur))} }
     @keyframes heroGlowPulse { 0%,100%{ transform:scale(1); filter:blur(var(--glow-blur)); opacity:var(--glow-opacity);} 50%{ transform:scale(1.03); filter:blur(calc(var(--glow-blur) + 6px)); opacity: calc(var(--glow-opacity) + .05);} }
 
-    .page-blur{ position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); background: rgba(0,0,0,.28); z-index:9999; pointer-events:none; transition: backdrop-filter 2s cubic-bezier(.2,.8,.2,1), background-color 2s cubic-bezier(.2,.8,.2,1), opacity 2s cubic-bezier(.2,.8,.2,1); }
+    /* === Faster page fade so first paint < 501ms === */
+    .page-blur{
+      position:fixed; inset:0; backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px);
+      background: rgba(0,0,0,.28); z-index:9999; pointer-events:none;
+      transition: backdrop-filter var(--page-blur-dur) cubic-bezier(.2,.8,.2,1),
+                  background-color var(--page-blur-dur) cubic-bezier(.2,.8,.2,1),
+                  opacity var(--page-blur-dur) cubic-bezier(.2,.8,.2,1);
+    }
     .page-blur.hide{ backdrop-filter:blur(0); -webkit-backdrop-filter:blur(0); background:transparent; opacity:0; }
 
     .scroll-fade { isolation:isolate; }
-    .scroll-fade > * { filter: blur(16px); opacity:.65; transform: translateY(8px); transition: filter 1100ms cubic-bezier(.16,1,.3,1), opacity 1100ms cubic-bezier(.16,1,.3,1), transform 1100ms cubic-bezier(.16,1,.3,1); will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0); }
+    .scroll-fade > * {
+      filter: blur(16px); opacity:.65; transform: translateY(8px);
+      transition: filter 480ms cubic-bezier(.16,1,.3,1),
+                  opacity 480ms cubic-bezier(.16,1,.3,1),
+                  transform 480ms cubic-bezier(.16,1,.3,1);
+      will-change: filter, opacity, transform; backface-visibility:hidden; transform:translateZ(0);
+    }
     .scroll-fade.in-view > * { filter: blur(0); opacity:1; transform: translateY(0); }
 
-    /* === New: Reveal primitives (IO one-shot) === */
-    .reveal{ opacity:0; transform:translateY(14px); filter:blur(6px);
-      transition: opacity .9s cubic-bezier(.2,.8,.2,1), transform .9s cubic-bezier(.2,.8,.2,1), filter .9s; will-change: opacity, transform, filter; backface-visibility:hidden; }
+    /* === Reveal primitives (fast) === */
+    .reveal{
+      opacity:0; transform:translateY(14px); filter:blur(6px);
+      transition: opacity .45s cubic-bezier(.2,.8,.2,1),
+                  transform .45s cubic-bezier(.2,.8,.2,1),
+                  filter .45s;
+      will-change: opacity, transform, filter; backface-visibility:hidden;
+    }
     .reveal.in{ opacity:1; transform:translateY(0); filter:blur(0); }
 
     /* Direction helpers (optional) */
@@ -220,7 +256,7 @@
     .reveal-right{ transform:translateX(-14px); }
     .reveal-up.in,.reveal-down.in,.reveal-left.in,.reveal-right.in{ transform:none; }
 
-    /* Scroll-synced variant (CSS View Timeline). Use class="reveal-sync" on any element, no JS needed. */
+    /* Scroll-synced variant */
     @keyframes fadeUp { from{opacity:0; transform:translateY(14px); filter:blur(6px);} to{opacity:1; transform:none; filter:none;} }
     @supports (animation-timeline: view()) {
       .reveal-sync{
@@ -778,7 +814,6 @@
         const step = Math.max(0, parseInt(group.getAttribute('data-reveal-stagger'),10) || 90);
         const kids = group.querySelectorAll('.reveal');
         kids.forEach((el,i)=>{ el.style.transitionDelay = (i*step)+'ms'; });
-        // Also stagger scroll-fade child items if container itself is scroll-fade
         if (group.classList.contains('scroll-fade')) {
           Array.from(group.children).forEach((child,i)=>{
             child.style.transitionDelay = (i*step)+'ms';
@@ -789,7 +824,6 @@
       const targets = Array.from(document.querySelectorAll('.reveal, .scroll-fade'));
       if (!targets.length) return;
 
-      // If reduced motion or no IO support, apply immediately
       if (prefersReduced || !('IntersectionObserver' in window)) {
         targets.forEach(t=>{
           t.classList.add('in','in-view');
@@ -814,7 +848,7 @@
     })();
   </script>
 
-  <!-- Page blur fade -->
+  <!-- Page blur fade (<= 500ms to visible) -->
   <script>
   (()=>{
     window.addEventListener('load', ()=>{
@@ -822,7 +856,12 @@
       if(!pageBlur) return;
       pageBlur.classList.add('hide');
       document.dispatchEvent(new Event('oc:page-blur-fade'));
-      setTimeout(()=>pageBlur.remove(), 1300);
+      // Remove after the longest transition ends, plus a small cushion
+      const d = getComputedStyle(pageBlur).transitionDuration
+        .split(',')
+        .map(s => parseFloat(s) * 1000)
+        .reduce((a,b)=>Math.max(a,b), 0) || 420;
+      setTimeout(()=>pageBlur.remove(), Math.min(500, d + 60)); // keep under ~500ms total
     });
   })();
   </script>
