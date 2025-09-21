@@ -1,5 +1,4 @@
 // /assets/onx-header.js
-
 /* ─────────────────────────────────────────────────────────────────────────────
    EDIT HERE — EASY NAV LINKS (optional)
    Add items to ONX_HEADER_LINKS and they will appear in BOTH:
@@ -14,10 +13,11 @@ const ONX_HEADER_LINKS = [
   // { label: "Docs", href: "/docs.html", black: true,  pro: false },
 ];
 
-/* Usage for ONX Pro page theme (page-scoped):
+/* Usage:
    <onx-header theme="ONXPro"></onx-header>
    Accepts: theme="ONXPro" | "onxpro" | "pro"
-   NEW:     theme="ONXProLight" | "onxpro-light" | "pro-light"  (or just add the boolean attribute: invert)
+            theme="ONXProLight" | "onxpro-light" | "pro-light"
+            or boolean attribute: invert
 */
 
 class ONXHeader extends HTMLElement {
@@ -31,13 +31,10 @@ class ONXHeader extends HTMLElement {
     this._trapTab = this._trapTab.bind(this);
     this._threshold = parseInt(this.getAttribute("threshold") || "8", 10);
     this._prevFocus = null;
-
-    // spacing sync
-    this._syncEdgeGaps = this._syncEdgeGaps.bind(this);
   }
 
   connectedCallback() {
-    // Allow per-instance CSS variable overrides via attributes
+    // Per-instance CSS variable overrides via attributes
     const varMap = {
       "width-flat": "--header-width-flat",
       "max-w": "--header-max-w",
@@ -47,21 +44,24 @@ class ONXHeader extends HTMLElement {
       "pad-float-bottom-mobile": "--header-float-pad-bottom-mobile",
       "pad-float-top-desktop": "--header-float-pad-top-desktop",
       "pad-float-bottom-desktop": "--header-float-pad-bottom-desktop",
+      "flat-inner-x-mobile": "--flat-inner-x-mobile",
+      "flat-inner-x-desktop": "--flat-inner-x-desktop",
       "pill-inner-x-mobile": "--pill-inner-x-mobile",
       "pill-inner-x-desktop": "--pill-inner-x-desktop",
       "pill-outer-x-mobile": "--pill-outer-x-mobile",
       "pill-outer-x-desktop": "--pill-outer-x-desktop",
+      "flat-height-mobile": "--flat-height-mobile",
+      "flat-height-desktop": "--flat-height-desktop",
       "pill-height-mobile": "--pill-height-mobile",
       "pill-height-desktop": "--pill-height-desktop",
       "logo-size": "--logo-size",
       "mobile-logo-size": "--mobile-logo-size",
-      // Global nav controls (apply to header + mobile)
+      // Global nav controls
       "nav-font-size": "--nav-font-size",
       "nav-font-weight": "--nav-font-weight",
       "nav-letter-spacing": "--nav-letter-spacing",
       "nav-gap": "--nav-gap",
       "mobile-link-padding": "--mobile-link-padding",
-      // prevent descender clipping
       "nav-line-height": "--nav-line-height",
       // download button vertical padding
       "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
@@ -82,26 +82,34 @@ class ONXHeader extends HTMLElement {
           /* Tunables */
           --header-width-flat: 100%;
           --header-max-w: 1200px;
+
+          /* Content paddings when header is flat (no pill) */
           --header-flat-pad-top: 0rem;
           --header-flat-pad-bottom: 0rem;
+
+          /* Content paddings when header floats (pill mode) */
           --header-float-pad-top-mobile: .75rem;
           --header-float-pad-bottom-mobile: .25rem;
           --header-float-pad-top-desktop: 1rem;
           --header-float-pad-bottom-desktop: .25rem;
 
-          --pill-inner-x-mobile: 30px;
+          /* Flat vs Pill inner spacing */
+          --flat-inner-x-mobile: 22px;
+          --flat-inner-x-desktop: 12px;
+          --pill-inner-x-mobile: 12px;
           --pill-inner-x-desktop: 12px;
+
+          /* Pill outer margins (used only when floating) */
           --pill-outer-x-mobile: 16px;
           --pill-outer-x-desktop: 0px;
-          --pill-height-mobile: 2.85rem;
+
+          /* Heights */
+          --flat-height-mobile: 3.6rem;   /* larger on mobile (starts BIG) */
+          --flat-height-desktop: 3.2rem;
+          --pill-height-mobile: 2.85rem;  /* compact pill */
           --pill-height-desktop: 2.85rem;
 
-          --logo-pad-left-mobile: 16px;
-          --logo-pad-left-desktop: 12px;
-          --download-pad-right-mobile: 16px;
-          --download-pad-right-desktop: 12px;
-
-          --header-radius: 28px;
+          /* Logo */
           --logo-size: 75px;
           --mobile-logo-size: 32px;
 
@@ -158,18 +166,25 @@ class ONXHeader extends HTMLElement {
           padding-bottom: var(--header-flat-pad-bottom);
           transition: padding .36s cubic-bezier(.2,.8,.2,1);
         }
+
         .header-bar{
           position: relative; box-sizing: border-box;
           width: var(--header-width-flat);
           margin-inline: auto;
           display:flex; align-items:center; justify-content:space-between;
-          height: var(--pill-height-mobile);
-          padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
+
+          /* BIG at start on mobile; becomes pill on scroll */
+          height: var(--flat-height-mobile);
+          padding-left: var(--flat-inner-x-mobile);
+          padding-right: var(--flat-inner-x-mobile);
+
           background: transparent; border: 0; border-radius: 0; box-shadow: none;
           line-height: 1;
           -webkit-backdrop-filter: none; backdrop-filter: none;
           transition:
             width .36s cubic-bezier(.2,.8,.2,1),
+            height .36s cubic-bezier(.2,.8,.2,1),
+            padding .36s cubic-bezier(.2,.8,.2,1),
             background-color .36s ease,
             border-radius .36s cubic-bezier(.2,.8,.2,1),
             box-shadow .36s ease,
@@ -177,14 +192,10 @@ class ONXHeader extends HTMLElement {
             backdrop-filter .36s ease;
         }
 
-        .logo-pad{
-          height:100%;
-          padding-left: var(--logo-pad-left-mobile);
-          display:flex; align-items:center; gap:.75rem;
-        }
+        .logo-pad{ height:100%; display:flex; align-items:center; gap:.75rem; }
         .logo-pad a{ display:flex; align-items:center; line-height:1; }
 
-        .right-area{ height:100%; padding-right: var(--download-pad-right-mobile); display:flex; align-items:center; gap:1rem; }
+        .right-area{ height:100%; display:flex; align-items:center; gap:1rem; }
 
         .center{
           position:absolute; left:50%; transform:translateX(-50%);
@@ -205,14 +216,17 @@ class ONXHeader extends HTMLElement {
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
-          .header-bar{ height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
-          .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
-          .right-area{ padding-right: var(--download-pad-right-desktop); }
+          .header-bar{
+            height: var(--flat-height-desktop);
+            padding-left: var(--flat-inner-x-desktop);
+            padding-right: var(--flat-inner-x-desktop);
+          }
           .center{ display:flex; }
           .hamburger{ display:none !important; }
           .desktop-actions{ display:flex !important; }
         }
 
+        /* FLOAT (PILL) STATE */
         :host(.is-float) .oc-header{
           padding-top: var(--header-float-pad-top-mobile);
           padding-bottom: var(--header-float-pad-bottom-mobile);
@@ -226,13 +240,22 @@ class ONXHeader extends HTMLElement {
         :host(.is-float) .header-bar{
           background: rgba(255,255,255,.96);
           border: 1px solid rgba(0,0,0,0.02);
-          border-radius: var(--header-radius);
+          border-radius: 28px;
           box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
           -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+
+          /* Transition to pill sizing & padding */
+          height: var(--pill-height-mobile);
+          padding-left: var(--pill-inner-x-mobile);
+          padding-right: var(--pill-inner-x-mobile);
+
           width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
         }
         @media (min-width:768px){
           :host(.is-float) .header-bar{
+            height: var(--pill-height-desktop);
+            padding-left: var(--pill-inner-x-desktop);
+            padding-right: var(--pill-inner-x-desktop);
             width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
           }
         }
@@ -247,7 +270,6 @@ class ONXHeader extends HTMLElement {
           transition: transform .2s cubic-bezier(.2,.8,.2,1);
         }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
-        .nav-link--pro{ font-weight:800 !important; } /* kept for other links */
 
         .center .nav-link::after{
           content:""; position:absolute; left:10%; right:10%; bottom:-.28em; height:2px;
@@ -258,10 +280,8 @@ class ONXHeader extends HTMLElement {
         .center .nav-link:hover{ transform: translateY(-1px); }
         .center .nav-link:hover::after{ transform: scaleX(1); opacity:.5; }
 
-        .news-link{
-          display:none; align-items:center; gap:.5rem;
-          font-size:.9rem; font-weight:700; color:#0A0D10;
-        }
+        .news-link{ display:none; align-items:center; gap:.5rem; font-size:.9rem; font-weight:700; color:#0A0D10; }
+
         .btn{
           display:inline-flex; align-items:center; gap:.5rem;
           color:#fff; font-size:.9rem; font-weight:700;
@@ -279,9 +299,6 @@ class ONXHeader extends HTMLElement {
             height: calc(var(--pill-height-desktop) - (2 * var(--download-btn-pad-y-desktop)));
             padding-block: var(--download-btn-pad-y-desktop);
           }
-        }
-
-        @media (min-width:768px){
           .news-link{ display:inline-flex; }
         }
 
@@ -305,15 +322,12 @@ class ONXHeader extends HTMLElement {
         .hamburger:focus{ outline: none; }
         .hamburger:focus-visible{ outline: none; box-shadow: none; }
 
-        .hamburger .lines{
-          position:relative; width:var(--hb-w); height:var(--hb-h); display:block;
-        }
+        .hamburger .lines{ position:relative; width:var(--hb-w); height:var(--hb-h); display:block; }
         .hamburger .lines::before,
         .hamburger .lines::after,
         .hamburger .lines span{
           content:""; position:absolute; left:0; right:0;
-          height:var(--hb-line); border-radius:1.5px;
-          background: currentColor;
+          height:var(--hb-line); border-radius:1.5px; background: currentColor;
           transform-origin: 50% 50%;
           transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease;
         }
@@ -355,24 +369,13 @@ class ONXHeader extends HTMLElement {
         }
         :host(.mobile-open) .sheet{ opacity:1; pointer-events:auto; }
 
-        .sheet-inner{
-          padding: 14px;
-          overflow: hidden !important;
-          overscroll-behavior: none !important;
-          -webkit-overflow-scrolling: auto !important;
-          touch-action: none !important;
-        }
+        .sheet-inner{ padding: 14px; overflow: hidden !important; overscroll-behavior: none !important; }
 
-        .mobile-row{
-          display:flex; align-items:center; justify-content:space-between;
-          padding: 8px 6px 10px 10px;
-        }
+        .mobile-row{ display:flex; align-items:center; justify-content:space-between; padding: 8px 6px 10px 10px; }
         .mobile-title{ display:flex; align-items:center; gap:10px; }
         .mobile-title .logo-anim{ --logo-size: var(--mobile-logo-size); }
 
-        .mobile-nav{
-          display:flex; flex-direction:column; gap:.25rem; padding: 4px;
-        }
+        .mobile-nav{ display:flex; flex-direction:column; gap:.25rem; padding: 4px; }
         .mobile-link{
           display:flex; align-items:center; justify-content:space-between;
           padding: var(--mobile-link-padding); border-radius: 14px;
@@ -383,33 +386,16 @@ class ONXHeader extends HTMLElement {
         .mobile-link:hover{ background:#f7f8f9; transform: translateY(-1px); }
         .mobile-link .chev{ width:18px; height:18px; opacity:.4; }
 
-        .mobile-link--pro{ font-weight:800 !important; }
-
-        .mobile-actions{
-          display:flex; flex-direction:column; gap:.5rem; padding: 10px 8px 12px;
-        }
+        .mobile-actions{ display:flex; flex-direction:column; gap:.5rem; padding: 10px 8px 12px; }
         .mobile-actions .btn{
-          justify-content:center;
-          width:100%;
-          border-radius:14px;
-          padding:.75rem 1rem;
-          box-sizing: border-box;
+          justify-content:center; width:100%; border-radius:14px; padding:.75rem 1rem; box-sizing: border-box;
         }
 
-        .mobile-extra-actions a,
-        .mobile-extra-actions button{
-          position: static !important;
-          float: none !important;
-          display: inline-flex !important;
-          align-items: center; justify-content: center;
-          width: 100% !important; max-width: 100% !important;
-          margin: 0 !important; inset: auto !important;
-          box-sizing: border-box !important;
-          border-radius: 14px !important;
-          padding: .75rem 1rem !important;
-          text-align: center !important;
-          white-space: nowrap;
-          overflow: hidden; text-overflow: ellipsis;
+        .mobile-extra-actions a, .mobile-extra-actions button{
+          position: static !important; float: none !important; display: inline-flex !important;
+          align-items: center; justify-content: center; width: 100% !important; max-width: 100% !important;
+          margin: 0 !important; inset: auto !important; box-sizing: border-box !important; border-radius: 14px !important;
+          padding: .75rem 1rem !important; text-align: center !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
         .sheet .hamburger,
@@ -417,33 +403,24 @@ class ONXHeader extends HTMLElement {
         .sheet .hamburger:active,
         .sheet .hamburger:focus,
         .sheet .hamburger:focus-visible{
-          background: transparent !important;
-          box-shadow: none !important;
-          outline: none !important;
-          transform: none !important;
+          background: transparent !important; box-shadow: none !important; outline: none !important; transform: none !important;
         }
 
         /* ===== ONXPro THEME ===== */
         :host([theme="ONXPro"]) .header-bar,
         :host([theme="onxpro"]) .header-bar,
         :host([theme="pro"]) .header-bar{
-          background:#0A0D10;
-          border:1px solid rgba(255,255,255,.06);
+          background:#0A0D10; border:1px solid rgba(255,255,255,.06);
           box-shadow: 0 18px 38px -18px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.06);
         }
         :host([theme="ONXPro"].is-float) .header-bar,
         :host([theme="onxpro"].is-float) .header-bar,
-        :host([theme="pro"].is-float) .header-bar{
-          background:#0A0D10;
-        }
+        :host([theme="pro"].is-float) .header-bar{ background:#0A0D10; }
 
         :host([theme="ONXPro"]) .center .nav-link,
         :host([theme="onxpro"]) .center .nav-link,
         :host([theme="pro"]) .center .nav-link{
-          background:none !important;
-          -webkit-text-fill-color: initial !important;
-          color:#fff !important;
-          padding-bottom: 0 !important;
+          background:none !important; -webkit-text-fill-color: initial !important; color:#fff !important; padding-bottom: 0 !important;
         }
         :host([theme="ONXPro"]) .news-link,
         :host([theme="onxpro"]) .news-link,
@@ -455,9 +432,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXPro"]) .mobile-actions .btn,
         :host([theme="onxpro"]) .mobile-actions .btn,
         :host([theme="pro"]) .mobile-actions .btn{
-          background:#fff !important;
-          color:#0A0D10 !important;
-          animation:none !重要;
+          background:#fff !important; color:#0A0D10 !important; animation:none !important;
         }
 
         :host([theme="ONXPro"]) .hamburger,
@@ -469,21 +444,14 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXProLight"]) .header-bar,
         :host([theme="onxpro-light"]) .header-bar,
         :host([theme="pro-light"]) .header-bar{
-          background:#ffffff !important;
-          color:#0A0D10 !important;
-          border:none !important;
-          box-shadow:none !important;
-          border-radius: var(--header-radius);
-          -webkit-backdrop-filter: none !important;
-          backdrop-filter: none !important;
+          background:#ffffff !important; color:#0A0D10 !important; border:none !important;
+          box-shadow:none !important; border-radius: 28px; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
         }
         :host([invert].is-float) .header-bar,
         :host([theme="ONXProLight"].is-float) .header-bar,
         :host([theme="onxpro-light"].is-float) .header-bar,
         :host([theme="pro-light"].is-float) .header-bar{
-          background:#ffffff !important;
-          border:none !important;
-          box-shadow:none !important;
+          background:#ffffff !important; border:none !important; box-shadow:none !important;
         }
 
         :host(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .center .nav-link,
@@ -491,18 +459,13 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXProLight"]) .center .nav-link,
         :host([theme="onxpro-light"]) .center .nav-link,
         :host([theme="pro-light"]) .center .nav-link{
-          background:none !important;
-          -webkit-text-fill-color: initial !important;
-          color:#0A0D10 !important;
-          padding-bottom: 0 !important;
+          background:none !important; -webkit-text-fill-color: initial !important; color:#0A0D10 !important; padding-bottom: 0 !important;
         }
 
         :host([invert]) .news-link,
         :host([theme="ONXProLight"]) .news-link,
         :host([theme="onxpro-light"]) .news-link,
-        :host([theme="pro-light"]) .news-link{
-          color:#0A0D10 !important;
-        }
+        :host([theme="pro-light"]) .news-link{ color:#0A0D10 !important; }
 
         :host([invert]) .desktop-actions .btn,
         :host([invert]) .mobile-actions .btn,
@@ -512,9 +475,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="onxpro-light"]) .mobile-actions .btn,
         :host([theme="pro-light"]) .desktop-actions .btn,
         :host([theme="pro-light"]) .mobile-actions .btn{
-          background:#0A0D10 !important;
-          color:#ffffff !important;
-          animation:none !important;
+          background:#0A0D10 !important; color:#ffffff !important; animation:none !important;
         }
 
         :host([invert]) .hamburger,
@@ -526,8 +487,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXProLight"]) .logo-anim,
         :host([theme="onxpro-light"]) .logo-anim,
         :host([theme="pro-light"]) .logo-anim{
-          background:#000000 !important;
-          animation:none !important;
+          background:#000000 !important; animation:none !important;
         }
       </style>
 
@@ -582,7 +542,7 @@ class ONXHeader extends HTMLElement {
           </div>
 
           <nav class="mobile-nav" aria-label="Mobile">
-            <!-- ONX Pro now matches Pricing styling -->
+            <!-- ONX Pro matches Pricing styling -->
             <a class="mobile-link" href="/oc-pro.html">ONX Pro
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
             </a>
@@ -630,12 +590,9 @@ class ONXHeader extends HTMLElement {
     this._cloneSlotted('nav');
     this._cloneSlotted('actions');
 
-    // Scroll + initial state
+    // Scroll + initial state (starts FLAT, becomes pill after threshold)
     window.addEventListener("scroll", this._onScroll, { passive: true });
     this._onScroll();
-
-    // spacing after paint
-    requestAnimationFrame(this._syncEdgeGaps);
   }
 
   disconnectedCallback() {
@@ -646,6 +603,17 @@ class ONXHeader extends HTMLElement {
     if (this._backdrop) this._backdrop.removeEventListener("click", this._toggleMobile);
   }
 
+  /* ===== Helpers ===== */
+  _chev(){
+    const s = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('class','chev'); s.setAttribute('viewBox','0 0 24 24');
+    s.setAttribute('fill','none'); s.setAttribute('stroke','currentColor');
+    s.setAttribute('stroke-width','1.8'); s.setAttribute('stroke-linecap','round'); s.setAttribute('stroke-linejoin','round');
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d','m9 6 6 6-6 6');
+    s.appendChild(p);
+    return s;
+  }
+
   /* ===== Inject global-config links ===== */
   _renderExtraLinks(list = []) {
     if (!Array.isArray(list) || !list.length) return;
@@ -654,38 +622,24 @@ class ONXHeader extends HTMLElement {
     const mobileExtra = this._root.querySelector('.mobile-extra');
     if (!centerExtra || !mobileExtra) return;
 
-    // Clear previous
-    centerExtra.innerHTML = '';
-    mobileExtra.innerHTML = '';
+    // Remove previous clones we created
+    centerExtra.querySelectorAll('[data-clone]').forEach(n => n.remove());
+    mobileExtra.querySelectorAll('[data-clone]').forEach(n => n.remove());
 
     list.forEach(item => {
       if (!item || !item.label || !item.href) return;
+      const isOnxPro = /onx\s*pro/i.test(String(item.label));
 
-      const isOnxPro = String(item.label).trim().toLowerCase().includes('onx pro');
-
-      // Desktop link
+      // Desktop link (match Pricing for ONX Pro)
       const a = document.createElement('a');
-      // ONX Pro → match Pricing (no forced black/bold)
-      a.className =
-        'nav-link' +
-        (item.black && !isOnxPro ? ' nav-link--black' : '') +
-        (item.pro && !isOnxPro ? ' nav-link--pro' : '');
-      a.href = item.href;
-      a.textContent = item.label;
+      a.className = 'nav-link' + (item.black && !isOnxPro ? ' nav-link--black' : '');
+      a.href = item.href; a.textContent = item.label; a.setAttribute('data-clone','');
       centerExtra.appendChild(a);
 
       // Mobile link
       const m = document.createElement('a');
-      m.className = 'mobile-link' + (item.pro && !isOnxPro ? ' mobile-link--pro' : '');
-      m.href = item.href;
-      m.textContent = item.label;
-      const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24');
-      chev.setAttribute('fill','none'); chev.setAttribute('stroke','currentColor');
-      chev.setAttribute('stroke-width','1.8'); chev.setAttribute('stroke-linecap','round'); chev.setAttribute('stroke-linejoin','round');
-      const p = document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d','m9 6 6 6-6 6');
-      chev.appendChild(p);
-      m.appendChild(chev);
+      m.className = 'mobile-link'; m.href = item.href; m.textContent = item.label; m.setAttribute('data-clone','');
+      m.appendChild(this._chev());
       m.addEventListener('click', () => this._toggleMobile(false));
       mobileExtra.appendChild(m);
     });
@@ -707,37 +661,32 @@ class ONXHeader extends HTMLElement {
 
     if (name === 'nav'){
       const container = this._root.querySelector('.mobile-extra');
+      const centerExtra = this._root.querySelector('.center-extra');
+      // Clear our prior clones only; keep globally injected links
+      container.querySelectorAll('[data-clone]').forEach(n => n.remove());
+      centerExtra.querySelectorAll('[data-clone-slot]').forEach(n => n.remove());
+
       assigned.forEach(node => {
         if (!(node instanceof HTMLAnchorElement)) return;
         const text = (node.textContent || '').trim();
         const isOnxPro = /onx\s*pro/i.test(text);
 
-        // Mobile clone (match Pricing styling for ONX Pro)
+        // Mobile clone (ONX Pro styled like Pricing)
         const a = document.createElement('a');
         a.className = 'mobile-link';
         a.href = node.getAttribute('href') || '#';
         a.textContent = text;
-        if (node.classList.contains('nav-link--pro') && !isOnxPro) a.classList.add('mobile-link--pro');
-        const chev = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        chev.setAttribute('class','chev'); chev.setAttribute('viewBox','0 0 24 24');
-        chev.setAttribute('fill','none'); chev.setAttribute('stroke','currentColor');
-        chev.setAttribute('stroke-width','1.8'); chev.setAttribute('stroke-linecap','round'); chev.setAttribute('stroke-linejoin','round');
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d','m9 6 6 6-6 6');
-        chev.appendChild(p);
-        a.appendChild(chev);
+        a.setAttribute('data-clone','');
+        a.appendChild(this._chev());
         a.addEventListener('click', () => this._toggleMobile(false));
         container.appendChild(a);
 
         // Desktop mirror after injected ones
-        const centerExtra = this._root.querySelector('.center-extra');
-        if (centerExtra) {
-          const d = node.cloneNode(true);
-          if (!d.classList.contains('nav-link')) d.classList.add('nav-link');
-          if (/onx\s*pro/i.test((d.textContent || ''))) {
-            d.classList.remove('nav-link--pro','nav-link--black');
-          }
-          centerExtra.appendChild(d);
-        }
+        const d = node.cloneNode(true);
+        if (!d.classList.contains('nav-link')) d.classList.add('nav-link');
+        if (isOnxPro) d.classList.remove('nav-link--black');
+        d.setAttribute('data-clone-slot','');
+        centerExtra.appendChild(d);
       });
     } else {
       const acts = this._root.querySelector('.mobile-extra-actions');
@@ -799,40 +748,12 @@ class ONXHeader extends HTMLElement {
 
   _onResize(){
     if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
-    this._syncEdgeGaps();
   }
 
   _onScroll() {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
     if (y > this._threshold) this.classList.add("is-float");
     else this.classList.remove("is-float");
-  }
-
-  /* ===== Mobile edge spacing sync ===== */
-  _syncEdgeGaps(){
-    try{
-      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
-      if (!isMobile){
-        this.style.removeProperty('--pill-inner-x-mobile');
-        this.style.removeProperty('--logo-pad-left-mobile');
-        this.style.removeProperty('--download-pad-right-mobile');
-        return;
-      }
-      const headerBar = this._root.querySelector('.header-bar');
-      const logo = this._root.querySelector('.logo-pad .logo-anim');
-      if (!headerBar || !logo) return;
-
-      const hbRect = headerBar.getBoundingClientRect();
-      const logoRect = logo.getBoundingClientRect();
-      const topGap = Math.max(0, logoRect.top - hbRect.top);
-
-      const extra = 15; // px
-      this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
-      this.style.setProperty('--logo-pad-left-mobile', `0px`);
-      this.style.setProperty('--download-pad-right-mobile', `0px`);
-    }catch(_e){
-      /* no-op */
-    }
   }
 }
 
