@@ -66,6 +66,8 @@ class ONXHeader extends HTMLElement {
       // download button vertical padding
       "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
       "download-btn-pad-y-mobile": "--download-btn-pad-y-mobile",
+      // NEW: control pre-pill mobile edge padding
+      "flat-edge-x-mobile": "--flat-edge-x-mobile",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -96,9 +98,10 @@ class ONXHeader extends HTMLElement {
           --pill-height-mobile: 2.85rem;
           --pill-height-desktop: 2.85rem;
 
-          --logo-pad-left-mobile: 16px;
+          --flat-edge-x-mobile: 6px;                 /* NEW: 6px pre-pill mobile edge */
+          --logo-pad-left-mobile: 0px;               /* NEW: tighter pre-pill mobile logo */
           --logo-pad-left-desktop: 12px;
-          --download-pad-right-mobile: 16px;
+          --download-pad-right-mobile: 0px;          /* NEW: tighter pre-pill mobile right */
           --download-pad-right-desktop: 12px;
 
           --header-radius: 28px;
@@ -164,7 +167,8 @@ class ONXHeader extends HTMLElement {
           margin-inline: auto;
           display:flex; align-items:center; justify-content:space-between;
           height: var(--pill-height-mobile);
-          padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
+          padding-left: var(--flat-edge-x-mobile);   /* NEW: pre-pill mobile edge 6px */
+          padding-right: var(--flat-edge-x-mobile);  /* NEW: pre-pill mobile edge 6px */
           background: transparent; border: 0; border-radius: 0; box-shadow: none;
           line-height: 1;
           -webkit-backdrop-filter: none; backdrop-filter: none;
@@ -174,7 +178,8 @@ class ONXHeader extends HTMLElement {
             border-radius .36s cubic-bezier(.2,.8,.2,1),
             box-shadow .36s ease,
             -webkit-backdrop-filter .36s ease,
-            backdrop-filter .36s ease;
+            backdrop-filter .36s ease,
+            padding .28s ease;                       /* NEW: smooth edge→pill padding */
         }
 
         .logo-pad{
@@ -205,7 +210,11 @@ class ONXHeader extends HTMLElement {
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
-          .header-bar{ height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
+          .header-bar{
+            height: var(--pill-height-desktop);
+            padding-left: var(--pill-inner-x-desktop);
+            padding-right: var(--pill-inner-x-desktop);
+          }
           .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
           .right-area{ padding-right: var(--download-pad-right-desktop); }
           .center{ display:flex; }
@@ -230,10 +239,14 @@ class ONXHeader extends HTMLElement {
           box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
           -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
           width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+          padding-left: var(--pill-inner-x-mobile);    /* NEW: pill spacing (mobile) */
+          padding-right: var(--pill-inner-x-mobile);   /* NEW: pill spacing (mobile) */
         }
         @media (min-width:768px){
           :host(.is-float) .header-bar{
             width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+            padding-left: var(--pill-inner-x-desktop);   /* keep desktop pill spacing */
+            padding-right: var(--pill-inner-x-desktop);
           }
         }
 
@@ -457,7 +470,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="pro"]) .mobile-actions .btn{
           background:#fff !important;
           color:#0A0D10 !important;
-          animation:none !重要;
+          animation:none !important; /* fixed typo */
         }
 
         :host([theme="ONXPro"]) .hamburger,
@@ -691,8 +704,7 @@ class ONXHeader extends HTMLElement {
     });
   }
 
-  /* ===== Clone slotted nav/actions into mobile sheet ===== */
-  _cloneSlotted(name){
+    _cloneSlotted(name){
     const slot = this._root.querySelector(`slot[name="${name}"]`);
     if (!slot) return;
     slot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
@@ -806,6 +818,7 @@ class ONXHeader extends HTMLElement {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
     if (y > this._threshold) this.classList.add("is-float");
     else this.classList.remove("is-float");
+    this._syncEdgeGaps(); // NEW: recompute when state flips
   }
 
   /* ===== Mobile edge spacing sync ===== */
@@ -813,23 +826,33 @@ class ONXHeader extends HTMLElement {
     try{
       const isMobile = !window.matchMedia('(min-width: 768px)').matches;
       if (!isMobile){
-        this.style.removeProperty('--pill-inner-x-mobile');
+        // cleanup mobile-only overrides on desktop
+        this.style.removeProperty('--flat-edge-x-mobile');
         this.style.removeProperty('--logo-pad-left-mobile');
         this.style.removeProperty('--download-pad-right-mobile');
         return;
       }
-      const headerBar = this._root.querySelector('.header-bar');
-      const logo = this._root.querySelector('.logo-pad .logo-anim');
-      if (!headerBar || !logo) return;
 
-      const hbRect = headerBar.getBoundingClientRect();
-      const logoRect = logo.getBoundingClientRect();
-      const topGap = Math.max(0, logoRect.top - hbRect.top);
-
-      const extra = 15; // px
-      this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
+      // Always keep logo/right tight; header-bar padding provides the 6px
       this.style.setProperty('--logo-pad-left-mobile', `0px`);
       this.style.setProperty('--download-pad-right-mobile', `0px`);
+
+      const floating = this.classList.contains('is-float');
+      if (floating){
+        // Keep pill behavior: compute dynamic inner X for the rounded pill
+        const headerBar = this._root.querySelector('.header-bar');
+        const logo = this._root.querySelector('.logo-pad .logo-anim');
+        if (headerBar && logo){
+          const hbRect = headerBar.getBoundingClientRect();
+          const logoRect = logo.getBoundingClientRect();
+          const topGap = Math.max(0, logoRect.top - hbRect.top);
+          const extra = 15; // px (existing look)
+          this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
+        }
+      } else {
+        // Pre-pill: hard 6px edges
+        this.style.setProperty('--flat-edge-x-mobile', `6px`);
+      }
     }catch(_e){
       /* no-op */
     }
