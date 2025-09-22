@@ -1462,77 +1462,57 @@
   })();
 </script>
 
-<!-- ONX Value Carousel — Ultra‑minimal, Apple‑grade, centered & non‑overlapping arrows -->
-<section id="onx-carousel" class="py-14 sm:py-20">
-  <div class="mx-auto max-w-5xl px-4 sm:px-6">
-    <div id="onxDeck" aria-roledescription="carousel" class="relative overflow-hidden rounded-2xl">
-      <!-- Track -->
-      <div id="onxTrack" class="flex transition-transform duration-500 ease-out will-change-transform">
-        <!-- Slide 1 -->
-        <article class="min-w-full shrink-0" role="group" aria-roledescription="slide" aria-label="1 of 3">
-          <div class="flex h-[42vh] min-h-[360px] items-center justify-center px-[max(1rem,env(safe-area-inset-left))] text-center sm:h-[48vh]">
-            <div class="mx-auto max-w-2xl">
-              <h2 class="text-4xl font-semibold tracking-tight sm:text-5xl">Local</h2>
-              <p class="mt-3 text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Runs fully on your device for instant feel and true privacy.
-              </p>
-            </div>
-          </div>
-        </article>
 
-        <!-- Slide 2 -->
-        <article class="min-w-full shrink-0" role="group" aria-roledescription="slide" aria-label="2 of 3">
-          <div class="flex h-[42vh] min-h-[360px] items-center justify-center px-[max(1rem,env(safe-area-inset-left))] text-center sm:h-[48vh]">
-            <div class="mx-auto max-w-2xl">
-              <h2 class="text-4xl font-semibold tracking-tight sm:text-5xl">Accurate</h2>
-              <p class="mt-3 text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Built for precise prompts and verifiable results you can trust.
-              </p>
-            </div>
-          </div>
-        </article>
+<script>
+  (function(){
+    const deck  = document.getElementById('onxDeck');
+    const track = document.getElementById('onxTrack');
+    const slides = Array.from(track.children);
+    const prev  = document.getElementById('onxPrev');
+    const next  = document.getElementById('onxNext');
+    const dots  = Array.from(document.querySelectorAll('#onx-carousel [data-dot]'));
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        <!-- Slide 3 -->
-        <article class="min-w-full shrink-0" role="group" aria-roledescription="slide" aria-label="3 of 3">
-          <div class="flex h-[42vh] min-h-[360px] items-center justify-center px-[max(1rem,env(safe-area-inset-left))] text-center sm:h-[48vh]">
-            <div class="mx-auto max-w-2xl">
-              <h2 class="text-4xl font-semibold tracking-tight sm:text-5xl">Private</h2>
-              <p class="mt-3 text-base leading-7 text-neutral-600 dark:text-neutral-400">
-                Your data never leaves. No logs. No tracking. Your rules.
-              </p>
-            </div>
-          </div>
-        </article>
-      </div>
+    let index = 0, auto;
 
-      <!-- Edge gradients so arrows never sit on text -->
-      <div class="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-white to-transparent dark:from-black"></div>
-      <div class="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-white to-transparent dark:from-black"></div>
+    function update(){
+      track.style.transform = `translateX(-${index*100}%)`;
+      slides.forEach((s,i)=> s.setAttribute('aria-hidden', i===index ? 'false' : 'true'));
+      dots.forEach((d,i)=> d.setAttribute('aria-current', i===index ? 'true' : 'false'));
+    }
+    function go(n){ index = (n + slides.length) % slides.length; update(); }
 
-      <!-- Controls (kept outside content area) -->
-      <div class="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
-        <button id="onxPrev" aria-label="Previous"
-          class="pointer-events-auto -ml-6 inline-flex size-10 items-center justify-center rounded-full bg-white/80 text-neutral-900 ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-          style="transform: translateX(-6px);">
-          <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m15 18-6-6 6-6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button id="onxNext" aria-label="Next"
-          class="pointer-events-auto -mr-6 inline-flex size-10 items-center justify-center rounded-full bg-white/80 text-neutral-900 ring-1 ring-black/5 backdrop-blur hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-black dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
-          style="transform: translateX(6px);">
-          <svg xmlns="http://www.w3.org/2000/svg" class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
+    // Buttons
+    prev.addEventListener('click', ()=>go(index-1));
+    next.addEventListener('click', ()=>go(index+1));
 
-      <!-- Dots -->
-      <div class="mt-6 flex items-center justify-center gap-2" role="tablist" aria-label="Slides">
-        <button class="onx-dot h-1.5 w-6 rounded-full bg-neutral-300 dark:bg-neutral-800" data-dot="0"><span class="sr-only">Local</span></button>
-        <button class="onx-dot h-1.5 w-6 rounded-full bg-neutral-300 dark:bg-neutral-800" data-dot="1"><span class="sr-only">Accurate</span></button>
-        <button class="onx-dot h-1.5 w-6 rounded-full bg-neutral-300 dark:bg-neutral-800" data-dot="2"><span class="sr-only">Private</span></button>
-      </div>
-    </div>
-  </div>
-</section>
+    // Dots
+    dots.forEach(d=> d.addEventListener('click', ()=> go(parseInt(d.dataset.dot))));
 
+    // Keyboard
+    deck.tabIndex = 0;
+    deck.addEventListener('keydown', e=>{
+      if(e.key==='ArrowRight') go(index+1);
+      if(e.key==='ArrowLeft')  go(index-1);
+    });
+
+    // Touch swipe
+    let sx=0, dx=0, touching=false;
+    track.addEventListener('touchstart', e=>{ touching=true; sx=e.touches[0].clientX; dx=0; }, {passive:true});
+    track.addEventListener('touchmove', e=>{ if(!touching) return; dx=e.touches[0].clientX - sx; }, {passive:true});
+    track.addEventListener('touchend', ()=>{ touching=false; if(Math.abs(dx)>40) go(index + (dx<0?1:-1)); dx=0; });
+
+    // Autoplay (pause on hover/focus; respects reduced motion)
+    function start(){ if(reduceMotion) return; stop(); auto = setInterval(()=>go(index+1), 5000); }
+    function stop(){ if(auto) clearInterval(auto); }
+    deck.addEventListener('pointerenter', stop);
+    deck.addEventListener('pointerleave', start);
+    deck.addEventListener('focusin', stop);
+    deck.addEventListener('focusout', start);
+
+    update(); start();
+  })();
+</script>
 
 
 
