@@ -813,142 +813,449 @@
     </div>
   </div>
 </section>
-
-
-
-
-<script>
-(() => {
-  const deck   = document.getElementById('onxDeck');
-  const track  = document.getElementById('onxTrack');
-  const slides = Array.from(track.children);
-  const prev   = document.getElementById('onxPrev');
-  const next   = document.getElementById('onxNext');
-  const dots   = Array.from(document.querySelectorAll('#onx-carousel [data-dot]'));
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // CONFIG
-  const POP_MS   = reduceMotion ? 0 : 420;   // pop/bounce duration
-  const PAUSE_MS = 100;                      // pause after each pop before advancing
-
-  // Ensure each slide has a "content" node to animate (the inner centered wrapper)
-  function contentNode(slide) {
-    // grab the first meaningful child inside each slide to animate (your inner max-w-2xl div)
-    return slide.querySelector('.mx-auto.max-w-2xl') || slide.firstElementChild;
-  }
-
-  let index = 0;
-  let playing = false;       // autoplay running
-  let animTimer = null;      // next-step timer
-  let started = false;       // has intersection trigger fired at least once
-
-  function updateUI() {
-    track.style.transform = `translateX(-${index * 100}%)`;
-    slides.forEach((s, i) => s.setAttribute('aria-hidden', i === index ? 'false' : 'true'));
-    dots.forEach((d, i) => d.setAttribute('aria-current', i === index ? 'true' : 'false'));
-  }
-
-  function go(n) {
-    index = (n + slides.length) % slides.length;
-    updateUI();
-    triggerPop(slides[index]);
-  }
-
-  function triggerPop(slide) {
-    // clear any prior pop classes
-    slides.forEach(s => {
-      const c = contentNode(s);
-      if (c) c.classList.remove('onx-pop');
-    });
-
-    // add pop on the active slide's content
-    const c = contentNode(slide);
-    if (!c) return;
-    // reflow to restart animation cleanly
-    void c.offsetWidth;
-    c.classList.add('onx-pop');
-
-    // when pop ends, wait PAUSE_MS then advance
-    if (!reduceMotion) {
-      c.addEventListener('animationend', onEnded, { once: true });
-    } else {
-      // reduced motion → just pause then advance
-      clearTimeout(animTimer);
-      animTimer = setTimeout(() => playing && go(index + 1), PAUSE_MS);
+<!--------------------------------------------------------------------OPENAI MODEL CARD---------------------------------------------------------------------->
+<!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
+<div id="onx-card-reveal"
+     data-speed="1.6"
+     data-menu-scale="1.5"
+     data-overshoot-x-enabled="false"
+     data-overshoot-y-enabled="true"
+     data-overshoot-x="1.5"
+     data-overshoot-y="1.5"
+     data-peak-x="0.58"
+     data-peak-y="0.60"
+     style="max-width: 100%; margin: 48px auto;">
+  <style>
+    #onx-card-reveal * { box-sizing: border-box; }
+    #onx-stage{
+      position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
+      border-radius:28px; overflow:hidden;
+      background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
+      box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
     }
-
-    function onEnded() {
-      clearTimeout(animTimer);
-      animTimer = setTimeout(() => {
-        if (playing) go(index + 1);
-      }, PAUSE_MS);
+    #onx-stage canvas{width:100%; height:100%; display:block;}
+    #onx-controls{
+      display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
+      font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
     }
-  }
-
-  // Public controls: stop autoplay and navigate manually
-  function stop() { playing = false; clearTimeout(animTimer); }
-  function start() {
-    if (playing) return;
-    playing = true;
-    // ensure current slide pops immediately when (re)starting
-    triggerPop(slides[index]);
-  }
-
-  prev.addEventListener('click', () => { stop(); go(index - 1); });
-  next.addEventListener('click', () => { stop(); go(index + 1); });
-  dots.forEach(d => d.addEventListener('click', () => { stop(); go(parseInt(d.dataset.dot)); }));
-
-  // Keyboard
-  deck.tabIndex = 0;
-  deck.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { stop(); go(index + 1); }
-    if (e.key === 'ArrowLeft')  { stop(); go(index - 1); }
-  });
-
-  // Touch swipe
-  let sx = 0, dx = 0, touching = false;
-  track.addEventListener('touchstart', e => { touching = true; sx = e.touches[0].clientX; dx = 0; stop(); }, { passive: true });
-  track.addEventListener('touchmove',  e => { if (!touching) return; dx = e.touches[0].clientX - sx; }, { passive: true });
-  track.addEventListener('touchend',   () => { touching = false; if (Math.abs(dx) > 40) go(index + (dx < 0 ? 1 : -1)); dx = 0; });
-
-  // ── START ONLY WHEN SECTION CENTER IS VISIBLE ──────────────────────────────
-  const section = document.getElementById('onx-carousel');
-  function sectionCenterVisible() {
-    const r = section.getBoundingClientRect();
-    const centerY = window.innerHeight / 2;
-    return r.top <= centerY && r.bottom >= centerY;
-  }
-
-  function checkStart() {
-    if (!started && sectionCenterVisible()) {
-      started = true;
-      start();
-      window.removeEventListener('scroll', checkStart, true);
-      window.removeEventListener('resize', checkStart, true);
+    #onx-controls button{
+      border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
+      background:#000; color:#fff; font-weight:600; letter-spacing:.2px;
+      box-shadow:0 6px 18px rgba(0,0,0,.12);
+      transition:transform .15s ease, box-shadow .2s ease;
     }
-  }
+    #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+  </style>
 
-  // Use both IO + manual center check to be precise and resilient
-  try {
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting) checkStart();
+  <div id="onx-stage"><canvas id="onx-canvas"></canvas></div>
+  <div id="onx-controls"><button id="onx-play">Play</button></div>
+
+  <script>
+    (function(){
+      'use strict';
+
+      // ===== GLOBAL OPTIONS =====
+      const host = document.getElementById('onx-card-reveal');
+      const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+      const TEMPO = {
+        speed: parseFloat(host.dataset.speed) || 1.6,
+        menuScale: parseFloat(host.dataset.menuScale) || 1.5,
+        overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false,
+        overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true,
+        overshootX: parseFloat(host.dataset.overshootX) || 1.5,
+        overshootY: parseFloat(host.dataset.overshootY) || 1.5,
+        peakX: parseFloat(host.dataset.peakX) || 0.58,
+        peakY: parseFloat(host.dataset.peakY) || 0.60
+      };
+
+      // Timings (scaled by speed)
+      const BASE = {
+        width: 0.65,                 // width grow portion of Phase A
+        rowStep: 0.16,               // stagger between row pops
+        itemPop: 0.42,               // pop duration per row
+        holdA: 0.34, holdB: 0.50,    // holds before morph
+        morph: 0.95                  // card→bubble morph
+      };
+      const S = v => v / TEMPO.speed;
+
+      // ===== DESIGN BASE (pre-scale) =====
+      const DESIGN = {
+        padX: 20, padY: 20,
+        rowGap: 16, subGap: 6,
+        titleSize: 28, subSize: 18,
+        titleWeight: 800, subWeight: 500,
+        minW: 360, maxW: 720,
+        stageMargin: 56
+      };
+
+      const SCALE = TEMPO.menuScale;
+      const STYLE = {
+        padX: Math.round(DESIGN.padX * SCALE),
+        padY: Math.round(DESIGN.padY * SCALE),
+        rowGap: Math.round(DESIGN.rowGap * SCALE),
+        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
+        titleSize: DESIGN.titleSize * SCALE,
+        subSize: DESIGN.subSize * SCALE,
+        titleWeight: DESIGN.titleWeight,
+        subWeight: DESIGN.subWeight,
+        minW: DESIGN.minW * SCALE,
+        maxW: DESIGN.maxW * SCALE,
+        stageMargin: DESIGN.stageMargin
+      };
+
+      // ===== Models =====
+      const rows = [
+        { title:'ONX FAST', sub:'Fastest for instant answers' },
+        { title:'ONX',      sub:'Default model' },
+        { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
+      ];
+
+      // Canvas
+      const CONFIG = { w: 1920, h: 1080 };
+      const canvas = document.getElementById('onx-canvas');
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
+      const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+
+      // Helpers
+      const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
+      const lerp=(a,b,t)=>a+(b-a)*t;
+      const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
+      const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+
+      function boomerang(t, factor=1.08, peak=0.55){
+        if (t <= 0) return 0;
+        if (t >= 1) return 1;
+        if (t < peak) return easeOutCubic(t/peak) * factor;
+        const u = (t - peak) / (1 - peak);
+        return 1 + (factor - 1) * (1 - easeOutCubic(u));
+      }
+      function setFont(weight,size){
+        ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
+      }
+      function roundedRect(ctx,x,y,w,h,r){
+        const rr=Math.min(r,w/2,h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr,y);
+        ctx.arcTo(x+w,y,x+w,y+h,rr);
+        ctx.arcTo(x+w,y+h,x,y+h,rr);
+        ctx.arcTo(x,y+h,x,y,rr);
+        ctx.arcTo(x,y,x+w,y,rr);
+        ctx.closePath();
+      }
+
+      // Measure final layout (for end-of-Phase-A target & morph)
+      function measureFinalLayout(){
+        let maxTextW = 0;
+        setFont(STYLE.titleWeight, STYLE.titleSize);
+        rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+        setFont(STYLE.subWeight, STYLE.subSize);
+        rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+
+        const contentW = Math.ceil(maxTextW);
+        const cardW = Math.min(
+          clamp(contentW + STYLE.padX*2, STYLE.minW, STYLE.maxW),
+          CONFIG.w - 2*STYLE.stageMargin
+        );
+
+        const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
+        const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
+        const cardH = Math.min(
+          Math.ceil(contentH + STYLE.padY*2),
+          CONFIG.h - 2*STYLE.stageMargin
+        );
+
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+        return { cardW, cardH, rowHeights, radius };
+      }
+      let layout = measureFinalLayout();
+
+      // Seed (start small)
+      const seed = { w: 120, h: 80, r: 20 };
+
+      // --------- Phase A: Card build (HEIGHT DRIVEN BY ROW POPS) ----------
+      function renderCard(t){
+        // Stage bg
+        const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
+        g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
+        ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
+
+        // Width easing (independent)
+        const widthEnd = S(BASE.width);
+        const tw = clamp(t / widthEnd);
+        const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
+        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
+
+        // Row-driven height: compute cumulative visible content
+        const rowStep = S(BASE.rowStep), popDur = S(BASE.itemPop);
+        let contentVisibleH = 0;
+        let gaps = 0;
+        const perRow = [];
+        for (let i=0; i<rows.length; i++){
+          const start = i * rowStep;
+          const pr = clamp((t - start) / popDur);          // 0..1 reveal progress for row i
+          perRow.push(pr);
+          if (pr > 0){
+            contentVisibleH += layout.rowHeights[i] * pr;  // proportionally contributes height
+            gaps++;
+          }
+        }
+        if (gaps > 0) contentVisibleH += STYLE.rowGap * (gaps - 1);
+        const dynamicTargetH = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
+        const h = dynamicTargetH; // height follows rows directly → feels “pushed” by popping items
+
+        // Centered position & rounding
+        const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w)); // proxy for width growth
+        const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
+        const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
+
+        // Card shell
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
+        ctx.shadowBlur = lerp(6, 26, growT);
+        ctx.shadowOffsetY = lerp(6, 15, growT);
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, x, y, w, h, r); ctx.fill();
+        ctx.shadowColor='transparent';
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+        // Clip + content
+        ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
+        const contentX = x + STYLE.padX;
+        let cursorY = y + STYLE.padY;
+
+        // Draw rows with subtle “bubble pop” scale
+        for (let i=0; i<rows.length; i++){
+          const row = rows[i];
+          const pr = perRow[i];
+          if (pr <= 0) continue;
+
+          const a  = easeOutCubic(pr);
+          const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06; // small pop, stays flat/minimal
+          const dy = lerp(10, 0, a);
+          const blurPx = (1 - a) * 1.5;
+
+          ctx.save();
+          ctx.translate(contentX, cursorY + dy);
+          ctx.scale(s, s);
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.globalAlpha = a; ctx.filter = `blur(${blurPx}px)`;
+
+          // Title
+          setFont(STYLE.titleWeight, STYLE.titleSize);
+          ctx.fillStyle = '#0b0b10';
+          ctx.fillText(row.title, 0, STYLE.titleSize);
+
+          // Sub
+          let drawnH = STYLE.titleSize;
+          if (row.sub){
+            setFont(STYLE.subWeight, STYLE.subSize);
+            ctx.fillStyle = '#5f646c';
+            ctx.fillText(row.sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
+            drawnH = STYLE.titleSize + STYLE.subGap + STYLE.subSize;
+          }
+
+          ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
+
+          // Advance cursor using full row height (keeps even padding as it grows)
+          cursorY += layout.rowHeights[i] * pr + STYLE.rowGap;
+        }
+        // remove last added gap if last row not fully placed (minor visual polish)
+        // but since we computed dynamic height from the same math, padding remains even.
+
+        ctx.restore();
+
+        // Phase A total: until last row finishes + holds
+        const lastStart = (rows.length - 1) * rowStep;
+        const total = lastStart + popDur + S(BASE.holdA) + S(BASE.holdB);
+
+        // Return box for morph start (uses current card box if Phase A ended)
+        return { total, x, y, w, h, r };
+      }
+
+      // --------- Phase B: Morph card → chat bubble ----------
+      function renderMorphCardToBubble(startBox, t){
+        const bubbleH = Math.round(Math.min(100 * SCALE, 130));
+        const bubbleW = Math.round(Math.min(CONFIG.w - 2*STYLE.stageMargin, Math.max(startBox.w*1.8, 1100)));
+        const bubbleR = Math.round(bubbleH / 2);
+
+        const bx = (CONFIG.w - bubbleW)/2;
+        const by = (CONFIG.h - bubbleH)/2 + 30;
+
+        const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
+        const heightF = TEMPO.overshootYEnabled ? boomerang(t, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(t);
+        const radiusF = easeInOutCubic(t);
+
+        const w = startBox.w + (bubbleW - startBox.w) * widthF;
+        const h = startBox.h + (bubbleH - startBox.h) * heightF;
+        const r = startBox.r + (bubbleR - startBox.r) * radiusF;
+        const x = (CONFIG.w - w)/2;
+        const y = (CONFIG.h - h)/2 + 30 * radiusF;
+
+        // BG
+        const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
+        g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
+        ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
+
+        // Shape
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
+        ctx.shadowBlur = lerp(12, 22, radiusF);
+        ctx.shadowOffsetY = lerp(10, 14, radiusF);
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, x, y, w, h, r); ctx.fill();
+        ctx.shadowColor='transparent';
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+        // Subtle ghost of rows (fades out early)
+        const contentFadeOut = 1 - clamp(t / 0.25);
+        if (contentFadeOut > 0){
+          ctx.save();
+          roundedRect(ctx, x, y, w, h, r); ctx.clip();
+          const contentX = x + STYLE.padX, contentTop = y + STYLE.padY;
+          setFont(STYLE.titleWeight, STYLE.titleSize);
+          ctx.globalAlpha = 0.4 * contentFadeOut; ctx.fillStyle = '#0b0b10';
+          const ghostLines = Math.min(3, rows.length);
+          for (let i=0;i<ghostLines;i++){
+            let yRow = contentTop;
+            for (let j=0;j<i;j++) yRow += layout.rowHeights[j] + STYLE.rowGap;
+            ctx.fillText(rows[i].title, contentX, yRow + STYLE.titleSize);
+          }
+          ctx.restore();
+        }
+
+        // UI bits appear near end
+        const uiAlpha = clamp((t - 0.6)/0.25);
+        if (uiAlpha > 0){
+          const plusCx = x + 28, plusCy = y + h/2;
+          ctx.save();
+          ctx.globalAlpha = uiAlpha;
+          ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+          ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7);
+          ctx.stroke();
+          const micCx = x + w - 36, micCy = y + h/2;
+          ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+
+        return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
+      }
+
+      // --------- Phase C: Idle bubble with blinking caret ----------
+      let caretLoop = null;
+      function startBubbleIdle(bubble){
+        let rafId = null;
+        const caretPeriod = 900; // ms
+        function loop(nowMS){
+          // BG
+          const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
+          g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
+          ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
+
+          // Bubble
+          ctx.shadowColor = 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 20; ctx.shadowOffsetY = 14;
+          ctx.fillStyle = '#ffffff';
+          roundedRect(ctx, bubble.x, bubble.y, bubble.w, bubble.h, bubble.r); ctx.fill();
+          ctx.shadowColor='transparent';
+          ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+          // Icons
+          const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
+          ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+          ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
+          const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
+          ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+
+          // Placeholder text + caret
+          const textLeft = bubble.x + 56;
+          const textY = bubble.y + bubble.h/2 + 10;
+          setFont(600, Math.max(18, 18 * SCALE));
+          ctx.fillStyle = '#8a8f96';
+          ctx.fillText('Ask the impossible', textLeft, textY);
+
+          const showCaret = Math.floor((nowMS % (caretPeriod)) / (caretPeriod/2)) === 0;
+          if (showCaret){
+            const textWidth = ctx.measureText('Ask the impossible').width;
+            const cx = textLeft + textWidth + 6;
+            const cy = bubble.y + bubble.h/2 - 12;
+            ctx.fillStyle = '#8a8f96';
+            ctx.fillRect(cx, cy, 2, 24);
+          }
+          rafId = requestAnimationFrame(loop);
+        }
+        rafId = requestAnimationFrame(loop);
+        caretLoop = { stop: ()=> cancelAnimationFrame(rafId) };
+      }
+
+      // --------- Orchestrator ----------
+      let isAnimating = false;
+      let waitTimer = null;
+
+      function play(){
+        if (isAnimating) return;
+        isAnimating = true;
+        if (caretLoop){ caretLoop.stop(); caretLoop = null; }
+        if (waitTimer){ clearTimeout(waitTimer); waitTimer = null; }
+
+        const btn = document.getElementById('onx-play'); if (btn) btn.disabled = true;
+        const start = performance.now();
+
+        function stepA(now){
+          const t = (now - start)/1000;
+          const A = renderCard(t);
+          if (t < A.total){ requestAnimationFrame(stepA); }
+          else {
+            // Smoothly hand off to morph after a short pause
+            const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
+            waitTimer = setTimeout(()=>{
+              const morphStart = performance.now();
+              function stepB(now2){
+                const t2 = (now2 - morphStart)/1000 / S(BASE.morph);
+                const B = renderMorphCardToBubble(finalBox, clamp(t2));
+                if (t2 < 1){ requestAnimationFrame(stepB); }
+                else {
+                  startBubbleIdle({ x: B.bubble.x, y: B.bubble.y, w: B.bubble.w, h: B.bubble.h, r: B.bubble.r });
+                  isAnimating = false; if (btn) btn.disabled = false;
+                }
+              }
+              requestAnimationFrame(stepB);
+            }, 1000);
+          }
+        }
+        requestAnimationFrame(stepA);
+      }
+
+      // first frame
+      renderCard(0);
+
+      // controls
+      document.getElementById('onx-play').addEventListener('click', play);
+
+      // autoplay on scroll
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries) if (e.isIntersecting && !isAnimating) play();
+      }, { root: null, threshold: 0.35 });
+      io.observe(document.getElementById('onx-stage'));
+
+      // recompute on resize
+      let rid = null;
+      window.addEventListener('resize', ()=>{
+        if (caretLoop){ caretLoop.stop(); caretLoop = null; }
+        cancelAnimationFrame(rid);
+        rid = requestAnimationFrame(()=>{
+          layout = measureFinalLayout();
+          renderCard(0);
+        });
       });
-    }, { root: null, threshold: [0.5] });
-    io.observe(section);
-  } catch (_) {
-    // Fallback
-    window.addEventListener('scroll', checkStart, true);
-    window.addEventListener('resize', checkStart, true);
-  }
-  // Also run once on load
-  checkStart();
-
-  // Initialize UI to first slide (no animation yet)
-  updateUI();
-})();
-</script>
-
+    })();
+  </script>
+</div>
 
 <!-- ---------------------------------- OPEN AI MODELS END----------------------------------------------------------------------->
 
