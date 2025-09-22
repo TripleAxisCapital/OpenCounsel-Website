@@ -815,6 +815,273 @@
   </div>
 </section>
 
+<!-- ONX Card Reveal — Apple-style animation + video export (self-contained) -->
+<div id="onx-card-reveal" style="max-width: 100%; margin: 48px auto;">
+  <style>
+    #onx-card-reveal * { box-sizing: border-box; }
+    #onx-stage {
+      position: relative;
+      width: min(900px, 92vw);
+      aspect-ratio: 16/9;
+      margin: 0 auto;
+      border-radius: 24px;
+      overflow: hidden;
+      background: radial-gradient(120% 100% at 50% 0%,
+                  rgba(255,255,255,1) 0%, rgba(244,246,250,1) 35%, rgba(236,239,244,1) 100%);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+    #onx-stage canvas { width: 100%; height: 100%; display: block; }
+    #onx-controls {
+      display: flex; gap: 8px; justify-content: center; align-items: center;
+      margin-top: 14px; font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui;
+    }
+    #onx-controls button {
+      border: 0; border-radius: 999px; padding: 10px 16px; cursor: pointer;
+      background: #000; color: #fff; font-weight: 600; letter-spacing: .2px;
+      box-shadow: 0 6px 18px rgba(0,0,0,.12);
+      transition: transform .15s ease, box-shadow .2s ease;
+    }
+    #onx-controls button:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    #onx-download { font-size: 14px; opacity: .85; }
+    @media (prefers-reduced-motion: reduce) {
+      #onx-controls button { transition: none; }
+    }
+  </style>
+
+  <div id="onx-stage"><canvas id="onx-canvas"></canvas></div>
+  <div id="onx-controls">
+    <button id="onx-play">Play</button>
+    <button id="onx-render">Render Video</button>
+    <a id="onx-download" style="display:none;"></a>
+  </div>
+
+  <script>
+    (function(){
+      'use strict';
+
+      // ====== Config (tweak freely) =========================================================
+      const CONFIG = {
+        fps: 60,
+        width: 1920,              // video render size (HD)
+        height: 1080,
+        expandDuration: 0.65,     // seconds — tiny card -> full card
+        contentStagger: 0.18,     // seconds between each row reveal
+        contentFade: 0.45,        // seconds for each row fade/slide
+        endHold: 0.7,             // seconds to hold final frame before stopping
+        shadowMax: 28,            // px blur at peak
+        recordBits: 18_000_000,   // video bitrate
+        fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'
+      };
+
+      // ====== Canvas bootstrap ==============================================================
+      const stage = document.getElementById('onx-stage');
+      const canvas = document.getElementById('onx-canvas');
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const cw = CONFIG.width, ch = CONFIG.height;
+
+      // Canvas is internally HD (for crisp video); visually scaled by CSS.
+      canvas.width = cw * dpr; canvas.height = ch * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      // ====== Helpers =======================================================================
+      const lerp = (a,b,t) => a + (b - a) * t;
+      const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
+      const ease = t => { // Apple-ish ease (cubic-bezier .2,.6,.2,1)
+        const p = [0.2, 0.6, 0.2, 1.0];
+        // quick cubic bezier approx (De Casteljau)
+        const x = t, u = 1 - x;
+        return 3*u*u*x*p[0] + 3*u*x*x*p[1] + x*x*x*p[3];
+      };
+      function roundedRect(ctx, x, y, w, h, r) {
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x + rr, y);
+        ctx.arcTo(x + w, y, x + w, y + h, rr);
+        ctx.arcTo(x + w, y + h, x, y + h, rr);
+        ctx.arcTo(x, y + h, x, y, rr);
+        ctx.arcTo(x, y, x + w, y, rr);
+        ctx.closePath();
+      }
+      function drawTextLine(text, x, y, size, weight=600, opacity=1) {
+        ctx.globalAlpha = opacity;
+        ctx.font = `${weight} ${size}px ${CONFIG.fontFamily}`;
+        ctx.fillStyle = '#0b0b0f';
+        ctx.fillText(text, x, y);
+        ctx.globalAlpha = 1;
+      }
+      function drawSub(text, x, y, opacity=0.75) {
+        ctx.globalAlpha = opacity;
+        ctx.font = `500 28px ${CONFIG.fontFamily}`;
+        ctx.fillStyle = '#3d4046';
+        ctx.fillText(text, x, y);
+        ctx.globalAlpha = 1;
+      }
+      function drawDivider(x, y, w, alpha=0.08) {
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#0b0b0f';
+        ctx.fillRect(x, y, w, 1);
+        ctx.globalAlpha = 1;
+      }
+
+      // ====== Scene definitions =============================================================
+      const rows = [
+        { title: 'ONX FAST', sub: 'Fastest for instant answers' },
+        { title: 'ONX',      sub: 'Advanced reasoning & coding' },
+        { title: 'ONX PRO',  sub: 'Best overall quality' },
+      ];
+
+      // Card start/end geometry
+      const cardStart = { w: 160, h: 96, r: 20 };
+      const cardEnd   = { w: 980, h: 540, r: 26 };
+      const cardEndPos = { x: (CONFIG.width - cardEnd.w)/2, y: (CONFIG.height - cardEnd.h)/2 };
+
+      // ====== Animation core ================================================================
+      function renderFrame(t) {
+        // timeline
+        const expandEnd = CONFIG.expandDuration;
+        const total = expandEnd + (rows.length-1)*CONFIG.contentStagger + CONFIG.contentFade + CONFIG.endHold;
+
+        // Clear stage background (soft Apple-like gradient)
+        const grad = ctx.createLinearGradient(0, 0, 0, ch);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(1, '#eef2f7');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,0,CONFIG.width,CONFIG.height);
+
+        // Expand phase 0..1
+        const te = clamp(t / expandEnd);
+        const k  = ease(te);
+
+        const w = lerp(cardStart.w, cardEnd.w, k);
+        const h = lerp(cardStart.h, cardEnd.h, k);
+        const x = lerp((CONFIG.width - cardStart.w)/2, cardEndPos.x, k);
+        const y = lerp((CONFIG.height - cardStart.h)/2, cardEndPos.y, k);
+        const r = lerp(cardStart.r, cardEnd.r, k);
+        const sb = lerp(6, CONFIG.shadowMax, k);
+        const so = lerp(6, 18, k);
+        const sa = lerp(0.10, 0.20, k);
+
+        // Card shadow
+        ctx.shadowColor = `rgba(0,0,0,${sa})`;
+        ctx.shadowBlur = sb;
+        ctx.shadowOffsetY = so;
+
+        // Card
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, x, y, w, h, r);
+        ctx.fill();
+
+        // reset shadow
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Divider + content appears after expansion starts nearing end
+        const contentStart = expandEnd - 0.05; // tiny overlap for smoothness
+        const contentTime = Math.max(0, t - contentStart);
+
+        // Header
+        if (t >= contentStart) {
+          const headerAlpha = clamp((t - contentStart) / 0.28);
+          drawTextLine('Models', x + 36, y + 72, 34, 700, headerAlpha);
+          drawDivider(x + 32, y + 92, w - 64, headerAlpha * 0.10);
+        }
+
+        // Rows — staggered slide+fade
+        const baseY = y + 150;
+        rows.forEach((row, i) => {
+          const itemT0 = contentStart + i * CONFIG.contentStagger;
+          const prog = clamp((t - itemT0) / CONFIG.contentFade);
+          const a = ease(prog);
+          const dy = lerp(18, 0, a); // slide up
+          const titleY = baseY + i * 116 + dy;
+          drawTextLine(row.title, x + 36, titleY, 40, 800, a);
+          drawSub(row.sub, x + 36, titleY + 38, a * 0.85);
+
+          // subtle separators between rows (except after last)
+          if (i < rows.length - 1) {
+            drawDivider(x + 32, baseY + i * 116 + 64, w - 64, a * 0.06);
+          }
+        });
+
+        return { total };
+      }
+
+      function play({ record=false } = {}) {
+        const btnPlay = document.getElementById('onx-play');
+        const btnRender = document.getElementById('onx-render');
+        const dl = document.getElementById('onx-download');
+        btnPlay.disabled = true; btnRender.disabled = true; dl.style.display = 'none';
+
+        const start = performance.now();
+        const blobs = [];
+        let mediaRecorder = null;
+
+        // Prepare recorder if requested
+        if (record && canvas.captureStream) {
+          const stream = canvas.captureStream(CONFIG.fps);
+          const mimeChoices = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/mp4;codecs=h264', // some browsers
+            'video/webm'             // generic
+          ];
+          const mimeType = mimeChoices.find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || '';
+          try {
+            mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: CONFIG.recordBits });
+            mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) blobs.push(e.data); };
+            mediaRecorder.start(); // start immediately
+          } catch (e) {
+            console.warn('MediaRecorder unavailable, falling back (no recording).', e);
+          }
+        }
+
+        // Animation loop
+        const step = (now) => {
+          const t = (now - start) / 1000;
+          const { total } = renderFrame(t);
+          if (t < total) {
+            requestAnimationFrame(step);
+          } else {
+            // final frame & cleanup
+            renderFrame(total);
+            if (mediaRecorder) {
+              mediaRecorder.onstop = () => {
+                const blob = new Blob(blobs, { type: mediaRecorder.mimeType || 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.getElementById('onx-download');
+                a.href = url;
+                a.download = 'onx-card-reveal.' + (mediaRecorder.mimeType?.includes('mp4') ? 'mp4' : 'webm');
+                a.textContent = 'Download video';
+                a.style.display = 'inline-block';
+                a.style.marginLeft = '8px';
+                // Auto-expose link; do not auto-download to be polite.
+                btnPlay.disabled = false; btnRender.disabled = false;
+              };
+              // Give stream a short moment to flush the last frame
+              setTimeout(() => mediaRecorder.stop(), 120);
+            } else {
+              btnPlay.disabled = false; btnRender.disabled = false;
+            }
+          }
+        };
+        requestAnimationFrame(step);
+      }
+
+      // Initial frame (tiny empty card)
+      renderFrame(0);
+
+      // Wire controls
+      document.getElementById('onx-play').addEventListener('click', () => play({ record:false }));
+      document.getElementById('onx-render').addEventListener('click', () => play({ record:true }));
+    })();
+  </script>
+</div>
+
+
+
 <!-- ===== The Best made Better ===== -->
 <section id="brands" class="relative mx-auto max-w-[1200px] oc-container reveal">
   <!-- Soft glow background -->
