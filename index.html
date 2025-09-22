@@ -815,14 +815,14 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal — dynamic + scaled-up card, slower organic bounce, centered content -->
+<!-- ONX Card Reveal — dynamic boomerang overshoot (pure white), Apple-grade -->
 <div id="onx-card-reveal" style="max-width: 100%; margin: 48px auto;">
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f7f9fc 42%, #eef2f7 100%);
+      background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
       box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
@@ -848,27 +848,22 @@
     (function(){
       'use strict';
 
-      // ── Config (production-grade tuning) ─────────────────────────────────────
+      // ── Config: slower, smoother, pronounced boomerang ─────────────────────
       const CONFIG = {
         fps: 60,
-        w: 1920, h: 1080,                   // internal canvas res (crisp)
-        // Slower & smoother phases
-        widthDuration: 1.05,                // width grows first
-        heightDuration: 1.00,               // then height
-        overlap: 0.22,                      // slight phase overlap (organic)
-        overshootFactor: 1.6,               // 160% → bounce back (pronounced)
-        zeta: 0.24, omega: 12.8,            // spring damping/speed (silky)
-        // Card metrics (tighter Apple rhythm)
-        padX: 24, padY: 24,
+        w: 1920, h: 1080,                 // internal canvas resolution (crisp)
+        widthDuration: 1.15,              // phase 1 (width grows first)
+        heightDuration: 1.05,             // phase 2 (height grows second)
+        overlap: 0.14,                    // slight overlap for fluidity
+        overshootFactor: 1.5,             // 150% peak (boomerang once)
+        // Card & type rhythm (tight Apple feel)
+        padX: 24, padY: 22,
         rowGap: 18, subGap: 4,
         titleSize: 28, titleWeight: 800,
         subSize: 18,  subWeight: 500,
-        // Dynamic sizing bounds
-        minW: 380, maxW: 720,
-        // Size-up factor for the inside white card (requested)
-        scaleUp: 1.15,
-        // Safe margin so the card never kisses the stage edges
-        stageMargin: 56
+        minW: 380, maxW: 720,             // dynamic width clamps
+        scaleUp: 1.12,                    // tasteful size-up of inside white card
+        stageMargin: 56                   // safe guard from stage edges
       };
 
       // ── Models (edit freely) ────────────────────────────────────────────────
@@ -884,30 +879,25 @@
       canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
       const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
 
-      // ── Utils ───────────────────────────────────────────────────────────────
+      // ── Easing helpers ─────────────────────────────────────────────────────
       const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
       const lerp  = (a,b,t) => a + (b-a)*t;
+      const easeOutCubic = t => 1 - Math.pow(1 - clamp(t,0,1), 3);
 
-      // Under-damped spring to 1: smooth, natural
-      function spring01(t, zeta=0.24, omega=12.8){
-        t = clamp(t, 0, 1);
-        const wd = omega * Math.sqrt(1 - zeta*zeta);
-        const A = Math.exp(-zeta * omega * t);
-        const phi = Math.acos(zeta);
-        return 1 - (A / Math.sqrt(1 - zeta*zeta)) * Math.sin(wd * t + phi);
-      }
-      // Overshoot to `factor` at ~60%, then settle to 1 with same spring feel
-      function springOvershoot(t, factor=1.6, zeta=0.24, omega=12.8){
-        if (t <= 0) return 0; if (t >= 1) return 1;
-        const peak = 0.6;
-        if (t < peak){
-          const up = spring01(t/peak, zeta*0.9, omega*0.9);
-          return up * factor;
+      // "Boomerang" scaler:
+      //  • 0→peakTime: accelerate to overshootFactor (no bounce)
+      //  • peakTime→1: snap back to 1 using fast-out easing (still smooth)
+      function boomerang(t, factor=1.5, peakTime=0.6){
+        if (t <= 0) return 0;
+        if (t >= 1) return 1;
+        if (t < peakTime){
+          return easeOutCubic(t/peakTime) * factor;             // go past once
         } else {
-          const down = spring01((t-peak)/(1-peak), zeta, omega);
-          return factor - (factor - 1) * down;
+          const u = (t - peakTime) / (1 - peakTime);
+          return 1 + (factor - 1) * (1 - easeOutCubic(u));      // snap back
         }
       }
+
       function setFont(weight, size){
         ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
       }
@@ -922,7 +912,7 @@
         ctx.closePath();
       }
 
-      // ── Dynamic layout (measures text then sizes the card) ──────────────────
+      // ── Dynamic layout from text ────────────────────────────────────────────
       function measureLayout(){
         let maxTextW = 0;
         setFont(CONFIG.titleWeight, CONFIG.titleSize);
@@ -934,89 +924,73 @@
         const rowHeights = rows.map(r => CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
         const baseH = Math.ceil(rowHeights.reduce((a,b)=>a+b,0) + CONFIG.rowGap*(rows.length-1) + CONFIG.padY*2);
 
-        // Scale up (requested), but keep within stage margins
         const targetW = Math.min(baseW * CONFIG.scaleUp, CONFIG.w - 2*CONFIG.stageMargin);
         const targetH = Math.min(baseH * CONFIG.scaleUp, CONFIG.h - 2*CONFIG.stageMargin);
+        const radius  = Math.max(22, Math.min(36, Math.round(Math.min(targetW, targetH) * 0.08)));
 
-        const radius = Math.max(22, Math.min(36, Math.round(Math.min(targetW, targetH) * 0.08)));
-
-        return {
-          cardW: targetW, cardH: targetH,
-          contentH: baseH - CONFIG.padY*2,  // content block height (unscaled)
-          rowHeights, radius
-        };
+        return { cardW: targetW, cardH: targetH, contentH: baseH - CONFIG.padY*2, rowHeights, radius };
       }
-
       let layout = measureLayout();
 
       // Seed (tiny) card
       const seed = { w: 120, h: 80, r: 20 };
 
-      // Deterministic micro-stagger (no randomness → consistent each run)
+      // deterministic micro-stagger (consistent every run)
       const jitters = rows.map((_,i)=> (Math.sin(i*1.77)*0.5 + 0.5) * 0.02 - 0.01);
 
       // ── Render ──────────────────────────────────────────────────────────────
       function renderFrame(t){
         const wEnd = CONFIG.widthDuration;
         const hEnd = wEnd - CONFIG.overlap + CONFIG.heightDuration;
-        const total = hEnd + 0.40 + 0.70; // reveal + settle
+        const total = hEnd + 0.40 + 0.60; // reveal + hold
 
-        // Stage bg
+        // Stage background
         const grad = ctx.createLinearGradient(0,0,0,CONFIG.h);
         grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#eef2f7');
         ctx.fillStyle = grad; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // Width phase
+        // Width phase — single overshoot then return
         const tw = clamp(t / wEnd);
-        const widthScale = springOvershoot(tw, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega);
+        const widthScale = boomerang(tw, CONFIG.overshootFactor, 0.6);
         const w = lerp(seed.w, layout.cardW, Math.min(widthScale, CONFIG.overshootFactor));
 
-        // Height phase (with overlap)
+        // Height phase — starts a bit later, same boomerang profile
         const th = clamp((t - (wEnd - CONFIG.overlap)) / CONFIG.heightDuration);
-        const heightScale = springOvershoot(th, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega*0.95);
+        const heightScale = boomerang(th, CONFIG.overshootFactor, 0.6);
         const h = lerp(seed.h, layout.cardH, Math.min(heightScale, CONFIG.overshootFactor));
 
-        // Radius grows smoothly with overall progress
+        // Radius eases with overall growth (no extra shading on card)
         const growT = Math.max(tw, th);
-        const r = lerp(seed.r, layout.radius, spring01(growT, 0.28, 11.5));
+        const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
 
-        // Center perfectly
+        // Keep card perfectly centered
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2;
 
-        // Soft, layered shadow (Apple vibe)
-        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.18,growT)})`;
-        ctx.shadowBlur = lerp(6, 28, growT);
-        ctx.shadowOffsetY = lerp(6, 16, growT);
+        // Soft elevation (card remains PURE WHITE)
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
+        ctx.shadowBlur = lerp(6, 26, growT);
+        ctx.shadowOffsetY = lerp(6, 15, growT);
 
-        // Card
+        // PURE WHITE card (no inner gradients/overlays)
         ctx.fillStyle = '#ffffff';
-        roundedRect(ctx, x, y, w, h, r); ctx.fill();
-
-        // Subtle top highlight
-        ctx.save();
-        ctx.clip();
-        const hi = ctx.createLinearGradient(0, y, 0, y + h*0.35);
-        hi.addColorStop(0, 'rgba(255,255,255,.55)');
-        hi.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = hi; ctx.fillRect(x, y, w, h*0.35);
-        ctx.restore();
+        roundedRect(ctx, x, y, w, h, r);
+        ctx.fill();
 
         // Reset shadow
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-        // Content block (centered)
+        // Content (centered in the card)
         const contentX = x + w/2;
         const contentY = y + (h - layout.contentH)/2;
 
         rows.forEach((row, i) => {
           const itemStart = hEnd + i * (0.13 + jitters[i]);
           const prog = clamp((t - itemStart)/0.55);
-          const a = spring01(prog, 0.26, 11.2);     // slightly slower/softer
+          const a = easeOutCubic(prog);
           const dy = lerp(22, 0, a);
           const scale = 0.982 + 0.018*a;
 
-          // Baseline per row
           const passed = layout.rowHeights.slice(0, i).reduce((s,v)=>s+v, 0);
           const yRow = contentY + passed + (i ? CONFIG.rowGap*i : 0);
 
@@ -1031,7 +1005,7 @@
           ctx.fillStyle = '#0b0b10';
           ctx.fillText(row.title, 0, CONFIG.titleSize);
 
-          // Sub
+          // Subtitle
           if (row.sub){
             setFont(CONFIG.subWeight, CONFIG.subSize);
             ctx.fillStyle = '#5f646c';
@@ -1067,13 +1041,13 @@
       // Manual replay
       document.getElementById('onx-play').addEventListener('click', play);
 
-      // Autoplay on scroll into view
+      // Autoplay on scroll into view (once per view)
       const io = new IntersectionObserver((entries)=>{
         for (const e of entries){ if (e.isIntersecting && !isAnimating){ play(); } }
       }, { root: null, threshold: 0.35 });
       io.observe(document.getElementById('onx-stage'));
 
-      // Recompute on resize
+      // Recompute layout on resize
       let rid = null;
       window.addEventListener('resize', ()=>{
         cancelAnimationFrame(rid);
