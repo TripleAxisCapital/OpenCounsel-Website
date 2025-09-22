@@ -803,50 +803,37 @@ class ONXHeader extends HTMLElement {
   }
 
   _onScroll() {
-  const wasFloat = this.classList.contains("is-float");
-  const y = window.scrollY || document.documentElement.scrollTop || 0;
-
-  if (y > this._threshold) this.classList.add("is-float");
-  else this.classList.remove("is-float");
-
-  // If state changed, resync edge spacing
-  if (wasFloat !== this.classList.contains("is-float")) {
-    this._syncEdgeGaps();
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    if (y > this._threshold) this.classList.add("is-float");
+    else this.classList.remove("is-float");
   }
-}
-
 
   /* ===== Mobile edge spacing sync ===== */
-  /* ===== Mobile edge spacing sync ===== */
-_syncEdgeGaps(){
-  try{
-    const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+  _syncEdgeGaps(){
+    try{
+      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+      if (!isMobile){
+        this.style.removeProperty('--pill-inner-x-mobile');
+        this.style.removeProperty('--logo-pad-left-mobile');
+        this.style.removeProperty('--download-pad-right-mobile');
+        return;
+      }
+      const headerBar = this._root.querySelector('.header-bar');
+      const logo = this._root.querySelector('.logo-pad .logo-anim');
+      if (!headerBar || !logo) return;
 
-    // Desktop → use defaults
-    if (!isMobile){
-      this.style.removeProperty('--pill-inner-x-mobile');
-      this.style.removeProperty('--logo-pad-left-mobile');
-      this.style.removeProperty('--download-pad-right-mobile');
-      return;
+      const hbRect = headerBar.getBoundingClientRect();
+      const logoRect = logo.getBoundingClientRect();
+      const topGap = Math.max(0, logoRect.top - hbRect.top);
+
+      const extra = 15; // px
+      this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
+      this.style.setProperty('--logo-pad-left-mobile', `0px`);
+      this.style.setProperty('--download-pad-right-mobile', `0px`);
+    }catch(_e){
+      /* no-op */
     }
-
-    const isFloat = this.classList.contains('is-float');
-
-    if (isFloat){
-      // Pill state: keep your existing pill spacing (use CSS defaults)
-      this.style.removeProperty('--pill-inner-x-mobile');
-      this.style.removeProperty('--logo-pad-left-mobile');
-      this.style.removeProperty('--download-pad-right-mobile');
-    } else {
-      // Flat header (pre-pill): total edge gap = 6px
-      // Use header-bar padding for the 6px; zero out inner pads so it doesn't double up
-      this.style.setProperty('--pill-inner-x-mobile', '6px');
-      this.style.setProperty('--logo-pad-left-mobile', '0px');
-      this.style.setProperty('--download-pad-right-mobile', '0px');
-    }
-  }catch(_e){ /* no-op */ }
-}
-
+  }
 }
 
 customElements.define("onx-header", ONXHeader);
