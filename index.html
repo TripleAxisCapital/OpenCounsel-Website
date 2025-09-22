@@ -815,7 +815,7 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal — OpenAI-style portrait card, centered, big bounce overshoot -->
+<!-- ONX Card Reveal · dynamic sizing · organic 1.5× bounce · centered content -->
 <div id="onx-card-reveal" style="max-width: 100%; margin: 48px auto;">
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
@@ -838,63 +838,228 @@
     }
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
-    @media (prefers-reduced-motion: reduce){
-      #onx-controls button{ transition:none; }
-    }
+    @media (prefers-reduced-motion: reduce){ #onx-controls button{ transition:none; } }
   </style>
 
   <div id="onx-stage"><canvas id="onx-canvas"></canvas></div>
-  <div id="onx-controls">
-    <button id="onx-play">Play</button>
-  </div>
+  <div id="onx-controls"><button id="onx-play">Play</button></div>
 
   <script>
     (function(){
       'use strict';
 
-      // ======= Config (portrait card like OpenAI list) =======
+      // -------- Config (edit to taste) --------
       const CONFIG = {
         fps: 60,
-        width: 1920,                // internal canvas size (for crispness)
-        height: 1080,
-        widthDuration: 0.70,        // phase 1: width grows (with overshoot)
-        heightDuration: 0.65,       // phase 2: height grows (with overshoot)
-        overshoot: 0.50,            // 150% of final (7.5x4.5 if final is 5x3)
-        contentStagger: 0.14,
-        contentFade: 0.40,
-        endHold: 0.8,
-        shadowMax: 26,
-        fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'
+        w: 1920, h: 1080,                       // internal canvas resolution
+        widthDuration: 0.70,                    // width grows first
+        heightDuration: 0.65,                   // then height (slight overlap)
+        overlap: 0.18,                          // seconds width & height overlap
+        overshootFactor: 1.5,                   // -> 150% (7.5x4.5 from 5x3)
+        zeta: 0.22, omega: 15.0,                // spring feel (damping, speed)
+        padX: 24, padY: 26,                     // tighter Apple-style padding
+        rowGap: 18, subGap: 4,                  // tight vertical rhythm
+        titleSize: 28, titleWeight: 800,
+        subSize: 18, subWeight: 500,
+        minW: 360, maxW: 640                    // clamp dynamic width
       };
 
-      // ======= Canvas =======
+      // -------- Data (add/remove as needed) --------
+      const rows = [
+        { title:'ONX FAST', sub:'Fastest for instant answers' },
+        { title:'ONX',      sub:'Advanced reasoning & coding' },
+        { title:'ONX PRO',  sub:'Best overall quality' },
+      ];
+
+      // -------- Canvas bootstrap --------
       const canvas = document.getElementById('onx-canvas');
       const dpr = Math.max(1, window.devicePixelRatio || 1);
-      canvas.width = CONFIG.width * dpr; canvas.height = CONFIG.height * dpr;
-      const ctx = canvas.getContext('2d');
-      ctx.scale(dpr, dpr);
+      canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
+      const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
 
-      // ======= Helpers =======
+      // -------- Helpers --------
       const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
       const lerp = (a,b,t) => a + (b-a)*t;
-      const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
-      // Overshoot to (1 + overshoot) at ~60%, then bounce down to 1
-      // Guarantees exact peak = 1 + overshoot regardless of start size.
-      function springOvershoot(t, overshoot=0.5, peak=0.6){
+      // Analytic under-damped spring step response to target=1 (smooth + organic)
+      // y(t) = 1 - e^{-ζωt}/√(1-ζ²) * sin(√(1-ζ²)ωt + φ), φ=arccos(ζ)
+      function spring01(t, zeta=0.22, omega=15){
+        t = clamp(t, 0, 1);
+        const wd = omega * Math.sqrt(1 - zeta*zeta);
+        const A = Math.exp(-zeta * omega * t);
+        const phi = Math.acos(zeta);
+        return 1 - (A / Math.sqrt(1 - zeta*zeta)) * Math.sin(wd * t + phi);
+      }
+
+      // Overshoot to `factor` at ~60%, then relax to 1 with the same spring
+      function springOvershoot(t, factor=1.5, zeta=0.22, omega=15){
         if (t <= 0) return 0;
         if (t >= 1) return 1;
+        const peak = 0.6;             // when we reach max size
         if (t < peak){
-          const s = easeOutCubic(t / peak);
-          return s * (1 + overshoot);                 // rises to 1+o
+          const up = spring01(t/peak, zeta*0.9, omega*0.9); // slightly softer ramp
+          return up * factor;         // scale up to overshoot factor
         } else {
-          const u = (t - peak) / (1 - peak);
-          const decay = Math.exp(-7 * u);
-          const osc = Math.cos(10 * Math.PI * u);
-          return 1 + overshoot * decay * osc;         // decays to 1
+          const down = spring01((t-peak)/(1-peak), zeta, omega);
+          // decay from factor -> 1 using spring interpolation
+          return factor - (factor - 1) * down;
         }
       }
 
+      function setFont(weight, size){ ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`; }
+      function measureLayout(){
+        // measure longest line among titles/subs
+        let maxTextW = 0;
+        setFont(CONFIG.titleWeight, CONFIG.titleSize);
+        rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+        setFont(CONFIG.subWeight, CONFIG.subSize);
+        rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+
+        const contentW = Math.ceil(maxTextW);
+        const cardW = clamp(contentW + CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
+
+        // height: sum of each row block + gaps + vertical padding
+        const rowHeights = rows.map(r => CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
+        const contentH = rowHeights.reduce((a,b)=>a+b, 0) + CONFIG.rowGap*(rows.length-1);
+        const cardH = Math.ceil(contentH + CONFIG.padY*2);
+
+        // radius proportional to size (soft, not too pill)
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+
+        return { cardW, cardH, contentW, contentH, radius, rowHeights };
+      }
+
+      // layout is dynamic to count/length of rows (recomputed on resize too)
+      let layout = measureLayout();
+
+      // small seed card (tiny)
+      const seed = { w: 120, h: 80, r: 20 };
+
+      // micro-stagger to avoid robotic reveal (few ms variation)
+      const jitters = rows.map((_,i)=> (Math.random()*0.05 - 0.025));
+
+      // ---------- Render ----------
+      function renderFrame(t){
+        const wEnd = CONFIG.widthDuration;
+        const hEnd = wEnd - CONFIG.overlap + CONFIG.heightDuration; // overlap phases
+        const total = hEnd + 0.35 + 0.6; // content + settle/hold
+
+        // Stage background
+        const grad = ctx.createLinearGradient(0,0,0,CONFIG.h);
+        grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#eef2f7');
+        ctx.fillStyle = grad; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
+
+        // --- width growth (0..wEnd) ---
+        const tw = clamp(t / wEnd);
+        const widthScale = springOvershoot(tw, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega);
+        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, CONFIG.overshootFactor));
+
+        // --- height growth (starts at (wEnd - overlap)) ---
+        const th = clamp((t - (wEnd - CONFIG.overlap)) / CONFIG.heightDuration);
+        const heightScale = springOvershoot(th, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega*0.92);
+        const h = lerp(seed.h, layout.cardH, Math.min(heightScale, CONFIG.overshootFactor));
+
+        // rounding eases with overall progress
+        const growT = Math.max(tw, th);
+        const r = lerp(seed.r, layout.radius, spring01(growT, 0.28, 12));
+
+        // keep perfectly centered
+        const x = (CONFIG.w - w)/2;
+        const y = (CONFIG.h - h)/2;
+
+        // elevated, soft shadow
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.18,growT)})`;
+        ctx.shadowBlur = lerp(6, 26, growT);
+        ctx.shadowOffsetY = lerp(6, 16, growT);
+
+        // card
+        ctx.fillStyle = '#fff';
+        roundedRect(ctx, x, y, w, h, r); ctx.fill();
+
+        // reset shadow
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+        // ------- content (centered in card) -------
+        // compute centered origin for content block
+        const contentX = x + w/2;                                 // horizontal center
+        const contentY = y + (h - layout.contentH)/2;             // vertical center
+
+        rows.forEach((row, i) => {
+          // smooth stagger with tiny jitter
+          const itemStart = hEnd + i * (0.12 + jitters[i]);
+          const prog = clamp((t - itemStart)/0.5);
+          const a = spring01(prog, 0.24, 10.5);                   // organic fade/scale
+          const dy = lerp(22, 0, a);
+          const scale = 0.985 + 0.015*a;
+
+          // row baseline
+          let yRow = contentY + layout.rowHeights.slice(0, i).reduce((a,b)=>a+b, 0) + (i ? CONFIG.rowGap * i : 0);
+
+          ctx.save();
+          ctx.translate(contentX, yRow + dy);
+          ctx.scale(scale, scale);
+          ctx.textAlign = 'center';  // center the models
+          ctx.textBaseline = 'alphabetic';
+
+          // Title
+          ctx.globalAlpha = a;
+          setFont(CONFIG.titleWeight, CONFIG.titleSize);
+          ctx.fillStyle = '#0b0b10';
+          ctx.fillText(row.title, 0, CONFIG.titleSize);
+
+          // Sub
+          if (row.sub){
+            setFont(CONFIG.subWeight, CONFIG.subSize);
+            ctx.fillStyle = '#5f646c';
+            ctx.fillText(row.sub, 0, CONFIG.titleSize + CONFIG.subGap + CONFIG.subSize);
+          }
+          ctx.globalAlpha = 1;
+          ctx.restore();
+        });
+
+        return { total };
+      }
+
+      // ---------- Player ----------
+      let isAnimating = false;
+      function play(){
+        if (isAnimating) return;
+        isAnimating = true;
+        const btn = document.getElementById('onx-play'); if (btn) btn.disabled = true;
+
+        const start = performance.now();
+        const step = (now)=>{
+          const t = (now - start)/1000;
+          const { total } = renderFrame(t);
+          if (t < total){ requestAnimationFrame(step); }
+          else { renderFrame(total); isAnimating = false; if (btn) btn.disabled = false; }
+        };
+        requestAnimationFrame(step);
+      }
+
+      // initial small seed frame
+      renderFrame(0);
+
+      // manual replay
+      document.getElementById('onx-play').addEventListener('click', play);
+
+      // autoplay when scrolled into view
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries){ if (e.isIntersecting && !isAnimating){ play(); } }
+      }, { root: null, threshold: 0.35 });
+      io.observe(document.getElementById('onx-stage'));
+
+      // recompute dynamic layout on resize (debounced)
+      let rid = null;
+      window.addEventListener('resize', ()=> {
+        cancelAnimationFrame(rid);
+        rid = requestAnimationFrame(()=>{
+          layout = measureLayout();
+          renderFrame(0);
+        });
+      });
+
+      // utility: rounded rect
       function roundedRect(ctx, x, y, w, h, r){
         const rr = Math.min(r, w/2, h/2);
         ctx.beginPath();
@@ -905,137 +1070,6 @@
         ctx.arcTo(x,y,x+w,y,rr);
         ctx.closePath();
       }
-      function drawText(text, x, y, size, weight=600, opacity=1){
-        ctx.globalAlpha = opacity;
-        ctx.font = `${weight} ${size}px ${CONFIG.fontFamily}`;
-        ctx.fillStyle = '#0b0b0f';
-        ctx.fillText(text, x, y);
-        ctx.globalAlpha = 1;
-      }
-      function drawSub(text, x, y, opacity=.75){
-        ctx.globalAlpha = opacity;
-        ctx.font = `500 20px ${CONFIG.fontFamily}`;
-        ctx.fillStyle = '#60656d';
-        ctx.fillText(text, x, y);
-        ctx.globalAlpha = 1;
-      }
-
-      // ======= Scene (OpenAI list style: portrait card, no header, no dividers) =======
-      const rows = [
-        { title:'ONX FAST', sub:'Fastest for instant answers' },
-        { title:'ONX',      sub:'Advanced reasoning & coding' },
-        { title:'ONX PRO',  sub:'Best overall quality' },
-      ];
-
-      // Final portrait card size (tuned to match the screenshot proportions)
-      const cardEnd   = { w: 520, h: 720, r: 30 };
-      const cardStart = { w: 120, h: 80,  r: 24 }; // small seed card
-
-      function renderFrame(t){
-        const wEnd = CONFIG.widthDuration;
-        const hEnd = wEnd + CONFIG.heightDuration;
-        const total = hEnd + (rows.length-1)*CONFIG.contentStagger + CONFIG.contentFade + CONFIG.endHold;
-
-        // stage background
-        const grad = ctx.createLinearGradient(0,0,0,CONFIG.height);
-        grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#eef2f7');
-        ctx.fillStyle = grad; ctx.fillRect(0,0,CONFIG.width,CONFIG.height);
-
-        // ---------- WIDTH PHASE ----------
-        const tw = clamp(t / CONFIG.widthDuration);
-        const widthScale = springOvershoot(tw, CONFIG.overshoot, 0.6); // 0..(1+o)..→1
-        const minWScale = cardStart.w / cardEnd.w;
-        // interpolate from start->overshoot->settle using absolute scaling
-        const w = clamp(cardEnd.w * Math.max(widthScale, minWScale), cardStart.w, cardEnd.w*(1+CONFIG.overshoot));
-
-        // ---------- HEIGHT PHASE ----------
-        const th = clamp((t - wEnd) / CONFIG.heightDuration);
-        const heightScale = springOvershoot(th, CONFIG.overshoot, 0.6);
-        const minHScale = cardStart.h / cardEnd.h;
-        const h = clamp(cardEnd.h * Math.max(heightScale, minHScale), cardStart.h, cardEnd.h*(1+CONFIG.overshoot));
-
-        // card rounding softly increases with growth
-        const growT = easeOutCubic(Math.max(tw, th));
-        const r = lerp(cardStart.r, cardEnd.r, growT);
-
-        // Keep perfectly centered at every size
-        const x = (CONFIG.width - w)/2;
-        const y = (CONFIG.height - h)/2;
-
-        // Elevated shadow (Apple-ish)
-        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.18,growT)})`;
-        ctx.shadowBlur = lerp(6, CONFIG.shadowMax, growT);
-        ctx.shadowOffsetY = lerp(6, 16, growT);
-
-        // card
-        ctx.fillStyle = '#ffffff';
-        roundedRect(ctx, x, y, w, h, r);
-        ctx.fill();
-
-        // reset shadow
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-
-        // ---------- CONTENT (center-left block, OpenAI spacing) ----------
-        const contentStart = hEnd - 0.04;
-        if (t >= contentStart){
-          const left = x + 28;                // inner left padding
-          const top  = y + 48;                // inner top padding
-          const lineGap = 78;                 // vertical space between items
-
-          rows.forEach((row,i)=>{
-            const itemT0 = contentStart + i*CONFIG.contentStagger;
-            const prog = clamp((t - itemT0)/CONFIG.contentFade);
-            const a = easeOutCubic(prog);
-            const dy = lerp(20, 0, a);
-            ctx.save();
-            ctx.translate(left, top + i*lineGap + dy);
-            // Titles ~28px semibold; subs ~20px muted (match screenshot feel)
-            drawText(row.title, 0, 0, 28, 800, a);
-            drawSub(row.sub, 0, 26, a*0.95);
-            ctx.restore();
-          });
-        }
-
-        return { total };
-      }
-
-      // ======= Player / Scroll Autoplay =======
-      let isAnimating = false;
-      function play(){
-        if (isAnimating) return;
-        isAnimating = true;
-        const btn = document.getElementById('onx-play');
-        if (btn) btn.disabled = true;
-
-        const start = performance.now();
-        const step = (now)=>{
-          const t = (now - start)/1000;
-          const { total } = renderFrame(t);
-          if (t < total){
-            requestAnimationFrame(step);
-          } else {
-            renderFrame(total);
-            isAnimating = false;
-            if (btn) btn.disabled = false;
-          }
-        };
-        requestAnimationFrame(step);
-      }
-
-      // initial tiny card frame (centered)
-      renderFrame(0);
-
-      // manual replay
-      document.getElementById('onx-play').addEventListener('click', play);
-
-      // autoplay on scroll into view (once per view)
-      const target = document.getElementById('onx-stage');
-      const io = new IntersectionObserver((entries)=>{
-        for (const e of entries){
-          if (e.isIntersecting && !isAnimating){ play(); }
-        }
-      }, { root: null, threshold: 0.35 });
-      io.observe(target);
     })();
   </script>
 </div>
