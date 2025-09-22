@@ -815,15 +815,15 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal · dynamic sizing · organic 1.5× bounce · centered content -->
+<!-- ONX Card Reveal — dynamic + scaled-up card, slower organic bounce, centered content -->
 <div id="onx-card-reveal" style="max-width: 100%; margin: 48px auto;">
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
-      box-shadow: 0 10px 40px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.6);
+      background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f7f9fc 42%, #eef2f7 100%);
+      box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
     #onx-controls{
@@ -848,158 +848,182 @@
     (function(){
       'use strict';
 
-      // -------- Config (edit to taste) --------
+      // ── Config (production-grade tuning) ─────────────────────────────────────
       const CONFIG = {
         fps: 60,
-        w: 1920, h: 1080,                       // internal canvas resolution
-        widthDuration: 0.70,                    // width grows first
-        heightDuration: 0.65,                   // then height (slight overlap)
-        overlap: 0.18,                          // seconds width & height overlap
-        overshootFactor: 1.5,                   // -> 150% (7.5x4.5 from 5x3)
-        zeta: 0.22, omega: 15.0,                // spring feel (damping, speed)
-        padX: 24, padY: 26,                     // tighter Apple-style padding
-        rowGap: 18, subGap: 4,                  // tight vertical rhythm
+        w: 1920, h: 1080,                   // internal canvas res (crisp)
+        // Slower & smoother phases
+        widthDuration: 1.05,                // width grows first
+        heightDuration: 1.00,               // then height
+        overlap: 0.22,                      // slight phase overlap (organic)
+        overshootFactor: 1.6,               // 160% → bounce back (pronounced)
+        zeta: 0.24, omega: 12.8,            // spring damping/speed (silky)
+        // Card metrics (tighter Apple rhythm)
+        padX: 24, padY: 24,
+        rowGap: 18, subGap: 4,
         titleSize: 28, titleWeight: 800,
-        subSize: 18, subWeight: 500,
-        minW: 360, maxW: 640                    // clamp dynamic width
+        subSize: 18,  subWeight: 500,
+        // Dynamic sizing bounds
+        minW: 380, maxW: 720,
+        // Size-up factor for the inside white card (requested)
+        scaleUp: 1.15,
+        // Safe margin so the card never kisses the stage edges
+        stageMargin: 56
       };
 
-      // -------- Data (add/remove as needed) --------
+      // ── Models (edit freely) ────────────────────────────────────────────────
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Advanced reasoning & coding' },
         { title:'ONX PRO',  sub:'Best overall quality' },
       ];
 
-      // -------- Canvas bootstrap --------
+      // ── Canvas ──────────────────────────────────────────────────────────────
       const canvas = document.getElementById('onx-canvas');
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
       const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
 
-      // -------- Helpers --------
+      // ── Utils ───────────────────────────────────────────────────────────────
       const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
-      const lerp = (a,b,t) => a + (b-a)*t;
+      const lerp  = (a,b,t) => a + (b-a)*t;
 
-      // Analytic under-damped spring step response to target=1 (smooth + organic)
-      // y(t) = 1 - e^{-ζωt}/√(1-ζ²) * sin(√(1-ζ²)ωt + φ), φ=arccos(ζ)
-      function spring01(t, zeta=0.22, omega=15){
+      // Under-damped spring to 1: smooth, natural
+      function spring01(t, zeta=0.24, omega=12.8){
         t = clamp(t, 0, 1);
         const wd = omega * Math.sqrt(1 - zeta*zeta);
         const A = Math.exp(-zeta * omega * t);
         const phi = Math.acos(zeta);
         return 1 - (A / Math.sqrt(1 - zeta*zeta)) * Math.sin(wd * t + phi);
       }
-
-      // Overshoot to `factor` at ~60%, then relax to 1 with the same spring
-      function springOvershoot(t, factor=1.5, zeta=0.22, omega=15){
-        if (t <= 0) return 0;
-        if (t >= 1) return 1;
-        const peak = 0.6;             // when we reach max size
+      // Overshoot to `factor` at ~60%, then settle to 1 with same spring feel
+      function springOvershoot(t, factor=1.6, zeta=0.24, omega=12.8){
+        if (t <= 0) return 0; if (t >= 1) return 1;
+        const peak = 0.6;
         if (t < peak){
-          const up = spring01(t/peak, zeta*0.9, omega*0.9); // slightly softer ramp
-          return up * factor;         // scale up to overshoot factor
+          const up = spring01(t/peak, zeta*0.9, omega*0.9);
+          return up * factor;
         } else {
           const down = spring01((t-peak)/(1-peak), zeta, omega);
-          // decay from factor -> 1 using spring interpolation
           return factor - (factor - 1) * down;
         }
       }
+      function setFont(weight, size){
+        ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
+      }
+      function roundedRect(ctx, x, y, w, h, r){
+        const rr = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr,y);
+        ctx.arcTo(x+w,y,x+w,y+h,rr);
+        ctx.arcTo(x+w,y+h,x,y+h,rr);
+        ctx.arcTo(x,y+h,x,y,rr);
+        ctx.arcTo(x,y,x+w,y,rr);
+        ctx.closePath();
+      }
 
-      function setFont(weight, size){ ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`; }
+      // ── Dynamic layout (measures text then sizes the card) ──────────────────
       function measureLayout(){
-        // measure longest line among titles/subs
         let maxTextW = 0;
         setFont(CONFIG.titleWeight, CONFIG.titleSize);
         rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
         setFont(CONFIG.subWeight, CONFIG.subSize);
         rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
-        const contentW = Math.ceil(maxTextW);
-        const cardW = clamp(contentW + CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
-
-        // height: sum of each row block + gaps + vertical padding
+        const baseW = clamp(Math.ceil(maxTextW) + CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
         const rowHeights = rows.map(r => CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
-        const contentH = rowHeights.reduce((a,b)=>a+b, 0) + CONFIG.rowGap*(rows.length-1);
-        const cardH = Math.ceil(contentH + CONFIG.padY*2);
+        const baseH = Math.ceil(rowHeights.reduce((a,b)=>a+b,0) + CONFIG.rowGap*(rows.length-1) + CONFIG.padY*2);
 
-        // radius proportional to size (soft, not too pill)
-        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+        // Scale up (requested), but keep within stage margins
+        const targetW = Math.min(baseW * CONFIG.scaleUp, CONFIG.w - 2*CONFIG.stageMargin);
+        const targetH = Math.min(baseH * CONFIG.scaleUp, CONFIG.h - 2*CONFIG.stageMargin);
 
-        return { cardW, cardH, contentW, contentH, radius, rowHeights };
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(targetW, targetH) * 0.08)));
+
+        return {
+          cardW: targetW, cardH: targetH,
+          contentH: baseH - CONFIG.padY*2,  // content block height (unscaled)
+          rowHeights, radius
+        };
       }
 
-      // layout is dynamic to count/length of rows (recomputed on resize too)
       let layout = measureLayout();
 
-      // small seed card (tiny)
+      // Seed (tiny) card
       const seed = { w: 120, h: 80, r: 20 };
 
-      // micro-stagger to avoid robotic reveal (few ms variation)
-      const jitters = rows.map((_,i)=> (Math.random()*0.05 - 0.025));
+      // Deterministic micro-stagger (no randomness → consistent each run)
+      const jitters = rows.map((_,i)=> (Math.sin(i*1.77)*0.5 + 0.5) * 0.02 - 0.01);
 
-      // ---------- Render ----------
+      // ── Render ──────────────────────────────────────────────────────────────
       function renderFrame(t){
         const wEnd = CONFIG.widthDuration;
-        const hEnd = wEnd - CONFIG.overlap + CONFIG.heightDuration; // overlap phases
-        const total = hEnd + 0.35 + 0.6; // content + settle/hold
+        const hEnd = wEnd - CONFIG.overlap + CONFIG.heightDuration;
+        const total = hEnd + 0.40 + 0.70; // reveal + settle
 
-        // Stage background
+        // Stage bg
         const grad = ctx.createLinearGradient(0,0,0,CONFIG.h);
         grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#eef2f7');
         ctx.fillStyle = grad; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // --- width growth (0..wEnd) ---
+        // Width phase
         const tw = clamp(t / wEnd);
         const widthScale = springOvershoot(tw, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega);
         const w = lerp(seed.w, layout.cardW, Math.min(widthScale, CONFIG.overshootFactor));
 
-        // --- height growth (starts at (wEnd - overlap)) ---
+        // Height phase (with overlap)
         const th = clamp((t - (wEnd - CONFIG.overlap)) / CONFIG.heightDuration);
-        const heightScale = springOvershoot(th, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega*0.92);
+        const heightScale = springOvershoot(th, CONFIG.overshootFactor, CONFIG.zeta, CONFIG.omega*0.95);
         const h = lerp(seed.h, layout.cardH, Math.min(heightScale, CONFIG.overshootFactor));
 
-        // rounding eases with overall progress
+        // Radius grows smoothly with overall progress
         const growT = Math.max(tw, th);
-        const r = lerp(seed.r, layout.radius, spring01(growT, 0.28, 12));
+        const r = lerp(seed.r, layout.radius, spring01(growT, 0.28, 11.5));
 
-        // keep perfectly centered
+        // Center perfectly
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2;
 
-        // elevated, soft shadow
+        // Soft, layered shadow (Apple vibe)
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.18,growT)})`;
-        ctx.shadowBlur = lerp(6, 26, growT);
+        ctx.shadowBlur = lerp(6, 28, growT);
         ctx.shadowOffsetY = lerp(6, 16, growT);
 
-        // card
-        ctx.fillStyle = '#fff';
+        // Card
+        ctx.fillStyle = '#ffffff';
         roundedRect(ctx, x, y, w, h, r); ctx.fill();
 
-        // reset shadow
+        // Subtle top highlight
+        ctx.save();
+        ctx.clip();
+        const hi = ctx.createLinearGradient(0, y, 0, y + h*0.35);
+        hi.addColorStop(0, 'rgba(255,255,255,.55)');
+        hi.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = hi; ctx.fillRect(x, y, w, h*0.35);
+        ctx.restore();
+
+        // Reset shadow
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-        // ------- content (centered in card) -------
-        // compute centered origin for content block
-        const contentX = x + w/2;                                 // horizontal center
-        const contentY = y + (h - layout.contentH)/2;             // vertical center
+        // Content block (centered)
+        const contentX = x + w/2;
+        const contentY = y + (h - layout.contentH)/2;
 
         rows.forEach((row, i) => {
-          // smooth stagger with tiny jitter
-          const itemStart = hEnd + i * (0.12 + jitters[i]);
-          const prog = clamp((t - itemStart)/0.5);
-          const a = spring01(prog, 0.24, 10.5);                   // organic fade/scale
+          const itemStart = hEnd + i * (0.13 + jitters[i]);
+          const prog = clamp((t - itemStart)/0.55);
+          const a = spring01(prog, 0.26, 11.2);     // slightly slower/softer
           const dy = lerp(22, 0, a);
-          const scale = 0.985 + 0.015*a;
+          const scale = 0.982 + 0.018*a;
 
-          // row baseline
-          let yRow = contentY + layout.rowHeights.slice(0, i).reduce((a,b)=>a+b, 0) + (i ? CONFIG.rowGap * i : 0);
+          // Baseline per row
+          const passed = layout.rowHeights.slice(0, i).reduce((s,v)=>s+v, 0);
+          const yRow = contentY + passed + (i ? CONFIG.rowGap*i : 0);
 
           ctx.save();
           ctx.translate(contentX, yRow + dy);
           ctx.scale(scale, scale);
-          ctx.textAlign = 'center';  // center the models
-          ctx.textBaseline = 'alphabetic';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
 
           // Title
           ctx.globalAlpha = a;
@@ -1020,7 +1044,7 @@
         return { total };
       }
 
-      // ---------- Player ----------
+      // ── Player ──────────────────────────────────────────────────────────────
       let isAnimating = false;
       function play(){
         if (isAnimating) return;
@@ -1037,39 +1061,27 @@
         requestAnimationFrame(step);
       }
 
-      // initial small seed frame
+      // Initial tiny seed frame
       renderFrame(0);
 
-      // manual replay
+      // Manual replay
       document.getElementById('onx-play').addEventListener('click', play);
 
-      // autoplay when scrolled into view
+      // Autoplay on scroll into view
       const io = new IntersectionObserver((entries)=>{
         for (const e of entries){ if (e.isIntersecting && !isAnimating){ play(); } }
       }, { root: null, threshold: 0.35 });
       io.observe(document.getElementById('onx-stage'));
 
-      // recompute dynamic layout on resize (debounced)
+      // Recompute on resize
       let rid = null;
-      window.addEventListener('resize', ()=> {
+      window.addEventListener('resize', ()=>{
         cancelAnimationFrame(rid);
         rid = requestAnimationFrame(()=>{
           layout = measureLayout();
           renderFrame(0);
         });
       });
-
-      // utility: rounded rect
-      function roundedRect(ctx, x, y, w, h, r){
-        const rr = Math.min(r, w/2, h/2);
-        ctx.beginPath();
-        ctx.moveTo(x+rr,y);
-        ctx.arcTo(x+w,y,x+w,y+h,rr);
-        ctx.arcTo(x+w,y+h,x,y+h,rr);
-        ctx.arcTo(x,y+h,x,y,rr);
-        ctx.arcTo(x,y,x+w,y,rr);
-        ctx.closePath();
-      }
     })();
   </script>
 </div>
