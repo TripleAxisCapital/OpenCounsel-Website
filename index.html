@@ -639,7 +639,7 @@
       <span class="hero-title font-semibold text-white text-5xl md:text-7xl leading-tight">ONX</span>
 
       <!-- SUBTITLE: bigger + rotating word with blinking caret -->
-      <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-5xl text-white/90 leading-relaxed">
+      <p class="hero-sub1 mt-1 md:mt-2 text-2xl md:text-3xl text-white/90 leading-relaxed">
         <!-- JS will insert structure + caret and handle mobile split -->
       </p>
 
@@ -815,10 +815,10 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal — center-out expand, per-axis overshoot toggles, pure white, menuScale -->
+<!-- ONX Card Reveal — center-out expand, gated content reveal, Apple-polished -->
 <div id="onx-card-reveal"
      data-speed="1.6"                 <!-- >1 faster, <1 slower -->
-     data-menu-scale="1.5"            <!-- scales the inside menu/card -->
+     data-menu-scale="1.5"            <!-- scales inside menu/card -->
      data-overshoot-x-enabled="false" <!-- width overshoot OFF by default -->
      data-overshoot-y-enabled="true"  <!-- height overshoot ON by default -->
      data-overshoot-x="1.5"           <!-- width overshoot factor (if enabled) -->
@@ -858,12 +858,12 @@
 
       // ===== GLOBAL OPTIONS =====
       const host = document.getElementById('onx-card-reveal');
-      const parseBool = (v) => String(v).toLowerCase().trim();
-      const isTrue = (v) => ['1','true','on','yes'].includes(parseBool(v));
+      const parseBool = v => String(v).toLowerCase().trim();
+      const isTrue = v => ['1','true','on','yes'].includes(parseBool(v));
 
       const TEMPO = {
-        speed: parseFloat(host.dataset.speed) || 1.6,                 // >1 faster
-        menuScale: parseFloat(host.dataset.menuScale) || 1.5,         // 1.5× default
+        speed: parseFloat(host.dataset.speed) || 1.6,
+        menuScale: parseFloat(host.dataset.menuScale) || 1.5,
         overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? isTrue(host.dataset.overshootXEnabled) : false,
         overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? isTrue(host.dataset.overshootYEnabled) : true,
         overshootX: parseFloat(host.dataset.overshootX) || 1.5,
@@ -873,10 +873,7 @@
       };
 
       // Base timings (scaled by speed)
-      const BASE = {
-        width: 1.10, height: 1.00, overlap: 0.16,
-        itemFade: 0.50, holdA: 0.36, holdB: 0.54
-      };
+      const BASE = { width: 1.10, height: 1.00, overlap: 0.16, itemFade: 0.50, holdA: 0.36, holdB: 0.54 };
       const S = v => v / TEMPO.speed;
 
       // Design metrics
@@ -903,10 +900,11 @@
       const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
 
       // Helpers
-      const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
-      const lerp  = (a,b,t) => a + (b-a)*t;
-      const easeOutCubic = t => 1 - Math.pow(1 - clamp(t,0,1), 3);
-      const easeInOutCubic = t => (t<0.5) ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+      const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
+      const lerp=(a,b,t)=>a+(b-a)*t;
+      const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
+      const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+      const smoothstep=(t,a,b)=>{ t=clamp((t-a)/(b-a)); return t*t*(3-2*t); };
 
       // One-shot overshoot (boomerang)
       function boomerang(t, factor, peak){
@@ -917,11 +915,11 @@
         return 1 + (factor - 1) * (1 - easeOutCubic(u));
       }
 
-      function setFont(weight, size){
+      function setFont(weight,size){
         ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
       }
-      function roundedRect(ctx, x, y, w, h, r){
-        const rr = Math.min(r, w/2, h/2);
+      function roundedRect(ctx,x,y,w,h,r){
+        const rr=Math.min(r,w/2,h/2);
         ctx.beginPath();
         ctx.moveTo(x+rr,y);
         ctx.arcTo(x+w,y,x+w,y+h,rr);
@@ -935,28 +933,27 @@
       function measureLayout(){
         let maxTextW = 0;
         setFont(CONFIG.titleWeight, CONFIG.titleSize);
-        rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+        rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
         setFont(CONFIG.subWeight, CONFIG.subSize);
-        rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+        rows.forEach(r=>{ if(r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
-        const baseW = clamp(Math.ceil(maxTextW) + CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
-        const rowHeights = rows.map(r => CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
+        const baseW = clamp(Math.ceil(maxTextW)+CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
+        const rowHeights = rows.map(r=> CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
         const baseH = Math.ceil(rowHeights.reduce((a,b)=>a+b,0) + CONFIG.rowGap*(rows.length-1) + CONFIG.padY*2);
 
-        // Apply global menuScale, then keep inside stage margins
         const cardW = Math.min(baseW * TEMPO.menuScale, CONFIG.w - 2*CONFIG.stageMargin);
         const cardH = Math.min(baseH * TEMPO.menuScale, CONFIG.h - 2*CONFIG.stageMargin);
-        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH)*0.08)));
 
         return { cardW, cardH, contentH: baseH - CONFIG.padY*2, rowHeights, radius };
       }
       let layout = measureLayout();
 
-      // Seed (tiny) card
+      // Seed card
       const seed = { w: 120, h: 80, r: 20 };
 
       // deterministic micro-stagger
-      const jitters = rows.map((_,i)=> (Math.sin(i*1.77)*0.5 + 0.5) * 0.02 - 0.01);
+      const jitters = rows.map((_,i)=> (Math.sin(i*1.77)*0.5 + 0.5)*0.02 - 0.01);
 
       // Render
       function renderFrame(t){
@@ -970,29 +967,25 @@
         g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
         ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // WIDTH — use overshoot if enabled; otherwise ease to 1
+        // WIDTH
         const tw = clamp(t / wEnd);
-        const widthScale = TEMPO.overshootXEnabled
-          ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX)
-          : easeInOutCubic(tw);
+        const widthScale = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
         const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
 
-        // HEIGHT — use overshoot if enabled; otherwise ease to 1
+        // HEIGHT
         const th = clamp((t - hStart) / S(BASE.height));
-        const heightScale = TEMPO.overshootYEnabled
-          ? boomerang(th, TEMPO.overshootY, TEMPO.peakY)
-          : easeInOutCubic(th);
+        const heightScale = TEMPO.overshootYEnabled ? boomerang(th, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(th);
         const h = lerp(seed.h, layout.cardH, Math.min(heightScale, TEMPO.overshootYEnabled ? TEMPO.overshootY : 1));
 
-        // Corner radius follows overall growth
+        // Corner radius
         const growT = Math.max(tw, th);
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
 
-        // ===== CENTER-OUT EXPANSION =====
+        // Center-out expansion
         const x = (CONFIG.w - w)/2;
-        const y = (CONFIG.h - h)/2;  // <- centered vertically (no bottom anchor)
+        const y = (CONFIG.h - h)/2;
 
-        // PURE WHITE card with soft elevation
+        // PURE WHITE card + hairline and soft drop shadow (Apple-y)
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT);
         ctx.shadowOffsetY = lerp(6, 15, growT);
@@ -1001,46 +994,54 @@
         roundedRect(ctx, x, y, w, h, r);
         ctx.fill();
 
-        // Clip content to card
+        // hairline border (subtle)
+        ctx.shadowColor='transparent';
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.stroke();
+
+        // --- Strict clipping so NOTHING can bleed outside the card ---
         ctx.save();
         roundedRect(ctx, x, y, w, h, r);
         ctx.clip();
 
-        // Content (centered; **reveals with the expansion**)
+        // Content placement (centered)
         const contentX = x + w/2;
         const contentY = y + (h - layout.contentH)/2;
 
-        // Tie reveal to blended size progress so it feels synced to expansion
-        const revealProgress = clamp((tw + th) / 2);
+        // GATED REVEAL:
+        // wait until BOTH dimensions are near final, then ease in smoothly.
+        const wr = clamp(w / layout.cardW);
+        const hr = clamp(h / layout.cardH);
+        const gateBase = Math.min(wr, hr);
+        const gate = smoothstep(gateBase, 0.62, 0.88); // nothing visible before ~62% formed
 
         rows.forEach((row, i) => {
-          // Each row begins partway through the size reveal for a cohesive feel
-          const startFrac = 0.18 + i * 0.12 + jitters[i];
-          const local = clamp((revealProgress - startFrac) / S(BASE.itemFade));
+          const start = 0.10 + i*0.10 + jitters[i];          // stagger after gate
+          const local = clamp((gate - start) / S(BASE.itemFade));
           const a = easeOutCubic(local);
-          const dy = lerp(22, 0, a);
-          const scale = 0.982 + 0.018*a;
+          const dy = lerp(18, 0, a);
+          const scale = 0.985 + 0.015*a;
+          const blurPx = (1 - a) * 1.6;                      // softer than before
 
-          // Polished touch: subtle blur that sharpens as text settles
-          const blurPx = (1 - a) * 2.0; // 2px -> 0
-
-          const passed = layout.rowHeights.slice(0, i).reduce((s,v)=>s+v, 0);
+          const passed = layout.rowHeights.slice(0,i).reduce((s,v)=>s+v,0);
           const yRow = contentY + passed + (i ? CONFIG.rowGap*i : 0);
 
           ctx.save();
           ctx.translate(contentX, yRow + dy);
           ctx.scale(scale, scale);
-          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.textAlign = 'left';    // matches reference look
+          ctx.textBaseline = 'alphabetic';
+          ctx.translate(- (w/2 - 24), 0); // nice left padding inside the card
 
+          // fade/blur in
           ctx.globalAlpha = a;
           ctx.filter = `blur(${blurPx}px)`;
 
-          // Title
           setFont(CONFIG.titleWeight, CONFIG.titleSize);
           ctx.fillStyle = '#0b0b10';
           ctx.fillText(row.title, 0, CONFIG.titleSize);
 
-          // Subtitle
           if (row.sub){
             setFont(CONFIG.subWeight, CONFIG.subSize);
             ctx.fillStyle = '#5f646c';
