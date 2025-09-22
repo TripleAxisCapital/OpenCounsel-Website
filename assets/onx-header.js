@@ -82,10 +82,10 @@ class ONXHeader extends HTMLElement {
           /* Tunables */
           --header-width-flat: 100%;
           --header-max-w: 1200px;
-          --header-flat-pad-top: 0.75rem;
-          --header-flat-pad-bottom: 0.25rem;
-          --header-float-pad-top-mobile: 0rem;
-          --header-float-pad-bottom-mobile: 0rem;
+          --header-flat-pad-top: 0rem;
+          --header-flat-pad-bottom: 0rem;
+          --header-float-pad-top-mobile: .75rem;
+          --header-float-pad-bottom-mobile: .25rem;
           --header-float-pad-top-desktop: 1rem;
           --header-float-pad-bottom-desktop: .25rem;
 
