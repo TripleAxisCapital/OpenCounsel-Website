@@ -32,6 +32,12 @@ class ONXHeader extends HTMLElement {
     this._threshold = parseInt(this.getAttribute("threshold") || "8", 10);
     this._prevFocus = null;
 
+    // smooth, in-sync scroll → width interpolation (mobile)
+    this._scrollRange = parseInt(this.getAttribute("scroll-range") || "140", 10); // px to reach "small" state
+    this._raf = null;
+    this._outerMobileLarge = null;
+    this._outerMobileSmall = null;
+
     // spacing sync
     this._syncEdgeGaps = this._syncEdgeGaps.bind(this);
   }
@@ -119,6 +125,9 @@ class ONXHeader extends HTMLElement {
           /* download button padding */
           --download-btn-pad-y-desktop: .35rem;
           --download-btn-pad-y-mobile: .50rem;
+
+          /* Dynamic (mobile) — computed in JS for truly in-sync scroll */
+          --outer-x-mobile-dyn: var(--pill-outer-x-mobile-large);
 
           position: sticky; top: 0; z-index: 50;
           display:block;
@@ -240,23 +249,51 @@ class ONXHeader extends HTMLElement {
           }
         }
 
-        /* === REVERSAL (MOBILE-ONLY): start LARGE pill, shrink to SMALL on scroll === */
+        /* === MOBILE: large→small pill synced to scroll; NO OUTLINE on mobile === */
         @media (max-width: 767.98px){
-          /* Top-of-page (no .is-float): large pill */
           .header-bar{
             background: rgba(255,255,255,.96);
-            border: 1px solid rgba(0,0,0,0.02);
+            /* remove outline on mobile pill header */
+            border: none !important;
+            outline: none !important;
             border-radius: var(--header-radius);
             box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
             -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile-large))));
+
+            /* width tied to --outer-x-mobile-dyn (set by JS on scroll) */
+            width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile-large)))));
+
+            /* transitions: keep instantaneous with scroll for width; still ease other props */
+            transition:
+              background-color .18s ease,
+              border-radius .18s cubic-bezier(.2,.8,.2,1),
+              box-shadow .18s ease,
+              -webkit-backdrop-filter .18s ease,
+              backdrop-filter .18s ease;
+
+            /* perf */
+            will-change: width;
           }
-          /* Scrolled (.is-float): narrower pill */
           :host(.is-float) .header-bar{
-            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+            /* keep border removed even when "floating" on mobile */
+            border: none !important;
+            outline: none !important;
+            /* width still driven by --outer-x-mobile-dyn */
+            width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile)))));
+          }
+
+          /* Ensure theme variants don't reintroduce a border on mobile */
+          :host([theme="ONXPro"]) .header-bar,
+          :host([theme="onxpro"]) .header-bar,
+          :host([theme="pro"]) .header-bar,
+          :host([theme="ONXPro"].is-float) .header-bar,
+          :host([theme="onxpro"].is-float) .header-bar,
+          :host([theme="pro"].is-float) .header-bar{
+            border: none !important;
+            outline: none !important;
           }
         }
-        /* === end reversal block === */
+        /* === end mobile block === */
 
         .nav-link{
           font-weight: var(--nav-font-weight);
@@ -603,7 +640,7 @@ class ONXHeader extends HTMLElement {
           </div>
 
           <nav class="mobile-nav" aria-label="Mobile">
-            <!-- ONX Pro now matches Pricing styling -->
+            <!-- ONX Pro now matches Pricing styling for mobile, too -->
             <a class="mobile-link" href="/oc-pro.html">ONX Pro
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
             </a>
@@ -651,6 +688,9 @@ class ONXHeader extends HTMLElement {
     this._cloneSlotted('nav');
     this._cloneSlotted('actions');
 
+    // Prime CSS var caches for interpolation
+    this._cacheDims();
+
     // Scroll + initial state
     window.addEventListener("scroll", this._onScroll, { passive: true });
     this._onScroll();
@@ -665,6 +705,7 @@ class ONXHeader extends HTMLElement {
     window.removeEventListener("resize", this._onResize);
     if (this._btns) this._btns.forEach(b => b.removeEventListener("click", this._toggleMobile));
     if (this._backdrop) this._backdrop.removeEventListener("click", this._toggleMobile);
+    if (this._raf) cancelAnimationFrame(this._raf);
   }
 
   /* ===== Inject global-config links ===== */
@@ -820,13 +861,43 @@ class ONXHeader extends HTMLElement {
 
   _onResize(){
     if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
+    this._cacheDims();
     this._syncEdgeGaps();
+    // re-run scroll to refresh dynamic width after resize
+    this._onScroll();
+  }
+
+  _cacheDims(){
+    const styles = getComputedStyle(this);
+    const toPx = (v) => parseFloat(String(v).replace('px','')) || 0;
+    this._outerMobileLarge = toPx(styles.getPropertyValue('--pill-outer-x-mobile-large'));
+    this._outerMobileSmall = toPx(styles.getPropertyValue('--pill-outer-x-mobile'));
+    if (!this._outerMobileLarge) this._outerMobileLarge = 8;
+    if (!this._outerMobileSmall) this._outerMobileSmall = 16;
   }
 
   _onScroll() {
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    if (y > this._threshold) this.classList.add("is-float");
-    else this.classList.remove("is-float");
+    if (this._raf) return;
+    this._raf = requestAnimationFrame(() => {
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+
+      if (isMobile){
+        // progress 0→1 over _scrollRange px
+        const t = Math.max(0, Math.min(1, y / this._scrollRange));
+        const outer = this._outerMobileLarge + (this._outerMobileSmall - this._outerMobileLarge) * t;
+        this.style.setProperty('--outer-x-mobile-dyn', `${outer.toFixed(2)}px`);
+
+        // keep mobile "floating" padding behavior; toggled once scrolled
+        this.classList.toggle("is-float", y > 0);
+      } else {
+        // desktop: keep original threshold snap (with eased CSS transition)
+        if (y > this._threshold) this.classList.add("is-float");
+        else this.classList.remove("is-float");
+      }
+
+      this._raf = null;
+    });
   }
 
   /* ===== Mobile edge spacing sync ===== */
