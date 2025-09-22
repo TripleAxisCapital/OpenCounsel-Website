@@ -835,7 +835,7 @@
       border-radius:28px; overflow:hidden;
       background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
       box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
-      will-change: transform; /* hint for smoother transforms on mobile */
+      will-change: transform;
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
     #onx-controls{
@@ -851,13 +851,10 @@
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    /* ───────── MOBILE-ONLY PERF + SCALE (2×) — desktop untouched ───────── */
+    /* MOBILE: no hard 2x; we scale adaptively via JS so nothing bleeds */
     @media (max-width: 640px){
-      #onx-card-reveal{ overflow: hidden; } /* prevent scaled stage overflow */
-      #onx-stage{
-        transform: scale(2);               /* visual 2× scale */
-        transform-origin: center center;   /* keep centered */
-      }
+      #onx-card-reveal{ overflow:hidden; }
+      /* Stage transform is set dynamically in JS to fit the viewport safely */
     }
   </style>
 
@@ -868,11 +865,12 @@
     (function(){
       'use strict';
 
-      // ===== GLOBAL OPTIONS =====
+      // ===== ELEMENTS =====
       const host = document.getElementById('onx-card-reveal');
       const stageEl = document.getElementById('onx-stage');
-      const canvas = document.getElementById('onx-canvas');
+      const canvas  = document.getElementById('onx-canvas');
 
+      // ===== OPTIONS =====
       const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
       const TEMPO = {
         speed: parseFloat(host.dataset.speed) || 1.6,
@@ -885,20 +883,40 @@
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
 
-      // Mobile detection (CSS breakpoint aligned)
-      const IS_MOBILE = window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+      const isMobile = () =>
+        window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
 
-      // Timings (scaled by speed)
+      // Dynamic stage scaler (MOBILE ONLY): tries to give you ~2x feel without bleeding.
+      // It computes the unscaled stage width (min(900px, 92vw)), then scales so stage fits
+      // within (vw - 16px gutters). Max scale is 2.0.
+      function applyMobileScale(){
+        if (!isMobile()){
+          stageEl.style.transform = '';
+          stageEl.style.transformOrigin = '';
+          return;
+        }
+        const vw = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 360);
+        const safeGutter = 16;                 // px on each side
+        const baseWidth = Math.min(900, 0.92 * vw); // matches CSS width:min(900px,92vw)
+        const targetWidth = vw - safeGutter * 2;
+        const desiredScale = 2.0;              // your requested 2x
+        const maxScaleThatFits = Math.max(1, targetWidth / baseWidth);
+        const scale = Math.min(desiredScale, maxScaleThatFits);
+
+        stageEl.style.transform = `scale(${scale})`;
+        stageEl.style.transformOrigin = 'center top';
+      }
+
+      // ===== TIMINGS =====
       const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
       const S = v => v / TEMPO.speed;
 
-      // ===== DESIGN BASE (pre-scale) =====
+      // ===== DESIGN BASE =====
       const DESIGN = {
         padX: 20, padY: 20, rowGap: 16, subGap: 6,
         titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
         minW: 360, maxW: 720, stageMargin: 56
       };
-
       const SCALE = TEMPO.menuScale;
       const STYLE = {
         padX: Math.round(DESIGN.padX * SCALE),
@@ -911,35 +929,34 @@
         subWeight: DESIGN.subWeight,
         minW: DESIGN.minW * SCALE,
         maxW: DESIGN.maxW * SCALE,
-        stageMargin: DESIGN.stageMargin
+        // Slightly smaller margins on mobile to avoid visual clipping (canvas stays inside)
+        stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
       };
 
-      // ===== Models (unchanged) =====
+      // ===== MODELS (unchanged) =====
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Default model' },
         { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
       ];
 
-      // ===== Canvas setup (mobile perf caps + background cache) =====
-      let CONFIG = { w: 1920, h: 1080 };              // desktop default
-      if (IS_MOBILE) CONFIG = { w: 1280, h: 720 };     // cut internal workload ~2.25× on mobile
-
+      // ===== CANVAS (MOBILE PERF OPTS) =====
+      // Reduce internal resolution on mobile to cut GPU/CPU; DPR is capped; we cache background.
+      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9
       const dprRaw = window.devicePixelRatio || 1;
-      const dpr = IS_MOBILE ? Math.min(1.25, dprRaw) : Math.max(1, dprRaw); // cap DPR on mobile for smoother frames
+      const dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
 
       canvas.width = CONFIG.w * dpr;
       canvas.height = CONFIG.h * dpr;
-      const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true }); // desync hint for mobile
+      const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
       ctx.scale(dpr, dpr);
-      ctx.imageSmoothingEnabled = true;  // keep visuals crisp enough
+      ctx.imageSmoothingEnabled = true;
 
-      // Pre-render a static background once (instead of rebuilding gradient every frame)
+      // Cached background (no gradient rebuilds each frame)
       let BG_CANVAS = document.createElement('canvas');
-      BG_CANVAS.width = CONFIG.w;
-      BG_CANVAS.height = CONFIG.h;
+      BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
-      (function cacheBackground(){
+      (function cacheBG(){
         const g = BG_CTX.createLinearGradient(0,0,0,CONFIG.h);
         g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
         BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
@@ -971,7 +988,7 @@
         ctx.closePath();
       }
 
-      // Measure final layout
+      // Layout
       function measureFinalLayout(){
         let maxTextW = 0;
         setFont(STYLE.titleWeight, STYLE.titleSize);
@@ -997,17 +1014,21 @@
       }
       let layout = measureFinalLayout();
 
-      // Seed (start small)
+      // Seed
       const seed = { w: 120, h: 80, r: 20 };
 
-      // Precompute row schedule
+      // Row schedule
       const ROW_POP_DUR = S(BASE.rowPop);
       const ROW_PAUSE   = S(BASE.rowPause);
       const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
 
+      // MOBILE PERF TUNING (subtle): reduce expensive blur/shadow while keeping look
+      const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
+      const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
+
       // --------- Phase A: Card build ----------
       function renderCard(t){
-        // Draw cached BG once per frame (cheap blit, faster on mobile)
+        // BG (cheap blit)
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
         // Width growth
@@ -1025,7 +1046,6 @@
         for (let i=0; i<rows.length; i++){
           const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
           if (local <= 0) break;
-
           visibleRows++;
           if (local < 1){
             poppingIndex = i;
@@ -1055,7 +1075,7 @@
 
         // Card shell
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
-        ctx.shadowBlur = lerp(6, 26, growT);
+        ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
         ctx.shadowOffsetY = lerp(6, 15, growT);
         ctx.fillStyle = '#ffffff';
         roundedRect(ctx, x, y, w, h, r); ctx.fill();
@@ -1075,13 +1095,14 @@
           const a  = easeOutCubic(pr);
           const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06;
           const dy = lerp(10, 0, a);
-          const blurPx = (1 - a) * 1.5;
+          const blurPx = (1 - a) * 1.5 * MOBILE_BLUR_SCALE;
 
           ctx.save();
           ctx.translate(contentX, cursorY + dy);
           ctx.scale(s, s);
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-          ctx.globalAlpha = a; ctx.filter = `blur(${blurPx}px)`;
+          ctx.globalAlpha = a;
+          if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
 
           setFont(STYLE.titleWeight, STYLE.titleSize);
           ctx.fillStyle = '#0b0b10';
@@ -1106,12 +1127,12 @@
 
       // --------- Phase B: Morph card → chat bubble ----------
       function renderMorphCardToBubble(startBox, t){
+        // Constrain bubble to canvas with margins (prevents bleeding when scaled)
+        const maxBubbleW = CONFIG.w - 2*STYLE.stageMargin;
+        const targetBubbleW = Math.max(startBox.w*1.8, 1100);
+        const bubbleW = Math.round(Math.min(maxBubbleW, targetBubbleW));
         const bubbleH = Math.round(Math.min(100 * SCALE, 130));
-        const bubbleW = Math.round(Math.min(CONFIG.w - 2*STYLE.stageMargin, Math.max(startBox.w*1.8, 1100)));
         const bubbleR = Math.round(bubbleH / 2);
-
-        const bx = (CONFIG.w - bubbleW)/2;
-        const by = (CONFIG.h - bubbleH)/2 + 30;
 
         const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
         const heightF = TEMPO.overshootYEnabled ? boomerang(t, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(t);
@@ -1123,19 +1144,19 @@
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2 + 30 * radiusF;
 
-        // Cached BG
+        // BG
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
         // Shape
         ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
-        ctx.shadowBlur = lerp(12, 22, radiusF);
+        ctx.shadowBlur = lerp(12, 22, radiusF) * MOBILE_SHADOW_SCALE;
         ctx.shadowOffsetY = lerp(10, 14, radiusF);
         ctx.fillStyle = '#ffffff';
         roundedRect(ctx, x, y, w, h, r); ctx.fill();
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Subtle ghost of rows (fades out early)
+        // Ghost rows (fade out early)
         const contentFadeOut = 1 - clamp(t / 0.25);
         if (contentFadeOut > 0){
           ctx.save();
@@ -1169,6 +1190,9 @@
           ctx.restore();
         }
 
+        // Return bubble target box (centered)
+        const bx = (CONFIG.w - bubbleW)/2;
+        const by = (CONFIG.h - bubbleH)/2 + 30;
         return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
       }
 
@@ -1177,12 +1201,13 @@
       function startBubbleIdle(bubble){
         let rafId = null;
         const caretPeriod = 900; // ms
+
         function loop(nowMS){
           ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
           // Bubble
           ctx.shadowColor = 'rgba(0,0,0,0.15)';
-          ctx.shadowBlur = 20; ctx.shadowOffsetY = 14;
+          ctx.shadowBlur = 20 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 14;
           ctx.fillStyle = '#ffffff';
           roundedRect(ctx, bubble.x, bubble.y, bubble.w, bubble.h, bubble.r); ctx.fill();
           ctx.shadowColor='transparent';
@@ -1262,7 +1287,7 @@
       // Manual controls
       document.getElementById('onx-play').addEventListener('click', play, { passive: true });
 
-      // ── Autoplay ONLY when the center of the section is visible ──
+      // Autoplay when section center visible
       let autoplayed = false;
       function centerIsVisible(el){
         const rect = el.getBoundingClientRect();
@@ -1282,23 +1307,27 @@
       }, { root: null, threshold: 0 });
       io.observe(stageEl);
 
-      // Recompute on resize (including breakpoint flips)
+      // Initial mobile scale
+      applyMobileScale();
+
+      // Recompute on resize (includes rebuild when crossing breakpoints)
       let rid = null;
       window.addEventListener('resize', ()=>{
         if (caretLoop){ caretLoop.stop(); caretLoop = null; }
         cancelAnimationFrame(rid);
         rid = requestAnimationFrame(()=>{
-          // If we crossed mobile/desktop, rebuild canvas sizing & BG cache
-          const NOW_MOBILE = window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
-          const newCONFIG = NOW_MOBILE ? { w:1280, h:720 } : { w:1920, h:1080 };
-          const newDPR = NOW_MOBILE ? Math.min(1.25, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
+          // Fit to viewport (no bleed)
+          applyMobileScale();
 
-          // Only reinit if something truly changed (avoid extra work)
-          if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h || newDPR !== dpr){
+          const NOW_MOBILE = isMobile();
+          const newCONFIG = NOW_MOBILE ? { w:1024, h:576 } : { w:1920, h:1080 };
+          const newDPR = NOW_MOBILE ? Math.min(1.15, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
+
+          if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h || Math.abs(newDPR - dpr) > 0.001){
             CONFIG = newCONFIG;
             canvas.width = CONFIG.w * newDPR;
             canvas.height = CONFIG.h * newDPR;
-            ctx.setTransform(1,0,0,1,0,0); // reset
+            ctx.setTransform(1,0,0,1,0,0);
             ctx.scale(newDPR, newDPR);
 
             // Rebuild BG cache
@@ -1310,22 +1339,20 @@
             BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
           }
 
+          // Update stage margin for mobile vs desktop
+          STYLE.stageMargin = NOW_MOBILE ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin;
+
           layout = measureFinalLayout();
           renderCard(0);
           tryAutoplay();
         });
       }, { passive: true });
 
-      // Also check on scroll for the center rule
       window.addEventListener('scroll', tryAutoplay, { passive: true });
     })();
   </script>
 </div>
 <!-- ---------------------------------- OPEN AI MODELS END----------------------------------------------------------------------->
-
-
-
-
 
 
 <!--------------------------------------------------------------------BECOME LIMITLESS Models---------------------------------------------------------------------->
