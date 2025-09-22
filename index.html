@@ -815,8 +815,8 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal — dynamic boomerang overshoot (pure white), Apple-grade -->
-<div id="onx-card-reveal" style="max-width: 100%; margin: 48px auto;">
+<!-- ONX Card Reveal — boomerang overshoot, pure white, dynamic size, global speed -->
+<div id="onx-card-reveal" data-speed="1.6" style="max-width: 100%; margin: 48px auto;">
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
@@ -838,7 +838,6 @@
     }
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
-    @media (prefers-reduced-motion: reduce){ #onx-controls button{ transition:none; } }
   </style>
 
   <div id="onx-stage"><canvas id="onx-canvas"></canvas></div>
@@ -848,56 +847,72 @@
     (function(){
       'use strict';
 
-      // ── Config: slower, smoother, pronounced boomerang ─────────────────────
-      const CONFIG = {
-        fps: 60,
-        w: 1920, h: 1080,                 // internal canvas resolution (crisp)
-        widthDuration: 1.15,              // phase 1 (width grows first)
-        heightDuration: 1.05,             // phase 2 (height grows second)
-        overlap: 0.14,                    // slight overlap for fluidity
-        overshootFactor: 1.5,             // 150% peak (boomerang once)
-        // Card & type rhythm (tight Apple feel)
-        padX: 24, padY: 22,
-        rowGap: 18, subGap: 4,
-        titleSize: 28, titleWeight: 800,
-        subSize: 18,  subWeight: 500,
-        minW: 380, maxW: 720,             // dynamic width clamps
-        scaleUp: 1.12,                    // tasteful size-up of inside white card
-        stageMargin: 56                   // safe guard from stage edges
+      // ========= GLOBAL SPEED KNOBS =========
+      // Change these or set data-speed / data-overshoot / data-peak on #onx-card-reveal
+      const TEMPO = {
+        speed: 1.6,          // >1 = faster, <1 = slower (applies to ALL durations)
+        overshoot: 1.5,      // peak factor for boomerang (1.5 = 150%)
+        peak: 0.58           // when overshoot peaks within each phase (0..1)
       };
 
-      // ── Models (edit freely) ────────────────────────────────────────────────
+      // ========= Base timings (scaled by TEMPO.speed) =========
+      const BASE = {
+        width: 1.15,         // width phase duration
+        height: 1.05,        // height phase duration
+        overlap: 0.14,       // width→height overlap
+        itemStagger: 0.13,   // stagger between rows
+        contentFade: 0.55,   // per-row reveal time
+        holdA: 0.40,         // post-expand breathing
+        holdB: 0.60          // final settle/hold
+      };
+      const S = (v)=> v / TEMPO.speed;  // scaler
+
+      // ========= Design metrics =========
+      const CONFIG = {
+        w: 1920, h: 1080,
+        padX: 24, padY: 22, rowGap: 18, subGap: 4,
+        titleSize: 28, titleWeight: 800,
+        subSize: 18,  subWeight: 500,
+        minW: 380, maxW: 720,
+        scaleUp: 1.12,
+        stageMargin: 56
+      };
+
+      // ========= Models (edit freely) =========
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Advanced reasoning & coding' },
         { title:'ONX PRO',  sub:'Best overall quality' },
       ];
 
-      // ── Canvas ──────────────────────────────────────────────────────────────
+      // Read optional data-* overrides
+      const host = document.getElementById('onx-card-reveal');
+      const ds = parseFloat(host.dataset.speed);      if (!isNaN(ds) && ds > 0) TEMPO.speed = ds;
+      const dof = parseFloat(host.dataset.overshoot); if (!isNaN(dof) && dof >= 1) TEMPO.overshoot = dof;
+      const dpk = parseFloat(host.dataset.peak);      if (!isNaN(dpk) && dpk > 0 && dpk < 1) TEMPO.peak = dpk;
+
+      // ========= Canvas =========
       const canvas = document.getElementById('onx-canvas');
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
       const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
 
-      // ── Easing helpers ─────────────────────────────────────────────────────
+      // ========= Helpers =========
       const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
       const lerp  = (a,b,t) => a + (b-a)*t;
       const easeOutCubic = t => 1 - Math.pow(1 - clamp(t,0,1), 3);
 
-      // "Boomerang" scaler:
-      //  • 0→peakTime: accelerate to overshootFactor (no bounce)
-      //  • peakTime→1: snap back to 1 using fast-out easing (still smooth)
-      function boomerang(t, factor=1.5, peakTime=0.6){
+      // Single-overshoot "boomerang": go past once, then snap back
+      function boomerang(t, factor=TEMPO.overshoot, peakTime=TEMPO.peak){
         if (t <= 0) return 0;
         if (t >= 1) return 1;
         if (t < peakTime){
-          return easeOutCubic(t/peakTime) * factor;             // go past once
+          return easeOutCubic(t/peakTime) * factor;
         } else {
           const u = (t - peakTime) / (1 - peakTime);
-          return 1 + (factor - 1) * (1 - easeOutCubic(u));      // snap back
+          return 1 + (factor - 1) * (1 - easeOutCubic(u));
         }
       }
-
       function setFont(weight, size){
         ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
       }
@@ -912,81 +927,73 @@
         ctx.closePath();
       }
 
-      // ── Dynamic layout from text ────────────────────────────────────────────
+      // ========= Dynamic layout =========
       function measureLayout(){
         let maxTextW = 0;
-        setFont(CONFIG.titleWeight, CONFIG.titleSize);
-        rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
-        setFont(CONFIG.subWeight, CONFIG.subSize);
-        rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+        setFont(800, CONFIG.titleSize);  rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+        setFont(500, CONFIG.subSize);    rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
         const baseW = clamp(Math.ceil(maxTextW) + CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
         const rowHeights = rows.map(r => CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
         const baseH = Math.ceil(rowHeights.reduce((a,b)=>a+b,0) + CONFIG.rowGap*(rows.length-1) + CONFIG.padY*2);
 
-        const targetW = Math.min(baseW * CONFIG.scaleUp, CONFIG.w - 2*CONFIG.stageMargin);
-        const targetH = Math.min(baseH * CONFIG.scaleUp, CONFIG.h - 2*CONFIG.stageMargin);
-        const radius  = Math.max(22, Math.min(36, Math.round(Math.min(targetW, targetH) * 0.08)));
+        const cardW = Math.min(baseW * CONFIG.scaleUp, CONFIG.w - 2*CONFIG.stageMargin);
+        const cardH = Math.min(baseH * CONFIG.scaleUp, CONFIG.h - 2*CONFIG.stageMargin);
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
 
-        return { cardW: targetW, cardH: targetH, contentH: baseH - CONFIG.padY*2, rowHeights, radius };
+        return { cardW, cardH, contentH: baseH - CONFIG.padY*2, rowHeights, radius };
       }
       let layout = measureLayout();
 
-      // Seed (tiny) card
       const seed = { w: 120, h: 80, r: 20 };
-
-      // deterministic micro-stagger (consistent every run)
       const jitters = rows.map((_,i)=> (Math.sin(i*1.77)*0.5 + 0.5) * 0.02 - 0.01);
 
-      // ── Render ──────────────────────────────────────────────────────────────
+      // ========= Render =========
       function renderFrame(t){
-        const wEnd = CONFIG.widthDuration;
-        const hEnd = wEnd - CONFIG.overlap + CONFIG.heightDuration;
-        const total = hEnd + 0.40 + 0.60; // reveal + hold
+        const wEnd = S(BASE.width);
+        const hEnd = wEnd - S(BASE.overlap) + S(BASE.height);
+        const total = hEnd + S(BASE.holdA) + S(BASE.holdB);
 
-        // Stage background
-        const grad = ctx.createLinearGradient(0,0,0,CONFIG.h);
-        grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#eef2f7');
-        ctx.fillStyle = grad; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
+        // stage bg
+        const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
+        g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
+        ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // Width phase — single overshoot then return
+        // width -> boomerang
         const tw = clamp(t / wEnd);
-        const widthScale = boomerang(tw, CONFIG.overshootFactor, 0.6);
-        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, CONFIG.overshootFactor));
+        const widthScale = boomerang(tw);
+        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshoot));
 
-        // Height phase — starts a bit later, same boomerang profile
-        const th = clamp((t - (wEnd - CONFIG.overlap)) / CONFIG.heightDuration);
-        const heightScale = boomerang(th, CONFIG.overshootFactor, 0.6);
-        const h = lerp(seed.h, layout.cardH, Math.min(heightScale, CONFIG.overshootFactor));
+        // height -> boomerang (overlaps)
+        const th = clamp((t - (wEnd - S(BASE.overlap))) / S(BASE.height));
+        const heightScale = boomerang(th);
+        const h = lerp(seed.h, layout.cardH, Math.min(heightScale, TEMPO.overshoot));
 
-        // Radius eases with overall growth (no extra shading on card)
         const growT = Math.max(tw, th);
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
 
-        // Keep card perfectly centered
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2;
 
-        // Soft elevation (card remains PURE WHITE)
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT);
         ctx.shadowOffsetY = lerp(6, 15, growT);
 
-        // PURE WHITE card (no inner gradients/overlays)
+        // PURE WHITE card
         ctx.fillStyle = '#ffffff';
         roundedRect(ctx, x, y, w, h, r);
         ctx.fill();
 
-        // Reset shadow
+        // reset shadow
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-        // Content (centered in the card)
+        // content (centered)
         const contentX = x + w/2;
         const contentY = y + (h - layout.contentH)/2;
 
         rows.forEach((row, i) => {
-          const itemStart = hEnd + i * (0.13 + jitters[i]);
-          const prog = clamp((t - itemStart)/0.55);
+          const itemStart = hEnd + i * S(BASE.itemStagger + jitters[i]);
+          const prog = clamp((t - itemStart)/S(BASE.contentFade));
           const a = easeOutCubic(prog);
           const dy = lerp(22, 0, a);
           const scale = 0.982 + 0.018*a;
@@ -999,13 +1006,11 @@
           ctx.scale(scale, scale);
           ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
 
-          // Title
           ctx.globalAlpha = a;
           setFont(CONFIG.titleWeight, CONFIG.titleSize);
           ctx.fillStyle = '#0b0b10';
           ctx.fillText(row.title, 0, CONFIG.titleSize);
 
-          // Subtitle
           if (row.sub){
             setFont(CONFIG.subWeight, CONFIG.subSize);
             ctx.fillStyle = '#5f646c';
@@ -1018,7 +1023,7 @@
         return { total };
       }
 
-      // ── Player ──────────────────────────────────────────────────────────────
+      // ========= Player =========
       let isAnimating = false;
       function play(){
         if (isAnimating) return;
@@ -1035,26 +1040,23 @@
         requestAnimationFrame(step);
       }
 
-      // Initial tiny seed frame
+      // initial frame
       renderFrame(0);
 
-      // Manual replay
+      // controls
       document.getElementById('onx-play').addEventListener('click', play);
 
-      // Autoplay on scroll into view (once per view)
+      // autoplay on scroll
       const io = new IntersectionObserver((entries)=>{
         for (const e of entries){ if (e.isIntersecting && !isAnimating){ play(); } }
       }, { root: null, threshold: 0.35 });
       io.observe(document.getElementById('onx-stage'));
 
-      // Recompute layout on resize
+      // recompute on resize
       let rid = null;
       window.addEventListener('resize', ()=>{
         cancelAnimationFrame(rid);
-        rid = requestAnimationFrame(()=>{
-          layout = measureLayout();
-          renderFrame(0);
-        });
+        rid = requestAnimationFrame(()=>{ layout = measureLayout(); renderFrame(0); });
       });
     })();
   </script>
