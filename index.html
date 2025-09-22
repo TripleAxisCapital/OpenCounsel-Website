@@ -871,11 +871,11 @@
 
       // Timings (scaled by speed)
       const BASE = {
-        width: 0.65,                 // width grow portion of Phase A
-        rowStep: 0.16,               // stagger between row pops
-        itemPop: 0.42,               // pop duration per row
-        holdA: 0.34, holdB: 0.50,    // holds before morph
-        morph: 0.95                  // card→bubble morph
+        widthGrow: 0.65,           // portion of Phase A devoted to width growth
+        rowPop: 0.42,              // pop duration per row (s)
+        rowPause: 0.10,            // pause BETWEEN row pops (s)  ← per request (100ms)
+        holdA: 0.34, holdB: 0.50,
+        morph: 0.95
       };
       const S = v => v / TEMPO.speed;
 
@@ -923,8 +923,8 @@
       const lerp=(a,b,t)=>a+(b-a)*t;
       const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
       const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-
-      function boomerang(t, factor=1.08, peak=0.55){
+      // Boomerang overshoot (used for per-row pop & card bounce)
+      function boomerang(t, factor=1.10, peak=0.55){
         if (t <= 0) return 0;
         if (t >= 1) return 1;
         if (t < peak) return easeOutCubic(t/peak) * factor;
@@ -974,39 +974,62 @@
       // Seed (start small)
       const seed = { w: 120, h: 80, r: 20 };
 
-      // --------- Phase A: Card build (HEIGHT DRIVEN BY ROW POPS) ----------
+      // Precompute row schedule: each row starts after previous finishes + 100ms pause
+      const ROW_POP_DUR = S(BASE.rowPop);
+      const ROW_PAUSE   = S(BASE.rowPause);
+      const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE)); // 0, d+pause, 2*(d+pause)…
+
+      // --------- Phase A: Card build (HEIGHT DRIVEN BY ROW POPS + CARD BOUNCE) ----------
       function renderCard(t){
-        // Stage bg
+        // BG
         const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
         g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
         ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // Width easing (independent)
-        const widthEnd = S(BASE.width);
+        // Width growth (independent)
+        const widthEnd = S(BASE.widthGrow);
         const tw = clamp(t / widthEnd);
         const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
         const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
 
-        // Row-driven height: compute cumulative visible content
-        const rowStep = S(BASE.rowStep), popDur = S(BASE.itemPop);
+        // Row-driven height with *per-row* overshoot & bounce
+        // Each currently popping row uses boomerang(), finished rows contribute full height,
+        // not-started rows contribute 0. Card height then slightly overshoots via a spring factor.
         let contentVisibleH = 0;
-        let gaps = 0;
-        const perRow = [];
+        let visibleRows = 0;
+        let poppingIndex = -1;
+        let poppingProgress = 0;
+
         for (let i=0; i<rows.length; i++){
-          const start = i * rowStep;
-          const pr = clamp((t - start) / popDur);          // 0..1 reveal progress for row i
-          perRow.push(pr);
-          if (pr > 0){
-            contentVisibleH += layout.rowHeights[i] * pr;  // proportionally contributes height
-            gaps++;
+          const local = (t - rowStartTimes[i]) / ROW_POP_DUR; // local progress of row i
+          if (local <= 0) break; // rows start sequentially; bail early for perf
+
+          visibleRows++;
+          if (local < 1){
+            poppingIndex = i;
+            poppingProgress = clamp(local);
+            // row overshoot scale (subtle)
+            const rowScale = boomerang(poppingProgress, 1.08, 0.55);
+            contentVisibleH += layout.rowHeights[i] * rowScale;
+          } else {
+            contentVisibleH += layout.rowHeights[i]; // fully revealed
           }
         }
-        if (gaps > 0) contentVisibleH += STYLE.rowGap * (gaps - 1);
-        const dynamicTargetH = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
-        const h = dynamicTargetH; // height follows rows directly → feels “pushed” by popping items
+        if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
 
-        // Centered position & rounding
-        const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w)); // proxy for width growth
+        // Card spring/overshoot tied to the *active* row pop (height only)
+        let springY = 1;
+        if (poppingIndex >= 0){
+          springY = boomerang(poppingProgress, 1.06, 0.5); // card bounce
+        }
+        const dynamicTargetH = Math.max(
+          seed.h,
+          Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin)
+        );
+        const h = dynamicTargetH;
+
+        // Center & rounding
+        const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w));
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
         const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
@@ -1024,14 +1047,14 @@
         const contentX = x + STYLE.padX;
         let cursorY = y + STYLE.padY;
 
-        // Draw rows with subtle “bubble pop” scale
+        // Draw rows using the same per-row schedule (with gentle pop)
         for (let i=0; i<rows.length; i++){
-          const row = rows[i];
-          const pr = perRow[i];
-          if (pr <= 0) continue;
+          const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
+          if (local <= 0) break;
 
+          const pr = clamp(local);
           const a  = easeOutCubic(pr);
-          const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06; // small pop, stays flat/minimal
+          const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06; // tiny pop, flat look preserved
           const dy = lerp(10, 0, a);
           const blurPx = (1 - a) * 1.5;
 
@@ -1041,35 +1064,26 @@
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
           ctx.globalAlpha = a; ctx.filter = `blur(${blurPx}px)`;
 
-          // Title
           setFont(STYLE.titleWeight, STYLE.titleSize);
           ctx.fillStyle = '#0b0b10';
-          ctx.fillText(row.title, 0, STYLE.titleSize);
+          ctx.fillText(rows[i].title, 0, STYLE.titleSize);
 
-          // Sub
-          let drawnH = STYLE.titleSize;
-          if (row.sub){
+          if (rows[i].sub){
             setFont(STYLE.subWeight, STYLE.subSize);
             ctx.fillStyle = '#5f646c';
-            ctx.fillText(row.sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
-            drawnH = STYLE.titleSize + STYLE.subGap + STYLE.subSize;
+            ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
           }
-
           ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
 
-          // Advance cursor using full row height (keeps even padding as it grows)
-          cursorY += layout.rowHeights[i] * pr + STYLE.rowGap;
+          // Advance cursor by the *final* row height (keeps even padding as it grows)
+          cursorY += layout.rowHeights[i] + STYLE.rowGap;
         }
-        // remove last added gap if last row not fully placed (minor visual polish)
-        // but since we computed dynamic height from the same math, padding remains even.
-
         ctx.restore();
 
-        // Phase A total: until last row finishes + holds
-        const lastStart = (rows.length - 1) * rowStep;
-        const total = lastStart + popDur + S(BASE.holdA) + S(BASE.holdB);
+        // Phase A total: time when last row is complete, plus holds
+        const lastEnd = rowStartTimes[rows.length - 1] + ROW_POP_DUR;
+        const total = lastEnd + S(BASE.holdA) + S(BASE.holdB);
 
-        // Return box for morph start (uses current card box if Phase A ended)
         return { total, x, y, w, h, r };
       }
 
@@ -1211,7 +1225,6 @@
           const A = renderCard(t);
           if (t < A.total){ requestAnimationFrame(stepA); }
           else {
-            // Smoothly hand off to morph after a short pause
             const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
             waitTimer = setTimeout(()=>{
               const morphStart = performance.now();
@@ -1231,19 +1244,35 @@
         requestAnimationFrame(stepA);
       }
 
-      // first frame
+      // First static frame
       renderCard(0);
 
-      // controls
+      // Manual controls
       document.getElementById('onx-play').addEventListener('click', play);
 
-      // autoplay on scroll
+      // ── Autoplay ONLY when the center of the section is visible ──
+      const stageEl = document.getElementById('onx-stage');
+      let autoplayed = false;
+      function centerIsVisible(el){
+        const rect = el.getBoundingClientRect();
+        const vpCenterY = window.innerHeight / 2;
+        return (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
+      }
+      function tryAutoplay(){
+        if (!autoplayed && !isAnimating && centerIsVisible(stageEl)) {
+          autoplayed = true;
+          play();
+        }
+      }
+      // Use IO to reduce work, then confirm center visibility
       const io = new IntersectionObserver((entries)=>{
-        for (const e of entries) if (e.isIntersecting && !isAnimating) play();
-      }, { root: null, threshold: 0.35 });
-      io.observe(document.getElementById('onx-stage'));
+        for (const e of entries){
+          if (e.isIntersecting) tryAutoplay();
+        }
+      }, { root: null, threshold: 0 }); // fire whenever visible at all; we check center manually
+      io.observe(stageEl);
 
-      // recompute on resize
+      // Recompute on resize, keep autoplay condition correct
       let rid = null;
       window.addEventListener('resize', ()=>{
         if (caretLoop){ caretLoop.stop(); caretLoop = null; }
@@ -1251,11 +1280,16 @@
         rid = requestAnimationFrame(()=>{
           layout = measureFinalLayout();
           renderCard(0);
+          tryAutoplay();
         });
       });
+
+      // Also check on scroll for the center rule (in case IO fired early)
+      window.addEventListener('scroll', tryAutoplay, { passive: true });
     })();
   </script>
 </div>
+
 
 <!-- ---------------------------------- OPEN AI MODELS END----------------------------------------------------------------------->
 
