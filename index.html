@@ -813,7 +813,6 @@
     </div>
   </div>
 </section>
-
 <!--------------------------------------------------------------------OPENAI MODEL CARD---------------------------------------------------------------------->
 <!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
 <div id="onx-card-reveal"
@@ -872,9 +871,11 @@
 
       // Timings (scaled by speed)
       const BASE = {
-        width: 1.10, height: 1.00, overlap: 0.16,
-        itemFade: 0.45, rowStep: 0.18, holdA: 0.34, holdB: 0.50,
-        morph: 0.95                              // card→bubble morph duration
+        width: 0.65,                 // width grow portion of Phase A
+        rowStep: 0.16,               // stagger between row pops
+        itemPop: 0.42,               // pop duration per row
+        holdA: 0.34, holdB: 0.50,    // holds before morph
+        morph: 0.95                  // card→bubble morph
       };
       const S = v => v / TEMPO.speed;
 
@@ -922,9 +923,8 @@
       const lerp=(a,b,t)=>a+(b-a)*t;
       const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
       const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-      const smoothstep=(t,a,b)=>{ t=clamp((t-a)/(b-a)); return t*t*(3-2*t); };
 
-      function boomerang(t, factor, peak){
+      function boomerang(t, factor=1.08, peak=0.55){
         if (t <= 0) return 0;
         if (t >= 1) return 1;
         if (t < peak) return easeOutCubic(t/peak) * factor;
@@ -945,8 +945,8 @@
         ctx.closePath();
       }
 
-      // Measure with scaled typography
-      function measureLayout(){
+      // Measure final layout (for end-of-Phase-A target & morph)
+      function measureFinalLayout(){
         let maxTextW = 0;
         setFont(STYLE.titleWeight, STYLE.titleSize);
         rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
@@ -967,39 +967,50 @@
         );
 
         const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
-        return { cardW, cardH, contentH, rowHeights, radius };
+        return { cardW, cardH, rowHeights, radius };
       }
-      let layout = measureLayout();
+      let layout = measureFinalLayout();
 
-      // Seed
+      // Seed (start small)
       const seed = { w: 120, h: 80, r: 20 };
 
-      // --------- Phase A: Card build (with one-by-one rows) ----------
+      // --------- Phase A: Card build (HEIGHT DRIVEN BY ROW POPS) ----------
       function renderCard(t){
-        const wEnd = S(BASE.width);
-        const hStart = wEnd - S(BASE.overlap);
-        const hEnd = hStart + S(BASE.height);
-        const total = hEnd + S(BASE.holdA) + S(BASE.holdB); // phase total
-
         // Stage bg
         const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
         g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
         ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // Width/Height progress
-        const tw = clamp(t / wEnd);
-        const th = clamp((t - hStart) / S(BASE.height));
+        // Width easing (independent)
+        const widthEnd = S(BASE.width);
+        const tw = clamp(t / widthEnd);
         const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
-        const heightScale = TEMPO.overshootYEnabled ? boomerang(th, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(th);
-        const w = lerp(seed.w, layout.cardW, Math.min(widthScale,  TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
-        const h = lerp(seed.h, layout.cardH, Math.min(heightScale, TEMPO.overshootYEnabled ? TEMPO.overshootY : 1));
+        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
+
+        // Row-driven height: compute cumulative visible content
+        const rowStep = S(BASE.rowStep), popDur = S(BASE.itemPop);
+        let contentVisibleH = 0;
+        let gaps = 0;
+        const perRow = [];
+        for (let i=0; i<rows.length; i++){
+          const start = i * rowStep;
+          const pr = clamp((t - start) / popDur);          // 0..1 reveal progress for row i
+          perRow.push(pr);
+          if (pr > 0){
+            contentVisibleH += layout.rowHeights[i] * pr;  // proportionally contributes height
+            gaps++;
+          }
+        }
+        if (gaps > 0) contentVisibleH += STYLE.rowGap * (gaps - 1);
+        const dynamicTargetH = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
+        const h = dynamicTargetH; // height follows rows directly → feels “pushed” by popping items
 
         // Centered position & rounding
-        const growT = Math.max(tw, th);
+        const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w)); // proxy for width growth
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
         const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
-        // Card
+        // Card shell
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT);
         ctx.shadowOffsetY = lerp(6, 15, growT);
@@ -1008,66 +1019,69 @@
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Clip for content
+        // Clip + content
         ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
-
-        // Content placement
         const contentX = x + STYLE.padX;
-        const contentTop = y + STYLE.padY;
+        let cursorY = y + STYLE.padY;
 
-        // Gate rows until card mostly done
-        const wr = clamp(w / layout.cardW), hr = clamp(h / layout.cardH);
-        const gate = smoothstep(Math.min(wr,hr), 0.62, 0.90);
+        // Draw rows with subtle “bubble pop” scale
+        for (let i=0; i<rows.length; i++){
+          const row = rows[i];
+          const pr = perRow[i];
+          if (pr <= 0) continue;
 
-        // Sequential reveal
-        const rowStep = S(BASE.rowStep), fadeDur = S(BASE.itemFade);
-        rows.forEach((row, i) => {
-          const yRow = contentTop
-            + layout.rowHeights.slice(0,i).reduce((s,v)=>s+v,0)
-            + (i ? STYLE.rowGap*i : 0);
-
-          const start = i * rowStep;
-          const prog = clamp((gate - start) / fadeDur);
-          const a = easeOutCubic(prog);
-          const dy = lerp(18, 0, a);
-          const scale = 0.985 + 0.015*a;
+          const a  = easeOutCubic(pr);
+          const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06; // small pop, stays flat/minimal
+          const dy = lerp(10, 0, a);
           const blurPx = (1 - a) * 1.5;
 
           ctx.save();
-          ctx.translate(contentX, yRow + dy);
-          ctx.scale(scale, scale);
+          ctx.translate(contentX, cursorY + dy);
+          ctx.scale(s, s);
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
           ctx.globalAlpha = a; ctx.filter = `blur(${blurPx}px)`;
 
+          // Title
           setFont(STYLE.titleWeight, STYLE.titleSize);
           ctx.fillStyle = '#0b0b10';
           ctx.fillText(row.title, 0, STYLE.titleSize);
 
+          // Sub
+          let drawnH = STYLE.titleSize;
           if (row.sub){
             setFont(STYLE.subWeight, STYLE.subSize);
             ctx.fillStyle = '#5f646c';
             ctx.fillText(row.sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
+            drawnH = STYLE.titleSize + STYLE.subGap + STYLE.subSize;
           }
 
           ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
-        });
+
+          // Advance cursor using full row height (keeps even padding as it grows)
+          cursorY += layout.rowHeights[i] * pr + STYLE.rowGap;
+        }
+        // remove last added gap if last row not fully placed (minor visual polish)
+        // but since we computed dynamic height from the same math, padding remains even.
 
         ctx.restore();
-        return { total, x, y, w, h, r }; // return final card box when t>=total
+
+        // Phase A total: until last row finishes + holds
+        const lastStart = (rows.length - 1) * rowStep;
+        const total = lastStart + popDur + S(BASE.holdA) + S(BASE.holdB);
+
+        // Return box for morph start (uses current card box if Phase A ended)
+        return { total, x, y, w, h, r };
       }
 
       // --------- Phase B: Morph card → chat bubble ----------
       function renderMorphCardToBubble(startBox, t){
-        // Bubble target (pill) — responsive to canvas size & scale
-        const bubbleH = Math.round(Math.min(100 * SCALE, 130));                    // ~72–100px feel
+        const bubbleH = Math.round(Math.min(100 * SCALE, 130));
         const bubbleW = Math.round(Math.min(CONFIG.w - 2*STYLE.stageMargin, Math.max(startBox.w*1.8, 1100)));
         const bubbleR = Math.round(bubbleH / 2);
 
-        // Center the pill (slightly lower than center for balance)
         const bx = (CONFIG.w - bubbleW)/2;
         const by = (CONFIG.h - bubbleH)/2 + 30;
 
-        // Progress mapping with boomerang (single overshoot)
         const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
         const heightF = TEMPO.overshootYEnabled ? boomerang(t, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(t);
         const radiusF = easeInOutCubic(t);
@@ -1076,47 +1090,42 @@
         const h = startBox.h + (bubbleH - startBox.h) * heightF;
         const r = startBox.r + (bubbleR - startBox.r) * radiusF;
         const x = (CONFIG.w - w)/2;
-        const y = (CONFIG.h - h)/2 + 30 * radiusF; // slide slightly downward as it becomes a pill
+        const y = (CONFIG.h - h)/2 + 30 * radiusF;
 
-        // Stage bg
+        // BG
         const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
         g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
         ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // Fade out old content during first 25% of morph
-        const contentFadeOut = 1 - clamp(t / 0.25);
-
-        // Draw morphing shape
+        // Shape
         ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
         ctx.shadowBlur = lerp(12, 22, radiusF);
         ctx.shadowOffsetY = lerp(10, 14, radiusF);
         ctx.fillStyle = '#ffffff';
         roundedRect(ctx, x, y, w, h, r); ctx.fill();
-
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Optional: ghost out the rows briefly (subtle)
+        // Subtle ghost of rows (fades out early)
+        const contentFadeOut = 1 - clamp(t / 0.25);
         if (contentFadeOut > 0){
           ctx.save();
           roundedRect(ctx, x, y, w, h, r); ctx.clip();
           const contentX = x + STYLE.padX, contentTop = y + STYLE.padY;
-          rows.slice(0,3).forEach((row, i) => {
-            const yRow = contentTop
-              + layout.rowHeights.slice(0,i).reduce((s,v)=>s+v,0)
-              + (i ? STYLE.rowGap*i : 0);
-            ctx.globalAlpha = 0.4 * contentFadeOut;
-            setFont(STYLE.titleWeight, STYLE.titleSize);
-            ctx.fillStyle = '#0b0b10';
-            ctx.fillText(row.title, contentX, yRow + STYLE.titleSize);
-          });
+          setFont(STYLE.titleWeight, STYLE.titleSize);
+          ctx.globalAlpha = 0.4 * contentFadeOut; ctx.fillStyle = '#0b0b10';
+          const ghostLines = Math.min(3, rows.length);
+          for (let i=0;i<ghostLines;i++){
+            let yRow = contentTop;
+            for (let j=0;j<i;j++) yRow += layout.rowHeights[j] + STYLE.rowGap;
+            ctx.fillText(rows[i].title, contentX, yRow + STYLE.titleSize);
+          }
           ctx.restore();
         }
 
-        // When very close to pill target, draw the pill UI elements (plus, mic)
+        // UI bits appear near end
         const uiAlpha = clamp((t - 0.6)/0.25);
         if (uiAlpha > 0){
-          // left plus icon
           const plusCx = x + 28, plusCy = y + h/2;
           ctx.save();
           ctx.globalAlpha = uiAlpha;
@@ -1125,14 +1134,12 @@
           ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
           ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7);
           ctx.stroke();
-          // right mic dot
           const micCx = x + w - 36, micCy = y + h/2;
           ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
           ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
           ctx.restore();
         }
 
-        // Return pill target box & caret area
         return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
       }
 
@@ -1156,20 +1163,18 @@
           ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
           // Icons
-          // plus
           const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
           ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
           ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
           ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
-          // mic
           const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
           ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
           ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
           ctx.restore();
 
-          // Placeholder text + blinking caret
+          // Placeholder text + caret
           const textLeft = bubble.x + 56;
-          const textY = bubble.y + bubble.h/2 + 10; // baseline adjust
+          const textY = bubble.y + bubble.h/2 + 10;
           setFont(600, Math.max(18, 18 * SCALE));
           ctx.fillStyle = '#8a8f96';
           ctx.fillText('Ask the impossible', textLeft, textY);
@@ -1201,29 +1206,26 @@
         const btn = document.getElementById('onx-play'); if (btn) btn.disabled = true;
         const start = performance.now();
 
-        // Phase A — card build
         function stepA(now){
           const t = (now - start)/1000;
           const A = renderCard(t);
           if (t < A.total){ requestAnimationFrame(stepA); }
           else {
-            // hold the final card frame, then Phase B after 2s real time
-            const finalBox = { x:A.x, y:A.y, w:layout.cardW, h:layout.cardH, r:layout.radius };
+            // Smoothly hand off to morph after a short pause
+            const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
             waitTimer = setTimeout(()=>{
-              // Phase B — morph
               const morphStart = performance.now();
               function stepB(now2){
                 const t2 = (now2 - morphStart)/1000 / S(BASE.morph);
                 const B = renderMorphCardToBubble(finalBox, clamp(t2));
                 if (t2 < 1){ requestAnimationFrame(stepB); }
                 else {
-                  // Phase C — idle bubble with blinking caret
                   startBubbleIdle({ x: B.bubble.x, y: B.bubble.y, w: B.bubble.w, h: B.bubble.h, r: B.bubble.r });
                   isAnimating = false; if (btn) btn.disabled = false;
                 }
               }
               requestAnimationFrame(stepB);
-            }, 1000); // exact 2s
+            }, 1000);
           }
         }
         requestAnimationFrame(stepA);
@@ -1247,7 +1249,7 @@
         if (caretLoop){ caretLoop.stop(); caretLoop = null; }
         cancelAnimationFrame(rid);
         rid = requestAnimationFrame(()=>{
-          layout = measureLayout();
+          layout = measureFinalLayout();
           renderCard(0);
         });
       });
@@ -1255,6 +1257,7 @@
   </script>
 </div>
 
+<!-- ---------------------------------- OPEN AI MODELS END----------------------------------------------------------------------->
 
 <!--------------------------------------------------------------------BECOME LIMITLESS Models---------------------------------------------------------------------->
 
