@@ -815,16 +815,25 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal — center-out expand, gated content reveal, Apple-polished -->
+<!--------------------------------------------------------------------OPENAI MODEL CARD---------------------------------------------------------------------->
+
+<!-- Global options go here (edit values as needed):
+     data-speed .......... >1 faster, <1 slower (e.g., "1.6")
+     data-menu-scale ..... overall inside card/menu scale (e.g., "1.5")
+     data-overshoot-x-enabled="false|true"  (width overshoot toggle)
+     data-overshoot-y-enabled="false|true"  (height overshoot toggle)
+     data-overshoot-x / data-overshoot-y .. overshoot factors (e.g., "1.5")
+     data-peak-x / data-peak-y ............ when overshoot peaks (0..1)
+-->
 <div id="onx-card-reveal"
-     data-speed="1.6"                 <!-- >1 faster, <1 slower -->
-     data-menu-scale="1.5"            <!-- scales inside menu/card -->
-     data-overshoot-x-enabled="false" <!-- width overshoot OFF by default -->
-     data-overshoot-y-enabled="true"  <!-- height overshoot ON by default -->
-     data-overshoot-x="1.5"           <!-- width overshoot factor (if enabled) -->
-     data-overshoot-y="1.5"           <!-- height overshoot factor (if enabled) -->
-     data-peak-x="0.58"               <!-- when X hits overshoot (0..1) -->
-     data-peak-y="0.60"               <!-- when Y hits overshoot (0..1) -->
+     data-speed="1.6"
+     data-menu-scale="2.5"
+     data-overshoot-x-enabled="false"
+     data-overshoot-y-enabled="true"
+     data-overshoot-x="1.5"
+     data-overshoot-y="1.5"
+     data-peak-x="0.58"
+     data-peak-y="0.60"
      style="max-width: 100%; margin: 48px auto;">
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
@@ -858,25 +867,28 @@
 
       // ===== GLOBAL OPTIONS =====
       const host = document.getElementById('onx-card-reveal');
-      const parseBool = v => String(v).toLowerCase().trim();
-      const isTrue = v => ['1','true','on','yes'].includes(parseBool(v));
-
+      const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
       const TEMPO = {
         speed: parseFloat(host.dataset.speed) || 1.6,
         menuScale: parseFloat(host.dataset.menuScale) || 1.5,
-        overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? isTrue(host.dataset.overshootXEnabled) : false,
-        overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? isTrue(host.dataset.overshootYEnabled) : true,
+        overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false,
+        overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true,
         overshootX: parseFloat(host.dataset.overshootX) || 1.5,
         overshootY: parseFloat(host.dataset.overshootY) || 1.5,
         peakX: parseFloat(host.dataset.peakX) || 0.58,
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
 
-      // Base timings (scaled by speed)
-      const BASE = { width: 1.10, height: 1.00, overlap: 0.16, itemFade: 0.50, holdA: 0.36, holdB: 0.54 };
+      // Timings (all scaled by speed)
+      const BASE = {
+        width: 1.10, height: 1.00, overlap: 0.16,
+        itemFade: 0.45,           // per-row fade duration
+        rowStep: 0.18,            // time between rows (sequential)
+        holdA: 0.34, holdB: 0.50
+      };
       const S = v => v / TEMPO.speed;
 
-      // Design metrics
+      // Layout metrics
       const CONFIG = {
         w: 1920, h: 1080,
         padX: 24, padY: 22, rowGap: 18, subGap: 4,
@@ -886,7 +898,7 @@
         stageMargin: 56
       };
 
-      // Models
+      // Models (edit freely)
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Advanced reasoning & coding' },
@@ -952,9 +964,6 @@
       // Seed card
       const seed = { w: 120, h: 80, r: 20 };
 
-      // deterministic micro-stagger
-      const jitters = rows.map((_,i)=> (Math.sin(i*1.77)*0.5 + 0.5)*0.02 - 0.01);
-
       // Render
       function renderFrame(t){
         const wEnd = S(BASE.width);
@@ -985,58 +994,48 @@
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2;
 
-        // PURE WHITE card + hairline and soft drop shadow (Apple-y)
+        // PURE WHITE card + subtle hairline + premium shadow
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT);
         ctx.shadowOffsetY = lerp(6, 15, growT);
-
         ctx.fillStyle = '#ffffff';
-        roundedRect(ctx, x, y, w, h, r);
-        ctx.fill();
+        roundedRect(ctx, x, y, w, h, r); ctx.fill();
 
-        // hairline border (subtle)
         ctx.shadowColor='transparent';
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-        ctx.stroke();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // --- Strict clipping so NOTHING can bleed outside the card ---
-        ctx.save();
-        roundedRect(ctx, x, y, w, h, r);
-        ctx.clip();
+        // Strict clipping for content
+        ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
 
-        // Content placement (centered)
-        const contentX = x + w/2;
+        // Content placement (left-aligned inside the card)
+        const contentX = x + 24; // inner left padding
         const contentY = y + (h - layout.contentH)/2;
 
-        // GATED REVEAL:
-        // wait until BOTH dimensions are near final, then ease in smoothly.
-        const wr = clamp(w / layout.cardW);
-        const hr = clamp(h / layout.cardH);
+        // Gate content until card is mostly formed to avoid bleed
+        const wr = clamp(w / layout.cardW), hr = clamp(h / layout.cardH);
         const gateBase = Math.min(wr, hr);
-        const gate = smoothstep(gateBase, 0.62, 0.88); // nothing visible before ~62% formed
+        const gate = smoothstep(gateBase, 0.62, 0.90); // 0..1 as card completes
+
+        // One-at-a-time reveal synced to gate progress
+        const rowStep = S(BASE.rowStep);
+        const fadeDur = S(BASE.itemFade);
 
         rows.forEach((row, i) => {
-          const start = 0.10 + i*0.10 + jitters[i];          // stagger after gate
-          const local = clamp((gate - start) / S(BASE.itemFade));
-          const a = easeOutCubic(local);
-          const dy = lerp(18, 0, a);
-          const scale = 0.985 + 0.015*a;
-          const blurPx = (1 - a) * 1.6;                      // softer than before
-
           const passed = layout.rowHeights.slice(0,i).reduce((s,v)=>s+v,0);
           const yRow = contentY + passed + (i ? CONFIG.rowGap*i : 0);
+
+          const start = i * rowStep;                   // strict sequential start
+          const prog = clamp((gate - start) / fadeDur);
+          const a = easeOutCubic(prog);
+          const dy = lerp(18, 0, a);
+          const scale = 0.985 + 0.015*a;
+          const blurPx = (1 - a) * 1.6;
 
           ctx.save();
           ctx.translate(contentX, yRow + dy);
           ctx.scale(scale, scale);
-          ctx.textAlign = 'left';    // matches reference look
-          ctx.textBaseline = 'alphabetic';
-          ctx.translate(- (w/2 - 24), 0); // nice left padding inside the card
-
-          // fade/blur in
-          ctx.globalAlpha = a;
-          ctx.filter = `blur(${blurPx}px)`;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.globalAlpha = a; ctx.filter = `blur(${blurPx}px)`;
 
           setFont(CONFIG.titleWeight, CONFIG.titleSize);
           ctx.fillStyle = '#0b0b10';
@@ -1048,9 +1047,7 @@
             ctx.fillText(row.sub, 0, CONFIG.titleSize + CONFIG.subGap + CONFIG.subSize);
           }
 
-          ctx.filter = 'none';
-          ctx.globalAlpha = 1;
-          ctx.restore();
+          ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
         });
 
         ctx.restore(); // end clip
@@ -1063,26 +1060,23 @@
         if (isAnimating) return;
         isAnimating = true;
         const btn = document.getElementById('onx-play'); if (btn) btn.disabled = true;
-
         const start = performance.now();
         const step = (now)=>{
           const t = (now - start)/1000;
           const { total } = renderFrame(t);
-          if (t < total){ requestAnimationFrame(step); }
+          if (t < total) requestAnimationFrame(step);
           else { renderFrame(total); isAnimating = false; if (btn) btn.disabled = false; }
         };
         requestAnimationFrame(step);
       }
 
-      // Initial frame
+      // Initial frame & controls
       renderFrame(0);
-
-      // Controls
       document.getElementById('onx-play').addEventListener('click', play);
 
       // Autoplay on scroll
       const io = new IntersectionObserver((entries)=>{
-        for (const e of entries){ if (e.isIntersecting && !isAnimating){ play(); } }
+        for (const e of entries) if (e.isIntersecting && !isAnimating) play();
       }, { root: null, threshold: 0.35 });
       io.observe(document.getElementById('onx-stage'));
 
@@ -1095,6 +1089,7 @@
     })();
   </script>
 </div>
+
 
 
 <!-- ===== The Best made Better ===== -->
