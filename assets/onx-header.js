@@ -1,4 +1,5 @@
 // /assets/onx-header.js
+// Mobile behavior reversed: large pill at top → small pill on scroll (is-float = compact)
 
 /* ─────────────────────────────────────────────────────────────────────────────
    EDIT HERE — EASY NAV LINKS (optional)
@@ -49,9 +50,12 @@ class ONXHeader extends HTMLElement {
       "pad-float-bottom-desktop": "--header-float-pad-bottom-desktop",
       "pill-inner-x-mobile": "--pill-inner-x-mobile",
       "pill-inner-x-desktop": "--pill-inner-x-desktop",
-      "pill-outer-x-mobile": "--pill-outer-x-mobile",
+      "pill-outer-x-mobile": "--pill-outer-x-mobile",                // rest (large)
+      "pill-outer-x-mobile-compact": "--pill-outer-x-mobile-compact",// compact on scroll (small)
       "pill-outer-x-desktop": "--pill-outer-x-desktop",
-      "pill-height-mobile": "--pill-height-mobile",
+      "pill-outer-x-desktop-compact": "--pill-outer-x-desktop-compact",
+      "pill-height-mobile": "--pill-height-mobile",                  // rest (large)
+      "pill-height-mobile-compact": "--pill-height-mobile-compact",  // compact on scroll (small)
       "pill-height-desktop": "--pill-height-desktop",
       "logo-size": "--logo-size",
       "mobile-logo-size": "--mobile-logo-size",
@@ -66,8 +70,6 @@ class ONXHeader extends HTMLElement {
       // download button vertical padding
       "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
       "download-btn-pad-y-mobile": "--download-btn-pad-y-mobile",
-      // NEW: starting (top-of-page) mobile pill outer gap (smaller gap = larger pill)
-      "pill-outer-x-mobile-large": "--pill-outer-x-mobile-large",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -84,6 +86,8 @@ class ONXHeader extends HTMLElement {
           /* Tunables */
           --header-width-flat: 100%;
           --header-max-w: 1200px;
+
+          /* NOTE: We reversed behavior so base = roomy (float) paddings, scrolled = flat paddings */
           --header-flat-pad-top: 0rem;
           --header-flat-pad-bottom: 0rem;
           --header-float-pad-top-mobile: .75rem;
@@ -93,10 +97,16 @@ class ONXHeader extends HTMLElement {
 
           --pill-inner-x-mobile: 30px;
           --pill-inner-x-desktop: 12px;
-          --pill-outer-x-mobile: 16px;             /* smaller pill on scroll */
-          --pill-outer-x-mobile-large: 8px;        /* larger pill at top (mobile) */
+
+          /* Outer X (margins from viewport) — REST = larger pill; COMPACT (on scroll) = smaller/narrower pill */
+          --pill-outer-x-mobile: 16px;             /* rest (top of page) */
+          --pill-outer-x-mobile-compact: 24px;     /* on-scroll compact */
           --pill-outer-x-desktop: 0px;
-          --pill-height-mobile: 2.85rem;
+          --pill-outer-x-desktop-compact: 8px;
+
+          /* Heights — REST larger, COMPACT smaller */
+          --pill-height-mobile: 3.25rem;           /* large pill at top */
+          --pill-height-mobile-compact: 2.85rem;   /* small pill on scroll */
           --pill-height-desktop: 2.85rem;
 
           --logo-pad-left-mobile: 16px;
@@ -155,24 +165,36 @@ class ONXHeader extends HTMLElement {
           -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain;
         }
 
+        /* Base header wrapper — now uses the "float" pads by default for roomy top-of-page look */
         .oc-header{
           background: transparent;
-          padding-top: var(--header-flat-pad-top);
-          padding-bottom: var(--header-flat-pad-bottom);
+          padding-top: var(--header-float-pad-top-mobile);
+          padding-bottom: var(--header-float-pad-bottom-mobile);
           transition: padding .36s cubic-bezier(.2,.8,.2,1);
         }
+
         .header-bar{
           position: relative; box-sizing: border-box;
-          width: var(--header-width-flat);
+          /* Base = pill (large) */
+          width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
           margin-inline: auto;
           display:flex; align-items:center; justify-content:space-between;
           height: var(--pill-height-mobile);
           padding-left: var(--pill-inner-x-mobile); padding-right: var(--pill-inner-x-mobile);
-          background: transparent; border: 0; border-radius: 0; box-shadow: none;
+
+          /* Pill visuals now in base */
+          background: rgba(255,255,255,.96);
+          border: 1px solid rgba(0,0,0,0.02);
+          border-radius: var(--header-radius);
+          box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
+          -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+
           line-height: 1;
-          -webkit-backdrop-filter: none; backdrop-filter: none;
+
           transition:
             width .36s cubic-bezier(.2,.8,.2,1),
+            height .36s cubic-bezier(.2,.8,.2,1),
+            padding .36s cubic-bezier(.2,.8,.2,1),
             background-color .36s ease,
             border-radius .36s cubic-bezier(.2,.8,.2,1),
             box-shadow .36s ease,
@@ -208,7 +230,12 @@ class ONXHeader extends HTMLElement {
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
-          .header-bar{ height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
+          .header-bar{
+            height: var(--pill-height-desktop);
+            padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop);
+            /* Base desktop width stays tight to max-w; on scroll we may compact slightly */
+            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
+          }
           .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
           .right-area{ padding-right: var(--download-pad-right-desktop); }
           .center{ display:flex; }
@@ -216,47 +243,23 @@ class ONXHeader extends HTMLElement {
           .desktop-actions{ display:flex !important; }
         }
 
+        /* SCROLLED (COMPACT) STATE — using existing class name "is-float" */
         :host(.is-float) .oc-header{
-          padding-top: var(--header-float-pad-top-mobile);
-          padding-bottom: var(--header-float-pad-bottom-mobile);
-        }
-        @media (min-width:768px){
-          :host(.is-float) .oc-header{
-            padding-top: var(--header-float-pad-top-desktop);
-            padding-bottom: var(--header-float-pad-bottom-desktop);
-          }
-        }
-        :host(.is-float) .header-bar{
-          background: rgba(255,255,255,.96);
-          border: 1px solid rgba(0,0,0,0.02);
-          border-radius: var(--header-radius);
-          box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
-          -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-          width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
-        }
-        @media (min-width:768px){
-          :host(.is-float) .header-bar{
-            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
-          }
+          /* compact paddings on scroll */
+          padding-top: var(--header-flat-pad-top);
+          padding-bottom: var(--header-flat-pad-bottom);
         }
 
-        /* === REVERSAL (MOBILE-ONLY): start LARGE pill, shrink to SMALL on scroll === */
-        @media (max-width: 767.98px){
-          /* Top-of-page (no .is-float): large pill */
-          .header-bar{
-            background: rgba(255,255,255,.96);
-            border: 1px solid rgba(0,0,0,0.02);
-            border-radius: var(--header-radius);
-            box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
-            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile-large))));
-          }
-          /* Scrolled (.is-float): narrower pill */
+        :host(.is-float) .header-bar{
+          /* shrink pill when scrolled */
+          height: var(--pill-height-mobile-compact);
+          width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile-compact))));
+        }
+        @media (min-width:768px){
           :host(.is-float) .header-bar{
-            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop-compact))));
           }
         }
-        /* === end reversal block === */
 
         .nav-link{
           font-weight: var(--nav-font-weight);
@@ -478,7 +481,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="pro"]) .mobile-actions .btn{
           background:#fff !important;
           color:#0A0D10 !important;
-          animation:none !important;
+          animation:none !重要;
         }
 
         :host([theme="ONXPro"]) .hamburger,
@@ -603,7 +606,7 @@ class ONXHeader extends HTMLElement {
           </div>
 
           <nav class="mobile-nav" aria-label="Mobile">
-            <!-- ONX Pro now matches Pricing styling -->
+            <!-- ONX Pro matches Pricing styling -->
             <a class="mobile-link" href="/oc-pro.html">ONX Pro
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
             </a>
@@ -653,7 +656,7 @@ class ONXHeader extends HTMLElement {
 
     // Scroll + initial state
     window.addEventListener("scroll", this._onScroll, { passive: true });
-    this._onScroll();
+    this._onScroll(); // ensure correct compact/not-compact on load
 
     // spacing after paint
     requestAnimationFrame(this._syncEdgeGaps);
@@ -825,6 +828,7 @@ class ONXHeader extends HTMLElement {
 
   _onScroll() {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
+    // is-float now represents the COMPACT (scrolled) state
     if (y > this._threshold) this.classList.add("is-float");
     else this.classList.remove("is-float");
   }
