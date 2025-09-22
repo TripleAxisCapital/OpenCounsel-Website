@@ -815,7 +815,7 @@
   </div>
 </section>
 
-<!-- ONX Card Reveal — clean/bouncy Apple-style (no video) -->
+<!-- ONX Card Reveal — autoplay on scroll, width-first then height with bouncy overshoot -->
 <div id="onx-card-reveal" style="max-width: 100%; margin: 48px auto;">
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
@@ -853,36 +853,43 @@
     (function(){
       'use strict';
 
-      // ========= Config =========
+      // ======= Config =======
       const CONFIG = {
         fps: 60,
         width: 1920,
         height: 1080,
-        expandDuration: 0.72,   // tiny card -> full card
-        contentStagger: 0.18,   // between each row reveal
-        contentFade: 0.48,      // row fade/slide time
-        endHold: 0.8,           // hold final frame
+        widthDuration: 0.70,     // width grows first
+        heightDuration: 0.65,    // then height
+        widthOvershoot: 0.06,    // 6% beyond final, then bounce back
+        heightOvershoot: 0.07,
+        contentStagger: 0.18,
+        contentFade: 0.48,
+        endHold: 0.8,
         shadowMax: 28,
         fontFamily: 'ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'
       };
 
-      // ========= Canvas =========
+      // ======= Canvas =======
       const canvas = document.getElementById('onx-canvas');
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       canvas.width = CONFIG.width * dpr; canvas.height = CONFIG.height * dpr;
       const ctx = canvas.getContext('2d');
       ctx.scale(dpr, dpr);
 
-      // ========= Helpers =========
+      // ======= Helpers =======
       const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
       const lerp = (a,b,t) => a + (b-a)*t;
-
-      // springy / elastic feel that overshoots then settles by t=1
-      function easeOutElastic(t){
-        const c4 = (2*Math.PI)/3;
-        return t===0 ? 0 : t===1 ? 1 : Math.pow(2,-10*t)*Math.sin((t*10-0.75)*c4)+1;
-      }
       const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+      // Slight overshoot then damped bounce to 1.0
+      function overshootElastic(t, overshoot=0.06){
+        if (t <= 0) return 0;
+        if (t >= 1) return 1;
+        const base = easeOutCubic(t);
+        const c4 = (2*Math.PI)/3;
+        const bounce = Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4); // [-1..1] decaying
+        return clamp(base + overshoot * bounce, 0, 1 + overshoot);
+      }
 
       function roundedRect(ctx, x, y, w, h, r){
         const rr = Math.min(r, w/2, h/2);
@@ -909,42 +916,51 @@
         ctx.globalAlpha = 1;
       }
 
-      // ========= Scene =========
+      // ======= Scene =======
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Advanced reasoning & coding' },
         { title:'ONX PRO',  sub:'Best overall quality' },
       ];
 
-      // card geometry (slightly more rounded)
-      const cardStart = { w: 160, h: 96, r: 24 };
-      const cardEnd   = { w: 980, h: 540, r: 34 };
+      const cardStart = { w: 160, h: 96, r: 26 };   // starts small
+      const cardEnd   = { w: 980, h: 540, r: 36 };  // slightly more rounded
       const cardEndPos= { x:(CONFIG.width-cardEnd.w)/2, y:(CONFIG.height-cardEnd.h)/2 };
 
       function renderFrame(t){
-        const expandEnd = CONFIG.expandDuration;
-        const total = expandEnd + (rows.length-1)*CONFIG.contentStagger + CONFIG.contentFade + CONFIG.endHold;
+        const wEnd = CONFIG.widthDuration;
+        const hEnd = wEnd + CONFIG.heightDuration;
 
-        // bg
+        const total = hEnd + (rows.length-1)*CONFIG.contentStagger + CONFIG.contentFade + CONFIG.endHold;
+
+        // background
         const grad = ctx.createLinearGradient(0,0,0,CONFIG.height);
         grad.addColorStop(0,'#ffffff'); grad.addColorStop(1,'#eef2f7');
         ctx.fillStyle = grad; ctx.fillRect(0,0,CONFIG.width,CONFIG.height);
 
-        // expansion (elastic / bouncy)
-        const te = clamp(t/expandEnd);
-        const k  = easeOutElastic(te);
+        // --- Width progress (0..wEnd) ---
+        const tw = clamp(t / CONFIG.widthDuration);
+        const pw = overshootElastic(tw, CONFIG.widthOvershoot); // 0..1+o
 
-        const w = lerp(cardStart.w, cardEnd.w, k);
-        const h = lerp(cardStart.h, cardEnd.h, k);
-        const x = lerp((CONFIG.width-cardStart.w)/2, cardEndPos.x, k);
-        const y = lerp((CONFIG.height-cardStart.h)/2, cardEndPos.y, k);
-        const r = lerp(cardStart.r, cardEnd.r, k);
+        // width value (allow tiny overshoot)
+        const w = lerp(cardStart.w, cardEnd.w, Math.min(pw, 1 + CONFIG.widthOvershoot));
 
-        // soft, elevating shadow
-        const sb = lerp(6, CONFIG.shadowMax, easeOutCubic(te));
-        const so = lerp(6, 18, easeOutCubic(te));
-        const sa = lerp(.10, .20, easeOutCubic(te));
-        ctx.shadowColor = `rgba(0,0,0,${sa})`; ctx.shadowBlur = sb; ctx.shadowOffsetY = so;
+        // --- Height progress (starts after width) ---
+        const th = clamp((t - wEnd) / CONFIG.heightDuration);
+        const ph = overshootElastic(th, CONFIG.heightOvershoot);
+
+        const h = lerp(cardStart.h, cardEnd.h, Math.min(ph, 1 + CONFIG.heightOvershoot));
+
+        // position card to remain visually centered as it grows
+        const x = (CONFIG.width - w)/2;
+        const y = (CONFIG.height - h)/2;
+        const r = lerp(cardStart.r, cardEnd.r, easeOutCubic(Math.max(tw, th)));
+
+        // soft, elevating shadow that ramps with growth
+        const shadowT = easeOutCubic(Math.max(tw, th));
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.20,shadowT)})`;
+        ctx.shadowBlur = lerp(6, CONFIG.shadowMax, shadowT);
+        ctx.shadowOffsetY = lerp(6, 18, shadowT);
 
         // card
         ctx.fillStyle = '#fff'; roundedRect(ctx, x, y, w, h, r); ctx.fill();
@@ -952,21 +968,22 @@
         // reset shadow
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-        // content
-        const contentStart = expandEnd - 0.05;
+        // content timing begins near end of height expansion
+        const contentStart = hEnd - 0.06;
         if (t >= contentStart){
           const headerAlpha = clamp((t - contentStart)/0.28);
           drawText('Models', x+36, y+72, 34, 700, headerAlpha);
         }
 
-        // rows (no separators; clean + bouncy slide)
+        // rows: clean (no separators), gentle slide + fade
         const baseY = y + 150;
+        const stagger = CONFIG.contentStagger;
         rows.forEach((row,i)=>{
-          const itemT0 = contentStart + i*CONFIG.contentStagger;
+          const itemT0 = contentStart + i*stagger;
           const prog = clamp((t - itemT0)/CONFIG.contentFade);
           const a = easeOutCubic(prog);
-          const dy = lerp(24, 0, a);            // slightly more slide
-          const scale = 0.985 + 0.015*a;        // tiny pop
+          const dy = lerp(24, 0, a);
+          const scale = 0.985 + 0.015*a;
           ctx.save();
           ctx.translate(x+36, baseY + i*116 + dy);
           ctx.scale(scale, scale);
@@ -978,22 +995,45 @@
         return { total };
       }
 
+      // ======= Player =======
+      let isAnimating = false;
       function play(){
+        if (isAnimating) return;
+        isAnimating = true;
         const btn = document.getElementById('onx-play');
-        btn.disabled = true;
+        if (btn) btn.disabled = true;
+
         const start = performance.now();
         const step = (now)=>{
           const t = (now - start)/1000;
           const { total } = renderFrame(t);
-          if (t < total) requestAnimationFrame(step);
-          else { renderFrame(total); btn.disabled = false; }
+          if (t < total){
+            requestAnimationFrame(step);
+          } else {
+            renderFrame(total);
+            isAnimating = false;
+            if (btn) btn.disabled = false;
+          }
         };
         requestAnimationFrame(step);
       }
 
-      // first frame shows the tiny empty card
+      // initial tiny card frame
       renderFrame(0);
+
+      // manual replay
       document.getElementById('onx-play').addEventListener('click', play);
+
+      // autoplay when scrolled into view
+      const target = document.getElementById('onx-stage');
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries){
+          if (e.isIntersecting && !isAnimating){
+            play();
+          }
+        }
+      }, { root: null, threshold: 0.35 });
+      io.observe(target);
     })();
   </script>
 </div>
