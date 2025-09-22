@@ -66,6 +66,8 @@ class ONXHeader extends HTMLElement {
       // download button vertical padding
       "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
       "download-btn-pad-y-mobile": "--download-btn-pad-y-mobile",
+      // NEW: starting (top-of-page) mobile pill outer gap (smaller gap = larger pill)
+      "pill-outer-x-mobile-large": "--pill-outer-x-mobile-large",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
       const v = this.getAttribute(attr);
@@ -91,7 +93,8 @@ class ONXHeader extends HTMLElement {
 
           --pill-inner-x-mobile: 30px;
           --pill-inner-x-desktop: 12px;
-          --pill-outer-x-mobile: 16px;
+          --pill-outer-x-mobile: 16px;             /* smaller pill on scroll */
+          --pill-outer-x-mobile-large: 8px;        /* larger pill at top (mobile) */
           --pill-outer-x-desktop: 0px;
           --pill-height-mobile: 2.85rem;
           --pill-height-desktop: 2.85rem;
@@ -236,6 +239,24 @@ class ONXHeader extends HTMLElement {
             width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-desktop))));
           }
         }
+
+        /* === REVERSAL (MOBILE-ONLY): start LARGE pill, shrink to SMALL on scroll === */
+        @media (max-width: 767.98px){
+          /* Top-of-page (no .is-float): large pill */
+          .header-bar{
+            background: rgba(255,255,255,.96);
+            border: 1px solid rgba(0,0,0,0.02);
+            border-radius: var(--header-radius);
+            box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
+            -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile-large))));
+          }
+          /* Scrolled (.is-float): narrower pill */
+          :host(.is-float) .header-bar{
+            width: min(var(--header-max-w), calc(100% - (2 * var(--pill-outer-x-mobile))));
+          }
+        }
+        /* === end reversal block === */
 
         .nav-link{
           font-weight: var(--nav-font-weight);
@@ -457,7 +478,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="pro"]) .mobile-actions .btn{
           background:#fff !important;
           color:#0A0D10 !important;
-          animation:none !重要;
+          animation:none !important;
         }
 
         :host([theme="ONXPro"]) .hamburger,
