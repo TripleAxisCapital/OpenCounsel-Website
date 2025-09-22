@@ -816,14 +816,14 @@
 </section>
 
 <!--------------------------------------------------------------------OPENAI MODEL CARD---------------------------------------------------------------------->
-
-<!-- Global options go here (edit values as needed):
-     data-speed .......... >1 faster, <1 slower (e.g., "1.6")
-     data-menu-scale ..... overall inside card/menu scale (e.g., "1.5")
-     data-overshoot-x-enabled="false|true"  (width overshoot toggle)
-     data-overshoot-y-enabled="false|true"  (height overshoot toggle)
-     data-overshoot-x / data-overshoot-y .. overshoot factors (e.g., "1.5")
-     data-peak-x / data-peak-y ............ when overshoot peaks (0..1)
+<!-- ONX Card Reveal — center-out expand, tight padding, proportional scaling -->
+<!-- Global options:
+     data-speed .................. >1 faster, <1 slower (e.g., "1.6")
+     data-menu-scale ............ proportional scale for inside card + text (e.g., "1.5")
+     data-overshoot-x-enabled ... "true"|"false" (width overshoot toggle)
+     data-overshoot-y-enabled ... "true"|"false" (height overshoot toggle)
+     data-overshoot-x/y ......... overshoot factors if enabled (e.g., "1.5")
+     data-peak-x/y .............. when overshoot peaks (0..1)
 -->
 <div id="onx-card-reveal"
      data-speed="1.6"
@@ -870,7 +870,7 @@
       const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
       const TEMPO = {
         speed: parseFloat(host.dataset.speed) || 1.6,
-        menuScale: parseFloat(host.dataset.menuScale) || 1.5,
+        menuScale: parseFloat(host.dataset.menuScale) || 1.5,   // scales card + typography
         overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false,
         overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true,
         overshootX: parseFloat(host.dataset.overshootX) || 1.5,
@@ -879,26 +879,40 @@
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
 
-      // Timings (all scaled by speed)
+      // Timings (scaled by speed)
       const BASE = {
         width: 1.10, height: 1.00, overlap: 0.16,
-        itemFade: 0.45,           // per-row fade duration
-        rowStep: 0.18,            // time between rows (sequential)
-        holdA: 0.34, holdB: 0.50
+        itemFade: 0.45, rowStep: 0.18, holdA: 0.34, holdB: 0.50
       };
       const S = v => v / TEMPO.speed;
 
-      // Layout metrics
-      const CONFIG = {
-        w: 1920, h: 1080,
-        padX: 24, padY: 22, rowGap: 18, subGap: 4,
-        titleSize: 28, titleWeight: 800,
-        subSize: 18,  subWeight: 500,
-        minW: 380, maxW: 720,
+      // ===== DESIGN BASE (pre-scale) — tuned to the reference =====
+      const DESIGN = {
+        padX: 20, padY: 20,         // tight, even padding top/bottom/left
+        rowGap: 16, subGap: 6,      // compact vertical rhythm
+        titleSize: 28, subSize: 18, // type sizes at scale 1.0
+        titleWeight: 800, subWeight: 500,
+        minW: 360, maxW: 720,       // card width bounds at scale 1.0
         stageMargin: 56
       };
 
-      // Models (edit freely)
+      // Derived style after proportional scaling (card + typography + spacing)
+      const SCALE = TEMPO.menuScale;
+      const STYLE = {
+        padX: Math.round(DESIGN.padX * SCALE),
+        padY: Math.round(DESIGN.padY * SCALE),
+        rowGap: Math.round(DESIGN.rowGap * SCALE),
+        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
+        titleSize: DESIGN.titleSize * SCALE,
+        subSize: DESIGN.subSize * SCALE,
+        titleWeight: DESIGN.titleWeight,
+        subWeight: DESIGN.subWeight,
+        minW: DESIGN.minW * SCALE,
+        maxW: DESIGN.maxW * SCALE,
+        stageMargin: DESIGN.stageMargin
+      };
+
+      // ===== Models (edit freely) =====
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Advanced reasoning & coding' },
@@ -906,6 +920,7 @@
       ];
 
       // Canvas
+      const CONFIG = { w: 1920, h: 1080 };
       const canvas = document.getElementById('onx-canvas');
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
@@ -918,7 +933,6 @@
       const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
       const smoothstep=(t,a,b)=>{ t=clamp((t-a)/(b-a)); return t*t*(3-2*t); };
 
-      // One-shot overshoot (boomerang)
       function boomerang(t, factor, peak){
         if (t <= 0) return 0;
         if (t >= 1) return 1;
@@ -926,7 +940,6 @@
         const u = (t - peak) / (1 - peak);
         return 1 + (factor - 1) * (1 - easeOutCubic(u));
       }
-
       function setFont(weight,size){
         ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
       }
@@ -941,60 +954,63 @@
         ctx.closePath();
       }
 
-      // Dynamic layout
+      // Measure using scaled typography to keep perfect proportions
       function measureLayout(){
         let maxTextW = 0;
-        setFont(CONFIG.titleWeight, CONFIG.titleSize);
-        rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
-        setFont(CONFIG.subWeight, CONFIG.subSize);
-        rows.forEach(r=>{ if(r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+        setFont(STYLE.titleWeight, STYLE.titleSize);
+        rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+        setFont(STYLE.subWeight, STYLE.subSize);
+        rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
-        const baseW = clamp(Math.ceil(maxTextW)+CONFIG.padX*2, CONFIG.minW, CONFIG.maxW);
-        const rowHeights = rows.map(r=> CONFIG.titleSize + (r.sub ? (CONFIG.subGap + CONFIG.subSize) : 0));
-        const baseH = Math.ceil(rowHeights.reduce((a,b)=>a+b,0) + CONFIG.rowGap*(rows.length-1) + CONFIG.padY*2);
+        const contentW = Math.ceil(maxTextW);
+        const cardW = Math.min(
+          clamp(contentW + STYLE.padX*2, STYLE.minW, STYLE.maxW),
+          CONFIG.w - 2*STYLE.stageMargin
+        );
 
-        const cardW = Math.min(baseW * TEMPO.menuScale, CONFIG.w - 2*CONFIG.stageMargin);
-        const cardH = Math.min(baseH * TEMPO.menuScale, CONFIG.h - 2*CONFIG.stageMargin);
-        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH)*0.08)));
+        const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
+        const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
+        const cardH = Math.min(
+          Math.ceil(contentH + STYLE.padY*2),
+          CONFIG.h - 2*STYLE.stageMargin
+        );
 
-        return { cardW, cardH, contentH: baseH - CONFIG.padY*2, rowHeights, radius };
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+        return { cardW, cardH, contentH, rowHeights, radius };
       }
       let layout = measureLayout();
 
       // Seed card
       const seed = { w: 120, h: 80, r: 20 };
 
-      // Render
       function renderFrame(t){
         const wEnd = S(BASE.width);
         const hStart = wEnd - S(BASE.overlap);
         const hEnd = hStart + S(BASE.height);
         const total = hEnd + S(BASE.holdA) + S(BASE.holdB);
 
-        // Stage bg
+        // Stage background
         const g = ctx.createLinearGradient(0,0,0,CONFIG.h);
         g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
         ctx.fillStyle = g; ctx.fillRect(0,0,CONFIG.w,CONFIG.h);
 
-        // WIDTH
+        // Width & Height progress
         const tw = clamp(t / wEnd);
-        const widthScale = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
-        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
-
-        // HEIGHT
         const th = clamp((t - hStart) / S(BASE.height));
+
+        const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
         const heightScale = TEMPO.overshootYEnabled ? boomerang(th, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(th);
+
+        const w = lerp(seed.w, layout.cardW, Math.min(widthScale,  TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
         const h = lerp(seed.h, layout.cardH, Math.min(heightScale, TEMPO.overshootYEnabled ? TEMPO.overshootY : 1));
 
-        // Corner radius
+        // Corner radius and centered position
         const growT = Math.max(tw, th);
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
-
-        // Center-out expansion
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2;
 
-        // PURE WHITE card + subtle hairline + premium shadow
+        // Card (pure white) + hairline + soft shadow
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT);
         ctx.shadowOffsetY = lerp(6, 15, growT);
@@ -1004,32 +1020,32 @@
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Strict clipping for content
+        // Strict clipping so content never bleeds
         ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
 
-        // Content placement (left-aligned inside the card)
-        const contentX = x + 24; // inner left padding
-        const contentY = y + (h - layout.contentH)/2;
+        // Content block (left/top padding; equal top/bottom spacing)
+        const contentX = x + STYLE.padX;
+        const contentTop = y + STYLE.padY;
 
-        // Gate content until card is mostly formed to avoid bleed
+        // Gate rows until both dimensions are mostly done
         const wr = clamp(w / layout.cardW), hr = clamp(h / layout.cardH);
-        const gateBase = Math.min(wr, hr);
-        const gate = smoothstep(gateBase, 0.62, 0.90); // 0..1 as card completes
+        const gate = smoothstep(Math.min(wr,hr), 0.62, 0.90);
 
-        // One-at-a-time reveal synced to gate progress
+        // One-by-one reveal in sync with card growth
         const rowStep = S(BASE.rowStep);
         const fadeDur = S(BASE.itemFade);
 
         rows.forEach((row, i) => {
-          const passed = layout.rowHeights.slice(0,i).reduce((s,v)=>s+v,0);
-          const yRow = contentY + passed + (i ? CONFIG.rowGap*i : 0);
+          const yRow = contentTop
+            + layout.rowHeights.slice(0,i).reduce((s,v)=>s+v,0)
+            + (i ? STYLE.rowGap*i : 0);
 
-          const start = i * rowStep;                   // strict sequential start
+          const start = i * rowStep;                // strict sequence
           const prog = clamp((gate - start) / fadeDur);
           const a = easeOutCubic(prog);
           const dy = lerp(18, 0, a);
           const scale = 0.985 + 0.015*a;
-          const blurPx = (1 - a) * 1.6;
+          const blurPx = (1 - a) * 1.5;
 
           ctx.save();
           ctx.translate(contentX, yRow + dy);
@@ -1037,14 +1053,14 @@
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
           ctx.globalAlpha = a; ctx.filter = `blur(${blurPx}px)`;
 
-          setFont(CONFIG.titleWeight, CONFIG.titleSize);
+          setFont(STYLE.titleWeight, STYLE.titleSize);
           ctx.fillStyle = '#0b0b10';
-          ctx.fillText(row.title, 0, CONFIG.titleSize);
+          ctx.fillText(row.title, 0, STYLE.titleSize);
 
           if (row.sub){
-            setFont(CONFIG.subWeight, CONFIG.subSize);
+            setFont(STYLE.subWeight, STYLE.subSize);
             ctx.fillStyle = '#5f646c';
-            ctx.fillText(row.sub, 0, CONFIG.titleSize + CONFIG.subGap + CONFIG.subSize);
+            ctx.fillText(row.sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
           }
 
           ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
@@ -1070,7 +1086,7 @@
         requestAnimationFrame(step);
       }
 
-      // Initial frame & controls
+      // First frame & controls
       renderFrame(0);
       document.getElementById('onx-play').addEventListener('click', play);
 
@@ -1080,11 +1096,15 @@
       }, { root: null, threshold: 0.35 });
       io.observe(document.getElementById('onx-stage'));
 
-      // Recompute on resize
+      // Recompute on resize (keeps padding & type proportional)
       let rid = null;
       window.addEventListener('resize', ()=>{
         cancelAnimationFrame(rid);
-        rid = requestAnimationFrame(()=>{ layout = measureLayout(); renderFrame(0); });
+        rid = requestAnimationFrame(()=>{
+          // Re-measure with current SCALE
+          layout = measureLayout();
+          renderFrame(0);
+        });
       });
     })();
   </script>
