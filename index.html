@@ -831,7 +831,7 @@
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      /* Stage background now comes from .g-grad + .grad-animi classes */
+      /* Stage background comes from gradient utility classes below */
       box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
       will-change: transform;
       transform-origin:center top; /* mobile will scale from top-center */
@@ -851,7 +851,7 @@
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    /* MOBILE ONLY: shrink margins, smaller control, allow dynamic scale to guarantee full in-view fit (width & height) */
+    /* MOBILE ONLY */
     @media (max-width: 640px){
       #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
       #onx-controls{ margin-top:10px; }
@@ -859,7 +859,7 @@
     }
   </style>
 
-  <!-- Apply your gradient/animation classes to the STAGE -->
+  <!-- Gradient/animation lives on the stage container -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
   <div id="onx-controls"><button id="onx-play">Play</button></div>
@@ -897,28 +897,31 @@
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
 
-      // Effective visual scale for menu/card typography (desktop: unchanged; mobile: gently capped)
-      const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
-
       // ===== CANVAS CONFIG (mobile perf caps) =====
-      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9 canvas pixels
+      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9
       const dprRaw = window.devicePixelRatio || 1;
       let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
 
-      // Keep alpha true so stage gradient shows through anywhere we don't draw
       canvas.width  = CONFIG.w * dpr;
       canvas.height = CONFIG.h * dpr;
       const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
       ctx.scale(dpr, dpr);
       ctx.imageSmoothingEnabled = true;
 
-      // Cache background once per size for speed (now transparent so CSS gradient shows)
+      // Transparent BG buffer (kept for structure; now just clears)
       let BG_CANVAS = document.createElement('canvas');
       BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
       (function cacheBG(){
-        BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); // transparent BG so .g-grad/.grad-animi are visible
+        BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); // fully transparent
       })();
+
+      // Helper: clear the main canvas every frame (prevents trails)
+      function clearStage(){
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
 
       // ===== DESIGN BASE / STYLE (recomputable) =====
       const DESIGN = {
@@ -926,8 +929,9 @@
         titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
         minW: 360, maxW: 720, stageMargin: 56
       };
-      let STYLE = buildStyle();
+      const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
 
+      let STYLE = buildStyle();
       function buildStyle(){
         const SCALE = getMenuScale();
         return {
@@ -945,7 +949,7 @@
         };
       }
 
-      // ===== MODELS (unchanged content) =====
+      // ===== MODELS (content unchanged) =====
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Default model' },
@@ -985,9 +989,9 @@
       // ===== LAYOUT =====
       function measureFinalLayout(){
         let maxTextW = 0;
-        setFont(STYLE.titleWeight, STYLE.titleSize);
+        setFont(800, STYLE.titleSize);
         rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
-        setFont(STYLE.subWeight, STYLE.subSize);
+        setFont(500, STYLE.subSize);
         rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
         const contentW = Math.ceil(maxTextW);
@@ -1016,16 +1020,15 @@
       const ROW_PAUSE   = S(BASE.rowPause);
       const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
 
-      // MOBILE perf/light: trim shadow/blur a bit
+      // MOBILE tuning
       const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
       const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
-      // ===== MOBILE AUTO-FIT SCALE (WIDTH + HEIGHT) =====
+      // ===== MOBILE AUTO-FIT SCALE =====
       function controlHeight(){
         const ctrl = document.getElementById('onx-controls');
         return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
       }
-
       function applyMobileScale(){
         if (!isMobile()){
           stageEl.style.transform = '';
@@ -1056,8 +1059,8 @@
 
       // --------- Phase A: Card build ----------
       function renderCard(t){
-        // draw transparent BG buffer so CSS gradient shows through
-        ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
+        clearStage();                       // <— crucial: clear frame
+        ctx.drawImage(BG_CANVAS, 0, 0);     // transparent buffer (no fill)
 
         const widthEnd = S(BASE.widthGrow);
         const tw = clamp(t / widthEnd);
@@ -1146,9 +1149,11 @@
 
       // --------- Phase B: Morph card → chat bubble ----------
       function renderMorphCardToBubble(startBox, t){
+        clearStage();                    // <— clear frame
+        ctx.drawImage(BG_CANVAS, 0, 0);  // transparent buffer
+
         const mobile = isMobile();
 
-        // Fit bubble inside canvas with stage margin; mobile targets are tighter
         const maxBubbleW = CONFIG.w - 2*STYLE.stageMargin;
         const targetBubbleW = mobile
           ? Math.min(maxBubbleW, Math.max(520, startBox.w * 1.35))
@@ -1166,9 +1171,6 @@
         const r = startBox.r + (bubbleR - startBox.r) * radiusF;
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2 + 30 * radiusF;
-
-        // BG (transparent buffer)
-        ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
         // Shape
         ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
@@ -1196,7 +1198,7 @@
           ctx.restore();
         }
 
-        // Minimal UI bits at end (skip icons on mobile to maximize text room)
+        // Minimal UI bits at end (desktop only)
         const uiAlpha = clamp((t - 0.6)/0.25);
         if (uiAlpha > 0 && !mobile){
           const plusCx = x + 28, plusCy = y + h/2;
@@ -1226,8 +1228,8 @@
         const mobile = isMobile();
 
         function loop(nowMS){
-          // transparent BG buffer each frame
-          ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
+          clearStage();                  // <— clear frame
+          ctx.drawImage(BG_CANVAS, 0, 0);
 
           // Bubble
           ctx.shadowColor = 'rgba(0,0,0,0.15)';
@@ -1309,7 +1311,8 @@
         requestAnimationFrame(stepA);
       }
 
-      // First static frame
+      // First static frame (clean)
+      clearStage();
       renderCard(0);
 
       // Manual controls
@@ -1339,7 +1342,6 @@
       // Resize / orientation / viewport chrome changes
       let rid = null;
       function rebuildIfNeeded(){
-        // Fit to viewport (no bleed)
         applyMobileScale();
 
         const NOW_MOBILE = isMobile();
@@ -1351,15 +1353,17 @@
           canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
           ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
 
-          // Rebuild BG cache (transparent)
+          // Rebuild transparent BG buffer
           BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
           BG_CTX = BG_CANVAS.getContext('2d');
           BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
         }
 
-        // Update style & layout if mobile/desktop breakpoint or menu scale changed
+        // Update style & layout
         STYLE = buildStyle();
         layout = measureFinalLayout();
+
+        clearStage();
         renderCard(0);
         tryAutoplay();
       }
