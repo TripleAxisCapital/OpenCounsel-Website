@@ -816,7 +816,7 @@
 
 
 
-<!-------------------------------------------------------------------- OPENAI MODEL CARD (Desktop untouched • Mobile auto-fit • Animated Blue Grad Card) -------------------------------------------------------------------->
+<!-------------------------------------------------------------------- OPENAI MODEL CARD (Desktop untouched • Mobile auto-fit) -------------------------------------------------------------------->
 <!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
 <div id="onx-card-reveal"
      data-speed="1.6"
@@ -829,24 +829,14 @@
      data-peak-y="0.60"
      style="max-width: 100%; margin: 48px auto;">
   <style>
-    /* Match your hero’s blue gradient variables (editable). The JS will read these. */
-    #onx-card-reveal{
-      --angle: 135deg;
-      --from:  #0ea5ff;   /* sky/bright blue */
-      --via:   #3b82f6;   /* mid blue */
-      --to:    #1e40af;   /* deep blue */
-      --speed: 16s;       /* full rotation duration */
-    }
-
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      /* background stays the soft panel; the CARD itself now has animated blue gradient */
       background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
       box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
       will-change: transform;
-      transform-origin:center top;
+      transform-origin:center top; /* mobile will scale from top-center */
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
     #onx-controls{
@@ -863,7 +853,7 @@
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    /* MOBILE ONLY tweaks — desktop remains untouched */
+    /* MOBILE ONLY: shrink margins, smaller control, allow dynamic scale to guarantee full in-view fit (width & height) */
     @media (max-width: 640px){
       #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
       #onx-controls{ margin-top:10px; }
@@ -890,23 +880,10 @@
         window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
 
       const vp = () => {
+        // Use VisualViewport when available to handle mobile browser UI chrome
         const vv = window.visualViewport;
         if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
         return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
-      };
-
-      // Read hero-like CSS vars so the canvas gradient matches your site theme.
-      const cssVar = (name, fallback) => {
-        const val = getComputedStyle(host).getPropertyValue(name).trim();
-        return val || fallback;
-      };
-      const parseDeg = (s, fallback) => {
-        const m = String(s).match(/(-?\d+(\.\d+)?)deg/i);
-        return m ? parseFloat(m[1]) : fallback;
-      };
-      const parseSec = (s, fallback) => {
-        const m = String(s).match(/(-?\d+(\.\d+)?)s/i);
-        return m ? parseFloat(m[1]) : fallback;
       };
 
       // ===== OPTIONS =====
@@ -921,19 +898,11 @@
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
 
-      // Gradient (hero-style) config
-      const GRAD = {
-        from:  cssVar('--from',  '#0ea5ff'),
-        via:   cssVar('--via',   '#3b82f6'),
-        to:    cssVar('--to',    '#1e40af'),
-        angle0Deg: parseDeg(cssVar('--angle', '135deg'), 135),
-        speedSec:  parseSec(cssVar('--speed', '16s'), 16)
-      };
-
+      // Effective visual scale for menu/card typography (desktop: unchanged; mobile: gently capped)
       const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
 
       // ===== CANVAS CONFIG (mobile perf caps) =====
-      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9
+      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9 canvas pixels
       const dprRaw = window.devicePixelRatio || 1;
       let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
 
@@ -943,7 +912,7 @@
       ctx.scale(dpr, dpr);
       ctx.imageSmoothingEnabled = true;
 
-      // Cache background once per size (panel behind the card)
+      // Cache background once per size for speed
       let BG_CANVAS = document.createElement('canvas');
       BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
@@ -953,13 +922,14 @@
         BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
       })();
 
-      // ===== DESIGN BASE / STYLE =====
+      // ===== DESIGN BASE / STYLE (recomputable) =====
       const DESIGN = {
         padX: 20, padY: 20, rowGap: 16, subGap: 6,
         titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
         minW: 360, maxW: 720, stageMargin: 56
       };
       let STYLE = buildStyle();
+
       function buildStyle(){
         const SCALE = getMenuScale();
         return {
@@ -977,7 +947,7 @@
         };
       }
 
-      // ===== MODELS =====
+      // ===== MODELS (unchanged content) =====
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Default model' },
@@ -1008,30 +978,6 @@
         ctx.arcTo(x,y+h,x,y,rr);
         ctx.arcTo(x,y,x+w,y,rr);
         ctx.closePath();
-      }
-
-      // Build a linear gradient at an angle inside a rect (for the MAIN CARD ONLY)
-      function cardGradient(x,y,w,h, nowMS){
-        // Animate angle linearly (hero-like); convert --speed to seconds/cycle
-        const cycle = Math.max(1, GRAD.speedSec);
-        const phase = (nowMS/1000) / cycle; // 0..N
-        const angleDeg = (GRAD.angle0Deg + (phase * 360)) % 360;
-        const theta = angleDeg * Math.PI / 180;
-
-        // Compute gradient endpoints across rect
-        const cx = x + w/2, cy = y + h/2;
-        // Unit vector
-        const ux = Math.cos(theta), uy = Math.sin(theta);
-        // Extend to cover full rect diagonal
-        const half = Math.sqrt((w*w)+(h*h)) / 2;
-        const x0 = cx - ux * half, y0 = cy - uy * half;
-        const x1 = cx + ux * half, y1 = cy + uy * half;
-
-        const g = ctx.createLinearGradient(x0, y0, x1, y1);
-        g.addColorStop(0,   GRAD.from);
-        g.addColorStop(0.5, GRAD.via);
-        g.addColorStop(1,   GRAD.to);
-        return g;
       }
 
       // ===== TIMINGS =====
@@ -1081,6 +1027,7 @@
         const ctrl = document.getElementById('onx-controls');
         return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
       }
+
       function applyMobileScale(){
         if (!isMobile()){
           stageEl.style.transform = '';
@@ -1089,11 +1036,12 @@
         }
         const { vw, vh, top, bottom } = vp();
         const safeSide = 16;
-        const safeTop  = 16 + top;
-        const safeBot  = 16 + bottom;
+        const safeTop  = 16 + top;      // include browser chrome inset
+        const safeBot  = 16 + bottom;   // include bottom inset (iOS home bar)
         const ctrlH    = controlHeight();
-        const hostMargins = 24 + 28;
+        const hostMargins = 24 + 28;    // top + bottom in @media
 
+        // CSS sets stage width = min(900px, 92vw); compute that "base" box
         const baseW = Math.min(900, 0.92 * vw);
         const baseH = baseW / ASPECT;
 
@@ -1102,15 +1050,15 @@
 
         const scaleW = availW / baseW;
         const scaleH = availH / baseH;
-        const desired = 2.0;
-        const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH));
+        const desired = 2.0; // target "feel" but capped by fit
+        const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH)); // allow shrinking if height is tight
 
         stageEl.style.transform = `scale(${scale})`;
         stageEl.style.transformOrigin = 'center top';
       }
 
-      // --------- Phase A: Card build (MAIN card uses animated blue gradient) ----------
-      function renderCard(t, nowMS = performance.now()){
+      // --------- Phase A: Card build ----------
+      function renderCard(t){
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
         const widthEnd = S(BASE.widthGrow);
@@ -1147,17 +1095,16 @@
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
         const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
-        // MAIN CARD: animated hero-blue gradient fill
+        // Card
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
         ctx.shadowOffsetY = lerp(6, 15, growT);
-        const gradFill = cardGradient(x, y, w, h, nowMS);
-        ctx.fillStyle = gradFill;
+        ctx.fillStyle = '#ffffff';
         roundedRect(ctx, x, y, w, h, r); ctx.fill();
         ctx.shadowColor='transparent';
-        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.stroke();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Content (white-on-blue stays readable via dark text with subtle shadow)
+        // Content
         ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
         const contentX = x + STYLE.padX;
         let cursorY = y + STYLE.padY;
@@ -1179,21 +1126,15 @@
           ctx.globalAlpha = a;
           if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
 
-          // Title
           setFont(STYLE.titleWeight, STYLE.titleSize);
-          // Light text for contrast on blue gradient; add soft shadow for readability
-          ctx.fillStyle = '#f8fbff';
-          ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+          ctx.fillStyle = '#0b0b10';
           ctx.fillText(rows[i].title, 0, STYLE.titleSize);
 
-          // Sub
           if (rows[i].sub){
             setFont(STYLE.subWeight, STYLE.subSize);
-            ctx.fillStyle = '#e6f0ff';
+            ctx.fillStyle = '#5f646c';
             ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
           }
-          // reset
-          ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
           ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
 
           cursorY += layout.rowHeights[i] + STYLE.rowGap;
@@ -1205,10 +1146,11 @@
         return { total, x, y, w, h, r };
       }
 
-      // --------- Phase B: Morph card → chat bubble (bubble remains white for clarity) ----------
+      // --------- Phase B: Morph card → chat bubble ----------
       function renderMorphCardToBubble(startBox, t){
         const mobile = isMobile();
 
+        // Fit bubble inside canvas with stage margin; mobile targets are tighter
         const maxBubbleW = CONFIG.w - 2*STYLE.stageMargin;
         const targetBubbleW = mobile
           ? Math.min(maxBubbleW, Math.max(520, startBox.w * 1.35))
@@ -1230,7 +1172,7 @@
         // BG
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
-        // Morphing shape (solid white)
+        // Shape
         ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
         ctx.shadowBlur = lerp(12, 22, radiusF) * MOBILE_SHADOW_SCALE;
         ctx.shadowOffsetY = lerp(10, 14, radiusF);
@@ -1246,7 +1188,7 @@
           roundedRect(ctx, x, y, w, h, r); ctx.clip();
           const contentX = x + STYLE.padX, contentTop = y + STYLE.padY;
           setFont(STYLE.titleWeight, STYLE.titleSize);
-          ctx.globalAlpha = 0.35 * contentFadeOut; ctx.fillStyle = '#0b0b10';
+          ctx.globalAlpha = 0.4 * contentFadeOut; ctx.fillStyle = '#0b0b10';
           const ghostLines = Math.min(3, rows.length);
           for (let i=0;i<ghostLines;i++){
             let yRow = contentTop;
@@ -1256,9 +1198,26 @@
           ctx.restore();
         }
 
+        // Minimal UI bits at end (skip icons on mobile to maximize text room)
+        const uiAlpha = clamp((t - 0.6)/0.25);
+        if (uiAlpha > 0 && !mobile){
+          const plusCx = x + 28, plusCy = y + h/2;
+          ctx.save();
+          ctx.globalAlpha = uiAlpha;
+          ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+          ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7);
+          ctx.stroke();
+          const micCx = x + w - 36, micCy = y + h/2;
+          ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+
         const bx = (CONFIG.w - bubbleW)/2;
         const by = (CONFIG.h - bubbleH)/2 + 30;
-        return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR } };
+        return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
       }
 
       // --------- Phase C: Idle bubble with blinking caret ----------
@@ -1273,11 +1232,23 @@
 
           // Bubble
           ctx.shadowColor = 'rgba(0,0,0,0.15)';
-          ctx.shadowBlur = 20 * (mobile ? 0.7 : 1.0); ctx.shadowOffsetY = 14;
+          ctx.shadowBlur = 20 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 14;
           ctx.fillStyle = '#ffffff';
           roundedRect(ctx, bubble.x, bubble.y, bubble.w, bubble.h, bubble.r); ctx.fill();
           ctx.shadowColor='transparent';
           ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+          // Icons (desktop only)
+          if (!mobile){
+            const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
+            ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+            ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
+            const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
+            ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+          }
 
           // Placeholder text + caret
           const textLeft = mobile ? (bubble.x + 20) : (bubble.x + 56);
@@ -1317,7 +1288,7 @@
 
         function stepA(now){
           const t = (now - start)/1000;
-          const A = renderCard(t, now);
+          const A = renderCard(t);
           if (t < A.total){ requestAnimationFrame(stepA); }
           else {
             const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
@@ -1389,7 +1360,7 @@
           BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
         }
 
-        // Update style & layout if needed
+        // Update style & layout if mobile/desktop breakpoint or menu scale changed
         STYLE = buildStyle();
         layout = measureFinalLayout();
         renderCard(0);
@@ -1402,6 +1373,7 @@
         rid = requestAnimationFrame(rebuildIfNeeded);
       }, { passive: true });
 
+      // VisualViewport events (mobile address bar show/hide)
       if (window.visualViewport){
         window.visualViewport.addEventListener('resize', ()=>{
           cancelAnimationFrame(rid);

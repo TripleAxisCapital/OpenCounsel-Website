@@ -219,8 +219,8 @@ class ONXHeader extends HTMLElement {
           .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
           .right-area{ padding-right: var(--download-pad-right-desktop); }
           .center{ display:flex; }
-          .hamburger{ display:none !important; }
-          .desktop-actions{ display:flex !important; }
+          .hamburger{ display:none !重要; }
+          .desktop-actions{ display:flex !重要; }
         }
 
         :host(.is-float) .oc-header{
@@ -252,8 +252,8 @@ class ONXHeader extends HTMLElement {
           .header-bar{
             background: rgba(255,255,255,.96);
             /* 🔻 remove outline on mobile pill header */
-            border: none !important;
-            outline: none !important;
+            border: none !重要;
+            outline: none !重要;
             border-radius: var(--header-radius);
             box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
             -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
@@ -272,8 +272,8 @@ class ONXHeader extends HTMLElement {
           }
           :host(.is-float) .header-bar{
             /* keep border removed even when "floating" on mobile */
-            border: none !important;
-            outline: none !important;
+            border: none !重要;
+            outline: none !重要;
             width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile)))));
           }
 
@@ -284,8 +284,8 @@ class ONXHeader extends HTMLElement {
           :host([theme="ONXPro"].is-float) .header-bar,
           :host([theme="onxpro"].is-float) .header-bar,
           :host([theme="pro"].is-float) .header-bar{
-            border: none !important;
-            outline: none !important;
+            border: none !重要;
+            outline: none !重要;
             box-shadow: 0 18px 38px -18px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.06);
           }
         }
@@ -300,8 +300,8 @@ class ONXHeader extends HTMLElement {
           position: relative;
           transition: transform .2s cubic-bezier(.2,.8,.2,1);
         }
-        .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
-        .nav-link--pro{ font-weight:800 !important; }
+        .nav-link--black{ color:#0A0D10 !重要; background:none !重要; -webkit-text-fill-color: initial !重要; }
+        .nav-link--pro{ font-weight:800 !重要; }
 
         .center .nav-link::after{
           content:""; position:absolute; left:10%; right:10%; bottom:-.28em; height:2px;
@@ -437,7 +437,7 @@ class ONXHeader extends HTMLElement {
         .mobile-link:hover{ background:#f7f8f9; transform: translateY(-1px); }
         .mobile-link .chev{ width:18px; height:18px; opacity:.4; }
 
-        .mobile-link--pro{ font-weight:800 !important; }
+        .mobile-link--pro{ font-weight:800 !重要; }
 
         .mobile-actions{
           display:flex; flex-direction:column; gap:.5rem; padding: 10px 8px 12px;
@@ -452,16 +452,16 @@ class ONXHeader extends HTMLElement {
 
         .mobile-extra-actions a,
         .mobile-extra-actions button{
-          position: static !important;
-          float: none !important;
-          display: inline-flex !important;
+          position: static !重要;
+          float: none !重要;
+          display: inline-flex !重要;
           align-items: center; justify-content: center;
-          width: 100% !important; max-width: 100% !important;
-          margin: 0 !important; inset: auto !important;
-          box-sizing: border-box !important;
-          border-radius: 14px !important;
-          padding: .75rem 1rem !important;
-          text-align: center !important;
+          width: 100% !重要; max-width: 100% !重要;
+          margin: 0 !重要; inset: auto !重要;
+          box-sizing: border-box !重要;
+          border-radius: 14px !重要;
+          padding: .75rem 1rem !重要;
+          text-align: center !重要;
           white-space: nowrap;
           overflow: hidden; text-overflow: ellipsis;
         }
@@ -471,10 +471,10 @@ class ONXHeader extends HTMLElement {
         .sheet .hamburger:active,
         .sheet .hamburger:focus,
         .sheet .hamburger:focus-visible{
-          background: transparent !important;
-          box-shadow: none !important;
-          outline: none !important;
-          transform: none !important;
+          background: transparent !重要;
+          box-shadow: none !重要;
+          outline: none !重要;
+          transform: none !重要;
         }
 
         /* ===== ONXPro THEME ===== */
@@ -494,14 +494,14 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXPro"]) .center .nav-link,
         :host([theme="onxpro"]) .center .nav-link,
         :host([theme="pro"]) .center .nav-link{
-          background:none !important;
-          -webkit-text-fill-color: initial !important;
-          color:#fff !important;
-          padding-bottom: 0 !important;
+          background:none !重要;
+          -webkit-text-fill-color: initial !重要;
+          color:#fff !重要;
+          padding-bottom: 0 !重要;
         }
         :host([theme="ONXPro"]) .news-link,
         :host([theme="onxpro"]) .news-link,
-        :host([theme="pro"]) .news-link{ color:#fff !important; }
+        :host([theme="pro"]) .news-link{ color:#fff !重要; }
 
         :host([theme="ONXPro"]) .desktop-actions .btn,
         :host([theme="onxpro"]) .desktop-actions .btn,
@@ -509,9 +509,9 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXPro"]) .mobile-actions .btn,
         :host([theme="onxpro"]) .mobile-actions .btn,
         :host([theme="pro"]) .mobile-actions .btn{
-          background:#fff !important;
-          color:#0A0D10 !important;
-          animation:none !important;
+          background:#fff !重要;
+          color:#0A0D10 !重要;
+          animation:none !重要;
         }
 
         :host([theme="ONXPro"]) .hamburger,
@@ -523,21 +523,21 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXProLight"]) .header-bar,
         :host([theme="onxpro-light"]) .header-bar,
         :host([theme="pro-light"]) .header-bar{
-          background:#ffffff !important;
-          color:#0A0D10 !important;
-          border:none !important;
-          box-shadow:none !important;
+          background:#ffffff !重要;
+          color:#0A0D10 !重要;
+          border:none !重要;
+          box-shadow:none !重要;
           border-radius: var(--header-radius);
-          -webkit-backdrop-filter: none !important;
-          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !重要;
+          backdrop-filter: none !重要;
         }
         :host([invert].is-float) .header-bar,
         :host([theme="ONXProLight"].is-float) .header-bar,
         :host([theme="onxpro-light"].is-float) .header-bar,
         :host([theme="pro-light"].is-float) .header-bar{
-          background:#ffffff !important;
-          border:none !important;
-          box-shadow:none !important;
+          background:#ffffff !重要;
+          border:none !重要;
+          box-shadow:none !重要;
         }
 
         :host(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .center .nav-link,
@@ -545,17 +545,17 @@ class ONXHeader extends HTMLElement {
         :host([theme="ONXProLight"]) .center .nav-link,
         :host([theme="onxpro-light"]) .center .nav-link,
         :host([theme="pro-light"]) .center .nav-link{
-          background:none !important;
-          -webkit-text-fill-color: initial !important;
-          color:#0A0D10 !important;
-          padding-bottom: 0 !important;
+          background:none !重要;
+          -webkit-text-fill-color: initial !重要;
+          color:#0A0D10 !重要;
+          padding-bottom: 0 !重要;
         }
 
         :host([invert]) .news-link,
         :host([theme="ONXProLight"]) .news-link,
         :host([theme="onxpro-light"]) .news-link,
         :host([theme="pro-light"]) .news-link{
-          color:#0A0D10 !important;
+          color:#0A0D10 !重要;
         }
 
         :host([invert]) .desktop-actions .btn,
@@ -566,55 +566,74 @@ class ONXHeader extends HTMLElement {
         :host([theme="onxpro-light"]) .mobile-actions .btn,
         :host([theme="pro-light"]) .desktop-actions .btn,
         :host([theme="pro-light"]) .mobile-actions .btn{
-          background:#0A0D10 !important;
-          color:#ffffff !important;
-          animation:none !important;
+          background:#0A0D10 !重要;
+          color:#ffffff !重要;
+          animation:none !重要;
         }
 
         :host([invert]) .hamburger,
         :host([theme="ONXProLight"]) .hamburger,
         :host([theme="onxpro-light"]) .hamburger,
-        :host([theme="pro-light"]) .hamburger{ color:#0A0D10 !important; }
+        :host([theme="pro-light"]) .hamburger{ color:#0A0D10 !重要; }
 
         :host([invert]) .logo-anim,
         :host([theme="ONXProLight"]) .logo-anim,
         :host([theme="onxpro-light"]) .logo-anim,
         :host([theme="pro-light"]) .logo-anim{
-          background:#000000 !important;
-          animation:none !important;
+          background:#000000 !重要;
+          animation:none !重要;
         }
 
+        /* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
+        @media (max-width: 767.98px){
+          :host(:not(.is-float)) .header-bar{
+            border: none !重要;
+            outline: none !重要;
+            box-shadow: none !重要;
+            -webkit-box-shadow: none !重要;
+          }
+          :host([theme="ONXPro"]) .header-bar,
+          :host([theme="onxpro"]) .header-bar,
+          :host([theme="pro"]) .header-bar,
+          :host([theme="ONXProLight"]) .header-bar,
+          :host([theme="onxpro-light"]) .header-bar,
+          :host([theme="pro-light"]) .header-bar,
+          :host([invert]) .header-bar,
+          :host([theme="ONXPro"].is-float) .header-bar,
+          :host([theme="onxpro"].is-float) .header-bar,
+          :host([theme="pro"].is-float) .header-bar{
+            border: none !重要;
+            outline: none !重要;
+          }
+        }
 
+        /* ───────────────── HOVER GRADIENT FOR NAV LINKS (desktop) ────────────────
+           Adds the same animated ONX blue gradient on hover, even when the
+           base theme sets plain text (#fff/#0A0D10). Keeps underline in sync. */
+        .nav-link--grad-hover{ will-change: background-position, color; }
 
-/* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
-@media (max-width: 767.98px){
-  /* At page top (not floating): remove ALL edges */
-  :host(:not(.is-float)) .header-bar{
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    -webkit-box-shadow: none !important;
-    /* keep the rest of your styling (background, blur, radius) */
-  }
+        /* Force gradient on hover for ALL themes/variants */
+        :host .center .nav-link.nav-link--grad-hover:hover{
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !重要;
+          background-size: 300% 300% !重要;
+          animation: gradientShift var(--speed,16s) ease-in-out infinite !重要;
+          -webkit-background-clip:text !重要; background-clip:text !重要;
+          -webkit-text-fill-color: transparent !重要; color: transparent !重要;
+        }
+        /* Underline uses the same animated gradient on hover */
+        :host .center .nav-link.nav-link--grad-hover:hover::after{
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !重要;
+          opacity:.6;
+        }
 
-  /* Belt-and-suspenders: prevent any theme from re-adding a border */
-  :host([theme="ONXPro"]) .header-bar,
-  :host([theme="onxpro"]) .header-bar,
-  :host([theme="pro"]) .header-bar,
-  :host([theme="ONXProLight"]) .header-bar,
-  :host([theme="onxpro-light"]) .header-bar,
-  :host([theme="pro-light"]) .header-bar,
-  :host([invert]) .header-bar,
-  :host([theme="ONXPro"].is-float) .header-bar,
-  :host([theme="onxpro"].is-float) .header-bar,
-  :host([theme="pro"].is-float) .header-bar{
-    border: none !important;
-    outline: none !important;
-  }
-}
-
-
-
+        /* Reduce motion respect */
+        @media (prefers-reduced-motion: reduce){
+          :host .center .nav-link.nav-link--grad-hover:hover{
+            animation: none !重要;
+            background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !重要;
+            background-size: 300% 300% !重要;
+          }
+        }
       </style>
 
       <div class="oc-header">
@@ -629,8 +648,8 @@ class ONXHeader extends HTMLElement {
 
           <!-- Center (desktop) -->
           <nav class="center" aria-label="Primary">
-            <a href="/oc-pro.html" class="nav-link">ONX Pro</a>
-            <a href="/pricing.html" class="nav-link">Pricing</a>
+            <a href="/oc-pro.html" class="nav-link nav-link--grad-hover">ONX Pro</a>
+            <a href="/pricing.html" class="nav-link nav-link--grad-hover">Pricing</a>
             <span class="center-extra"></span>
             <slot name="nav"></slot>
           </nav>
@@ -753,7 +772,7 @@ class ONXHeader extends HTMLElement {
       // Desktop link
       const a = document.createElement('a');
       a.className =
-        'nav-link' +
+        'nav-link nav-link--grad-hover' +
         (item.black && !isOnxPro ? ' nav-link--black' : '') +
         (item.pro && !isOnxPro ? ' nav-link--pro' : '');
       a.href = item.href;
@@ -796,7 +815,7 @@ class ONXHeader extends HTMLElement {
       assigned.forEach(node => {
         if (!(node instanceof HTMLAnchorElement)) return;
         const text = (node.textContent || '').trim();
-        const isOnxPro = /onx\s*pro/i.test(text);
+        const isOnxPro = /onx\\s*pro/i.test(text);
 
         // Mobile clone
         const a = document.createElement('a');
@@ -819,7 +838,9 @@ class ONXHeader extends HTMLElement {
         if (centerExtra) {
           const d = node.cloneNode(true);
           if (!d.classList.contains('nav-link')) d.classList.add('nav-link');
-          if (/onx\s*pro/i.test((d.textContent || ''))) {
+          // ensure hover gradient class exists on clones
+          if (!d.classList.contains('nav-link--grad-hover')) d.classList.add('nav-link--grad-hover');
+          if (/onx\\s*pro/i.test((d.textContent || ''))) {
             d.classList.remove('nav-link--pro','nav-link--black');
           }
           centerExtra.appendChild(d);
@@ -908,7 +929,7 @@ class ONXHeader extends HTMLElement {
       if (isMobile){
         const t = Math.max(0, Math.min(1, y / this._scrollRange));
         const outer = this._outerMobileLarge + (this._outerMobileSmall - this._outerMobileLarge) * t;
-        this.style.setProperty('--outer-x-mobile-dyn', `${outer.toFixed(2)}px`);
+        this.style.setProperty('--outer-x-mobile-dyn', \`\${outer.toFixed(2)}px\`);
         this.classList.toggle("is-float", y > 0);
       } else {
         if (y > this._threshold) this.classList.add("is-float");
@@ -938,9 +959,9 @@ class ONXHeader extends HTMLElement {
       const topGap = Math.max(0, logoRect.top - hbRect.top);
 
       const extra = 15; // px
-      this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
-      this.style.setProperty('--logo-pad-left-mobile', `0px`);
-      this.style.setProperty('--download-pad-right-mobile', `0px`);
+      this.style.setProperty('--pill-inner-x-mobile', \`\${topGap + extra}px\`);
+      this.style.setProperty('--logo-pad-left-mobile', \`0px\`);
+      this.style.setProperty('--download-pad-right-mobile', \`0px\`);
     }catch(_e){
       /* no-op */
     }
