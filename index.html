@@ -1564,7 +1564,7 @@
 
 <!-- -------------------------------------------------------------------ONX Value Carousel — Ultra‑minimal, Apple‑grade, centered & non‑overlapping arrows -->
 
-<!-- ONX Value Carousel — Ultra-minimal, Apple-grade, centered & responsive -->
+<!-- ONX Value Carousel — Ultra-minimal, Apple-grade, centered & responsive (scoped, double-init safe) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1577,18 +1577,15 @@
     @media (prefers-color-scheme: dark) {
       body { background: #000; color: #f5f5f5; }
     }
-    /* Hide focus ring until keyboard use */
     :focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
     .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   </style>
 </head>
 <body class="bg-white text-neutral-900 antialiased selection:bg-black selection:text-white dark:bg-black dark:text-neutral-100">
 
-  <!-- Minimal Value Carousel (Apple-style: centered headline + paragraph) -->
   <section id="onx-carousel" class="py-12 sm:py-20">
     <div class="mx-auto max-w-5xl px-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))] sm:px-6">
       <div id="deck" aria-roledescription="carousel" class="relative overflow-hidden rounded-2xl ring-1 ring-black/5 dark:ring-white/10">
-        <!-- Track -->
         <div id="track" class="flex will-change-transform transition-transform duration-500 ease-out">
           <!-- Slide 1: Local -->
           <article class="min-w-full shrink-0" role="group" aria-roledescription="slide" aria-label="1 of 3">
@@ -1601,7 +1598,6 @@
               </div>
             </div>
           </article>
-
           <!-- Slide 2: Accurate -->
           <article class="min-w-full shrink-0" role="group" aria-roledescription="slide" aria-label="2 of 3">
             <div class="flex h-[44vh] min-h-[320px] sm:h-[52vh] items-center justify-center px-6 text-center">
@@ -1613,7 +1609,6 @@
               </div>
             </div>
           </article>
-
           <!-- Slide 3: Private -->
           <article class="min-w-full shrink-0" role="group" aria-roledescription="slide" aria-label="3 of 3">
             <div class="flex h-[44vh] min-h-[320px] sm:h-[52vh] items-center justify-center px-6 text-center">
@@ -1627,11 +1622,11 @@
           </article>
         </div>
 
-        <!-- Edge gradients (subtle, non-intrusive) -->
+        <!-- Edge gradients -->
         <div class="pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-16 bg-gradient-to-r from-white to-transparent dark:from-black"></div>
         <div class="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-16 bg-gradient-to-l from-white to-transparent dark:from-black"></div>
 
-        <!-- Controls (kept outside content so they never cover text) -->
+        <!-- Controls -->
         <div class="pointer-events-none absolute inset-y-0 left-0 right-0 flex items-center justify-between">
           <button id="prev" aria-label="Previous"
             class="pointer-events-auto -ml-3 sm:-ml-6 inline-flex size-11 sm:size-10 items-center justify-center rounded-full bg-white/80 text-neutral-900 ring-1 ring-black/5 backdrop-blur hover:bg-white focus-visible:ring-2 focus-visible:ring-black dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
@@ -1660,24 +1655,30 @@
   </section>
 
   <script>
-    // Elements
-    const deck   = document.getElementById('deck');
+  (function(){
+    'use strict';
+
+    const deck  = document.getElementById('deck');
+    if (!deck) return;
+
+    // Double-init guard if this script is loaded twice
+    if (deck.dataset.onxInit === '1') return;
+    deck.dataset.onxInit = '1';
+
     const track  = document.getElementById('track');
     const slides = Array.from(track.children);
     const prev   = document.getElementById('prev');
     const next   = document.getElementById('next');
     const dots   = Array.from(document.querySelectorAll('[data-dot]'));
 
-    // State
     let index = 0;
     let autoTimer = null;
     let width = deck.clientWidth;
-    let reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Helpers
-    function setTransform(px){
-      track.style.transform = `translateX(${px}px)`;
-    }
+    const rmQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let reduceMotion = rmQuery.matches;
+
+    function setTransform(px){ track.style.transform = `translateX(${px}px)`; }
     function toOffset(i){ return -i * width; }
 
     function updateDots(){
@@ -1686,7 +1687,7 @@
 
     function snapTo(i, animate = true){
       index = (i + slides.length) % slides.length;
-      track.style.transition = animate && !reduceMotion ? 'transform 500ms cubic-bezier(.22,.61,.36,1)' : 'none';
+      track.style.transition = (animate && !reduceMotion) ? 'transform 500ms cubic-bezier(.22,.61,.36,1)' : 'none';
       setTransform(toOffset(index));
       updateDots();
       slides.forEach((s, si) => s.setAttribute('aria-hidden', si === index ? 'false' : 'true'));
@@ -1694,13 +1695,13 @@
 
     function go(delta){ snapTo(index + delta, true); }
 
-    // Resize handling (keeps pixel-perfect alignment)
-    const ro = new ResizeObserver(() => {
+    // Resize handling
+    const resizeObserver = new ResizeObserver(() => {
       width = deck.clientWidth;
       track.style.transition = 'none';
       setTransform(toOffset(index));
     });
-    ro.observe(deck);
+    resizeObserver.observe(deck);
 
     // Buttons
     prev.addEventListener('click', () => go(-1));
@@ -1715,7 +1716,7 @@
 
     // Touch swipe with rubber-band preview
     let startX = 0, deltaX = 0, dragging = false, startOffset = 0;
-    const SWIPE_THRESHOLD = 0.18; // fraction of width to trigger a change
+    const SWIPE_THRESHOLD = 0.18;
 
     track.addEventListener('touchstart', (e) => {
       dragging = true;
@@ -1727,7 +1728,6 @@
     track.addEventListener('touchmove', (e) => {
       if (!dragging) return;
       deltaX = e.touches[0].clientX - startX;
-      // Rubber-band feel: ease movement a bit as you pull
       const resistance = 1 - Math.min(Math.abs(deltaX) / (width * 2), 0.5);
       setTransform(startOffset + deltaX * resistance);
     }, { passive: true });
@@ -1745,9 +1745,9 @@
     }, { passive: true });
 
     // Dots
-    dots.forEach(d => d.addEventListener('click', () => snapTo(parseInt(d.dataset.dot), true)));
+    dots.forEach(d => d.addEventListener('click', () => snapTo(parseInt(d.dataset.dot,10), true)));
 
-    // Autoplay (paused on hover/focus; respects reduced motion; only when visible)
+    // Autoplay helpers
     function startAuto(){
       if (reduceMotion || autoTimer) return;
       autoTimer = setInterval(() => go(1), 5000);
@@ -1755,35 +1755,45 @@
     function stopAuto(){
       if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
     }
+
     deck.addEventListener('pointerenter', stopAuto);
     deck.addEventListener('pointerleave', startAuto);
     deck.addEventListener('focusin', stopAuto);
     deck.addEventListener('focusout', startAuto);
 
-    // Run autoplay only when 60% visible to avoid offscreen motion
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
+    // Visibility-aware autoplay (scoped, no globals)
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.6) startAuto();
         else stopAuto();
-      });
+      }
     }, { threshold: [0, 0.6, 1] });
-    io.observe(deck);
+    observer.observe(deck);
+
+    // Reduced-motion changes live
+    if (typeof rmQuery.addEventListener === 'function') {
+      rmQuery.addEventListener('change', (e) => {
+        reduceMotion = e.matches;
+        if (reduceMotion) { stopAuto(); track.style.transition = 'none'; }
+        else { startAuto(); }
+      });
+    } else if (typeof rmQuery.addListener === 'function') { // Safari fallback
+      rmQuery.addListener((mq) => {
+        reduceMotion = mq.matches;
+        if (reduceMotion) { stopAuto(); track.style.transition = 'none'; }
+        else { startAuto(); }
+      });
+    }
 
     // Init
     updateDots();
     snapTo(0, false);
     if (!reduceMotion) startAuto();
-
-    // Update reduced motion if user toggles setting while on page
-    matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-      reduceMotion = e.matches;
-      if (reduceMotion) { stopAuto(); track.style.transition = 'none'; }
-      else { startAuto(); }
-    });
+  })();
   </script>
 </body>
 </html>
-<!-- -------------------------------------------------------------------ONX Value Carousel END----------------------------------------------------------------------> 
+<!-- -------------------------------------------------------------------BECOME LIMITLESS Models END---------------------------------------------------------------------->
  
 
 
