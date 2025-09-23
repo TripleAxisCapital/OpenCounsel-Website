@@ -816,9 +816,8 @@
 
 
 
-<!--------------------------------------------------------------------OPENAI MODEL CARD---------------------------------------------------------------------->
+<!-------------------------------------------------------------------- OPENAI MODEL CARD (Desktop untouched • Mobile auto-fit) -------------------------------------------------------------------->
 <!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
- <!--
 <div id="onx-card-reveal"
      data-speed="1.6"
      data-menu-scale="1.5"
@@ -837,11 +836,13 @@
       background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
       box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
       will-change: transform;
+      transform-origin:center top; /* mobile will scale from top-center */
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
     #onx-controls{
       display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
       font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
+      touch-action: manipulation;
     }
     #onx-controls button{
       border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
@@ -852,10 +853,11 @@
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    /* MOBILE: no hard 2x; we scale adaptively via JS so nothing bleeds */
+    /* MOBILE ONLY: shrink margins, smaller control, allow dynamic scale to guarantee full in-view fit (width & height) */
     @media (max-width: 640px){
-      #onx-card-reveal{ overflow:hidden; }
-      /* Stage transform is set dynamically in JS to fit the viewport safely */
+      #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
+      #onx-controls{ margin-top:10px; }
+      #onx-controls button{ padding:9px 14px; font-size:14px; }
     }
   </style>
 
@@ -863,16 +865,28 @@
   <div id="onx-controls"><button id="onx-play">Play</button></div>
 
   <script>
-    (function(){
-      'use strict';
+    (()=>{ 'use strict';
 
       // ===== ELEMENTS =====
-      const host = document.getElementById('onx-card-reveal');
+      const host    = document.getElementById('onx-card-reveal');
       const stageEl = document.getElementById('onx-stage');
       const canvas  = document.getElementById('onx-canvas');
 
-      // ===== OPTIONS =====
+      // ===== UTILS =====
       const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+      const ASPECT = 16/9;
+
+      const isMobile = () =>
+        window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+
+      const vp = () => {
+        // Use VisualViewport when available to handle mobile browser UI chrome
+        const vv = window.visualViewport;
+        if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
+        return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
+      };
+
+      // ===== OPTIONS =====
       const TEMPO = {
         speed: parseFloat(host.dataset.speed) || 1.6,
         menuScale: parseFloat(host.dataset.menuScale) || 1.5,
@@ -884,76 +898,21 @@
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
 
-      const isMobile = () =>
-        window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+      // Effective visual scale for menu/card typography (desktop: unchanged; mobile: gently capped)
+      const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
 
-      // Dynamic stage scaler (MOBILE ONLY): tries to give you ~2x feel without bleeding.
-      // It computes the unscaled stage width (min(900px, 92vw)), then scales so stage fits
-      // within (vw - 16px gutters). Max scale is 2.0.
-      function applyMobileScale(){
-        if (!isMobile()){
-          stageEl.style.transform = '';
-          stageEl.style.transformOrigin = '';
-          return;
-        }
-        const vw = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 360);
-        const safeGutter = 16;                 // px on each side
-        const baseWidth = Math.min(900, 0.92 * vw); // matches CSS width:min(900px,92vw)
-        const targetWidth = vw - safeGutter * 2;
-        const desiredScale = 2.0;              // your requested 2x
-        const maxScaleThatFits = Math.max(1, targetWidth / baseWidth);
-        const scale = Math.min(desiredScale, maxScaleThatFits);
-
-        stageEl.style.transform = `scale(${scale})`;
-        stageEl.style.transformOrigin = 'center top';
-      }
-
-      // ===== TIMINGS =====
-      const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
-      const S = v => v / TEMPO.speed;
-
-      // ===== DESIGN BASE =====
-      const DESIGN = {
-        padX: 20, padY: 20, rowGap: 16, subGap: 6,
-        titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
-        minW: 360, maxW: 720, stageMargin: 56
-      };
-      const SCALE = TEMPO.menuScale;
-      const STYLE = {
-        padX: Math.round(DESIGN.padX * SCALE),
-        padY: Math.round(DESIGN.padY * SCALE),
-        rowGap: Math.round(DESIGN.rowGap * SCALE),
-        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
-        titleSize: DESIGN.titleSize * SCALE,
-        subSize: DESIGN.subSize * SCALE,
-        titleWeight: DESIGN.titleWeight,
-        subWeight: DESIGN.subWeight,
-        minW: DESIGN.minW * SCALE,
-        maxW: DESIGN.maxW * SCALE,
-        // Slightly smaller margins on mobile to avoid visual clipping (canvas stays inside)
-        stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
-      };
-
-      // ===== MODELS (unchanged) =====
-      const rows = [
-        { title:'ONX FAST', sub:'Fastest for instant answers' },
-        { title:'ONX',      sub:'Default model' },
-        { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
-      ];
-
-      // ===== CANVAS (MOBILE PERF OPTS) =====
-      // Reduce internal resolution on mobile to cut GPU/CPU; DPR is capped; we cache background.
-      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9
+      // ===== CANVAS CONFIG (mobile perf caps) =====
+      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9 canvas pixels
       const dprRaw = window.devicePixelRatio || 1;
-      const dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
+      let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
 
-      canvas.width = CONFIG.w * dpr;
+      canvas.width  = CONFIG.w * dpr;
       canvas.height = CONFIG.h * dpr;
       const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
       ctx.scale(dpr, dpr);
       ctx.imageSmoothingEnabled = true;
 
-      // Cached background (no gradient rebuilds each frame)
+      // Cache background once per size for speed
       let BG_CANVAS = document.createElement('canvas');
       BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
@@ -963,7 +922,39 @@
         BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
       })();
 
-      // Helpers
+      // ===== DESIGN BASE / STYLE (recomputable) =====
+      const DESIGN = {
+        padX: 20, padY: 20, rowGap: 16, subGap: 6,
+        titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
+        minW: 360, maxW: 720, stageMargin: 56
+      };
+      let STYLE = buildStyle();
+
+      function buildStyle(){
+        const SCALE = getMenuScale();
+        return {
+          padX: Math.round(DESIGN.padX * SCALE),
+          padY: Math.round(DESIGN.padY * SCALE),
+          rowGap: Math.round(DESIGN.rowGap * SCALE),
+          subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
+          titleSize: DESIGN.titleSize * SCALE,
+          subSize: DESIGN.subSize * SCALE,
+          titleWeight: DESIGN.titleWeight,
+          subWeight: DESIGN.subWeight,
+          minW: DESIGN.minW * SCALE,
+          maxW: DESIGN.maxW * SCALE,
+          stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
+        };
+      }
+
+      // ===== MODELS (unchanged content) =====
+      const rows = [
+        { title:'ONX FAST', sub:'Fastest for instant answers' },
+        { title:'ONX',      sub:'Default model' },
+        { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
+      ];
+
+      // ===== HELPERS =====
       const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
       const lerp=(a,b,t)=>a+(b-a)*t;
       const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
@@ -989,7 +980,11 @@
         ctx.closePath();
       }
 
-      // Layout
+      // ===== TIMINGS =====
+      const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
+      const S = v => v / TEMPO.speed;
+
+      // ===== LAYOUT =====
       function measureFinalLayout(){
         let maxTextW = 0;
         setFont(STYLE.titleWeight, STYLE.titleSize);
@@ -1015,7 +1010,7 @@
       }
       let layout = measureFinalLayout();
 
-      // Seed
+      // Seed shape
       const seed = { w: 120, h: 80, r: 20 };
 
       // Row schedule
@@ -1023,27 +1018,56 @@
       const ROW_PAUSE   = S(BASE.rowPause);
       const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
 
-      // MOBILE PERF TUNING (subtle): reduce expensive blur/shadow while keeping look
+      // MOBILE perf/light: trim shadow/blur a bit
       const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
       const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
+      // ===== MOBILE AUTO-FIT SCALE (WIDTH + HEIGHT) =====
+      function controlHeight(){
+        const ctrl = document.getElementById('onx-controls');
+        return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
+      }
+
+      function applyMobileScale(){
+        if (!isMobile()){
+          stageEl.style.transform = '';
+          stageEl.style.transformOrigin = 'center top';
+          return;
+        }
+        const { vw, vh, top, bottom } = vp();
+        const safeSide = 16;
+        const safeTop  = 16 + top;      // include browser chrome inset
+        const safeBot  = 16 + bottom;   // include bottom inset (iOS home bar)
+        const ctrlH    = controlHeight();
+        const hostMargins = 24 + 28;    // top + bottom in @media
+
+        // CSS sets stage width = min(900px, 92vw); compute that "base" box
+        const baseW = Math.min(900, 0.92 * vw);
+        const baseH = baseW / ASPECT;
+
+        const availW = Math.max(240, vw - 2*safeSide);
+        const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+
+        const scaleW = availW / baseW;
+        const scaleH = availH / baseH;
+        const desired = 2.0; // target "feel" but capped by fit
+        const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH)); // allow shrinking if height is tight
+
+        stageEl.style.transform = `scale(${scale})`;
+        stageEl.style.transformOrigin = 'center top';
+      }
+
       // --------- Phase A: Card build ----------
       function renderCard(t){
-        // BG (cheap blit)
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
-        // Width growth
         const widthEnd = S(BASE.widthGrow);
         const tw = clamp(t / widthEnd);
         const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
+
         const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
 
-        // Row-driven height
-        let contentVisibleH = 0;
-        let visibleRows = 0;
-        let poppingIndex = -1;
-        let poppingProgress = 0;
-
+        let contentVisibleH = 0, visibleRows = 0, poppingIndex = -1, poppingProgress = 0;
         for (let i=0; i<rows.length; i++){
           const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
           if (local <= 0) break;
@@ -1060,21 +1084,18 @@
         if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
 
         let springY = 1;
-        if (poppingIndex >= 0){
-          springY = boomerang(poppingProgress, 1.06, 0.5);
-        }
-        const dynamicTargetH = Math.max(
+        if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.06, 0.5);
+
+        const h = Math.max(
           seed.h,
           Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin)
         );
-        const h = dynamicTargetH;
 
-        // Center & rounding
         const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w));
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
         const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
-        // Card shell
+        // Card
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
         ctx.shadowOffsetY = lerp(6, 15, growT);
@@ -1083,7 +1104,7 @@
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Clip + content
+        // Content
         ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
         const contentX = x + STYLE.padX;
         let cursorY = y + STYLE.padY;
@@ -1122,17 +1143,20 @@
 
         const lastEnd = rowStartTimes[rows.length - 1] + ROW_POP_DUR;
         const total = lastEnd + S(BASE.holdA) + S(BASE.holdB);
-
         return { total, x, y, w, h, r };
       }
 
       // --------- Phase B: Morph card → chat bubble ----------
       function renderMorphCardToBubble(startBox, t){
-        // Constrain bubble to canvas with margins (prevents bleeding when scaled)
+        const mobile = isMobile();
+
+        // Fit bubble inside canvas with stage margin; mobile targets are tighter
         const maxBubbleW = CONFIG.w - 2*STYLE.stageMargin;
-        const targetBubbleW = Math.max(startBox.w*1.8, 1100);
+        const targetBubbleW = mobile
+          ? Math.min(maxBubbleW, Math.max(520, startBox.w * 1.35))
+          : Math.max(startBox.w * 1.8, 1100);
         const bubbleW = Math.round(Math.min(maxBubbleW, targetBubbleW));
-        const bubbleH = Math.round(Math.min(100 * SCALE, 130));
+        const bubbleH = Math.round(mobile ? Math.min(96, 104) : Math.min(100 * getMenuScale(), 130));
         const bubbleR = Math.round(bubbleH / 2);
 
         const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
@@ -1157,7 +1181,7 @@
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Ghost rows (fade out early)
+        // Fade out ghost rows
         const contentFadeOut = 1 - clamp(t / 0.25);
         if (contentFadeOut > 0){
           ctx.save();
@@ -1174,9 +1198,9 @@
           ctx.restore();
         }
 
-        // UI bits appear near end
+        // Minimal UI bits at end (skip icons on mobile to maximize text room)
         const uiAlpha = clamp((t - 0.6)/0.25);
-        if (uiAlpha > 0){
+        if (uiAlpha > 0 && !mobile){
           const plusCx = x + 28, plusCy = y + h/2;
           ctx.save();
           ctx.globalAlpha = uiAlpha;
@@ -1191,7 +1215,6 @@
           ctx.restore();
         }
 
-        // Return bubble target box (centered)
         const bx = (CONFIG.w - bubbleW)/2;
         const by = (CONFIG.h - bubbleH)/2 + 30;
         return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
@@ -1202,6 +1225,7 @@
       function startBubbleIdle(bubble){
         let rafId = null;
         const caretPeriod = 900; // ms
+        const mobile = isMobile();
 
         function loop(nowMS){
           ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
@@ -1214,30 +1238,34 @@
           ctx.shadowColor='transparent';
           ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-          // Icons
-          const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
-          ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
-          ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
-          ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
-          const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
-          ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
-          ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
-          ctx.restore();
+          // Icons (desktop only)
+          if (!mobile){
+            const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
+            ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+            ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
+            const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
+            ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+          }
 
           // Placeholder text + caret
-          const textLeft = bubble.x + 56;
-          const textY = bubble.y + bubble.h/2 + 10;
-          setFont(600, Math.max(18, 18 * SCALE));
+          const textLeft = mobile ? (bubble.x + 20) : (bubble.x + 56);
+          const textY = bubble.y + bubble.h/2 + (mobile ? 8 : 10);
+          const baseText = 'Ask the impossible';
+          setFont(600, mobile ? Math.max(16, 16 * getMenuScale()) : Math.max(18, 18 * getMenuScale()));
           ctx.fillStyle = '#8a8f96';
-          ctx.fillText('Ask the impossible', textLeft, textY);
+          ctx.fillText(baseText, textLeft, textY);
 
           const showCaret = Math.floor((nowMS % (caretPeriod)) / (caretPeriod/2)) === 0;
           if (showCaret){
-            const textWidth = ctx.measureText('Ask the impossible').width;
+            const textWidth = ctx.measureText(baseText).width;
             const cx = textLeft + textWidth + 6;
-            const cy = bubble.y + bubble.h/2 - 12;
+            const caretH = mobile ? 20 : 24;
+            const cy = bubble.y + bubble.h/2 - caretH/2;
             ctx.fillStyle = '#8a8f96';
-            ctx.fillRect(cx, cy, 2, 24);
+            ctx.fillRect(cx, cy, 2, caretH);
           }
           rafId = requestAnimationFrame(loop);
         }
@@ -1292,7 +1320,7 @@
       let autoplayed = false;
       function centerIsVisible(el){
         const rect = el.getBoundingClientRect();
-        const vpCenterY = window.innerHeight / 2;
+        const vpCenterY = (window.visualViewport ? window.visualViewport.height : window.innerHeight) / 2;
         return (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
       }
       function tryAutoplay(){
@@ -1302,60 +1330,67 @@
         }
       }
       const io = new IntersectionObserver((entries)=>{
-        for (const e of entries){
-          if (e.isIntersecting) tryAutoplay();
-        }
-      }, { root: null, threshold: 0 });
+        for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
+      }, { root: null, threshold: 0.1 });
       io.observe(stageEl);
 
-      // Initial mobile scale
+      // Initial mobile fit
       applyMobileScale();
 
-      // Recompute on resize (includes rebuild when crossing breakpoints)
+      // Resize / orientation / viewport chrome changes
       let rid = null;
+      function rebuildIfNeeded(){
+        // Fit to viewport (no bleed)
+        applyMobileScale();
+
+        const NOW_MOBILE = isMobile();
+        const newCONFIG = NOW_MOBILE ? { w:1024, h:576 } : { w:1920, h:1080 };
+        const newDPR = NOW_MOBILE ? Math.min(1.15, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
+
+        if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h || Math.abs(newDPR - dpr) > 0.001){
+          CONFIG = newCONFIG; dpr = newDPR;
+          canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
+          ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
+
+          // Rebuild BG cache
+          BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
+          BG_CTX = BG_CANVAS.getContext('2d');
+          const g = BG_CTX.createLinearGradient(0,0,0,CONFIG.h);
+          g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
+          BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
+        }
+
+        // Update style & layout if mobile/desktop breakpoint or menu scale changed
+        STYLE = buildStyle();
+        layout = measureFinalLayout();
+        renderCard(0);
+        tryAutoplay();
+      }
+
       window.addEventListener('resize', ()=>{
         if (caretLoop){ caretLoop.stop(); caretLoop = null; }
         cancelAnimationFrame(rid);
-        rid = requestAnimationFrame(()=>{
-          // Fit to viewport (no bleed)
-          applyMobileScale();
-
-          const NOW_MOBILE = isMobile();
-          const newCONFIG = NOW_MOBILE ? { w:1024, h:576 } : { w:1920, h:1080 };
-          const newDPR = NOW_MOBILE ? Math.min(1.15, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
-
-          if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h || Math.abs(newDPR - dpr) > 0.001){
-            CONFIG = newCONFIG;
-            canvas.width = CONFIG.w * newDPR;
-            canvas.height = CONFIG.h * newDPR;
-            ctx.setTransform(1,0,0,1,0,0);
-            ctx.scale(newDPR, newDPR);
-
-            // Rebuild BG cache
-            BG_CANVAS.width = CONFIG.w;
-            BG_CANVAS.height = CONFIG.h;
-            BG_CTX = BG_CANVAS.getContext('2d');
-            const g = BG_CTX.createLinearGradient(0,0,0,CONFIG.h);
-            g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
-            BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
-          }
-
-          // Update stage margin for mobile vs desktop
-          STYLE.stageMargin = NOW_MOBILE ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin;
-
-          layout = measureFinalLayout();
-          renderCard(0);
-          tryAutoplay();
-        });
+        rid = requestAnimationFrame(rebuildIfNeeded);
       }, { passive: true });
+
+      // VisualViewport events (mobile address bar show/hide)
+      if (window.visualViewport){
+        window.visualViewport.addEventListener('resize', ()=>{
+          cancelAnimationFrame(rid);
+          rid = requestAnimationFrame(rebuildIfNeeded);
+        }, { passive: true });
+        window.visualViewport.addEventListener('scroll', ()=>{
+          cancelAnimationFrame(rid);
+          rid = requestAnimationFrame(applyMobileScale);
+        }, { passive: true });
+      }
 
       window.addEventListener('scroll', tryAutoplay, { passive: true });
     })();
   </script>
 </div>
+<!-- ---------------------------------- OPEN AI MODELS END -------------------------------------------------------------------->
 
--->
-<!-- ---------------------------------- OPEN AI MODELS END----------------------------------------------------------------------->
 
 
 <!--------------------------------------------------------------------BECOME LIMITLESS Models---------------------------------------------------------------------->
