@@ -33,7 +33,7 @@ class ONXHeader extends HTMLElement {
     this._prevFocus = null;
 
     // smooth, in-sync scroll → width interpolation (mobile)
-    this._scrollRange = parseInt(this.getAttribute("scroll-range") || "140", 10); // px to reach "small" state
+    this._scrollRange = parseInt(this.getAttribute("scroll-range") || "140", 10);
     this._raf = null;
     this._outerMobileLarge = null;
     this._outerMobileSmall = null;
@@ -61,18 +61,16 @@ class ONXHeader extends HTMLElement {
       "pill-height-desktop": "--pill-height-desktop",
       "logo-size": "--logo-size",
       "mobile-logo-size": "--mobile-logo-size",
-      // Global nav controls (apply to header + mobile)
+      // Global nav controls
       "nav-font-size": "--nav-font-size",
       "nav-font-weight": "--nav-font-weight",
       "nav-letter-spacing": "--nav-letter-spacing",
       "nav-gap": "--nav-gap",
       "mobile-link-padding": "--mobile-link-padding",
-      // prevent descender clipping
       "nav-line-height": "--nav-line-height",
-      // download button vertical padding
       "download-btn-pad-y-desktop": "--download-btn-pad-y-desktop",
       "download-btn-pad-y-mobile": "--download-btn-pad-y-mobile",
-      // NEW: starting (top-of-page) mobile pill outer gap (smaller gap = larger pill)
+      // starting (top-of-page) mobile pill outer gap (smaller gap = larger pill)
       "pill-outer-x-mobile-large": "--pill-outer-x-mobile-large",
     };
     for (const [attr, cssVar] of Object.entries(varMap)) {
@@ -253,7 +251,7 @@ class ONXHeader extends HTMLElement {
         @media (max-width: 767.98px){
           .header-bar{
             background: rgba(255,255,255,.96);
-            /* remove outline on mobile pill header */
+            /* 🔻 remove outline on mobile pill header */
             border: none !important;
             outline: none !important;
             border-radius: var(--header-radius);
@@ -263,7 +261,6 @@ class ONXHeader extends HTMLElement {
             /* width tied to --outer-x-mobile-dyn (set by JS on scroll) */
             width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile-large)))));
 
-            /* transitions: keep instantaneous with scroll for width; still ease other props */
             transition:
               background-color .18s ease,
               border-radius .18s cubic-bezier(.2,.8,.2,1),
@@ -271,14 +268,12 @@ class ONXHeader extends HTMLElement {
               -webkit-backdrop-filter .18s ease,
               backdrop-filter .18s ease;
 
-            /* perf */
             will-change: width;
           }
           :host(.is-float) .header-bar{
             /* keep border removed even when "floating" on mobile */
             border: none !important;
             outline: none !important;
-            /* width still driven by --outer-x-mobile-dyn */
             width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile)))));
           }
 
@@ -291,6 +286,7 @@ class ONXHeader extends HTMLElement {
           :host([theme="pro"].is-float) .header-bar{
             border: none !important;
             outline: none !important;
+            box-shadow: 0 18px 38px -18px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.06);
           }
         }
         /* === end mobile block === */
@@ -305,7 +301,7 @@ class ONXHeader extends HTMLElement {
           transition: transform .2s cubic-bezier(.2,.8,.2,1);
         }
         .nav-link--black{ color:#0A0D10 !important; background:none !important; -webkit-text-fill-color: initial !important; }
-        .nav-link--pro{ font-weight:800 !important; } /* kept for other links */
+        .nav-link--pro{ font-weight:800 !important; }
 
         .center .nav-link::after{
           content:""; position:absolute; left:10%; right:10%; bottom:-.28em; height:2px;
@@ -601,7 +597,6 @@ class ONXHeader extends HTMLElement {
 
           <!-- Center (desktop) -->
           <nav class="center" aria-label="Primary">
-            <!-- ONX Pro now styled identically to Pricing -->
             <a href="/oc-pro.html" class="nav-link">ONX Pro</a>
             <a href="/pricing.html" class="nav-link">Pricing</a>
             <span class="center-extra"></span>
@@ -611,7 +606,6 @@ class ONXHeader extends HTMLElement {
           <!-- Right -->
           <div class="right-area">
             <div class="desktop-actions">
-              <!-- <a class="news-link" href="/news.html" aria-label="ONX News">...</a> -->
               <slot name="actions"></slot>
               <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -640,7 +634,6 @@ class ONXHeader extends HTMLElement {
           </div>
 
           <nav class="mobile-nav" aria-label="Mobile">
-            <!-- ONX Pro now matches Pricing styling for mobile, too -->
             <a class="mobile-link" href="/oc-pro.html">ONX Pro
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
             </a>
@@ -727,7 +720,6 @@ class ONXHeader extends HTMLElement {
 
       // Desktop link
       const a = document.createElement('a');
-      // ONX Pro → match Pricing (no forced black/bold)
       a.className =
         'nav-link' +
         (item.black && !isOnxPro ? ' nav-link--black' : '') +
@@ -774,7 +766,7 @@ class ONXHeader extends HTMLElement {
         const text = (node.textContent || '').trim();
         const isOnxPro = /onx\s*pro/i.test(text);
 
-        // Mobile clone (match Pricing styling for ONX Pro)
+        // Mobile clone
         const a = document.createElement('a');
         a.className = 'mobile-link';
         a.href = node.getAttribute('href') || '#';
@@ -863,7 +855,6 @@ class ONXHeader extends HTMLElement {
     if (window.matchMedia('(min-width: 768px)').matches) this._toggleMobile(false);
     this._cacheDims();
     this._syncEdgeGaps();
-    // re-run scroll to refresh dynamic width after resize
     this._onScroll();
   }
 
@@ -883,15 +874,11 @@ class ONXHeader extends HTMLElement {
       const isMobile = !window.matchMedia('(min-width: 768px)').matches;
 
       if (isMobile){
-        // progress 0→1 over _scrollRange px
         const t = Math.max(0, Math.min(1, y / this._scrollRange));
         const outer = this._outerMobileLarge + (this._outerMobileSmall - this._outerMobileLarge) * t;
         this.style.setProperty('--outer-x-mobile-dyn', `${outer.toFixed(2)}px`);
-
-        // keep mobile "floating" padding behavior; toggled once scrolled
         this.classList.toggle("is-float", y > 0);
       } else {
-        // desktop: keep original threshold snap (with eased CSS transition)
         if (y > this._threshold) this.classList.add("is-float");
         else this.classList.remove("is-float");
       }
