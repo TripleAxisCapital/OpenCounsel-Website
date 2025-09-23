@@ -814,8 +814,6 @@
   </div>
 </section>
 
-
-
 <!-------------------------------------------------------------------- OPENAI MODEL CARD (Desktop untouched • Mobile auto-fit) -------------------------------------------------------------------->
 <!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
 <div id="onx-card-reveal"
@@ -833,7 +831,7 @@
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      background: radial-gradient(120% 100% at 50% 0%, #fff 0%, #f6f8fb 42%, #eef2f7 100%);
+      /* Stage background now comes from .g-grad + .grad-animi classes */
       box-shadow: 0 12px 44px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.65);
       will-change: transform;
       transform-origin:center top; /* mobile will scale from top-center */
@@ -861,6 +859,7 @@
     }
   </style>
 
+  <!-- Apply your gradient/animation classes to the STAGE -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
   <div id="onx-controls"><button id="onx-play">Play</button></div>
@@ -881,7 +880,6 @@
         window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
 
       const vp = () => {
-        // Use VisualViewport when available to handle mobile browser UI chrome
         const vv = window.visualViewport;
         if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
         return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
@@ -907,20 +905,19 @@
       const dprRaw = window.devicePixelRatio || 1;
       let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
 
+      // Keep alpha true so stage gradient shows through anywhere we don't draw
       canvas.width  = CONFIG.w * dpr;
       canvas.height = CONFIG.h * dpr;
       const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
       ctx.scale(dpr, dpr);
       ctx.imageSmoothingEnabled = true;
 
-      // Cache background once per size for speed
+      // Cache background once per size for speed (now transparent so CSS gradient shows)
       let BG_CANVAS = document.createElement('canvas');
       BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
       (function cacheBG(){
-        const g = BG_CTX.createLinearGradient(0,0,0,CONFIG.h);
-        g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
-        BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
+        BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); // transparent BG so .g-grad/.grad-animi are visible
       })();
 
       // ===== DESIGN BASE / STYLE (recomputable) =====
@@ -1037,12 +1034,11 @@
         }
         const { vw, vh, top, bottom } = vp();
         const safeSide = 16;
-        const safeTop  = 16 + top;      // include browser chrome inset
-        const safeBot  = 16 + bottom;   // include bottom inset (iOS home bar)
+        const safeTop  = 16 + top;
+        const safeBot  = 16 + bottom;
         const ctrlH    = controlHeight();
-        const hostMargins = 24 + 28;    // top + bottom in @media
+        const hostMargins = 24 + 28;
 
-        // CSS sets stage width = min(900px, 92vw); compute that "base" box
         const baseW = Math.min(900, 0.92 * vw);
         const baseH = baseW / ASPECT;
 
@@ -1051,8 +1047,8 @@
 
         const scaleW = availW / baseW;
         const scaleH = availH / baseH;
-        const desired = 2.0; // target "feel" but capped by fit
-        const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH)); // allow shrinking if height is tight
+        const desired = 2.0;
+        const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH));
 
         stageEl.style.transform = `scale(${scale})`;
         stageEl.style.transformOrigin = 'center top';
@@ -1060,6 +1056,7 @@
 
       // --------- Phase A: Card build ----------
       function renderCard(t){
+        // draw transparent BG buffer so CSS gradient shows through
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
         const widthEnd = S(BASE.widthGrow);
@@ -1170,7 +1167,7 @@
         const x = (CONFIG.w - w)/2;
         const y = (CONFIG.h - h)/2 + 30 * radiusF;
 
-        // BG
+        // BG (transparent buffer)
         ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
         // Shape
@@ -1229,6 +1226,7 @@
         const mobile = isMobile();
 
         function loop(nowMS){
+          // transparent BG buffer each frame
           ctx.drawImage(BG_CANVAS, 0, 0, CONFIG.w, CONFIG.h);
 
           // Bubble
@@ -1353,12 +1351,10 @@
           canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
           ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
 
-          // Rebuild BG cache
+          // Rebuild BG cache (transparent)
           BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
           BG_CTX = BG_CANVAS.getContext('2d');
-          const g = BG_CTX.createLinearGradient(0,0,0,CONFIG.h);
-          g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#eef2f7');
-          BG_CTX.fillStyle = g; BG_CTX.fillRect(0,0,CONFIG.w,CONFIG.h);
+          BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
         }
 
         // Update style & layout if mobile/desktop breakpoint or menu scale changed
@@ -1374,7 +1370,6 @@
         rid = requestAnimationFrame(rebuildIfNeeded);
       }, { passive: true });
 
-      // VisualViewport events (mobile address bar show/hide)
       if (window.visualViewport){
         window.visualViewport.addEventListener('resize', ()=>{
           cancelAnimationFrame(rid);
