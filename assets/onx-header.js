@@ -613,6 +613,13 @@ class ONXHeader extends HTMLElement {
   }
 }
 
+@media (max-width: 767.98px){
+  :host(.is-float) .header-bar{
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+  }
+}
+
 
       </style>
 
