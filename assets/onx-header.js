@@ -921,51 +921,56 @@ class ONXHeader extends HTMLElement {
   }
 
   _onScroll() {
-    if (this._raf) return;
-    this._raf = requestAnimationFrame(() => {
-      const y = window.scrollY || document.documentElement.scrollTop || 0;
-      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+  if (this._raf) return;
+  this._raf = requestAnimationFrame(() => {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    const isMobile = !window.matchMedia('(min-width: 768px)').matches;
 
-      if (isMobile){
-        const t = Math.max(0, Math.min(1, y / this._scrollRange));
-        const outer = this._outerMobileLarge + (this._outerMobileSmall - this._outerMobileLarge) * t;
-        this.style.setProperty('--outer-x-mobile-dyn', \`\${outer.toFixed(2)}px\`);
-        this.classList.toggle("is-float", y > 0);
-      } else {
-        if (y > this._threshold) this.classList.add("is-float");
-        else this.classList.remove("is-float");
-      }
-
-      this._raf = null;
-    });
-  }
-
-  /* ===== Mobile edge spacing sync ===== */
-  _syncEdgeGaps(){
-    try{
-      const isMobile = !window.matchMedia('(min-width: 768px)').matches;
-      if (!isMobile){
-        this.style.removeProperty('--pill-inner-x-mobile');
-        this.style.removeProperty('--logo-pad-left-mobile');
-        this.style.removeProperty('--download-pad-right-mobile');
-        return;
-      }
-      const headerBar = this._root.querySelector('.header-bar');
-      const logo = this._root.querySelector('.logo-pad .logo-anim');
-      if (!headerBar || !logo) return;
-
-      const hbRect = headerBar.getBoundingClientRect();
-      const logoRect = logo.getBoundingClientRect();
-      const topGap = Math.max(0, logoRect.top - hbRect.top);
-
-      const extra = 15; // px
-      this.style.setProperty('--pill-inner-x-mobile', \`\${topGap + extra}px\`);
-      this.style.setProperty('--logo-pad-left-mobile', \`0px\`);
-      this.style.setProperty('--download-pad-right-mobile', \`0px\`);
-    }catch(_e){
-      /* no-op */
+    if (isMobile){
+      const t = Math.max(0, Math.min(1, y / this._scrollRange));
+      const outer = this._outerMobileLarge + (this._outerMobileSmall - this._outerMobileLarge) * t;
+      // ✅ no escaping around the template literal
+      this.style.setProperty('--outer-x-mobile-dyn', `${outer.toFixed(2)}px`);
+      this.classList.toggle("is-float", y > 0);
+    } else {
+      if (y > this._threshold) this.classList.add("is-float");
+      else this.classList.remove("is-float");
     }
-  }
+
+    this._raf = null;
+  });
 }
 
-customElements.define("onx-header", ONXHeader);
+
+/* ===== Mobile edge spacing sync ===== */
+_syncEdgeGaps(){
+  try{
+    const isMobile = !window.matchMedia('(min-width: 768px)').matches;
+    if (!isMobile){
+      this.style.removeProperty('--pill-inner-x-mobile');
+      this.style.removeProperty('--logo-pad-left-mobile');
+      this.style.removeProperty('--download-pad-right-mobile');
+      return;
+    }
+    const headerBar = this._root.querySelector('.header-bar');
+    const logo = this._root.querySelector('.logo-pad .logo-anim');
+    if (!headerBar || !logo) return;
+
+    const hbRect = headerBar.getBoundingClientRect();
+    const logoRect = logo.getBoundingClientRect();
+    const topGap = Math.max(0, logoRect.top - hbRect.top);
+
+    const extra = 15; // px
+    this.style.setProperty('--pill-inner-x-mobile', `${topGap + extra}px`);
+    this.style.setProperty('--logo-pad-left-mobile', `0px`);
+    this.style.setProperty('--download-pad-right-mobile', `0px`);
+  }catch(_e){
+    /* no-op */
+  }
+}
+}
+
+// ✅ safe define with guard (prevents “already defined” errors during HMR/reloads)
+if (!window.customElements.get('onx-header')) {
+  window.customElements.define('onx-header', ONXHeader);
+}
