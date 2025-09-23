@@ -583,6 +583,37 @@ class ONXHeader extends HTMLElement {
           background:#000000 !important;
           animation:none !important;
         }
+
+
+
+/* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
+@media (max-width: 767.98px){
+  /* At page top (not floating): remove ALL edges */
+  :host(:not(.is-float)) .header-bar{
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    /* keep the rest of your styling (background, blur, radius) */
+  }
+
+  /* Belt-and-suspenders: prevent any theme from re-adding a border */
+  :host([theme="ONXPro"]) .header-bar,
+  :host([theme="onxpro"]) .header-bar,
+  :host([theme="pro"]) .header-bar,
+  :host([theme="ONXProLight"]) .header-bar,
+  :host([theme="onxpro-light"]) .header-bar,
+  :host([theme="pro-light"]) .header-bar,
+  :host([invert]) .header-bar,
+  :host([theme="ONXPro"].is-float) .header-bar,
+  :host([theme="onxpro"].is-float) .header-bar,
+  :host([theme="pro"].is-float) .header-bar{
+    border: none !important;
+    outline: none !important;
+  }
+}
+
+
       </style>
 
       <div class="oc-header">
