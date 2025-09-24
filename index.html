@@ -837,8 +837,7 @@
 
 
 
-<!-- ─────────────────── ONX Orbit→Merge→Reveal→Showcase (Apple-style, white background) ─────────────────── -->
-<!-- Drop this block anywhere in your page (no <html>/<body> wrappers). -->
+<!-- ─────────────────── ONX Orbit→Merge→Reveal→Showcase (Apple-style, O starts perfectly centered) ─────────────────── -->
 <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
 <style>
@@ -910,17 +909,25 @@
     z-index: 0;
   }
 
-  /* Center cluster (vertical stack: wordmark, then gallery later) */
+  /* Center cluster:
+     - Start: single-row grid so the “O” is perfectly centered.
+     - Final: switch to two rows to place gallery beneath ONX. */
   .onx-merge .onx-center {
     position: relative;
     width: var(--size);
-    height: var(--size);
+    height: var(--size);              /* fixed box centers the O */
     display: grid;
-    grid-template-rows: 1fr auto; /* wordmark centered; gallery sits below */
+    grid-template-rows: 1fr;          /* ✨ ensures O is dead-center initially */
     place-items: center;
     z-index: 1;
     transform: translate3d(0,0,0);
     contain: layout paint size;
+  }
+  .onx-merge.final .onx-center {
+    height: auto;                     /* allow room for gallery later */
+    min-height: var(--size);
+    grid-template-rows: auto auto;    /* ONX + gallery under it */
+    row-gap: clamp(14px, 3.6vmin, 34px);
   }
 
   /* Wordmark: starts as centered “O”; later reveals “NX” */
@@ -933,13 +940,11 @@
     display: inline-flex;
     align-items: center;
     filter: drop-shadow(var(--shadow-soft));
-    align-self: center; /* keep truly centered vertically */
   }
   .onx-merge .glyph-o {
     font-size: var(--o-font);
     display: inline-block;
     will-change: transform, filter, letter-spacing;
-    /* Starts centered and visible by default */
   }
   .onx-merge .glyph-nx {
     font-size: var(--o-font);
@@ -1063,18 +1068,13 @@
 
   /* ===== Final showcase: logo gallery pops in under ONX and persists ===== */
   .onx-merge .onx-gallery {
-    align-self: end;
-    display: flex;
+    display: none;                     /* 🚫 no layout space initially → keeps O centered */
+    align-self: start;
+    justify-self: center;
     gap: var(--gallery-gap);
-    margin-top: clamp(14px, 3.8vmin, 36px);
-    opacity: 0;
-    transform: translateY(10px);
-    pointer-events: none; /* purely decorative */
   }
   .onx-merge.final .onx-gallery {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out);
+    display: flex;                     /* now participates in layout under ONX */
   }
 
   .onx-merge .gallery-chip {
@@ -1136,7 +1136,7 @@
       <div class="orbiter"><div class="chip"><img class="logo" src="LLM5.svg"       alt=""></div></div>
     </div>
 
-    <!-- Final persistent gallery under ONX (initially hidden; pops in) -->
+    <!-- Final persistent gallery under ONX (appears only after animation) -->
     <div class="onx-gallery" aria-hidden="true">
       <div class="gallery-chip"><img src="grokLogo.svg"   alt=""></div>
       <div class="gallery-chip"><img src="googleLogo.svg" alt=""></div>
@@ -1196,7 +1196,7 @@
 
     const finalStartAt = lastAbsorbEndsAt + FINAL_GAP;
     setTimeout(() => {
-      root.classList.add('final'); // triggers gallery opacity/translate; chips animate in with onx-pop
+      root.classList.add('final'); // triggers layout change + gallery chip pop animations
       // No cleanup; ONX + gallery stay visible until refresh.
     }, finalStartAt);
   })();
