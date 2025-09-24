@@ -834,11 +834,6 @@
 </section>
 
 
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -848,8 +843,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
   <style>
+    /* ───── Minimal reset for pixel-perfect centering & zero CLS ───── */
+    html,body{height:100%;margin:0}
+    *{box-sizing:border-box}
+    img{display:block;max-width:100%}
+
     /* ───── ONX Orbit→Merge→Reveal→Showcase (Apple-style) — O centered, ONX + bottom logos persist ───── */
-    .onx-merge {
+    .onx-merge{
       /* Design tokens */
       --bg:#fff; --ink:#0B0B0C;
       --stage-h:clamp(420px,78vh,980px);
@@ -883,7 +883,7 @@
       position:relative; width:100%; height:var(--stage-h);
       background:var(--bg); color:var(--ink);
       display:grid; place-items:center; /* hard center anchor */
-      overflow:clip; isolation:isolate;
+      overflow:hidden; isolation:isolate;
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
@@ -909,7 +909,7 @@
       font-family:'Audiowide',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
       line-height:1; letter-spacing:.01em; filter:drop-shadow(var(--shadow-soft));
       pointer-events:none; position:relative; z-index:10;
-      transform:translateX(var(--recenter,0px)); /* JS sets this at reveal */
+      transform:translateX(var(--recenter,0px)); /* JS sets this at reveal & on resize */
       transition:transform 560ms var(--ease-out);
       will-change:transform;
       opacity:1; /* hard lock: never fade */
@@ -921,7 +921,7 @@
       font-size:var(--o-font);
       /* absolutely positioned to the RIGHT of the O; gap set via --nx-gap */
       position:absolute; left:calc(100% + var(--nx-gap, 0px)); top:0;
-      margin-left:0.08em; /* used as the “design gap” that JS converts to px */
+      margin-left:0.08em; /* design gap that JS converts to px */
       opacity:0; transform:translateX(-0.18em);
       -webkit-mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
               mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
@@ -1061,7 +1061,7 @@
   </section>
 
   <script>
-  (function(){
+  (()=>{ "use strict";
     const root = document.getElementById('onx-merge');
     const word = document.getElementById('onx-word');
     const nxEl = document.getElementById('glyph-nx');
@@ -1080,7 +1080,7 @@
     const FINAL_GAP     = toMs(css('--final-gap'))     || 620;
     const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
 
-    // Avoid collisions with site-wide “reveal” CSS by using unique state classes
+    // Play state
     root.classList.add('is-play');
     const BOOST_LEAD = 360;
     setTimeout(()=> root.classList.add('is-boost'), Math.max(0, SUCK_START-BOOST_LEAD));
@@ -1099,7 +1099,7 @@
 
     // Compute recenter so ONX stays centered when NX appears (measure NX width in px)
     function computeRecenter(){
-      const nxWidth = nxEl.getBoundingClientRect().width; // absolute, but measurable even at opacity:0
+      const nxWidth = nxEl.getBoundingClientRect().width; // measurable even at opacity:0
       const gapPx   = parseFloat(getComputedStyle(word).getPropertyValue('--nx-gap')) || 0;
       const delta   = nxWidth + gapPx; // extra width added to the right when NX shows
       word.style.setProperty('--recenter', (-delta/2) + 'px');
@@ -1120,13 +1120,18 @@
       gchips.forEach((el,i)=> el.style.setProperty('--gdelay', (i * GALLERY_STAG) + 'ms'));
     }
 
+    // When to reveal/finalize
     const lastAbsorbEndsAt = SUCK_START + ((chips.length-1)*STAGGER) + SUCK_DURATION + REVEAL_GAP;
 
-    // Reveal ONX (persist) — compute recenter just before reveal
-    setTimeout(async ()=>{
+    // Reveal ONX (persist) — compute recenter just before reveal (after fonts are ready)
+    const ensureFontsReady = (async ()=>{
       if (document.fonts && document.fonts.ready) {
         try { await document.fonts.ready; } catch(e){}
       }
+    })();
+
+    setTimeout(async ()=>{
+      await ensureFontsReady;
       computeRecenter();
       root.classList.add('is-reveal');        // orbit fades only; word stays
       root.setAttribute('aria-label','ONX');
@@ -1142,21 +1147,26 @@
       requestAnimationFrame(()=> { placeGallery(); }); // extra pass for slow layout
     }, finalStartAt);
 
-    // Keep gallery locked under ONX on resize or font swaps
-    window.addEventListener('resize', ()=> { if (root.classList.contains('is-final')) placeGallery(); }, {passive:true});
-    document.fonts && document.fonts.ready && document.fonts.ready.then(()=> { if (root.classList.contains('is-final')) placeGallery(); });
+    // Keep layout perfect on viewport changes (recenter + gallery lock)
+    const onResize = ()=> {
+      if (root.classList.contains('is-reveal') || root.classList.contains('is-final')) {
+        computeRecenter();
+        placeGallery();
+      }
+    };
+    window.addEventListener('resize', onResize, {passive:true});
 
     // If images load later, re-place once (covers cache misses)
     const imgs = Array.from(document.images).filter(img => gallery.contains(img));
     imgs.forEach(img => {
-      if (!img.complete) img.addEventListener('load', ()=> { if (root.classList.contains('is-final')) placeGallery(); }, {once:true});
+      if (!img.complete) img.addEventListener('load', ()=> {
+        if (root.classList.contains('is-final')) placeGallery();
+      }, {once:true});
     });
   })();
   </script>
 </body>
 </html>
-
-
 
 
 
