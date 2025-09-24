@@ -834,6 +834,301 @@
 </section>
 
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>ONX Neural Network — Orbit Merge Animation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Google Font: Audiowide -->
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============ Design Tokens ============ */
+    :root{
+      --bg: #ffffff;
+      --ink: #0B0B0C;
+      --size: min(56vmin, 560px);        /* Stage size for the central cluster */
+      --ring: calc(var(--size) * 0.82);  /* Orbit diameter */
+      --o-font: clamp(48px, 14vmin, 180px);
+      --logo: clamp(28px, 5.2vmin, 56px);/* LLM logo size */
+      --radius: calc(var(--ring) / 2.2); /* Orbital radius for logos */
+      --spin-duration: 6s;               /* Base orbit spin duration */
+      --suck-duration: 900ms;            /* Duration of the “sucked in” move */
+      --suck-stagger: 600ms;             /* Time between each logo being sucked */
+      --suck-start: 2000ms;              /* Delay before first logo merges */
+      --reveal-gap: 350ms;               /* Pause before ONX reveal */
+      --ease-out: cubic-bezier(.2,.8,0,1);
+      --ease-in: cubic-bezier(.3,0,.7,.1);
+      --ease-inout: cubic-bezier(.2,.6,.1,1);
+    }
+
+    /* ============ Base ============ */
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .onx-scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Audiowide', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    .onx-center{
+      position: relative;
+      width: var(--size);
+      height: var(--size);
+      contain: layout paint size;
+    }
+
+    /* Subtle halo behind the O */
+    .halo {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: calc(var(--size) * 0.86);
+      height: calc(var(--size) * 0.86);
+      border-radius: 50%;
+      background:
+        radial-gradient(60% 60% at 50% 50%, #00000010, transparent 70%),
+        radial-gradient(45% 45% at 50% 50%, #00000008, transparent 72%);
+      filter: blur(1.2px);
+      pointer-events: none;
+      transform: translateZ(0);
+    }
+
+    /* The wordmark: starts as "O", later reveals "NX" */
+    .wordmark{
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      line-height: 1;
+      letter-spacing: .01em;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .glyph{
+      display: inline-block;
+      will-change: transform, opacity, letter-spacing, filter;
+    }
+
+    .glyph-o{
+      font-size: var(--o-font);
+      filter: drop-shadow(0 2px 8px #00000012);
+      transform: translateZ(0);
+    }
+
+    .glyph-nx{
+      font-size: var(--o-font);
+      margin-left: .06em;
+      letter-spacing: .02em;
+      opacity: 0;
+      transform: translateX(-0.16em) translateZ(0);
+      transition:
+        opacity 520ms var(--ease-out),
+        transform 520ms var(--ease-out),
+        letter-spacing 520ms var(--ease-out);
+    }
+
+    /* Orbit container rotates; logos ride along on a separate translate */
+    .orbit {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: var(--ring);
+      height: var(--ring);
+      margin-left: calc(var(--ring) / -2);
+      margin-top: calc(var(--ring) / -2);
+      border-radius: 50%;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    /* Visual ring outline (thin, tasteful) */
+    .orbit::before{
+      content: "";
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 1px solid #0B0B0C10;
+      box-shadow:
+        0 0 0 1px #0B0B0C05 inset,
+        0 30px 80px #00000008 inset;
+    }
+
+    /* Continuous spin (disabled during reduced motion) */
+    .play .orbit{
+      animation: orbit-spin var(--spin-duration) linear infinite;
+    }
+    @keyframes orbit-spin{
+      to { transform: rotate(360deg); }
+    }
+
+    /* Each orbiter is a polar positioner; inner .llm translates out to radius */
+    .orbiter{
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 1px; height: 1px;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    .orbiter:nth-child(1){ transform: rotate(10deg);  }
+    .orbiter:nth-child(2){ transform: rotate(82deg);  }
+    .orbiter:nth-child(3){ transform: rotate(154deg); }
+    .orbiter:nth-child(4){ transform: rotate(226deg); }
+    .orbiter:nth-child(5){ transform: rotate(298deg); }
+
+    .llm{
+      width: var(--logo);
+      height: var(--logo);
+      transform: translateX(var(--radius)) translate(-50%, -50%);
+      transform-origin: 50% 50%;
+      object-fit: contain;
+      filter:
+        drop-shadow(0 6px 12px #0000001a)
+        saturate(1.02);
+      will-change: transform, opacity, filter;
+      transition: filter 240ms ease;
+      /* If an SVG isn't present, avoid alt text showing; keep it clean */
+      background: #f5f7fb;
+      border-radius: 10px;
+    }
+    .llm:hover{ filter: drop-shadow(0 8px 18px #00000020) saturate(1.05); }
+
+    /* Suck-in animation: translate to center, scale down, fade & slight blur */
+    .suck .llm {
+      animation: suck-in var(--suck-duration) var(--ease-in) forwards;
+      animation-delay: var(--delay, 0ms);
+    }
+    @keyframes suck-in{
+      0% {
+        opacity: 1;
+        transform: translateX(var(--radius)) translate(-50%, -50%) scale(1);
+        filter: drop-shadow(0 6px 12px #0000001a) saturate(1.02);
+      }
+      80% {
+        opacity: .1;
+        transform: translateX(0) translate(-50%, -50%) scale(.35);
+        filter: blur(1.2px) drop-shadow(0 2px 6px #00000014);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(0) translate(-50%, -50%) scale(.28);
+        filter: blur(1.6px);
+      }
+    }
+
+    /* O spin + ONX reveal */
+    .reveal .glyph-o{
+      animation: o-spin 820ms var(--ease-inout) both;
+    }
+    @keyframes o-spin{
+      0%   { transform: rotate(0deg)   translateZ(0); letter-spacing: .01em; filter: drop-shadow(0 2px 8px #00000012); }
+      60%  { transform: rotate(360deg) translateZ(0); letter-spacing: .02em; filter: drop-shadow(0 6px 22px #00000010); }
+      100% { transform: rotate(360deg) translateZ(0); letter-spacing: .01em; filter: drop-shadow(0 2px 8px #00000012); }
+    }
+
+    .reveal .glyph-nx{
+      opacity: 1;
+      transform: translateX(0) translateZ(0);
+      letter-spacing: .01em;
+    }
+
+    /* After merge, calm the ring and halo */
+    .reveal .orbit{ opacity: .0; transition: opacity 350ms ease; }
+    .reveal .halo { opacity: .65; transition: opacity 400ms ease; }
+
+    /* Reduced Motion: respect user preference */
+    @media (prefers-reduced-motion: reduce){
+      .play .orbit{ animation: none; }
+      .suck .llm, .reveal .glyph-o { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+      .glyph-nx{ transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ============ Scene ============ -->
+  <div class="onx-scene" id="onx-scene" aria-label="ONX Neural Network animation">
+    <div class="onx-center">
+      <div class="halo" aria-hidden="true"></div>
+
+      <!-- Wordmark (starts as “O”, reveals “ONX”) -->
+      <div class="wordmark" aria-hidden="true">
+        <span class="glyph glyph-o">O</span><span class="glyph glyph-nx">NX</span>
+      </div>
+
+      <!-- Orbiting logos (Put your real files: LLM1.svg … LLM5.svg) -->
+      <div class="orbit" aria-hidden="true">
+        <div class="orbiter"><img class="llm" src="LLM1.svg" alt="" /></div>
+        <div class="orbiter"><img class="llm" src="LLM2.svg" alt="" /></div>
+        <div class="orbiter"><img class="llm" src="LLM3.svg" alt="" /></div>
+        <div class="orbiter"><img class="llm" src="LLM4.svg" alt="" /></div>
+        <div class="orbiter"><img class="llm" src="LLM5.svg" alt="" /></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Orchestration timeline for “orbit → suck in (staggered) → O spins → ONX” */
+    (function(){
+      const scene = document.getElementById('onx-scene');
+      const delays = []; // per-logo delays for the staggered suck-in
+
+      const SUCK_START   = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--suck-start')) || 2000;
+      const STAGGER      = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--suck-stagger')) || 600;
+      const SUCK_DURATION= parseTime(getComputedStyle(document.documentElement).getPropertyValue('--suck-duration')) || 900;
+      const REVEAL_GAP   = parseTime(getComputedStyle(document.documentElement).getPropertyValue('--reveal-gap')) || 350;
+
+      // Enable base spin
+      scene.classList.add('play');
+
+      // Assign stagger delays to each LLM logo
+      const logos = Array.from(scene.querySelectorAll('.llm'));
+      logos.forEach((el, i) => {
+        const d = SUCK_START + (i * STAGGER);
+        delays.push(d);
+        el.style.setProperty('--delay', d + 'ms');
+      });
+
+      // Start suck-in phase
+      setTimeout(() => {
+        scene.classList.add('suck');
+      }, SUCK_START);
+
+      // Reveal ONX shortly after the last logo is absorbed
+      const lastAbsorbEndsAt = SUCK_START + ( (logos.length - 1) * STAGGER ) + SUCK_DURATION + REVEAL_GAP;
+      setTimeout(() => {
+        scene.classList.add('reveal');
+        scene.setAttribute('aria-label', 'ONX');
+      }, lastAbsorbEndsAt);
+
+      // Utility: parse CSS time values (e.g., "600ms", "2s")
+      function parseTime(v){
+        v = String(v).trim();
+        if (!v) return 0;
+        if (v.endsWith('ms')) return parseFloat(v);
+        if (v.endsWith('s'))  return parseFloat(v) * 1000;
+        const num = parseFloat(v);
+        return isNaN(num) ? 0 : num;
+      }
+    })();
+  </script>
+</body>
+</html>
+
+
 <!-- ──────────────────────────Showcase Video Section───────────────────────────────────── -->
 <!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
 <div id="onx-card-reveal" class="padTop"
