@@ -907,10 +907,11 @@
     .onx-merge .onx-word{
       font-family:'Audiowide',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
       line-height:1; letter-spacing:.01em; filter:drop-shadow(var(--shadow-soft));
-      pointer-events:none; position:relative; z-index:4;
+      pointer-events:none; position:relative; z-index:10;
       transform:translateX(var(--recenter,0px)); /* JS sets this at reveal */
       transition:transform 560ms var(--ease-out);
       will-change:transform;
+      opacity:1; /* hard lock: never fade */
     }
     .onx-merge .glyph-o{
       font-size:var(--o-font); display:inline-block; will-change:transform,filter,letter-spacing;
@@ -919,8 +920,7 @@
       font-size:var(--o-font);
       /* absolutely positioned to the RIGHT of the O; gap set via --nx-gap */
       position:absolute; left:calc(100% + var(--nx-gap, 0px)); top:0;
-      /* provide a readable default gap that JS will convert to px for --nx-gap */
-      margin-left:0.08em;
+      margin-left:0.08em; /* used as the “design gap” that JS converts to px */
       opacity:0; transform:translateX(-0.18em);
       -webkit-mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
               mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
@@ -941,8 +941,8 @@
       margin-left:calc(var(--ring)/-2); margin-top:calc(var(--ring)/-2);
       border-radius:50%; pointer-events:none; will-change:transform; z-index:3;
     }
-    .onx-merge.play .onx-orbit{ animation:onx-spin var(--spin-duration) linear infinite; }
-    .onx-merge.boost .onx-orbit{ animation-duration:calc(var(--spin-duration)*0.45); animation-timing-function:var(--ease-inout); }
+    .onx-merge.is-play  .onx-orbit{ animation:onx-spin var(--spin-duration) linear infinite; }
+    .onx-merge.is-boost .onx-orbit{ animation-duration:calc(var(--spin-duration)*0.45); animation-timing-function:var(--ease-inout); }
     @keyframes onx-spin{ to{ transform:rotate(360deg); } }
 
     .onx-merge .orbiter{ position:absolute; left:50%; top:50%; width:1px; height:1px; transform-origin:0 0; }
@@ -968,7 +968,7 @@
     .onx-merge .logo{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02); }
 
     /* Suck-in boomerang */
-    .onx-merge.suck .chip{ animation:onx-suck var(--suck-duration) var(--ease-inout) forwards; animation-delay:var(--delay,0ms); }
+    .onx-merge.is-suck .chip{ animation:onx-suck var(--suck-duration) var(--ease-inout) forwards; animation-delay:var(--delay,0ms); }
     @keyframes onx-suck{
       0%{   opacity:1;   transform:translateX(var(--radius)) translate(-50%,-50%) scale(1); }
       62%{  opacity:.34; transform:translateX(0)             translate(-50%,-50%) scale(.46); }
@@ -978,7 +978,7 @@
     }
 
     /* O spin + bounce */
-    .onx-merge.reveal .glyph-o{ animation:onx-o-spin 860ms var(--ease-inout) both, onx-o-bounce 860ms var(--ease-inout) both; }
+    .onx-merge.is-reveal .glyph-o{ animation:onx-o-spin 860ms var(--ease-inout) both, onx-o-bounce 860ms var(--ease-inout) both; }
     @keyframes onx-o-spin{ to{ transform:rotate(360deg); } }
     @keyframes onx-o-bounce{
       0%{   letter-spacing:.010em; filter:drop-shadow(var(--shadow-soft)); transform:scale(1); }
@@ -988,21 +988,22 @@
     }
 
     /* NX wipe + settle (ONX persists) */
-    .onx-merge.reveal .glyph-nx{
+    .onx-merge.is-reveal .glyph-nx{
       opacity:1; transform:translateX(0); letter-spacing:.012em;
       -webkit-mask-position:100% 50%; mask-position:100% 50%;
     }
 
-    /* Fade orbit after merge */
-    .onx-merge.reveal .onx-orbit{ opacity:0; transition:opacity 420ms var(--ease-out); }
+    /* Fade orbit after merge (word remains at full opacity) */
+    .onx-merge.is-reveal .onx-orbit{ opacity:0; transition:opacity 420ms var(--ease-out); }
 
     /* PERSISTENT GALLERY (absolute under ONX; JS sets top exactly) */
     .onx-merge .onx-gallery{
       position:absolute; left:50%; transform:translateX(-50%);
       display:flex; gap:var(--gallery-gap);
-      visibility:hidden; opacity:0; pointer-events:none; z-index:5;
+      opacity:0; pointer-events:none; z-index:9; /* below word, above orbit */
+      will-change:opacity,transform;
     }
-    .onx-merge.final .onx-gallery{ visibility:visible; transition:opacity 420ms var(--ease-out); opacity:1; }
+    .onx-merge.is-final .onx-gallery{ transition:opacity 420ms var(--ease-out); opacity:1; }
 
     .onx-merge .gallery-chip{
       position:relative; width:var(--gallery-logo); height:var(--gallery-logo);
@@ -1011,7 +1012,7 @@
       box-shadow:0 0 0 1px #0b0b0c12 inset, 0 8px 20px #00000012;
       overflow:hidden; opacity:0; transform:translateY(12px) scale(.92); will-change:transform,opacity;
     }
-    .onx-merge.final .gallery-chip{ animation:onx-pop 700ms var(--ease-inout) forwards; animation-delay:var(--gdelay,0ms); }
+    .onx-merge.is-final .gallery-chip{ animation:onx-pop 700ms var(--ease-inout) forwards; animation-delay:var(--gdelay,0ms); }
     .onx-merge .gallery-chip img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02); }
     @keyframes onx-pop{
       0%{   opacity:0; transform:translateY(12px) scale(.92); }
@@ -1021,10 +1022,10 @@
     }
 
     @media (prefers-reduced-motion:reduce){
-      .onx-merge.play .onx-orbit{ animation:none; }
-      .onx-merge.suck .chip,
-      .onx-merge.reveal .glyph-o,
-      .onx-merge.final .gallery-chip{ animation-duration:.001ms !important; animation-iteration-count:1 !important; }
+      .onx-merge.is-play .onx-orbit{ animation:none; }
+      .onx-merge.is-suck .chip,
+      .onx-merge.is-reveal .glyph-o,
+      .onx-merge.is-final .gallery-chip{ animation-duration:.001ms !important; animation-iteration-count:1 !important; }
       .onx-merge .glyph-nx{ transition:none; }
     }
   </style>
@@ -1064,15 +1065,13 @@
   (function(){
     const root = document.getElementById('onx-merge');
     const word = document.getElementById('onx-word');
-    const oEl  = document.getElementById('glyph-o');
     const nxEl = document.getElementById('glyph-nx');
-    const orbit = root.querySelector('.onx-orbit');
     const chips = Array.from(root.querySelectorAll('.chip'));
     const gallery = document.getElementById('onx-gallery');
     const gchips  = Array.from(gallery.querySelectorAll('.gallery-chip'));
 
     // CSS helpers
-    const css = p => getComputedStyle(root).getPropertyValue(p).trim();
+    const css  = p => getComputedStyle(root).getPropertyValue(p).trim();
     const toMs = v => v.endsWith('ms') ? parseFloat(v) : v.endsWith('s') ? parseFloat(v)*1000 : parseFloat(v)||0;
 
     const SUCK_START    = toMs(css('--suck-start'))    || 1500;
@@ -1082,6 +1081,12 @@
     const FINAL_GAP     = toMs(css('--final-gap'))     || 620;
     const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
 
+    // Avoid collisions with site-wide “reveal” CSS by using unique state classes
+    root.classList.add('is-play');
+    const BOOST_LEAD = 360;
+    setTimeout(()=> root.classList.add('is-boost'), Math.max(0, SUCK_START-BOOST_LEAD));
+    setTimeout(()=> root.classList.remove('is-boost'), Math.max(0, SUCK_START+80));
+
     // Ensure NX gap matches its CSS margin (converted to px)
     (function setNxGap(){
       const s = getComputedStyle(nxEl);
@@ -1089,19 +1094,12 @@
       word.style.setProperty('--nx-gap', gap + 'px');
     })();
 
-    // Start orbit + a brief anticipation boost
-    root.classList.add('play');
-    const BOOST_LEAD = 360;
-    setTimeout(()=> root.classList.add('boost'), Math.max(0, SUCK_START-BOOST_LEAD));
-    setTimeout(()=> root.classList.remove('boost'), Math.max(0, SUCK_START+80));
-
     // Stagger suck-in per chip
     chips.forEach((el,i)=> el.style.setProperty('--delay', (SUCK_START + i*STAGGER) + 'ms'));
-    setTimeout(()=> root.classList.add('suck'), SUCK_START);
+    setTimeout(()=> root.classList.add('is-suck'), SUCK_START);
 
     // Compute recenter so ONX stays centered when NX appears (measure NX width in px)
     function computeRecenter(){
-      // Make sure font metrics are loaded for accurate width
       const nxWidth = nxEl.getBoundingClientRect().width; // absolute, but measurable even at opacity:0
       const gapPx   = parseFloat(getComputedStyle(word).getPropertyValue('--nx-gap')) || 0;
       const delta   = nxWidth + gapPx; // extra width added to the right when NX shows
@@ -1127,9 +1125,11 @@
 
     // Reveal ONX (persist) — compute recenter just before reveal
     setTimeout(async ()=>{
-      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} }
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch(e){}
+      }
       computeRecenter();
-      root.classList.add('reveal');
+      root.classList.add('is-reveal');        // orbit fades only; word stays
       root.setAttribute('aria-label','ONX');
     }, lastAbsorbEndsAt);
 
@@ -1137,23 +1137,20 @@
     const finalStartAt = lastAbsorbEndsAt + FINAL_GAP;
     setTimeout(()=>{
       setGalleryStagger();
-      placeGallery();
-      root.classList.add('final');
-
-      // Re-place after the gallery becomes visible so height is accurate
+      root.classList.add('is-final');         // make gallery visible
+      // After visible, position it (needs real height)
       requestAnimationFrame(()=> { placeGallery(); });
-      // One more frame to be extra-safe on slow layouts
-      requestAnimationFrame(()=> { placeGallery(); });
+      requestAnimationFrame(()=> { placeGallery(); }); // extra pass for slow layout
     }, finalStartAt);
 
     // Keep gallery locked under ONX on resize or font swaps
-    window.addEventListener('resize', ()=> { if (root.classList.contains('final')) placeGallery(); }, {passive:true});
-    document.fonts && document.fonts.ready && document.fonts.ready.then(()=> { if (root.classList.contains('final')) placeGallery(); });
+    window.addEventListener('resize', ()=> { if (root.classList.contains('is-final')) placeGallery(); }, {passive:true});
+    document.fonts && document.fonts.ready && document.fonts.ready.then(()=> { if (root.classList.contains('is-final')) placeGallery(); });
 
     // If images load later, re-place once (covers cache misses)
-    let imgs = Array.from(document.images).filter(img => gallery.contains(img));
+    const imgs = Array.from(document.images).filter(img => gallery.contains(img));
     imgs.forEach(img => {
-      if (!img.complete) img.addEventListener('load', ()=> { if (root.classList.contains('final')) placeGallery(); }, {once:true});
+      if (!img.complete) img.addEventListener('load', ()=> { if (root.classList.contains('is-final')) placeGallery(); }, {once:true});
     });
   })();
   </script>
