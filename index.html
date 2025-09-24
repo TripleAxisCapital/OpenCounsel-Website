@@ -810,13 +810,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
   <style>
-    /* ───── Minimal reset for pixel-perfect centering & zero CLS ───── */
-    html,body{height:100%;margin:0}
-    *{box-sizing:border-box}
-    img{display:block;max-width:100%}
-
     /* ───── ONX Orbit→Merge→Reveal→Showcase (Apple-style) — O centered, ONX + bottom logos persist ───── */
-    .onx-merge{
+    .onx-merge {
       /* Design tokens */
       --bg:#fff; --ink:#0B0B0C;
       --stage-h:clamp(420px,78vh,980px);
@@ -832,7 +827,7 @@
       --gallery-gap:clamp(10px,2.4vmin,22px);
       --gallery-offset:clamp(28px,3.8vmin,56px); /* px below ONX baseline */
 
-      --spin-duration:8.2s;
+      --spin-duration:8.2s;         /* used as base speed for JS-driven orbit */
       --suck-duration:920ms;
       --suck-stagger:540ms;
       --suck-start:1500ms;
@@ -850,7 +845,7 @@
       position:relative; width:100%; height:var(--stage-h);
       background:var(--bg); color:var(--ink);
       display:grid; place-items:center; /* hard center anchor */
-      overflow:hidden; isolation:isolate;
+      overflow:clip; isolation:isolate;
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
@@ -876,7 +871,7 @@
       font-family:'Audiowide',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
       line-height:1; letter-spacing:.01em; filter:drop-shadow(var(--shadow-soft));
       pointer-events:none; position:relative; z-index:10;
-      transform:translateX(var(--recenter,0px)); /* JS sets this at reveal & on resize */
+      transform:translateX(var(--recenter,0px)); /* JS sets this at reveal */
       transition:transform 560ms var(--ease-out);
       will-change:transform;
       opacity:1; /* hard lock: never fade */
@@ -888,7 +883,7 @@
       font-size:var(--o-font);
       /* absolutely positioned to the RIGHT of the O; gap set via --nx-gap */
       position:absolute; left:calc(100% + var(--nx-gap, 0px)); top:0;
-      margin-left:0.08em; /* design gap that JS converts to px */
+      margin-left:0.08em; /* used as the “design gap” that JS converts to px */
       opacity:0; transform:translateX(-0.18em);
       -webkit-mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
               mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
@@ -907,26 +902,27 @@
       position:absolute; left:50%; top:50%;
       width:var(--ring); height:var(--ring);
       margin-left:calc(var(--ring)/-2); margin-top:calc(var(--ring)/-2);
-      border-radius:50%; pointer-events:none; will-change:transform; z-index:3;
+      border-radius:50%; pointer-events:none; z-index:3;
+      will-change:transform; transform:translateZ(0);
+      backface-visibility:hidden; transform-style:preserve-3d;
     }
-    .onx-merge.is-play  .onx-orbit{ animation:onx-spin var(--spin-duration) linear infinite; }
-    .onx-merge.is-boost .onx-orbit{ animation-duration:calc(var(--spin-duration)*0.45); animation-timing-function:var(--ease-inout); }
-    @keyframes onx-spin{ to{ transform:rotate(360deg); } }
 
-    .onx-merge .orbiter{ position:absolute; left:50%; top:50%; width:1px; height:1px; transform-origin:0 0; }
-    .onx-merge .orbiter:nth-child(1){ transform:rotate(6deg); }
-    .onx-merge .orbiter:nth-child(2){ transform:rotate(78deg); }
-    .onx-merge .orbiter:nth-child(3){ transform:rotate(150deg); }
-    .onx-merge .orbiter:nth-child(4){ transform:rotate(222deg); }
-    .onx-merge .orbiter:nth-child(5){ transform:rotate(294deg); }
+    /* Evenly distributed starting angles (no missing final item) */
+    .onx-merge .orbiter{ position:absolute; left:50%; top:50%; width:1px; height:1px; transform-origin:0 0; will-change:transform; }
+    .onx-merge .orbiter:nth-child(1){ transform:rotate(0deg); }
+    .onx-merge .orbiter:nth-child(2){ transform:rotate(90deg); }
+    .onx-merge .orbiter:nth-child(3){ transform:rotate(180deg); }
+    .onx-merge .orbiter:nth-child(4){ transform:rotate(270deg); }
 
     .onx-merge .chip{
       position:relative; width:var(--logo); height:var(--logo);
-      transform:translateX(var(--radius)) translate(-50%,-50%); transform-origin:50% 50%;
+      transform:translate3d(var(--radius),0,0) translate3d(-50%,-50%,0) scale(1);
+      transform-origin:50% 50%;
       border-radius:14px;
       background:radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
       box-shadow:0 0 0 1px #0b0b0c12 inset, 0 10px 24px #00000014;
       overflow:hidden; will-change:transform,opacity,filter;
+      backface-visibility:hidden;
     }
     .onx-merge .chip::before{
       content:""; position:absolute; inset:0;
@@ -936,13 +932,16 @@
     .onx-merge .logo{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02); }
 
     /* Suck-in boomerang */
-    .onx-merge.is-suck .chip{ animation:onx-suck var(--suck-duration) var(--ease-inout) forwards; animation-delay:var(--delay,0ms); }
+    .onx-merge.is-suck .chip{
+      animation:onx-suck var(--suck-duration) var(--ease-inout) both;
+      animation-delay:var(--delay,0ms);
+    }
     @keyframes onx-suck{
-      0%{   opacity:1;   transform:translateX(var(--radius)) translate(-50%,-50%) scale(1); }
-      62%{  opacity:.34; transform:translateX(0)             translate(-50%,-50%) scale(.46); }
-      78%{  opacity:.22; transform:translateX(-10px)         translate(-50%,-50%) scale(.42); }
-      90%{  opacity:.16; transform:translateX(4px)           translate(-50%,-50%) scale(.38); }
-      100%{ opacity:0;   transform:translateX(0)             translate(-50%,-50%) scale(.28); filter:blur(1px); }
+      0%{   opacity:1;   transform:translate3d(var(--radius),0,0) translate3d(-50%,-50%,0) scale(1); }
+      62%{  opacity:.34; transform:translate3d(0,0,0)              translate3d(-50%,-50%,0) scale(.46); }
+      78%{  opacity:.22; transform:translate3d(-10px,0,0)          translate3d(-50%,-50%,0) scale(.42); }
+      90%{  opacity:.16; transform:translate3d(4px,0,0)            translate3d(-50%,-50%,0) scale(.38); }
+      100%{ opacity:0;   transform:translate3d(0,0,0)              translate3d(-50%,-50%,0) scale(.28); filter:blur(1px); }
     }
 
     /* O spin + bounce */
@@ -979,6 +978,7 @@
       background:radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
       box-shadow:0 0 0 1px #0b0b0c12 inset, 0 8px 20px #00000012;
       overflow:hidden; opacity:0; transform:translateY(12px) scale(.92); will-change:transform,opacity;
+      backface-visibility:hidden;
     }
     .onx-merge.is-final .gallery-chip{ animation:onx-pop 700ms var(--ease-inout) forwards; animation-delay:var(--gdelay,0ms); }
     .onx-merge .gallery-chip img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02); }
@@ -990,7 +990,7 @@
     }
 
     @media (prefers-reduced-motion:reduce){
-      .onx-merge.is-play .onx-orbit{ animation:none; }
+      .onx-merge .onx-orbit{ transition:none !important; }
       .onx-merge.is-suck .chip,
       .onx-merge.is-reveal .glyph-o,
       .onx-merge.is-final .gallery-chip{ animation-duration:.001ms !important; animation-iteration-count:1 !important; }
@@ -1010,29 +1010,30 @@
       </div>
 
       <!-- Orbiting logos — replace src with your assets -->
-      <div class="onx-orbit" aria-hidden="true">
-        <div class="orbiter"><div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div></div>
-        <div class="orbiter"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div></div>
-        <div class="orbiter"><div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div></div>
-        <div class="orbiter"><div class="chip"><img class="logo" src="OAILogo.png"    alt="OpenAI"></div></div>
+      <div class="onx-orbit" id="onx-orbit" aria-hidden="true">
+        <div class="orbiter"><div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"   decoding="async" fetchpriority="low"></div></div>
+        <div class="orbiter"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google" decoding="async" fetchpriority="low"></div></div>
+        <div class="orbiter"><div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"   decoding="async" fetchpriority="low"></div></div>
+        <div class="orbiter"><div class="chip"><img class="logo" src="OAILogo.png"    alt="OpenAI" decoding="async" fetchpriority="low"></div></div>
       </div>
     </div>
 
     <!-- Bottom gallery pops in under ONX and persists -->
     <div class="onx-gallery" id="onx-gallery" aria-hidden="true">
-      <div class="gallery-chip"><img src="grokLogo.svg"   alt="Grok"></div>
-      <div class="gallery-chip"><img src="googleLogo.svg" alt="Google"></div>
-      <div class="gallery-chip"><img src="metaLogo.svg"   alt="Meta"></div>
-      <div class="gallery-chip"><img src="OAILogo.png"    alt="OpenAI"></div>
+      <div class="gallery-chip"><img src="grokLogo.svg"   alt="Grok"   decoding="async"></div>
+      <div class="gallery-chip"><img src="googleLogo.svg" alt="Google" decoding="async"></div>
+      <div class="gallery-chip"><img src="metaLogo.svg"   alt="Meta"   decoding="async"></div>
+      <div class="gallery-chip"><img src="OAILogo.png"    alt="OpenAI" decoding="async"></div>
     </div>
   </section>
 
   <script>
-  (()=>{ "use strict";
-    const root = document.getElementById('onx-merge');
-    const word = document.getElementById('onx-word');
-    const nxEl = document.getElementById('glyph-nx');
-    const chips = Array.from(root.querySelectorAll('.chip'));
+  (function(){
+    const root    = document.getElementById('onx-merge');
+    const word    = document.getElementById('onx-word');
+    const nxEl    = document.getElementById('glyph-nx');
+    const orbitEl = document.getElementById('onx-orbit');
+    const chips   = Array.from(root.querySelectorAll('.chip'));
     const gallery = document.getElementById('onx-gallery');
     const gchips  = Array.from(gallery.querySelectorAll('.gallery-chip'));
 
@@ -1046,13 +1047,46 @@
     const REVEAL_GAP    = toMs(css('--reveal-gap'))    || 400;
     const FINAL_GAP     = toMs(css('--final-gap'))     || 620;
     const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
+    const SPIN_MS       = toMs(css('--spin-duration')) || 8200;
 
-    // Play state
-    root.classList.add('is-play');
-    const BOOST_LEAD = 360;
-    setTimeout(()=> root.classList.add('is-boost'), Math.max(0, SUCK_START-BOOST_LEAD));
-    setTimeout(()=> root.classList.remove('is-boost'), Math.max(0, SUCK_START+80));
+    // ---------- PERFECTLY SMOOTH ORBIT (no CSS animation resets) ----------
+    // Angle integrates over time; speed ramps briefly around suck start.
+    let angle = 0;
+    let last  = performance.now();
 
+    // Boost window (smooth acceleration/deceleration; no jump)
+    const BOOST_IN_START  = SUCK_START - 360;
+    const BOOST_PEAK_AT   = SUCK_START;
+    const BOOST_OUT_END   = SUCK_START + 120;
+    const BOOST_MAX_MULT  = 2.2;  // peak speed multiplier
+
+    // Cubic ease in-out
+    const ease = t => (t<0) ? 0 : (t>1) ? 1 : (t<.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2);
+
+    function speedMultiplier(now){
+      if (now < BOOST_IN_START) return 1;
+      if (now <= BOOST_PEAK_AT){
+        const t = (now - BOOST_IN_START) / (BOOST_PEAK_AT - BOOST_IN_START);
+        return 1 + (BOOST_MAX_MULT - 1) * ease(t);
+      }
+      if (now <= BOOST_OUT_END){
+        const t = (now - BOOST_PEAK_AT) / (BOOST_OUT_END - BOOST_PEAK_AT);
+        return BOOST_MAX_MULT - (BOOST_MAX_MULT - 1) * ease(t);
+      }
+      return 1;
+    }
+
+    function tick(ts){
+      const dt = (ts - last);
+      last = ts;
+      const degPerMs = 360 / SPIN_MS;
+      angle = (angle + degPerMs * speedMultiplier(ts) * dt) % 360;
+      orbitEl.style.transform = `translateZ(0) rotate(${angle}deg)`;
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    // ---------- Layout & timing orchestration ----------
     // Ensure NX gap matches its CSS margin (converted to px)
     (function setNxGap(){
       const s = getComputedStyle(nxEl);
@@ -1060,8 +1094,9 @@
       word.style.setProperty('--nx-gap', gap + 'px');
     })();
 
-    // Stagger suck-in per chip
+    // Stagger suck-in per chip (every chip WILL animate, including the last)
     chips.forEach((el,i)=> el.style.setProperty('--delay', (SUCK_START + i*STAGGER) + 'ms'));
+    // Trigger suck sequence (single class; per-chip delays handle all items)
     setTimeout(()=> root.classList.add('is-suck'), SUCK_START);
 
     // Compute recenter so ONX stays centered when NX appears (measure NX width in px)
@@ -1072,7 +1107,7 @@
       word.style.setProperty('--recenter', (-delta/2) + 'px');
     }
 
-    // Position gallery under the live ONX baseline
+    // Position gallery under the live ONX baseline with guard for stage bottom
     function placeGallery(){
       const stageRect = root.getBoundingClientRect();
       const wordRect  = word.getBoundingClientRect();
@@ -1087,18 +1122,11 @@
       gchips.forEach((el,i)=> el.style.setProperty('--gdelay', (i * GALLERY_STAG) + 'ms'));
     }
 
-    // When to reveal/finalize
     const lastAbsorbEndsAt = SUCK_START + ((chips.length-1)*STAGGER) + SUCK_DURATION + REVEAL_GAP;
 
-    // Reveal ONX (persist) — compute recenter just before reveal (after fonts are ready)
-    const ensureFontsReady = (async ()=>{
-      if (document.fonts && document.fonts.ready) {
-        try { await document.fonts.ready; } catch(e){}
-      }
-    })();
-
+    // Reveal ONX (persist) — compute recenter just before reveal
     setTimeout(async ()=>{
-      await ensureFontsReady;
+      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} }
       computeRecenter();
       root.classList.add('is-reveal');        // orbit fades only; word stays
       root.setAttribute('aria-label','ONX');
@@ -1114,21 +1142,14 @@
       requestAnimationFrame(()=> { placeGallery(); }); // extra pass for slow layout
     }, finalStartAt);
 
-    // Keep layout perfect on viewport changes (recenter + gallery lock)
-    const onResize = ()=> {
-      if (root.classList.contains('is-reveal') || root.classList.contains('is-final')) {
-        computeRecenter();
-        placeGallery();
-      }
-    };
-    window.addEventListener('resize', onResize, {passive:true});
+    // Keep gallery locked under ONX on resize or font swaps
+    window.addEventListener('resize', ()=> { if (root.classList.contains('is-final')) placeGallery(); }, {passive:true});
+    document.fonts && document.fonts.ready && document.fonts.ready.then(()=> { if (root.classList.contains('is-final')) placeGallery(); });
 
     // If images load later, re-place once (covers cache misses)
     const imgs = Array.from(document.images).filter(img => gallery.contains(img));
     imgs.forEach(img => {
-      if (!img.complete) img.addEventListener('load', ()=> {
-        if (root.classList.contains('is-final')) placeGallery();
-      }, {once:true});
+      if (!img.complete) img.addEventListener('load', ()=> { if (root.classList.contains('is-final')) placeGallery(); }, {once:true});
     });
   })();
   </script>
