@@ -842,7 +842,7 @@
 
 
 
-<!-- ─────────────────── ONX Orbit-Merge (Apple-style, white background, boomerang smooth) ─────────────────── -->
+<!-- ─────────────────── ONX Orbit→Merge→Reveal→Showcase (Apple-style, white background) ─────────────────── -->
 <!-- Drop this block anywhere in your page (no <html>/<body> wrappers). -->
 <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
@@ -853,20 +853,26 @@
     --ink: #0B0B0C;
 
     --stage-h: clamp(420px, 78vh, 980px);
-    --size: min(58vmin, 620px);           /* center cluster bounds */
-    --ring: calc(var(--size) * 0.9);      /* conceptual orbit diameter */
+    --size: min(58vmin, 620px);             /* center cluster bounds */
+    --ring: calc(var(--size) * 0.9);        /* conceptual orbit diameter */
     --o-font: clamp(72px, 17vmin, 220px);
 
-    /* Make logos unmistakably visible on white (larger + backplate) */
-    --logo: clamp(40px, 6.4vmin, 76px);
-    --radius: calc(var(--ring) / 2.05);   /* logo orbital radius */
+    /* Orbiting logo chips (clear on white) */
+    --logo: clamp(40px, 6.2vmin, 76px);
+    --radius: calc(var(--ring) / 2.05);     /* logo orbital radius */
+
+    /* Gallery (final row under ONX) */
+    --gallery-logo: clamp(28px, 5vmin, 60px);
+    --gallery-gap: clamp(10px, 2.4vmin, 22px);
 
     /* Timing */
-    --spin-duration: 8.2s;                /* premium slow spin */
-    --suck-duration: 920ms;               /* per-logo merge */
-    --suck-stagger: 540ms;                /* delay between logos */
-    --suck-start: 1500ms;                 /* when first logo merges */
-    --reveal-gap: 400ms;                  /* pause before ONX reveal */
+    --spin-duration: 8.2s;                  /* premium slow spin */
+    --suck-duration: 920ms;                 /* per-logo merge */
+    --suck-stagger: 540ms;                  /* delay between logos */
+    --suck-start: 1500ms;                   /* when first logo merges */
+    --reveal-gap: 400ms;                    /* pause before ONX reveal */
+    --final-gap: 620ms;                     /* pause before gallery pops in */
+    --gallery-stagger: 120ms;               /* delay between gallery pops */
 
     /* Easing tuned for boomerang feel */
     --ease-out: cubic-bezier(.16,1,.3,1);
@@ -909,19 +915,20 @@
     z-index: 0;
   }
 
-  /* Center cluster */
+  /* Center cluster (vertical stack: wordmark, then gallery later) */
   .onx-merge .onx-center {
     position: relative;
     width: var(--size);
     height: var(--size);
     display: grid;
+    grid-template-rows: 1fr auto; /* wordmark centered; gallery sits below */
     place-items: center;
     z-index: 1;
     transform: translate3d(0,0,0);
     contain: layout paint size;
   }
 
-  /* Wordmark: starts "O", then reveals "NX" with premium wipe */
+  /* Wordmark: starts as centered “O”; later reveals “NX” */
   .onx-merge .onx-word {
     font-family: 'Audiowide', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
     line-height: 1;
@@ -931,11 +938,13 @@
     display: inline-flex;
     align-items: center;
     filter: drop-shadow(var(--shadow-soft));
+    align-self: center; /* keep truly centered vertically */
   }
   .onx-merge .glyph-o {
     font-size: var(--o-font);
     display: inline-block;
     will-change: transform, filter, letter-spacing;
+    /* Starts centered and visible by default */
   }
   .onx-merge .glyph-nx {
     font-size: var(--o-font);
@@ -969,26 +978,14 @@
     border-radius: 50%;
     pointer-events: none;
     will-change: transform;
-    z-index: 2; /* ensure logos sit above the O for visibility */
+    z-index: 2; /* logos above the O initially */
   }
-
-  /* Gentle continuous spin; briefly accelerates pre-merge for “anticipation” */
-  .onx-merge.play .onx-orbit {
-    animation: onx-spin var(--spin-duration) linear infinite;
-  }
-  .onx-merge.boost .onx-orbit {
-    animation-duration: calc(var(--spin-duration) * 0.45);
-    animation-timing-function: var(--ease-inout);
-  }
+  .onx-merge.play .onx-orbit   { animation: onx-spin var(--spin-duration) linear infinite; }
+  .onx-merge.boost .onx-orbit  { animation-duration: calc(var(--spin-duration) * 0.45); animation-timing-function: var(--ease-inout); }
   @keyframes onx-spin { to { transform: rotate(360deg); } }
 
   /* Polar anchors */
-  .onx-merge .orbiter {
-    position: absolute;
-    left: 50%; top: 50%;
-    width: 1px; height: 1px;
-    transform-origin: 0 0;
-  }
+  .onx-merge .orbiter { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; transform-origin: 0 0; }
   .onx-merge .orbiter:nth-child(1){ transform: rotate(6deg);   }
   .onx-merge .orbiter:nth-child(2){ transform: rotate(78deg);  }
   .onx-merge .orbiter:nth-child(3){ transform: rotate(150deg); }
@@ -1012,7 +1009,6 @@
     will-change: transform, opacity, filter;
   }
   .onx-merge .chip::before {
-    /* soft edge sheen */
     content: "";
     position: absolute; inset: 0;
     background: radial-gradient(80% 80% at 50% 50%, #ffffff80, #ffffff00 70%);
@@ -1027,9 +1023,7 @@
     filter: saturate(1.05) contrast(1.02);
   }
   .onx-merge .chip:hover {
-    box-shadow:
-      0 0 0 1px #0b0b0c16 inset,
-      0 14px 34px #0000001e;
+    box-shadow: 0 0 0 1px #0b0b0c16 inset, 0 14px 34px #0000001e;
     transform: translateX(var(--radius)) translate(-50%, -50%) scale(1.04);
     transition: box-shadow 180ms ease, transform 180ms ease;
   }
@@ -1042,7 +1036,7 @@
   @keyframes onx-suck {
     0%   { opacity: 1;   transform: translateX(var(--radius)) translate(-50%, -50%) scale(1); }
     62%  { opacity: .34; transform: translateX(0)             translate(-50%, -50%) scale(.46); }
-    78%  { opacity: .22; transform: translateX(-10px)         translate(-50%, -50%) scale(.42); } /* overshoot past center */
+    78%  { opacity: .22; transform: translateX(-10px)         translate(-50%, -50%) scale(.42); } /* overshoot */
     90%  { opacity: .16; transform: translateX(  4px)         translate(-50%, -50%) scale(.38); } /* rebound */
     100% { opacity: 0;   transform: translateX(  0px)         translate(-50%, -50%) scale(.28); filter: blur(1px); }
   }
@@ -1060,7 +1054,7 @@
     100% { letter-spacing: .012em; filter: drop-shadow(var(--shadow-soft)); transform: scale(1);    }
   }
 
-  /* NX wipe + settle */
+  /* NX wipe + settle (stays visible indefinitely) */
   .onx-merge.reveal .glyph-nx {
     opacity: 1;
     transform: translateX(0);
@@ -1070,16 +1064,60 @@
   }
 
   /* Calm orbit layer after merge */
-  .onx-merge.reveal .onx-orbit {
+  .onx-merge.reveal .onx-orbit { opacity: 0; transition: opacity 420ms var(--ease-out); }
+
+  /* ===== Final showcase: logo gallery pops in under ONX and persists ===== */
+  .onx-merge .onx-gallery {
+    align-self: end;
+    display: flex;
+    gap: var(--gallery-gap);
+    margin-top: clamp(14px, 3.8vmin, 36px);
     opacity: 0;
-    transition: opacity 420ms var(--ease-out);
+    transform: translateY(10px);
+    pointer-events: none; /* purely decorative */
+  }
+  .onx-merge.final .onx-gallery {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out);
+  }
+
+  .onx-merge .gallery-chip {
+    position: relative;
+    width: var(--gallery-logo);
+    height: var(--gallery-logo);
+    border-radius: 12px;
+    background:
+      radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
+    box-shadow: 0 0 0 1px #0b0b0c12 inset, 0 8px 20px #00000012;
+    overflow: hidden;
+    opacity: 0;          /* start hidden; animate in */
+    transform: translateY(12px) scale(0.92);
+    will-change: transform, opacity;
+  }
+  .onx-merge.final .gallery-chip {
+    animation: onx-pop 700ms var(--ease-inout) forwards;
+    animation-delay: var(--gdelay, 0ms);
+  }
+  .onx-merge .gallery-chip img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    filter: saturate(1.05) contrast(1.02);
+  }
+  @keyframes onx-pop {
+    0%   { opacity: 0; transform: translateY(12px) scale(0.92); }
+    58%  { opacity: 1; transform: translateY(-3px) scale(1.08); } /* overshoot up */
+    78%  { transform: translateY(1px)  scale(0.99); }
+    100% { transform: translateY(0px)  scale(1.00); }
   }
 
   /* Reduced motion */
   @media (prefers-reduced-motion: reduce){
     .onx-merge.play .onx-orbit { animation: none; }
     .onx-merge.suck .chip,
-    .onx-merge.reveal .glyph-o { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
+    .onx-merge.reveal .glyph-o,
+    .onx-merge.final .gallery-chip { animation-duration: .001ms !important; animation-iteration-count: 1 !important; }
     .onx-merge .glyph-nx { transition: none; }
   }
 </style>
@@ -1089,38 +1127,37 @@
   <div class="onx-halo" aria-hidden="true"></div>
 
   <div class="onx-center">
-    <!-- Wordmark -->
+    <!-- Wordmark (starts as centered “O”; later shows “ONX”) -->
     <div class="onx-word" aria-hidden="true">
       <span class="glyph-o">O</span><span class="glyph-nx">NX</span>
     </div>
 
     <!-- Orbiting logos — replace src values with your assets -->
     <div class="onx-orbit" aria-hidden="true">
-      <div class="orbiter">
-        <div class="chip"><img class="logo" src="grokLogo.svg"   alt=""></div>
-      </div>
-      <div class="orbiter">
-        <div class="chip"><img class="logo" src="googleLogo.svg" alt=""></div>
-      </div>
-      <div class="orbiter">
-        <div class="chip"><img class="logo" src="metaLogo.svg"   alt=""></div>
-      </div>
-      <div class="orbiter">
-        <div class="chip"><img class="logo" src="OAILogo.png"    alt=""></div>
-      </div>
-      <div class="orbiter">
-        <div class="chip"><img class="logo" src="LLM5.svg"       alt=""></div>
-      </div>
+      <div class="orbiter"><div class="chip"><img class="logo" src="grokLogo.svg"   alt=""></div></div>
+      <div class="orbiter"><div class="chip"><img class="logo" src="googleLogo.svg" alt=""></div></div>
+      <div class="orbiter"><div class="chip"><img class="logo" src="metaLogo.svg"   alt=""></div></div>
+      <div class="orbiter"><div class="chip"><img class="logo" src="OAILogo.png"    alt=""></div></div>
+      <div class="orbiter"><div class="chip"><img class="logo" src="LLM5.svg"       alt=""></div></div>
+    </div>
+
+    <!-- Final persistent gallery under ONX (initially hidden; pops in) -->
+    <div class="onx-gallery" aria-hidden="true">
+      <div class="gallery-chip"><img src="grokLogo.svg"   alt=""></div>
+      <div class="gallery-chip"><img src="googleLogo.svg" alt=""></div>
+      <div class="gallery-chip"><img src="metaLogo.svg"   alt=""></div>
+      <div class="gallery-chip"><img src="OAILogo.png"    alt=""></div>
+      <div class="gallery-chip"><img src="LLM5.svg"       alt=""></div>
     </div>
   </div>
 </section>
 
 <script>
-  /* ── Orchestration: orbit → pre-merge acceleration → staggered “suck” → O boomerang spin → ONX reveal ── */
+  /* ── Orchestration: orbit → pre-merge accel → staggered “suck” → ONX reveal → gallery pop-in (persist) ── */
   (function(){
     const root = document.getElementById('onx-merge');
 
-    // Read CSS custom properties from the component
+    // Helper: read CSS custom properties from this component
     const css = (prop) => getComputedStyle(root).getPropertyValue(prop).trim();
     const toMs = (v) => {
       if (!v) return 0;
@@ -1133,31 +1170,42 @@
     const STAGGER       = toMs(css('--suck-stagger'))  || 540;
     const SUCK_DURATION = toMs(css('--suck-duration')) || 920;
     const REVEAL_GAP    = toMs(css('--reveal-gap'))    || 400;
+    const FINAL_GAP     = toMs(css('--final-gap'))     || 620;
+    const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
 
-    // Kick off base orbit
+    // 1) Kick off base orbit and anticipation boost
     root.classList.add('play');
-
-    // Brief anticipation: speed up orbit just before suck starts
     const BOOST_LEAD = 360; // ms before SUCK_START to accelerate orbit
     setTimeout(() => { root.classList.add('boost'); }, Math.max(0, SUCK_START - BOOST_LEAD));
     setTimeout(() => { root.classList.remove('boost'); }, Math.max(0, SUCK_START + 80));
 
-    // Stagger “suck” per logo chip
+    // 2) Stagger “suck” per orbiting logo chip
     const chips = Array.from(root.querySelectorAll('.chip'));
     chips.forEach((el, i) => el.style.setProperty('--delay', (SUCK_START + i * STAGGER) + 'ms'));
 
-    // Start the suck-in phase
     setTimeout(() => { root.classList.add('suck'); }, SUCK_START);
 
-    // Reveal ONX shortly after the last logo is absorbed
+    // 3) Reveal ONX shortly after the last logo is absorbed (ONX persists)
     const lastAbsorbEndsAt = SUCK_START + ((chips.length - 1) * STAGGER) + SUCK_DURATION + REVEAL_GAP;
     setTimeout(() => {
       root.classList.add('reveal');
       root.setAttribute('aria-label', 'ONX');
     }, lastAbsorbEndsAt);
+
+    // 4) Final showcase: pop-in gallery under ONX and keep it visible indefinitely
+    const gallery = root.querySelector('.onx-gallery');
+    const galleryChips = Array.from(gallery.querySelectorAll('.gallery-chip'));
+
+    // Stagger pop delays
+    galleryChips.forEach((el, i) => el.style.setProperty('--gdelay', (i * GALLERY_STAG) + 'ms'));
+
+    const finalStartAt = lastAbsorbEndsAt + FINAL_GAP;
+    setTimeout(() => {
+      root.classList.add('final'); // triggers gallery opacity/translate; chips animate in with onx-pop
+      // No cleanup; ONX + gallery stay visible until refresh.
+    }, finalStartAt);
   })();
 </script>
-
 
 
 <!-- ──────────────────────────Showcase Video Section───────────────────────────────────── -->
