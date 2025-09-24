@@ -838,16 +838,16 @@
 
 
 
-<!-- ───── ONX Orbit→Merge→Reveal→Showcase (Apple-style) — O centered, ONX + bottom logos persist ───── -->
+<!-- ───── ONX Orbit→Merge→Reveal→Showcase (Apple-style) — O centered; ONX + bottom logos persist ───── -->
 <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
 <style>
-  .onx-merge {
+  .onx-merge{
     /* Design tokens */
     --bg:#fff; --ink:#0B0B0C;
     --stage-h:clamp(420px,78vh,980px);
 
-    --size:min(58vmin,620px);     /* locked square at center */
+    --size:min(58vmin,620px);       /* locked square at center */
     --ring:calc(var(--size)*0.90);
     --o-font:clamp(72px,17vmin,220px);
 
@@ -875,8 +875,7 @@
 
     position:relative; width:100%; height:var(--stage-h);
     background:var(--bg); color:var(--ink);
-    display:grid; place-items:center; /* hard center anchor */
-    overflow:clip; isolation:isolate;
+    display:grid; place-items:center; overflow:clip; isolation:isolate;
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
 
@@ -897,20 +896,18 @@
     display:grid; place-items:center; z-index:2; contain:layout paint size;
   }
 
-  /* Wordmark: NX is absolutely positioned (no layout width) */
+  /* Wordmark: NX absolutely positioned so it can't shift centering */
   .onx-merge .onx-word{
     font-family:'Audiowide',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
     line-height:1; letter-spacing:.01em; filter:drop-shadow(var(--shadow-soft));
     pointer-events:none; position:relative; z-index:4;
-    transform:translateX(var(--recenter,0px)); /* JS sets this at reveal */
+    transform:translateX(var(--recenter,0px)); /* set at reveal to keep ONX centered */
     transition:transform 560ms var(--ease-out);
+    will-change:transform;
   }
-  .onx-merge .glyph-o{
-    font-size:var(--o-font); display:inline-block; will-change:transform,filter,letter-spacing;
-  }
+  .onx-merge .glyph-o{ font-size:var(--o-font); display:inline-block; will-change:transform,filter,letter-spacing; }
   .onx-merge .glyph-nx{
     font-size:var(--o-font);
-    /* absolutely positioned to the RIGHT of the O; gap set via --nx-gap */
     position:absolute; left:calc(100% + var(--nx-gap, 0px)); top:0;
     opacity:0; transform:translateX(-0.18em);
     -webkit-mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
@@ -925,7 +922,7 @@
     letter-spacing:.02em;
   }
 
-  /* Orbit (centered on same anchor) */
+  /* Orbit (shares the same center) */
   .onx-merge .onx-orbit{
     position:absolute; left:50%; top:50%;
     width:var(--ring); height:var(--ring);
@@ -991,9 +988,9 @@
   .onx-merge .onx-gallery{
     position:absolute; left:50%; transform:translateX(-50%);
     display:flex; gap:var(--gallery-gap);
-    visibility:hidden; opacity:0; pointer-events:none; z-index:5;
+    opacity:0; pointer-events:none; z-index:5;
   }
-  .onx-merge.final .onx-gallery{ visibility:visible; transition:opacity 420ms var(--ease-out); opacity:1; }
+  .onx-merge.final .onx-gallery{ transition:opacity 420ms var(--ease-out); opacity:1; }
 
   .onx-merge .gallery-chip{
     position:relative; width:var(--gallery-logo); height:var(--gallery-logo);
@@ -1006,7 +1003,7 @@
   .onx-merge .gallery-chip img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02); }
   @keyframes onx-pop{
     0%{   opacity:0; transform:translateY(12px) scale(.92); }
-    58%{  opacity:1; transform:translateY(-3px) scale(1.08); }
+    58%{  opacity:1; transform:translateY(-3px) scale(1.08); } /* overshoot */
     78%{  transform:translateY(1px)  scale(.99); }
     100%{ transform:translateY(0)    scale(1); }
   }
@@ -1054,9 +1051,7 @@
 (function(){
   const root = document.getElementById('onx-merge');
   const word = document.getElementById('onx-word');
-  const oEl  = document.getElementById('glyph-o');
   const nxEl = document.getElementById('glyph-nx');
-  const orbit = root.querySelector('.onx-orbit');
   const chips = Array.from(root.querySelectorAll('.chip'));
   const gallery = document.getElementById('onx-gallery');
   const gchips  = Array.from(gallery.querySelectorAll('.gallery-chip'));
@@ -1064,67 +1059,62 @@
   // CSS helpers
   const css = p => getComputedStyle(root).getPropertyValue(p).trim();
   const toMs = v => v.endsWith('ms') ? parseFloat(v) : v.endsWith('s') ? parseFloat(v)*1000 : parseFloat(v)||0;
-
   const SUCK_START    = toMs(css('--suck-start'))    || 1500;
   const STAGGER       = toMs(css('--suck-stagger'))  || 540;
   const SUCK_DURATION = toMs(css('--suck-duration')) || 920;
   const REVEAL_GAP    = toMs(css('--reveal-gap'))    || 400;
   const FINAL_GAP     = toMs(css('--final-gap'))     || 620;
   const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
+  const GALLERY_OFF   = parseFloat(css('--gallery-offset')) || 48;
 
-  // Ensure NX gap matches its original margin (converted to px)
-  (function setNxGap(){
-    const s = getComputedStyle(nxEl);
-    const gap = parseFloat(s.marginLeft || '0') || 0; // from CSS .glyph-nx margin (0.08em)
-    word.style.setProperty('--nx-gap', gap + 'px');
-  })();
-
-  // Start orbit + a brief anticipation boost
+  /* 1) Orbit + anticipation boost */
   root.classList.add('play');
   const BOOST_LEAD = 360;
   setTimeout(()=> root.classList.add('boost'), Math.max(0, SUCK_START-BOOST_LEAD));
   setTimeout(()=> root.classList.remove('boost'), Math.max(0, SUCK_START+80));
 
-  // Stagger suck-in per chip
+  /* 2) Stagger suck-in per chip */
   chips.forEach((el,i)=> el.style.setProperty('--delay', (SUCK_START + i*STAGGER) + 'ms'));
   setTimeout(()=> root.classList.add('suck'), SUCK_START);
 
-  // Compute recenter so ONX stays centered when NX appears (measure NX width in px)
+  /* Helper: keep ONX centered at reveal by shifting left by half NX width */
   function computeRecenter(){
-    const nxWidth = nxEl.getBoundingClientRect().width; // absolute, but measurable
-    const gapPx   = parseFloat(getComputedStyle(word).getPropertyValue('--nx-gap')) || 0;
-    const delta   = nxWidth + gapPx; // extra width added to the right when NX shows
-    word.style.setProperty('--recenter', (-delta/2) + 'px');
+    const s = getComputedStyle(nxEl);
+    const gap = parseFloat(s.marginLeft || '0') || 0;           // from CSS (em → px)
+    word.style.setProperty('--nx-gap', gap + 'px');             // feed to absolute NX
+    const nxWidth = nxEl.getBoundingClientRect().width;         // measure NX width
+    const delta = nxWidth + gap;                                 // extra width added
+    word.style.setProperty('--recenter', (-delta/2) + 'px');     // keep ONX centered
   }
 
-  // Position gallery under the live ONX baseline
+  /* Helper: position gallery under ONX baseline */
   function placeGallery(){
     const stageRect = root.getBoundingClientRect();
     const wordRect  = word.getBoundingClientRect();
-    const offsetPx  = parseFloat(css('--gallery-offset')) || 48;
-    const topPx     = (wordRect.bottom - stageRect.top) + offsetPx;
+    const topPx     = (wordRect.bottom - stageRect.top) + GALLERY_OFF;
     gallery.style.top = Math.min(topPx, stageRect.height - (gallery.offsetHeight||0) - 12) + 'px';
   }
 
   const lastAbsorbEndsAt = SUCK_START + ((chips.length-1)*STAGGER) + SUCK_DURATION + REVEAL_GAP;
 
-  // Reveal ONX (persist) — compute recenter just before reveal
+  /* 3) Reveal ONX (persists) — compute recenter just before reveal */
   setTimeout(async ()=>{
-    // Wait for fonts to be ready for accurate measurement
     if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch(e){} }
     computeRecenter();
     root.classList.add('reveal');
     root.setAttribute('aria-label','ONX');
   }, lastAbsorbEndsAt);
 
-  // Final: pop-in gallery below ONX (persist)
+  /* 4) Pop-in gallery beneath ONX (persists) */
   const finalStartAt = lastAbsorbEndsAt + FINAL_GAP;
+  // Stagger gallery chip pop delays
+  gchips.forEach((el,i)=> el.style.setProperty('--gdelay', (i*GALLERY_STAG) + 'ms'));
   setTimeout(()=>{
-    placeGallery();
-    root.classList.add('final');
+    placeGallery();                 // exact Y based on rendered ONX
+    root.classList.add('final');    // fade in gallery; chips play onx-pop
   }, finalStartAt);
 
-  // If layout changes (resize, font swap), keep gallery locked under ONX
+  // Re-place gallery on resize/font readiness to keep it glued under ONX
   window.addEventListener('resize', ()=> { if (root.classList.contains('final')) placeGallery(); }, {passive:true});
   document.fonts && document.fonts.ready && document.fonts.ready.then(()=> { if (root.classList.contains('final')) placeGallery(); });
 })();
