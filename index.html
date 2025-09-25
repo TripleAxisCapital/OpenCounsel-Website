@@ -650,6 +650,9 @@
       --screenPadX:20px;             /* bubble -> viewport side padding */
       --titleGap:28px;               /* space between title and bubble */
 
+      /* Animation timings */
+      --fade:360ms;                  /* fade-out duration for sentence swap */
+
       /* === Edit me (mobile & desktop controls) ===
          Mobile values apply by default; desktop overrides at 768px+.
          Send size = --sendBase * --sendScale-(m|d). Icon scales with the button. */
@@ -773,7 +776,10 @@
       overflow-wrap:anywhere;           /* extra guard for ultra-long tokens */
       -webkit-appearance:none;
       appearance:none;
+      transition:opacity var(--fade) ease;   /* enables fade-out between lines */
+      opacity:1;
     }
+    #chat-hero .prompt.is-fading{ opacity:0; }
     #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
     /* ---------------- Scalable Send button ---------- */
@@ -818,6 +824,7 @@
     /* ------------- Reduced motion safe ------------- */
     @media (prefers-reduced-motion: reduce){
       #chat-hero .send{ transition:none; }
+      #chat-hero .prompt{ transition:none; }
     }
   </style>
 
@@ -851,6 +858,7 @@
     /**
      * ===== Edit me easily =====
      * Add, remove, or change the lines below. They will type in beautifully.
+     * Now: type-in → hold → fade-out → next (no type-out/backspacing).
      */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
@@ -866,7 +874,13 @@
     ];
 
     /* Typing speeds (ms). Tweak to taste. */
-    const TYPER = { startDelay:500, type:34, erase:22, hold:1600, gap:650, loop:true };
+    const TYPER = {
+      startDelay: 500,
+      type: 34,          /* letter delay */
+      hold: 1600,        /* time to keep full line visible before fade */
+      gap: 650,          /* delay before starting the next line after fade */
+      loop: true
+    };
 
     (function initTypewriter(){
       const input  = document.getElementById('prompt-input');      // textarea
@@ -892,7 +906,7 @@
       const ro = new ResizeObserver(syncBubbleH);
       ro.observe(bubble);
 
-      // Reduced motion fallback
+      // Reduced motion fallback (no typing/fading)
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) {
         input.value = SUGGESTIONS[0] || "";
@@ -900,40 +914,61 @@
         return;
       }
 
-      let i = 0, j = 0, typing = true;
+      let i = 0, j = 0;
 
-      function loop(){
+      function typeNextChar(){
         const phrase = SUGGESTIONS[i] || "";
-        if (typing){
-          if (j < phrase.length){
-            input.value += phrase[j++];
-            autosize(); syncBubbleH();
-            setTimeout(loop, TYPER.type);
-          }else{
-            setTimeout(()=>{ typing = false; setTimeout(loop, TYPER.erase); }, TYPER.hold);
-          }
-        }else{
-          if (j > 0){
-            input.value = phrase.slice(0, --j);
-            autosize(); syncBubbleH();
-            setTimeout(loop, TYPER.erase);
-          }else{
-            i = (i + 1) % SUGGESTIONS.length;
-            typing = true;
-            setTimeout(loop, TYPER.gap);
-          }
+        // Ensure visible (in case we just faded)
+        input.classList.remove('is-fading');
+
+        if (j < phrase.length){
+          input.value += phrase[j++];
+          autosize(); syncBubbleH();
+          setTimeout(typeNextChar, TYPER.type);
+        } else {
+          // Full line shown; hold, then fade out and advance
+          setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
         }
+      }
+
+      function fadeOutThenAdvance(){
+        // Fade the textarea content (keeps height until cleared)
+        input.classList.add('is-fading');
+
+        const onEnd = (e) => {
+          if (e.propertyName && e.propertyName !== 'opacity') return;
+          input.removeEventListener('transitionend', onEnd);
+
+          // After fade completes: clear, shrink, and move to next phrase
+          input.value = "";
+          autosize(); syncBubbleH();
+
+          i = (i + 1) % SUGGESTIONS.length;
+          j = 0;
+
+          setTimeout(typeNextChar, TYPER.gap);
+        };
+
+        // Use transitionend for precise timing; also set a safety timeout fallback
+        input.addEventListener('transitionend', onEnd, { once: true });
+        setTimeout(() => {
+          // Fallback in case transitionend doesn't fire
+          if (input.classList.contains('is-fading')) {
+            input.dispatchEvent(new Event('transitionend'));
+          }
+        }, 1000);
       }
 
       input.value = "";
       autosize(); syncBubbleH();
-      setTimeout(loop, TYPER.startDelay);
+      setTimeout(typeNextChar, TYPER.startDelay);
 
       // Keep layout perfect on viewport changes
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
     })();
   </script>
 </section>
+
 
 <!-- ────────────────────────────────────────────────────────────────────────────
      ONX Orbit→Merge→Reveal→Showcase — Drop-in Snippet
