@@ -635,9 +635,7 @@
 
   <!--======================================================================================================================================================================-->
 
-
-
-<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, 20px side padding, black send button ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, 20px side padding, scalable send button, flawless wrapping ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -648,11 +646,20 @@
       --line:#E6E8EC;
 
       --radius:28px;                 /* bubble radius */
-      --bubbleH:78px;                /* bubble height */
+      --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
       --maxW:940px;                  /* max bubble width */
       --padX:20px;                   /* inside bubble padding L/R */
+      --padY:18px;                   /* inside bubble padding T/B */
       --screenPadX:20px;             /* bubble -> viewport side padding */
       --titleGap:28px;               /* space between title and bubble */
+
+      /* === Send button sizing (edit me) ===
+         Scale once here and everything (padding, icon) adapts.
+         Example: 1  = 56px (base), 0.5 = half size, 1.25 = 25% larger. */
+      --sendBase:56px;
+      --sendScale:.5;                 /* << requested: start at half-size */
+      --sendSize:calc(var(--sendBase) * var(--sendScale));
+      --sendIconRatio:.3928571429;    /* 22 / 56, keeps icon proportional */
 
       --shadowA:0 1px 0 rgba(0,0,0,.04);
       --shadowB:0 18px 40px rgba(0,0,0,.06);
@@ -697,13 +704,14 @@
       top:50%;
       transform:translate(-50%, -50%);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); /* <-- exactly 20px per side */
-      height:var(--bubbleH);
+      height:auto; /* let content drive height for flawless expansion */
     }
 
     /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
       width:100%;
-      height:100%;
+      min-height:var(--bubbleH);  /* initial min height; JS keeps var(--bubbleH) in sync with real height */
+      height:auto;
       display:flex;
       align-items:center;
       border:1px solid var(--line);
@@ -711,8 +719,11 @@
       background:#fff;
       box-shadow:var(--shadowA), var(--shadowB);
       padding-left:var(--padX);
-      padding-right:calc(var(--padX) + 56px + 14px); /* pad + send size + breathing room */
+      padding-right:calc(var(--padX) + var(--sendSize) + 14px); /* pad + scalable send + breathing room */
+      padding-top:var(--padY);
+      padding-bottom:var(--padY);
       transition:box-shadow .15s ease;
+      box-sizing:border-box;
     }
 
     /* Keyboard-only focus ring (no blue outline on load/click) */
@@ -720,12 +731,12 @@
       box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
 
-    /* ------------------ Input --------------------- */
+    /* ------------------ Multiline input ------------- */
     #chat-hero .prompt{
       flex:1 1 auto;
-      height:100%;
-      display:flex;
-      align-items:center;
+      display:block;
+      width:100%;
+      min-height:1.35em;                /* at least one line */
       font-size:clamp(16px, 2.2vw, 22px);
       line-height:1.35;
       color:#0b0b0c;
@@ -733,18 +744,24 @@
       background:transparent;
       outline:0; /* no browser outline */
       caret-color:#0b0b0c;
-      appearance:none; -webkit-appearance:none;
+      resize:none;                      /* we auto-grow with JS */
+      overflow:hidden;                  /* no scrollbars; expand instead */
+      padding:0;                        /* vertical rhythm handled by bubble padding */
+      white-space:pre-wrap;             /* wrap like Apple Notes */
+      word-break:break-word;            /* break long tokens */
+      -webkit-appearance:none;
+      appearance:none;
     }
     #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
-    /* ---------------- Send button ----------------- */
+    /* ---------------- Scalable Send button ---------- */
     #chat-hero .send{
       position:absolute;
       right:10px;
       top:50%;
       transform:translateY(-50%);
-      width:56px;
-      height:56px;
+      width:var(--sendSize);
+      height:var(--sendSize);
       border-radius:999px;
       border:1px solid #0b0b0c;      /* black ring */
       background:#0b0b0c;            /* black circle */
@@ -757,7 +774,9 @@
     #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
     #chat-hero .send:active{ transform:translateY(-50%); }
     #chat-hero .send svg{
-      width:22px; height:22px; display:block;
+      width:calc(var(--sendSize) * var(--sendIconRatio));
+      height:calc(var(--sendSize) * var(--sendIconRatio));
+      display:block;
       fill:none; stroke:#fff;         /* white arrow */
       stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
     }
@@ -779,23 +798,24 @@
     }
   </style>
 
-  <!-- Title is positioned relative to bubble center so the bubble stays EXACTLY centered -->
+   <!-- Title is positioned relative to bubble center so the bubble stays EXACTLY centered -->
   <h1 class="hero-title">ONX is Unstoppable</h1>
 
-  <!-- The centered bubble --> 
+  <!-- The centered bubble -->
   <div class="bubble-spot">
     <form class="bubble" action="#" method="get" onsubmit="return false">
-      <input
+      <textarea
         class="prompt"
         id="prompt-input"
-        type="text"
+        rows="1"
         autocomplete="off"
         autocapitalize="off"
         autocorrect="off"
         spellcheck="false"
         aria-label="Ask something"
         placeholder="Tell me to build something legendary…"
-      />
+      ></textarea>
+
       <button class="send" type="button" aria-label="Send">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 19V5M12 5l-6 6M12 5l6 6"/>
@@ -826,16 +846,36 @@
     const TYPER = { startDelay:500, type:34, erase:22, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
-      const input = document.getElementById('prompt-input');
-      if (!input) return;
+      const input  = document.getElementById('prompt-input');      // textarea
+      const bubble = document.querySelector('#chat-hero .bubble');
+      const hero   = document.getElementById('chat-hero');
+      if (!input || !bubble || !hero) return;
 
-      // Do NOT autofocus -> prevents any initial outline.
-      // Keep animation read-only for a clean hero feel.
+      // --- Prevent real typing for clean hero demo (keeps original behavior) ---
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
+      // --- Auto-size textarea to content, then sync CSS var for title positioning ---
+      function autosize(){
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+      }
+      function syncBubbleH(){
+        const h = bubble.getBoundingClientRect().height;
+        hero.style.setProperty('--bubbleH', h + 'px');
+      }
+
+      // Keep --bubbleH updated whenever the bubble resizes (typing, wrap, etc.)
+      const ro = new ResizeObserver(syncBubbleH);
+      ro.observe(bubble);
+
+      // Reduced motion fallback
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; return; }
+      if (reduceMotion) {
+        input.value = SUGGESTIONS[0] || "";
+        autosize(); syncBubbleH();
+        return;
+      }
 
       let i = 0, j = 0, typing = true;
 
@@ -844,6 +884,7 @@
         if (typing){
           if (j < phrase.length){
             input.value += phrase[j++];
+            autosize(); syncBubbleH();
             setTimeout(loop, TYPER.type);
           }else{
             setTimeout(()=>{ typing = false; setTimeout(loop, TYPER.erase); }, TYPER.hold);
@@ -851,6 +892,7 @@
         }else{
           if (j > 0){
             input.value = phrase.slice(0, --j);
+            autosize(); syncBubbleH();
             setTimeout(loop, TYPER.erase);
           }else{
             i = (i + 1) % SUGGESTIONS.length;
@@ -861,7 +903,11 @@
       }
 
       input.value = "";
+      autosize(); syncBubbleH();
       setTimeout(loop, TYPER.startDelay);
+
+      // Keep layout perfect on viewport changes
+      window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
     })();
   </script>
 </section>
