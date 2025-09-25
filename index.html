@@ -634,7 +634,7 @@
 
 
   <!--======================================================================================================================================================================-->
-<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, responsive padding & send size, flawless wrapping ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, responsive padding & send size, flawless wrapping, auto-expands on line 2 ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -656,12 +656,12 @@
 
       /* Mobile (default) */
       --padX-m:16px;                 /* inside bubble L/R on mobile */
-      --padY-m:14px;                 /* inside bubble T/B on mobile */
+      --padY-m:14px;                 /* inside bubble T/B on mobile — this is the space ABOVE & BELOW the text */
       --sendScale-m:.50;             /* mobile send size scale (0.5 = half of base) */
 
       /* Desktop (>=768px) */
       --padX-d:20px;                 /* inside bubble L/R on desktop */
-      --padY-d:18px;                 /* inside bubble T/B on desktop */
+      --padY-d:18px;                 /* inside bubble T/B on desktop — padding above/below the text */
       --sendScale-d:.75;             /* desktop send size scale */
 
       /* Base + active mappings (do not edit below unless you know why) */
@@ -731,18 +731,21 @@
     #chat-hero .bubble{
       position:relative;
       width:100%;
-      min-height:var(--bubbleH);    /* initial min height; JS keeps var(--bubbleH) in sync with real height */
+      min-height:var(--bubbleH);    /* initial min height; JS keeps --bubbleH in sync with real height */
       height:auto;
       display:flex;
-      align-items:center;
+      align-items:flex-start;       /* ⟵ top-align content so vertical padding is truly above/below the text */
       border:1px solid var(--line);
       border-radius:var(--radius);
       background:#fff;
       box-shadow:var(--shadowA), var(--shadowB);
+
+      /* The vertical padding here is the ONLY vertical padding around the text. */
       padding-left:var(--padX);
       padding-right:calc(var(--padX) + var(--sendSize) + 14px); /* pad + scalable send + breathing room */
       padding-top:var(--padY);
       padding-bottom:var(--padY);
+
       transition:box-shadow .15s ease;
       box-sizing:border-box;
     }
@@ -759,18 +762,19 @@
       width:100%;
       min-height:1.35em;                /* at least one line */
       font-size:clamp(16px, 2.2vw, 22px);
-      line-height:1.35;
+      line-height:1.38;                  /* slightly taller for graceful line-2 transition */
       color:#0b0b0c;
       border:0;
       background:transparent;
-      outline:0; /* no browser outline */
+      outline:0;                         /* no browser outline */
       caret-color:#0b0b0c;
-      resize:none;                      /* we auto-grow with JS */
-      overflow:hidden;                  /* no scrollbars; expand instead */
-      padding:0;                        /* vertical rhythm handled by bubble padding */
-      white-space:pre-wrap;             /* wrap like Apple Notes */
-      word-break:break-word;            /* break long tokens */
-      overflow-wrap:anywhere;           /* extra guard for ultra-long tokens */
+      resize:none;                       /* we auto-grow with JS */
+      overflow:hidden;                   /* no scrollbars; expand instead */
+      padding:0;                         /* all vertical rhythm comes from .bubble padding */
+      margin:0;                          /* no accidental extra space */
+      white-space:pre-wrap;              /* wrap like Apple Notes */
+      word-break:break-word;             /* break long tokens */
+      overflow-wrap:anywhere;            /* extra guard for ultra-long tokens */
       -webkit-appearance:none;
       appearance:none;
     }
@@ -878,17 +882,22 @@
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      // --- Auto-size textarea to content, then sync CSS var for title positioning ---
+      // --- Auto-size textarea to content (expands when line 2 starts), then sync CSS var for title positioning ---
       function autosize(){
+        // Reset first so scrollHeight is measured from natural content height
         input.style.height = 'auto';
-        input.style.height = input.scrollHeight + 'px';
+
+        // Use scrollHeight to grow; add a small guard to avoid sub-pixel rounding issues on iOS
+        const nextH = Math.ceil(input.scrollHeight);
+        input.style.height = nextH + 'px';
       }
       function syncBubbleH(){
-        const h = bubble.getBoundingClientRect().height;
+        // Keep --bubbleH in lockstep with actual bubble height (drives title placement)
+        const h = Math.ceil(bubble.getBoundingClientRect().height);
         hero.style.setProperty('--bubbleH', h + 'px');
       }
 
-      // Keep --bubbleH updated whenever the bubble resizes (typing, wrap, etc.)
+      // Keep --bubbleH updated whenever the bubble resizes (typing, wrap, media query changes, etc.)
       const ro = new ResizeObserver(syncBubbleH);
       ro.observe(bubble);
 
@@ -907,7 +916,7 @@
         if (typing){
           if (j < phrase.length){
             input.value += phrase[j++];
-            autosize(); syncBubbleH();
+            autosize(); syncBubbleH();   // ⟵ ensures bubble expands exactly as the second line begins
             setTimeout(loop, TYPER.type);
           }else{
             setTimeout(()=>{ typing = false; setTimeout(loop, TYPER.erase); }, TYPER.hold);
@@ -925,16 +934,21 @@
         }
       }
 
+      // Initial layout pass (in case first phrase begins long)
       input.value = "";
       autosize(); syncBubbleH();
+
+      // Kick off the typewriter
       setTimeout(loop, TYPER.startDelay);
 
-      // Keep layout perfect on viewport changes
+      // Keep layout perfect on viewport changes and when fonts load
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => { autosize(); syncBubbleH(); });
+      }
     })();
   </script>
 </section>
-
 
 
 
