@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <!-- ─────────────────────────────────────────────────────────────────────────────
-       Minimal, production-ready head
+       Minimal, production-ready head for a clean, OpenAI-style start page
        ───────────────────────────────────────────────────────────────────────────── -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>ONX — What can I help with?</title>
-  <meta name="description" content="Ask anything. A fast, clean chat entry with ONX." />
+  <meta name="description" content="A fast, clean chat entry with ONX." />
   <meta name="robots" content="index,follow" />
   <meta name="theme-color" content="#ffffff" />
 
-  <!-- Favicons (adjust paths as needed) -->
+  <!-- Favicons (adjust paths if needed) -->
   <link rel="icon" href="/logo.svg" type="image/svg+xml" sizes="any" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
@@ -39,8 +39,11 @@
       --chat-r: 24px;
       --pad-x: clamp(14px, 2.2vw, 22px);
 
-      /* Header swap threshold (px scrolled before pill header appears) */
-      --header-threshold: 8;
+      /* Brand image height (auto width via viewBox) */
+      --brand-h: 28px;
+    }
+    @media (max-width: 640px){
+      :root{ --brand-h: 24px; }
     }
 
     html, body { height: 100%; }
@@ -54,10 +57,10 @@
       text-rendering: optimizeLegibility;
     }
 
-    /* Ensure the custom header occupies layout space so main can center correctly */
+    /* Make sure the custom header occupies layout space */
     onx-header { display: block; }
 
-    /* Main hero area */
+    /* Main hero */
     .hero {
       min-height: clamp(520px, 76svh, 880px);
       display: grid;
@@ -78,10 +81,7 @@
     }
 
     /* Chat container */
-    .chat {
-      grid-row: 3;
-      width: var(--chat-w);
-    }
+    .chat { grid-row: 3; width: var(--chat-w); }
     .chat-form {
       position: relative;
       display: flex;
@@ -137,7 +137,7 @@
     .send:active { transform: translateY(-50%) translateY(0); }
     .send[disabled] { opacity: .6; cursor: not-allowed; box-shadow: none; }
 
-    /* Suggestion pills (optional, easy to edit) */
+    /* Suggestion pills (purely presentational) */
     .pills {
       margin-top: 16px;
       display: grid;
@@ -160,56 +160,53 @@
       user-select: none;
     }
 
-    /* Optional brand overlay for maximum compatibility if your header
-       doesn't expose a `slot="brand"`. We show it only if JS decides to. */
+    /* Brand mount areas: any SVG slotted here scales by --brand-h */
+    .brand-mount svg, .brand-mount img {
+      display: block;
+      height: var(--brand-h);
+      width: auto;
+    }
+
+    /* Fallback brand overlay if your header doesn't support slot="brand" */
     #onx-brand-overlay {
       position: absolute;
-      inset: 0 auto 0 18px; /* vertically centers via flex on parent wrapper */
-      display: none;        /* JS will set to flex only in fallback mode */
+      left: 18px; top: 0; bottom: 0;
+      display: none;                /* JS toggles if needed */
       align-items: center;
-      font-weight: 700;
-      letter-spacing: .01em;
-      color: var(--ink);
       pointer-events: none;
     }
 
-    /* Reduced motion: turn off typing animation */
     @media (prefers-reduced-motion: reduce) {
       .send, .chat-form { transition: none !important; }
     }
   </style>
 
   <!-- ─────────────────────────────────────────────────────────────────────────────
-       Brand swap configuration — EDIT JUST THIS if you want different texts
+       EDIT ONE VARIABLE: choose inline SVG templates or external URLs
+       - Use template IDs starting with '#' (default below), OR replace with URLs
+         e.g., window.ONX_HEADER_LOGO = { static:'/icons/ONX.svg', pill:'/icons/O.svg' };
        ───────────────────────────────────────────────────────────────────────────── -->
   <script>
-    // One place to edit:
-    // The header shows "ONX" when static, and "O" when it becomes a pill/floating header.
-    window.ONX_HEADER_LOGO = { static: 'ONX', pill: 'O' };
+    window.ONX_HEADER_LOGO = { static: '/onxlogo.svg', pill: '/logo.svg' };
   </script>
 </head>
 <body>
 
   <!--
-    Your custom header component. Keep attributes you use in your project.
-    threshold="8" is typical for when it flips to a floating/pill style.
-    We provide a brand slot <span slot="brand" ...> for components that support it.
-    If your component doesn't expose a "brand" slot, our JS falls back to a safe overlay.
+    Your custom header.
+    We provide an explicit brand slot. If your component doesn't expose "brand",
+    a small overlay fallback is enabled automatically (keeps the swap reliable).
   -->
   <onx-header id="siteHeader" threshold="8">
-    <!-- Brand content (preferred path if your component supports slot='brand') -->
-    <span id="onx-brand-slot" slot="brand" aria-label="ONX brand">ONX</span>
-
-    <!-- Right-side action slot example (optional) -->
-    <!-- <a slot="action" href="/download" class="btn">Download</a> -->
+    <span slot="brand" class="brand-mount" id="brandSlotMount" aria-label="ONX brand"></span>
   </onx-header>
 
-  <!-- Fallback brand overlay (only shown if slot isn't supported) -->
-  <div id="onx-brand-overlay" aria-hidden="true">ONX</div>
+  <!-- Fallback brand overlay (used only if slot isn't honored by the component) -->
+  <div id="onx-brand-overlay"><span class="brand-mount" id="brandOverlayMount"></span></div>
 
   <!-- Main hero -->
   <main class="hero" role="main">
-    <h1 class="title">Ask ONX anything</h1>
+    <h1 class="title">What can I help with?</h1>
 
     <section class="chat" aria-label="Chat input">
       <form class="chat-form" id="chatForm" action="javascript:;" novalidate>
@@ -243,7 +240,33 @@
   </main>
 
   <!-- ─────────────────────────────────────────────────────────────────────────────
-       Behavior: typing effect + header brand swap (safe with any header impl)
+       Inline SVG templates (vector, crisp at any size)
+       - Replace these with your real brand art anytime. Keep the IDs.
+       - Stroke uses currentColor so it inherits your header text color.
+       ───────────────────────────────────────────────────────────────────────────── -->
+  <template id="svg-onx">
+    <!-- ONX wordmark (geometric; tweak as needed) -->
+    <svg viewBox="0 0 160 32" role="img" aria-label="ONX">
+      <g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- O -->
+        <circle cx="20" cy="16" r="10.5"></circle>
+        <!-- N -->
+        <path d="M48 26 V6 M48 6 L78 26 M78 26 V6"></path>
+        <!-- X -->
+        <path d="M99 26 L123 6 M123 26 L99 6"></path>
+      </g>
+    </svg>
+  </template>
+
+  <template id="svg-o">
+    <!-- O glyph -->
+    <svg viewBox="0 0 32 32" role="img" aria-label="O">
+      <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="3.2"></circle>
+    </svg>
+  </template>
+
+  <!-- ─────────────────────────────────────────────────────────────────────────────
+       Behavior: typing effect + header brand swap (SVG images, not text)
        ───────────────────────────────────────────────────────────────────────────── -->
   <script>
     (function(){
@@ -253,7 +276,6 @@
       const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const input = document.getElementById('chatInput');
 
-      // Feel free to edit or extend
       const prompts = [
         "Explain this code",
         "Summarize this article",
@@ -262,7 +284,6 @@
         "Find pros & cons for this decision"
       ];
 
-      // If reduced motion, just show the first prompt and stop.
       if (!prefersReduced) {
         let i = 0;
         const typeSpeed = 38;     // ms per char
@@ -312,45 +333,70 @@
       });
 
       /* ==========================================================
-         3) Header brand swap (ONE VARIABLE to edit: ONX_HEADER_LOGO)
-         - Works whether your <onx-header> supports a brand slot or not
-         - If slot not supported, shows a safe overlay brand text
-         - Swaps when page scroll passes the threshold (8px default)
+         3) Header brand swap (SVG image → SVG image)
+            ONE VARIABLE to edit: window.ONX_HEADER_LOGO
+            - If value starts with "#", it clones an inline <template>.
+            - Otherwise it's treated as a URL to a .svg file.
          ========================================================== */
       const headerEl = document.getElementById('siteHeader');
-      const brandSlotEl = document.getElementById('onx-brand-slot');
-      const brandOverlay = document.getElementById('onx-brand-overlay');
-      const LOGO = (window.ONX_HEADER_LOGO || {static:'ONX', pill:'O'});
+      const slotMount = document.getElementById('brandSlotMount');
+      const overlay   = document.getElementById('onx-brand-overlay');
+      const overlayMount = document.getElementById('brandOverlayMount');
+      const LOGO = (window.ONX_HEADER_LOGO || {static:'#svg-onx', pill:'#svg-o'});
+      const THRESH = Number(headerEl.getAttribute('threshold') || 8);
 
-      // 3a) Determine whether the brand slot is actually used by the component.
-      // If not, show the overlay label positioned over the header.
-      function useOverlayFallbackIfNeeded(){
-        // If the slotted element is NOT visible (slot ignored), enable overlay
-        const slottedVisible = brandSlotEl && brandSlotEl.offsetParent !== null;
-        if (!slottedVisible) {
-          // Place overlay over header area
+      function nodeFromSpec(spec, altLabel){
+        if (typeof spec === 'string' && spec.startsWith('#')) {
+          const tpl = document.querySelector(spec);
+          if (tpl && tpl.content && tpl.content.firstElementChild) {
+            const clone = tpl.content.firstElementChild.cloneNode(true);
+            clone.setAttribute('aria-label', altLabel || '');
+            return clone;
+          }
+        }
+        if (typeof spec === 'string') {
+          const img = new Image();
+          img.decoding = 'async';
+          img.loading = 'eager';
+          img.referrerPolicy = 'no-referrer';
+          img.src = spec;
+          img.alt = altLabel || '';
+          return img;
+        }
+        return document.createElement('span'); // should never happen
+      }
+
+      function clearAndAppend(mount, child){
+        while (mount.firstChild) mount.removeChild(mount.firstChild);
+        mount.appendChild(child);
+      }
+
+      // Determine whether the brand slot is actually visible in your component.
+      function ensureOverlayFallback(){
+        const slotVisible = slotMount && slotMount.offsetParent !== null;
+        if (!slotVisible) {
           headerEl.style.position = 'relative';
-          brandOverlay.style.display = 'flex';
+          overlay.style.display = 'flex';
         }
       }
-      // run once after upgrade (if custom element delays rendering)
-      customElements.whenDefined('onx-header').then(useOverlayFallbackIfNeeded);
-      // …and once on next frame to be safe
-      requestAnimationFrame(useOverlayFallbackIfNeeded);
 
-      // 3b) Swap brand on scroll past threshold (mirrors your header's own behavior)
-      const THRESH = Number(headerEl.getAttribute('threshold') || 8);
+      // Build both variants up-front (prevents layout flash on swap)
+      const svgStatic = nodeFromSpec(LOGO.static, 'ONX');
+      const svgPill   = nodeFromSpec(LOGO.pill,   'O');
+      clearAndAppend(slotMount, svgStatic.cloneNode(true));
+      clearAndAppend(overlayMount, svgStatic.cloneNode(true));
+
       function updateBrand(){
         const pill = window.scrollY > THRESH;
-        const value = pill ? LOGO.pill : LOGO.static;
-        if (brandOverlay.style.display === 'flex') {
-          brandOverlay.textContent = value;
-        } else if (brandSlotEl) {
-          brandSlotEl.textContent = value;
-        }
-        // Optional: update <title> to match state (nice polish)
-        // document.title = pill ? `O — What can I help with?` : `ONX — What can I help with?`;
+        const chosen = pill ? svgPill : svgStatic;
+        // Replace in both mounts (overlay may be hidden; harmless to update)
+        clearAndAppend(slotMount, chosen.cloneNode(true));
+        clearAndAppend(overlayMount, chosen.cloneNode(true));
       }
+
+      // Initialize + wire events
+      customElements.whenDefined('onx-header').then(ensureOverlayFallback);
+      requestAnimationFrame(ensureOverlayFallback);
       updateBrand();
       window.addEventListener('scroll', updateBrand, { passive: true });
       window.addEventListener('resize', updateBrand, { passive: true });
