@@ -637,38 +637,37 @@
 
 
 
-<!-- ===== Full-screen Chat Hero (no header/icons) ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-style minimal, rotating typed prompts) ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
-    /* --- Design tokens --- */
+    /* ---------------- Design tokens ---------------- */
     #chat-hero{
       --bg:#ffffff;
       --ink:#0B0B0C;
-      --muted:#6b7280;              /* placeholder */
-      --line:#e5e7eb;               /* border */
-      --shadowA:0 1px 2px rgba(0,0,0,.04);
-      --shadowB:0 12px 32px rgba(0,0,0,.08);
-      --radius:24px;                /* bubble radius */
-      --bubbleH:84px;               /* bubble height */
-      --maxW:920px;                 /* max width of bubble */
-      --padX:22px;                  /* left/right padding inside bubble */
-      --sendSize:56px;              /* circular send button */
-      --sendBg:#f8fafc;
-      --sendHover:#eef2f7;
-      --sendBorder:#e6e9ee;
+      --muted:#77808d;
+      --line:#E6E8EC;
+
+      --radius:28px;               /* bubble radius */
+      --bubbleH:78px;              /* bubble height */
+      --maxW:940px;                /* bubble max width */
+      --padX:22px;                 /* bubble horizontal padding */
+      --send:56px;                 /* send button size */
+
+      --shadowA:0 1px 0 rgba(0,0,0,.04);
+      --shadowB:0 18px 40px rgba(0,0,0,.06);
     }
 
-    /* --- Layout --- */
+    /* --------------- Section layout --------------- */
     #chat-hero{
       position:relative;
-      min-height:100svh; /* iOS-friendly viewport */
+      min-height:100svh; /* iOS-viewport friendly */
       min-height:100vh;
       background:var(--bg);
       display:grid;
       place-content:center;
       padding:calc(env(safe-area-inset-top,0) + 24px)
-               24px
-               calc(env(safe-area-inset-bottom,0) + 24px);
+              24px
+              calc(env(safe-area-inset-bottom,0) + 24px);
       box-sizing:border-box;
       isolation:isolate;
     }
@@ -678,23 +677,23 @@
       margin-inline:auto;
       text-align:center;
       color:var(--ink);
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-                   Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                   "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
                    "Segoe UI Emoji";
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
     }
 
-    /* --- Heading --- */
+    /* ------------------ Heading ------------------- */
     #chat-hero h1{
       margin:0 0 28px;
       font-weight:700;
       letter-spacing:-0.02em;
-      line-height:1.12;
-      font-size:clamp(28px, 5.4vw, 54px);
+      line-height:1.1;
+      font-size:clamp(28px, 5.2vw, 54px);
     }
 
-    /* --- Chat bubble shell --- */
+    /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
       position:relative;
       margin-inline:auto;
@@ -702,66 +701,67 @@
       align-items:center;
       height:var(--bubbleH);
       border:1px solid var(--line);
-      background:#fff;
       border-radius:var(--radius);
+      background:#fff;
       box-shadow:var(--shadowA), var(--shadowB);
       padding-left:var(--padX);
-      padding-right:calc(var(--padX) + var(--sendSize) + 14px); /* room for button */
-      max-width:var(--maxW);
+      padding-right:calc(var(--padX) + var(--send) + 14px); /* room for button */
       width:min(100%, var(--maxW));
     }
 
-    /* --- Input (read-only placeholder look) --- */
+    /* ------------------ Input --------------------- */
     #chat-hero .prompt{
       flex:1 1 auto;
       height:100%;
       display:flex;
       align-items:center;
-      font-size:clamp(16px, 2.3vw, 22px);
+      font-size:clamp(16px, 2.2vw, 22px);
       line-height:1.35;
-      color:#111827;
-      outline:none;
+      color:#0b0b0c;
       border:0;
       background:transparent;
+      outline:0;
+      caret-color:#0b0b0c;
     }
-    #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.9; }
+    #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
-    /* --- Send button --- */
+    /* ---------------- Send button ----------------- */
     #chat-hero .send{
       position:absolute;
       right:10px;
-      width:var(--sendSize);
-      height:var(--sendSize);
-      border-radius:50%;
-      border:1px solid var(--sendBorder);
-      background:var(--sendBg);
+      width:var(--send);
+      height:var(--send);
+      border-radius:999px;
+      border:1px solid #E4E7EE;
+      background:#F7F9FC;
       display:grid;
       place-items:center;
       cursor:pointer;
-      transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+      transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
       box-shadow:0 1px 1px rgba(0,0,0,.04);
     }
-    #chat-hero .send:hover{ background:var(--sendHover); transform:translateY(-1px); }
+    #chat-hero .send:hover{ background:#EEF2F7; transform:translateY(-1px); }
     #chat-hero .send:active{ transform:translateY(0); }
     #chat-hero .send svg{
       width:22px; height:22px; display:block;
       fill:none; stroke:#0b0b0c; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
     }
 
-    /* --- Focus styles (keyboard & a11y) --- */
+    /* --------------- Focus subtle ring ------------- */
     #chat-hero .bubble:focus-within{
-      outline:2px solid #cbd5ff; outline-offset:3px;
+      box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
 
-    /* --- Dark mode (optional) --- */
+    /* ------------------ Dark mode ------------------ */
     @media (prefers-color-scheme: dark){
-      #chat-hero{ --bg:#0b0b0c; --ink:#f5f7fb; --muted:#c7cbd4; --line:#1f242c;
-                  --sendBg:#111418; --sendHover:#181c22; --sendBorder:#22262d; }
-      #chat-hero .bubble{ background:#0f1217; }
-      #chat-hero .send svg{ stroke:#f5f7fb; }
+      #chat-hero{ --bg:#0B0B0C; --ink:#F3F6FB; --muted:#B8BFCA; --line:#22262D; }
+      #chat-hero .bubble{ background:#0F1217; }
+      #chat-hero .prompt{ color:#F3F6FB; caret-color:#F3F6FB; }
+      #chat-hero .send{ background:#111418; border-color:#232831; }
+      #chat-hero .send svg{ stroke:#F3F6FB; }
     }
 
-    /* --- Reduce motion friendly --- */
+    /* ------------- Reduced motion safe ------------- */
     @media (prefers-reduced-motion: reduce){
       #chat-hero .send{ transition:none; }
     }
@@ -772,11 +772,16 @@
 
     <!-- Chat bubble -->
     <form class="bubble" action="#" method="get" onsubmit="return false">
-      <input class="prompt" type="text"
-             value="Plan a surf trip to Costa Rica in August"
-             aria-label="Enter a message" />
+      <input
+        class="prompt"
+        id="prompt-input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Ask something"
+        placeholder="Tell me to build something legendary…"
+      />
       <button class="send" type="button" aria-label="Send">
-        <!-- Up arrow icon inside a circle style -->
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 19V5M12 5l-6 6M12 5l6 6"/>
         </svg>
@@ -785,13 +790,77 @@
   </div>
 
   <script>
-    // Optional: place the caret at end so it feels like a filled suggestion.
-    (function(){
-      const el = document.querySelector('#chat-hero .prompt');
-      try {
-        el.focus();
-        const v = el.value; el.value = ''; el.value = v;
-      } catch(e){}
+    /**
+     * ===== Edit me easily =====
+     * Add, remove, or change the lines below. They will type in beautifully.
+     */
+    const SUGGESTIONS = [
+      "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
+      "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
+      "Find the fastest path to 1,000 paying users for an AI app—zero fluff.",
+      "Reverse-engineer my top competitor’s funnel and out-convert them by 30%.",
+      "Automate cold outreach that feels human—deliver 10 booked calls per day.",
+      "Blueprint a content flywheel that prints $50k/month in inbound leads.",
+      "Identify 3 undervalued micro-SaaS buys under $2M we can acquire now.",
+      "Draft a no-BS investor memo that raises $1M with traction-light signals.",
+      "Ship a viral ONX launch that hits #1 on Product Hunt within 48 hours.",
+      "Audit pricing and add a premium tier that lifts ARPU by 40%."
+    ];
+
+    /**
+     * Typing speeds (ms). Tweak to taste.
+     */
+    const TYPER = {
+      startDelay: 500,  // wait before first type
+      type: 34,         // per-character type speed
+      erase: 22,        // per-character erase speed
+      hold: 1600,       // pause when fully typed
+      gap: 650,         // pause before typing next line
+      loop: true        // keep cycling
+    };
+
+    (function initTypewriter(){
+      const input = document.getElementById('prompt-input');
+      if (!input) return;
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // On desktop, focus to show caret; avoid popping up keyboard on mobile.
+      const finePointer = window.matchMedia('(pointer: fine)').matches;
+      if (finePointer) { try { input.focus(); } catch(_){} }
+
+      // Prevent user typing while animation runs (keeps it minimal/clean).
+      input.addEventListener('keydown', e => e.preventDefault());
+      input.addEventListener('beforeinput', e => e.preventDefault());
+
+      // Reduced motion: just set a static line and stop.
+      if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; return; }
+
+      let i = 0, j = 0, typing = true;
+
+      function loop(){
+        const phrase = SUGGESTIONS[i] || "";
+        if (typing){
+          if (j < phrase.length){
+            input.value += phrase[j++];
+            setTimeout(loop, TYPER.type);
+          }else{
+            setTimeout(()=>{ typing = false; setTimeout(loop, TYPER.erase); }, TYPER.hold);
+          }
+        }else{
+          if (j > 0){
+            input.value = phrase.slice(0, --j);
+            setTimeout(loop, TYPER.erase);
+          }else{
+            i = (i + 1) % SUGGESTIONS.length;
+            typing = true;
+            setTimeout(loop, TYPER.gap);
+          }
+        }
+      }
+
+      input.value = "";
+      setTimeout(loop, TYPER.startDelay);
     })();
   </script>
 </section>
@@ -800,7 +869,7 @@
 
 
 
-
+  
 <!------------------------- HERO --------------------------------------------------------------------------------------------------------->
 <section
   id="home"
