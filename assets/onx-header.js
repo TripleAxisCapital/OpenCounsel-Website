@@ -3,7 +3,7 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    EDIT HERE — EASY NAV LINKS (optional)
    Add items to ONX_HEADER_LINKS and they will appear in BOTH:
-   • Desktop header center nav
+   • Desktop header center nav  (only visible when pill header is active)
    • Mobile sheet menu
    You can also keep using <a slot="nav" ...> per-page; both methods coexist.
    Example:
@@ -40,6 +40,10 @@ class ONXHeader extends HTMLElement {
 
     // spacing sync
     this._syncEdgeGaps = this._syncEdgeGaps.bind(this);
+
+    // center nav state
+    this._center = null;
+    this._centerVisible = false;
   }
 
   connectedCallback() {
@@ -196,6 +200,7 @@ class ONXHeader extends HTMLElement {
 
         .right-area{ height:100%; padding-right: var(--download-pad-right-mobile); display:flex; align-items:center; gap:1rem; }
 
+        /* Center (desktop) — hidden until pill header is active */
         .center{
           position:absolute; left:50%; transform:translateX(-50%);
           display:none; align-items:center; gap: var(--nav-gap);
@@ -215,10 +220,23 @@ class ONXHeader extends HTMLElement {
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
+          /* Desktop: prepare center nav for smooth reveal only in pill state */
+          .center{
+            display:flex;
+            opacity:0;
+            pointer-events:none;
+            transform: translateX(-50%) translateY(-2px);
+            transition: opacity .24s cubic-bezier(.2,.8,.2,1), transform .24s cubic-bezier(.2,.8,.2,1);
+          }
+          :host(.is-float) .center{
+            opacity:1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events:auto;
+          }
+
           .header-bar{ height: var(--pill-height-desktop); padding-left: var(--pill-inner-x-desktop); padding-right: var(--pill-inner-x-desktop); }
           .logo-pad{ padding-left: var(--logo-pad-left-desktop); }
           .right-area{ padding-right: var(--download-pad-right-desktop); }
-          .center{ display:flex; }
           .hamburger{ display:none !important; }
           .desktop-actions{ display:flex !important; }
         }
@@ -628,7 +646,7 @@ class ONXHeader extends HTMLElement {
           </div>
 
           <!-- Center (desktop) -->
-          <nav class="center" aria-label="Primary">
+          <nav class="center" aria-label="Primary" aria-hidden="true">
             <a href="/oc-pro.html" class="nav-link">ONX Pro</a>
             <a href="/pricing.html" class="nav-link">Pricing</a>
             <span class="center-extra"></span>
@@ -692,6 +710,7 @@ class ONXHeader extends HTMLElement {
     this._sheet = this._root.getElementById("onxMobileMenu");
     this._sheetInner = this._root.querySelector(".sheet-inner");
     this._toggleBtn = this._root.querySelector('.right-area .hamburger');
+    this._center = this._root.querySelector('.center');
 
     // Events
     this._btns.forEach(b => b.addEventListener("click", this._toggleMobile));
@@ -718,7 +737,7 @@ class ONXHeader extends HTMLElement {
 
     // Scroll + initial state
     window.addEventListener("scroll", this._onScroll, { passive: true });
-    this._onScroll();
+    this._onScroll(); // sets .is-float + syncs center nav visibility
 
     // spacing after paint
     requestAnimationFrame(this._syncEdgeGaps);
@@ -899,21 +918,45 @@ class ONXHeader extends HTMLElement {
     if (!this._outerMobileSmall) this._outerMobileSmall = 16;
   }
 
+  /* ===== Show nav links only when pill header is active (desktop) ===== */
+  _syncCenterVisibility(visible){
+    if (!this._center) return;
+    if (this._centerVisible === visible) return;
+    this._centerVisible = visible;
+
+    this._center.setAttribute('aria-hidden', String(!visible));
+    // Prefer the inert property if available
+    try { this._center.inert = !visible; } catch(_e){ /* noop */ }
+
+    // Make links unfocusable when hidden for perfect a11y
+    const nodes = this._root.querySelectorAll('.center a, .center button, .center [tabindex]');
+    nodes.forEach(el => {
+      if (!visible) el.setAttribute('tabindex','-1');
+      else el.removeAttribute('tabindex');
+    });
+  }
+
   _onScroll() {
     if (this._raf) return;
     this._raf = requestAnimationFrame(() => {
       const y = window.scrollY || document.documentElement.scrollTop || 0;
       const isMobile = !window.matchMedia('(min-width: 768px)').matches;
 
+      let floated = false;
+
       if (isMobile){
         const t = Math.max(0, Math.min(1, y / this._scrollRange));
         const outer = this._outerMobileLarge + (this._outerMobileSmall - this._outerMobileLarge) * t;
         this.style.setProperty('--outer-x-mobile-dyn', `${outer.toFixed(2)}px`);
         this.classList.toggle("is-float", y > 0);
+        floated = y > 0;
       } else {
-        if (y > this._threshold) this.classList.add("is-float");
-        else this.classList.remove("is-float");
+        if (y > this._threshold){ this.classList.add("is-float"); floated = true; }
+        else { this.classList.remove("is-float"); floated = false; }
       }
+
+      // Only show desktop center nav when floating (pill) and on desktop
+      this._syncCenterVisibility(!isMobile && floated);
 
       this._raf = null;
     });
@@ -945,12 +988,6 @@ class ONXHeader extends HTMLElement {
       /* no-op */
     }
   }
-
-
-
-
-
-  
 }
 
 customElements.define("onx-header", ONXHeader);
