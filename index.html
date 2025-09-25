@@ -670,6 +670,7 @@
               calc(env(safe-area-inset-bottom,0) + 24px);
       box-sizing:border-box;
       isolation:isolate;
+      -webkit-tap-highlight-color: transparent;
     }
     #chat-hero .inner{
       width:100%;
@@ -707,6 +708,12 @@
       padding-left:var(--padX);
       padding-right:calc(var(--padX) + var(--send) + 14px); /* room for button */
       width:min(100%, var(--maxW));
+      transition:box-shadow .15s ease;
+    }
+
+    /* Show subtle ring only when user navigates with keyboard (no ring on load) */
+    #chat-hero .bubble:has(.prompt:focus-visible){
+      box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
 
     /* ------------------ Input --------------------- */
@@ -720,8 +727,10 @@
       color:#0b0b0c;
       border:0;
       background:transparent;
-      outline:0;
+      outline:0;                     /* no blue outline */
       caret-color:#0b0b0c;
+      appearance:none;
+      -webkit-appearance:none;
     }
     #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
@@ -747,11 +756,6 @@
       fill:none; stroke:#0b0b0c; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
     }
 
-    /* --------------- Focus subtle ring ------------- */
-    #chat-hero .bubble:focus-within{
-      box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
-    }
-
     /* ------------------ Dark mode ------------------ */
     @media (prefers-color-scheme: dark){
       #chat-hero{ --bg:#0B0B0C; --ink:#F3F6FB; --muted:#B8BFCA; --line:#22262D; }
@@ -759,6 +763,9 @@
       #chat-hero .prompt{ color:#F3F6FB; caret-color:#F3F6FB; }
       #chat-hero .send{ background:#111418; border-color:#232831; }
       #chat-hero .send svg{ stroke:#F3F6FB; }
+      #chat-hero .bubble:has(.prompt:focus-visible){
+        box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
+      }
     }
 
     /* ------------- Reduced motion safe ------------- */
@@ -777,6 +784,8 @@
         id="prompt-input"
         type="text"
         autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
         spellcheck="false"
         aria-label="Ask something"
         placeholder="Tell me to build something legendary…"
@@ -825,11 +834,10 @@
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      // On desktop, focus to show caret; avoid popping up keyboard on mobile.
-      const finePointer = window.matchMedia('(pointer: fine)').matches;
-      if (finePointer) { try { input.focus(); } catch(_){} }
+      // Do NOT autofocus -> prevents the initial blue outline.
+      // Keep the caret hidden until the user clicks.
 
-      // Prevent user typing while animation runs (keeps it minimal/clean).
+      // Prevent typing while animation runs (keeps it minimal/clean).
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
