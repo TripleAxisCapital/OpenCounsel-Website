@@ -637,7 +637,7 @@
 
 
 
-<!-- ===== Full-screen Chat Hero (Apple-style minimal, rotating typed prompts) ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, 20px side padding, black send button ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -647,11 +647,12 @@
       --muted:#77808d;
       --line:#E6E8EC;
 
-      --radius:28px;               /* bubble radius */
-      --bubbleH:78px;              /* bubble height */
-      --maxW:940px;                /* bubble max width */
-      --padX:22px;                 /* bubble horizontal padding */
-      --send:56px;                 /* send button size */
+      --radius:28px;                 /* bubble radius */
+      --bubbleH:78px;                /* bubble height */
+      --maxW:940px;                  /* max bubble width */
+      --padX:20px;                   /* inside bubble padding L/R */
+      --screenPadX:20px;             /* bubble -> viewport side padding */
+      --titleGap:28px;               /* space between title and bubble */
 
       --shadowA:0 1px 0 rgba(0,0,0,.04);
       --shadowB:0 18px 40px rgba(0,0,0,.06);
@@ -660,58 +661,61 @@
     /* --------------- Section layout --------------- */
     #chat-hero{
       position:relative;
-      min-height:100svh; /* iOS-viewport friendly */
+      min-height:100svh;
       min-height:100vh;
       background:var(--bg);
-      display:grid;
-      place-content:center;
-      padding:calc(env(safe-area-inset-top,0) + 24px)
-              24px
-              calc(env(safe-area-inset-bottom,0) + 24px);
       box-sizing:border-box;
       isolation:isolate;
       -webkit-tap-highlight-color: transparent;
-    }
-    #chat-hero .inner{
-      width:100%;
-      max-width:var(--maxW);
-      margin-inline:auto;
-      text-align:center;
-      color:var(--ink);
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
                    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
                    "Segoe UI Emoji";
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
+      color:var(--ink);
     }
 
-    /* ------------------ Heading ------------------- */
-    #chat-hero h1{
-      margin:0 0 28px;
-      font-weight:700;
+    /* ------------------ Title --------------------- */
+    #chat-hero .hero-title{
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:calc(50% + (var(--bubbleH)/2) + var(--titleGap));
+      margin:0;
+      text-align:center;
       letter-spacing:-0.02em;
       line-height:1.1;
+      font-weight:700;
       font-size:clamp(28px, 5.2vw, 54px);
+      padding:0 12px; /* tiny guard so long words don't touch edges on very small screens */
+    }
+
+    /* --------------- Bubble spot (center) ---------- */
+    #chat-hero .bubble-spot{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); /* <-- exactly 20px per side */
+      height:var(--bubbleH);
     }
 
     /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
-      position:relative;
-      margin-inline:auto;
+      width:100%;
+      height:100%;
       display:flex;
       align-items:center;
-      height:var(--bubbleH);
       border:1px solid var(--line);
       border-radius:var(--radius);
       background:#fff;
       box-shadow:var(--shadowA), var(--shadowB);
       padding-left:var(--padX);
-      padding-right:calc(var(--padX) + var(--send) + 14px); /* room for button */
-      width:min(100%, var(--maxW));
+      padding-right:calc(var(--padX) + 56px + 14px); /* pad + send size + breathing room */
       transition:box-shadow .15s ease;
     }
 
-    /* Show subtle ring only when user navigates with keyboard (no ring on load) */
+    /* Keyboard-only focus ring (no blue outline on load/click) */
     #chat-hero .bubble:has(.prompt:focus-visible){
       box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
@@ -727,10 +731,9 @@
       color:#0b0b0c;
       border:0;
       background:transparent;
-      outline:0;                     /* no blue outline */
+      outline:0; /* no browser outline */
       caret-color:#0b0b0c;
-      appearance:none;
-      -webkit-appearance:none;
+      appearance:none; -webkit-appearance:none;
     }
     #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
@@ -738,22 +741,25 @@
     #chat-hero .send{
       position:absolute;
       right:10px;
-      width:var(--send);
-      height:var(--send);
+      top:50%;
+      transform:translateY(-50%);
+      width:56px;
+      height:56px;
       border-radius:999px;
-      border:1px solid #E4E7EE;
-      background:#F7F9FC;
+      border:1px solid #0b0b0c;      /* black ring */
+      background:#0b0b0c;            /* black circle */
       display:grid;
       place-items:center;
       cursor:pointer;
       transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
-      box-shadow:0 1px 1px rgba(0,0,0,.04);
+      box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08);
     }
-    #chat-hero .send:hover{ background:#EEF2F7; transform:translateY(-1px); }
-    #chat-hero .send:active{ transform:translateY(0); }
+    #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
+    #chat-hero .send:active{ transform:translateY(-50%); }
     #chat-hero .send svg{
       width:22px; height:22px; display:block;
-      fill:none; stroke:#0b0b0c; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+      fill:none; stroke:#fff;         /* white arrow */
+      stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
     }
 
     /* ------------------ Dark mode ------------------ */
@@ -761,8 +767,7 @@
       #chat-hero{ --bg:#0B0B0C; --ink:#F3F6FB; --muted:#B8BFCA; --line:#22262D; }
       #chat-hero .bubble{ background:#0F1217; }
       #chat-hero .prompt{ color:#F3F6FB; caret-color:#F3F6FB; }
-      #chat-hero .send{ background:#111418; border-color:#232831; }
-      #chat-hero .send svg{ stroke:#F3F6FB; }
+      /* keep send button black/white as requested */
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
@@ -774,10 +779,11 @@
     }
   </style>
 
-  <div class="inner">
-    <h1>What can I help with?</h1>
+  <!-- Title is positioned relative to bubble center so the bubble stays EXACTLY centered -->
+  <h1 class="hero-title">What can I help with?</h1>
 
-    <!-- Chat bubble -->
+  <!-- The centered bubble -->
+  <div class="bubble-spot">
     <form class="bubble" action="#" method="get" onsubmit="return false">
       <input
         class="prompt"
@@ -816,32 +822,19 @@
       "Audit pricing and add a premium tier that lifts ARPU by 40%."
     ];
 
-    /**
-     * Typing speeds (ms). Tweak to taste.
-     */
-    const TYPER = {
-      startDelay: 500,  // wait before first type
-      type: 34,         // per-character type speed
-      erase: 22,        // per-character erase speed
-      hold: 1600,       // pause when fully typed
-      gap: 650,         // pause before typing next line
-      loop: true        // keep cycling
-    };
+    /* Typing speeds (ms). Tweak to taste. */
+    const TYPER = { startDelay:500, type:34, erase:22, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
       const input = document.getElementById('prompt-input');
       if (!input) return;
 
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      // Do NOT autofocus -> prevents the initial blue outline.
-      // Keep the caret hidden until the user clicks.
-
-      // Prevent typing while animation runs (keeps it minimal/clean).
+      // Do NOT autofocus -> prevents any initial outline.
+      // Keep animation read-only for a clean hero feel.
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      // Reduced motion: just set a static line and stop.
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; return; }
 
       let i = 0, j = 0, typing = true;
