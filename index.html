@@ -634,8 +634,7 @@
 
 
   <!--======================================================================================================================================================================-->
-
-<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, 20px side padding, scalable send button, flawless wrapping ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, responsive padding & send size, flawless wrapping ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -648,21 +647,42 @@
       --radius:28px;                 /* bubble radius */
       --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
       --maxW:940px;                  /* max bubble width */
-      --padX:20px;                   /* inside bubble padding L/R */
-      --padY:18px;                   /* inside bubble padding T/B */
       --screenPadX:20px;             /* bubble -> viewport side padding */
       --titleGap:28px;               /* space between title and bubble */
 
-      /* === Send button sizing (edit me) ===
-         Scale once here and everything (padding, icon) adapts.
-         Example: 1  = 56px (base), 0.5 = half size, 1.25 = 25% larger. */
+      /* === Edit me (mobile & desktop controls) ===
+         Mobile values apply by default; desktop overrides at 768px+.
+         Send size = --sendBase * --sendScale-(m|d). Icon scales with the button. */
+
+      /* Mobile (default) */
+      --padX-m:16px;                 /* inside bubble L/R on mobile */
+      --padY-m:14px;                 /* inside bubble T/B on mobile */
+      --sendScale-m:.50;             /* mobile send size scale (0.5 = half of base) */
+
+      /* Desktop (>=768px) */
+      --padX-d:20px;                 /* inside bubble L/R on desktop */
+      --padY-d:18px;                 /* inside bubble T/B on desktop */
+      --sendScale-d:.75;             /* desktop send size scale */
+
+      /* Base + active mappings (do not edit below unless you know why) */
+      --padX:var(--padX-m);
+      --padY:var(--padY-m);
       --sendBase:56px;
-      --sendScale:.75;                 /* << requested: start at half-size */
+      --sendScale:var(--sendScale-m);
       --sendSize:calc(var(--sendBase) * var(--sendScale));
-      --sendIconRatio:.3928571429;    /* 22 / 56, keeps icon proportional */
+      --sendIconRatio:.3928571429;   /* 22 / 56 keeps icon proportional */
 
       --shadowA:0 1px 0 rgba(0,0,0,.04);
       --shadowB:0 18px 40px rgba(0,0,0,.06);
+    }
+
+    @media (min-width:768px){
+      #chat-hero{
+        --padX:var(--padX-d);
+        --padY:var(--padY-d);
+        --sendScale:var(--sendScale-d);
+        --sendSize:calc(var(--sendBase) * var(--sendScale));
+      }
     }
 
     /* --------------- Section layout --------------- */
@@ -703,14 +723,15 @@
       left:50%;
       top:50%;
       transform:translate(-50%, -50%);
-      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); /* <-- exactly 20px per side */
+      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); /* exactly 20px per side to viewport edges */
       height:auto; /* let content drive height for flawless expansion */
     }
 
     /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
+      position:relative;
       width:100%;
-      min-height:var(--bubbleH);  /* initial min height; JS keeps var(--bubbleH) in sync with real height */
+      min-height:var(--bubbleH);    /* initial min height; JS keeps var(--bubbleH) in sync with real height */
       height:auto;
       display:flex;
       align-items:center;
@@ -749,6 +770,7 @@
       padding:0;                        /* vertical rhythm handled by bubble padding */
       white-space:pre-wrap;             /* wrap like Apple Notes */
       word-break:break-word;            /* break long tokens */
+      overflow-wrap:anywhere;           /* extra guard for ultra-long tokens */
       -webkit-appearance:none;
       appearance:none;
     }
@@ -770,6 +792,7 @@
       cursor:pointer;
       transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
       box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08);
+      touch-action:manipulation;
     }
     #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
     #chat-hero .send:active{ transform:translateY(-50%); }
@@ -798,7 +821,7 @@
     }
   </style>
 
-   <!-- Title is positioned relative to bubble center so the bubble stays EXACTLY centered -->
+  <!-- Title is positioned relative to bubble center so the bubble stays EXACTLY centered -->
   <h1 class="hero-title">ONX is Unstoppable</h1>
 
   <!-- The centered bubble -->
