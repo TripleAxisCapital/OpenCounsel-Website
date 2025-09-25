@@ -635,6 +635,172 @@
 
   <!--======================================================================================================================================================================-->
 
+
+
+<!-- ===== Full-screen Chat Hero (no header/icons) ===== -->
+<section id="chat-hero" aria-label="Chat hero">
+  <style>
+    /* --- Design tokens --- */
+    #chat-hero{
+      --bg:#ffffff;
+      --ink:#0B0B0C;
+      --muted:#6b7280;              /* placeholder */
+      --line:#e5e7eb;               /* border */
+      --shadowA:0 1px 2px rgba(0,0,0,.04);
+      --shadowB:0 12px 32px rgba(0,0,0,.08);
+      --radius:24px;                /* bubble radius */
+      --bubbleH:84px;               /* bubble height */
+      --maxW:920px;                 /* max width of bubble */
+      --padX:22px;                  /* left/right padding inside bubble */
+      --sendSize:56px;              /* circular send button */
+      --sendBg:#f8fafc;
+      --sendHover:#eef2f7;
+      --sendBorder:#e6e9ee;
+    }
+
+    /* --- Layout --- */
+    #chat-hero{
+      position:relative;
+      min-height:100svh; /* iOS-friendly viewport */
+      min-height:100vh;
+      background:var(--bg);
+      display:grid;
+      place-content:center;
+      padding:calc(env(safe-area-inset-top,0) + 24px)
+               24px
+               calc(env(safe-area-inset-bottom,0) + 24px);
+      box-sizing:border-box;
+      isolation:isolate;
+    }
+    #chat-hero .inner{
+      width:100%;
+      max-width:var(--maxW);
+      margin-inline:auto;
+      text-align:center;
+      color:var(--ink);
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
+                   "Segoe UI Emoji";
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    /* --- Heading --- */
+    #chat-hero h1{
+      margin:0 0 28px;
+      font-weight:700;
+      letter-spacing:-0.02em;
+      line-height:1.12;
+      font-size:clamp(28px, 5.4vw, 54px);
+    }
+
+    /* --- Chat bubble shell --- */
+    #chat-hero .bubble{
+      position:relative;
+      margin-inline:auto;
+      display:flex;
+      align-items:center;
+      height:var(--bubbleH);
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:var(--radius);
+      box-shadow:var(--shadowA), var(--shadowB);
+      padding-left:var(--padX);
+      padding-right:calc(var(--padX) + var(--sendSize) + 14px); /* room for button */
+      max-width:var(--maxW);
+      width:min(100%, var(--maxW));
+    }
+
+    /* --- Input (read-only placeholder look) --- */
+    #chat-hero .prompt{
+      flex:1 1 auto;
+      height:100%;
+      display:flex;
+      align-items:center;
+      font-size:clamp(16px, 2.3vw, 22px);
+      line-height:1.35;
+      color:#111827;
+      outline:none;
+      border:0;
+      background:transparent;
+    }
+    #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.9; }
+
+    /* --- Send button --- */
+    #chat-hero .send{
+      position:absolute;
+      right:10px;
+      width:var(--sendSize);
+      height:var(--sendSize);
+      border-radius:50%;
+      border:1px solid var(--sendBorder);
+      background:var(--sendBg);
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease;
+      box-shadow:0 1px 1px rgba(0,0,0,.04);
+    }
+    #chat-hero .send:hover{ background:var(--sendHover); transform:translateY(-1px); }
+    #chat-hero .send:active{ transform:translateY(0); }
+    #chat-hero .send svg{
+      width:22px; height:22px; display:block;
+      fill:none; stroke:#0b0b0c; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+    }
+
+    /* --- Focus styles (keyboard & a11y) --- */
+    #chat-hero .bubble:focus-within{
+      outline:2px solid #cbd5ff; outline-offset:3px;
+    }
+
+    /* --- Dark mode (optional) --- */
+    @media (prefers-color-scheme: dark){
+      #chat-hero{ --bg:#0b0b0c; --ink:#f5f7fb; --muted:#c7cbd4; --line:#1f242c;
+                  --sendBg:#111418; --sendHover:#181c22; --sendBorder:#22262d; }
+      #chat-hero .bubble{ background:#0f1217; }
+      #chat-hero .send svg{ stroke:#f5f7fb; }
+    }
+
+    /* --- Reduce motion friendly --- */
+    @media (prefers-reduced-motion: reduce){
+      #chat-hero .send{ transition:none; }
+    }
+  </style>
+
+  <div class="inner">
+    <h1>What can I help with?</h1>
+
+    <!-- Chat bubble -->
+    <form class="bubble" action="#" method="get" onsubmit="return false">
+      <input class="prompt" type="text"
+             value="Plan a surf trip to Costa Rica in August"
+             aria-label="Enter a message" />
+      <button class="send" type="button" aria-label="Send">
+        <!-- Up arrow icon inside a circle style -->
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 19V5M12 5l-6 6M12 5l6 6"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Optional: place the caret at end so it feels like a filled suggestion.
+    (function(){
+      const el = document.querySelector('#chat-hero .prompt');
+      try {
+        el.focus();
+        const v = el.value; el.value = ''; el.value = v;
+      } catch(e){}
+    })();
+  </script>
+</section>
+
+
+
+
+
+
 <!------------------------- HERO --------------------------------------------------------------------------------------------------------->
 <section
   id="home"
