@@ -976,50 +976,90 @@
 
 
 
-
-
-
-
-<section class="onx-stream" data-rate="900" data-dmin="9" data-dmax="14" data-band="12" data-max="28">
+<!-- ▸ ONX Water-Stream (full-screen, lane-based, no overlaps) -->
+<section class="onx-stream"
+  data-rate="900"    <!-- spawn attempt cadence (ms) -->
+  data-dmin="9"      <!-- min rise duration (s) -->
+  data-dmax="14"     <!-- max rise duration (s) -->
+  data-band="12"     <!-- half-width of stream (%) from center -->
+  data-lanes="5"     <!-- number of lanes across the band -->
+  data-gap="1000"    <!-- min gap per lane (ms) -->
+  data-max="28">     <!-- max simultaneous words -->
   <script>
     (() => {
+      /* ── Edit your phrases here ─────────────────────── */
       const WORDS = [
         "FOR BUSINESS","FOR TEAMS","FOR INVESTORS",
         "FOR CREATORS","FOR ENTERPRISE","FOR BUILDERS"
       ];
+      /* ───────────────────────────────────────────────── */
 
       const $stage = document.currentScript.parentElement;
-      const RATE = +($stage.dataset.rate || 900);
-      const DMIN = +($stage.dataset.dmin || 9);
-      const DMAX = +($stage.dataset.dmax || 14);
-      const BAND = +($stage.dataset.band || 12);
-      const MAXN = +($stage.dataset.max  || 28);
+      const RATE  = +($stage.dataset.rate  || 900);
+      const DMIN  = +($stage.dataset.dmin  || 9);
+      const DMAX  = +($stage.dataset.dmax  || 14);
+      const BAND  = +($stage.dataset.band  || 12);  // % each side of center
+      const LANES = Math.max(1, +($stage.dataset.lanes || 5));
+      const GAP   = +($stage.dataset.gap   || 1000); // ms between same-lane spawns
+      const MAXN  = +($stage.dataset.max   || 28);
 
-      const shuffle = a => { for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+      // Evenly spaced lane offsets across [-BAND, +BAND]
+      const laneOffsets = Array.from({length: LANES}, (_, i) => {
+        return (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND;
+      });
+
+      // Per-lane cooldowns to prevent vertical overlap in the same lane
+      const laneReadyAt = new Array(LANES).fill(0);
+
+      // Shuffle phrases (non-repeating cycles)
+      const shuffle = a => { for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; };
       let queue = shuffle([...WORDS]);
 
+      function pickAvailableLane(now){
+        const free = [];
+        for (let i=0;i<LANES;i++){
+          if (now >= laneReadyAt[i]) free.push(i);
+        }
+        if (!free.length) return -1;
+        return free[Math.floor(Math.random()*free.length)];
+      }
+
       function spawn(){
+        const now = performance.now();
+        const lane = pickAvailableLane(now);
+        if (lane < 0) return; // all lanes busy; try next tick
+
         if (queue.length === 0) queue = shuffle([...WORDS]);
         const phrase = queue.pop();
 
+        // Randomized motion parameters (constrained for smoothness)
+        const dur    = DMIN + Math.random()*(DMAX - DMIN);           // rise seconds
+        const scale  = 0.96 + Math.random()*0.14;                    // 0.96–1.10
+        const delay  = Math.random()*0.8;                            // slight desync
+        const laneX  = laneOffsets[lane];                            // center of lane
+
+        // Lane width estimate (in %) to keep sway inside the lane
+        const laneSpan = (LANES === 1) ? (BAND*2) : (2*BAND)/(LANES-1); // Δ between lane centers
+        const swayMax  = Math.max(0.6, (laneSpan*0.38));               // stay inside lane
+        const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()* (swayMax - 0.6));
+
+        // Outer: vertical rise (transform only)
         const outer = document.createElement("span");
         outer.className = "onx-w";
-        const dur   = (DMIN + Math.random()*(DMAX - DMIN));
-        const xoff  = (Math.random()*BAND*2 - BAND);
-        const scale = (0.96 + Math.random()*0.14);
-        const delay = (Math.random()*1.2);
+        outer.setAttribute("aria-hidden","true");
         outer.style.setProperty("--dur",   dur.toFixed(2) + "s");
-        outer.style.setProperty("--x",     xoff.toFixed(2) + "%");
+        outer.style.setProperty("--x",     laneX.toFixed(2) + "%");
         outer.style.setProperty("--scale", scale.toFixed(2));
         outer.style.setProperty("--delay", delay.toFixed(2) + "s");
 
+        // Middle: gentle in-lane sway
         const swayWrap = document.createElement("span");
         swayWrap.className = "onx-sw";
-        const sway = (Math.random()<.5?-1:1) * (1.8 + Math.random()*2.6);
-        const swayDur = (6 + Math.random()*6);
-        swayWrap.style.setProperty("--sway", sway.toFixed(2) + "%");
+        const swayDur = 6 + Math.random()*6; // 6–12s
+        swayWrap.style.setProperty("--sway",    sway.toFixed(2) + "%");
         swayWrap.style.setProperty("--swaydur", swayDur.toFixed(2) + "s");
 
+        // Inner: the text node (shimmer, float, breathe)
         const inner = document.createElement("span");
         inner.className = "onx-t";
         inner.textContent = phrase;
@@ -1028,15 +1068,22 @@
         outer.appendChild(swayWrap);
         $stage.appendChild(outer);
 
+        // Cap DOM size
         const nodes = $stage.querySelectorAll(".onx-w");
-        if (nodes.length > MAXN) nodes[0].remove();
+        if (nodes.length > MAXN) nodes[0]?.remove();
 
-        outer.addEventListener("animationend", () => outer.remove());
+        // Mark lane busy until GAP elapses (prevents same-lane stacking)
+        laneReadyAt[lane] = now + GAP;
+
+        // Clean up when the word exits
+        outer.addEventListener("animationend", () => outer.remove(), {once:true});
       }
 
+      // Start stream
       spawn();
       const id = setInterval(spawn, RATE);
 
+      // Cleanup if removed from DOM
       const obs = new MutationObserver(() => {
         if (!document.body.contains($stage)) { clearInterval(id); obs.disconnect(); }
       });
@@ -1046,40 +1093,46 @@
 </section>
 
 <style>
-  /* Full-screen, Apple-clean */
+  /* ——— Full-screen canvas ——— */
   .onx-stream{
-    --bg:#fff; --c1:#3f6768; --c2:#57c7d9;
-    --shimmer:8s; --breath:7s; --float:3.8s;
-    --size:clamp(28px,8vw,72px); --weight:500; --track:0.26em;
+    --bg:#fff;
+    --c1:#3f6768;   /* deep teal */
+    --c2:#57c7d9;   /* aqua */
+    --shimmer:8s;   /* gradient shimmer speed */
+    --breath:7s;    /* glow speed */
+    --float:3.8s;   /* micro float speed */
+    --size:clamp(28px,8vw,72px);
+    --weight:500;
+    --track:0.26em;
 
     position:relative;
     width:100%;
-    min-height:100vh;     /* fallback */
-    height:100svh;        /* modern mobile safe viewport */
+    min-height:100vh;            /* fallback */
+    height:100svh;               /* mobile safe viewport */
     background:var(--bg);
     overflow:hidden;
     margin:0; padding:0;
-    isolation:isolate;    /* keep effects contained */
+    isolation:isolate;
     user-select:none; -webkit-user-select:none;
   }
 
-  /* Smooth vertical rise */
+  /* Vertical rise (transform only for GPU smoothness) */
   .onx-w{
-    position:absolute;
-    left:50%; top:105%;                         /* start below viewport */
+    position:absolute; left:50%; top:105%;
     transform:translate3d(-50%,0,0) scale(var(--scale,1));
     margin-left:var(--x,0);
-    will-change:transform,opacity;
+    will-change:transform, opacity;
     opacity:0; pointer-events:none;
     animation:onx-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
+    z-index:0; /* all decorative */
   }
   @keyframes onx-rise{
-    0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0)),0,0)   scale(var(--scale,1)); }
-    6%   { opacity:1; }
-    100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0)),-125vh,0) scale(var(--scale,1)); }
+    0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0)), 0, 0)   scale(var(--scale,1)); }
+    7%   { opacity:1; }
+    100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0)), -125vh, 0) scale(var(--scale,1)); }
   }
 
-  /* Gentle sway wrapper */
+  /* Side sway kept within lane */
   .onx-sw{
     display:inline-block;
     will-change:transform;
@@ -1090,7 +1143,7 @@
     to   { transform:translateX(var(--sway,3%)); }
   }
 
-  /* Gradient text shimmer + micro-float + glow */
+  /* Text with gradient shimmer + micro-float + soft glow */
   .onx-t{
     display:block;
     font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -1116,19 +1169,23 @@
   }
 
   @keyframes onx-shimmer{ 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
-  @keyframes onx-float{ from{transform:translateY(0)} to{transform:translateY(-2px)} }
+  @keyframes onx-float  { from{transform:translateY(0)} to{transform:translateY(-2px)} }
   @keyframes onx-breathe{
     0%,100% { filter:brightness(1) saturate(1); text-shadow:none; }
     50%     { filter:brightness(1.06) saturate(1.03); text-shadow:0 0 12px rgba(87,199,217,.12); }
   }
 
+  /* Motion accessibility */
   @media (prefers-reduced-motion: reduce){
-    .onx-w,.onx-sw,.onx-t{ animation:none !important; opacity:1 !important; transform:none !important; }
+    .onx-w,.onx-sw,.onx-t{ animation:none !important; opacity:1 !important; transform:none !important; top:auto; }
   }
 
-  .onx-stream,.onx-t{ -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+  /* Crisp type */
+  .onx-stream,.onx-t{
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
 </style>
-
 
 
 <!-- ────────────────────────────────────────────────────────────────────────────
