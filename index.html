@@ -712,12 +712,68 @@
     </script>
   </div>
 
-  <!-- Title (positioned relative to bubble center / viewport) -->
-  <h1 class="hero-title">
-    <span class="title-blur">
+ <!-- Title (mobile = single line, max size; desktop untouched) -->
+<h1 class="hero-title" id="hero-onx-title">
+  <span class="title-blur">
+    <span class="fit-line">
       <span class="title-onx">ONX.</span> Your Unfair Advantage.
     </span>
-  </h1>
+  </span>
+
+  <style>
+    /* Only affect this title, only on mobile */
+    @media (max-width:600px){
+      #hero-onx-title{ margin:0; }
+      #hero-onx-title .title-blur{
+        display:block;
+        width:100vw;                 /* span full viewport */
+        padding:0 12px;              /* exactly 12px on each side */
+        box-sizing:border-box;
+        overflow:visible;
+      }
+      #hero-onx-title .fit-line{
+        display:inline-block;
+        white-space:nowrap;          /* force one line */
+        line-height:1.05;
+        transform-origin:left center;
+        will-change:transform;
+        font-size:120px;             /* large base; we scale down to fit */
+      }
+    }
+  </style>
+
+  <script>
+    (function(){
+      const root = document.getElementById('hero-onx-title');
+      const line = root?.querySelector('.fit-line');
+      const shell = root?.querySelector('.title-blur');
+      const mq = window.matchMedia('(max-width: 600px)');
+
+      function fitOnce(){
+        if(!root || !line || !shell){ return; }
+        if(!mq.matches){ line.style.transform = ''; return; } // leave desktop as-is
+
+        // Reset before measuring
+        line.style.transform = 'scale(1)';
+
+        // Available width = viewport span (minus the 12px + 12px padding already applied)
+        const available = shell.getBoundingClientRect().width - 24; // px
+        const needed = line.scrollWidth;                             // natural width at 120px base
+        const scale = available > 0 ? Math.min(1, available / needed) : 1;
+
+        line.style.transform = 'scale(' + scale + ')';
+      }
+
+      function fit(){ fitOnce(); requestAnimationFrame(fitOnce); }   // 2 passes for font reflow
+      ['DOMContentLoaded','load','resize','orientationchange','pageshow'].forEach(ev=>{
+        window.addEventListener(ev, fit, {passive:true});
+      });
+      if (document.fonts?.ready) document.fonts.ready.then(fit).catch(()=>{});
+      fit();
+    })();
+  </script>
+</h1>
+
 
   <!-- The centered bubble -->
   <div class="bubble-spot">
