@@ -712,7 +712,7 @@
     </script>
   </div>
 
- <!-- Title (mobile = single line, scales to max; padding fully controllable here only) -->
+ <!-- Title (mobile: max single line; desktop: unchanged) -->
 <h1 class="hero-title" id="hero-onx-title">
   <span class="title-blur">
     <span class="fit-line">
@@ -721,32 +721,30 @@
   </span>
 
   <style>
-    /* Only affect this title on mobile; desktop untouched */
+    /* Only affect this section on mobile */
     @media (max-width:600px){
       #hero-onx-title{
-        /* ↓ Edit these to control outer spacing (outside the box) */
-        --outer-top: 0px;          /* space above the title block */
-        --outer-bottom: 0px;       /* space below the title block */
+        /* tweak these in-place */
+        --xpad: 12px;      /* left/right padding of the sentence */
+        --ypad: 0px;       /* top/bottom padding of the sentence */
+        --outer-top: 0px;  /* space above the whole block */
+        --outer-bottom: 0px;/* space below the whole block */
 
-        /* ↓ Edit these to control inner padding (inside the box) */
-        --xpad: 50px;              /* left/right padding of the sentence */
-        --ypad: 0px;               /* top/bottom padding of the sentence */
-
-        margin: var(--outer-top) 0 var(--outer-bottom);
+        margin: var(--outer-top) 0 var(--outer-bottom) !important; /* kill default h1 margins */
       }
       #hero-onx-title .title-blur{
         display:block;
-        width:100vw;               /* span full viewport width */
+        width:100vw;                          /* span full viewport */
         padding: var(--ypad) var(--xpad);
-        box-sizing:border-box;     /* include padding in width to avoid overflow */
+        box-sizing:border-box;                /* include padding in width */
+        line-height:0;                        /* remove baseline line-box gap */
       }
       #hero-onx-title .fit-line{
-        display:inline-block;
-        white-space:nowrap;        /* always one line */
+        display:block;                        /* avoids inline baseline gaps */
+        white-space:nowrap;                   /* always one line */
         line-height:1.05;
-        transform-origin:left center;
-        will-change:transform;
-        font-size:120px;           /* large base; JS scales down to fit */
+        font-size:120px;                      /* base; JS will shrink to fit */
+        font-weight:700;
       }
     }
   </style>
@@ -758,24 +756,38 @@
       const shell = root?.querySelector('.title-blur');
       const mq    = window.matchMedia('(max-width: 600px)');
 
+      let BASE = 120; // matches CSS
+
       function fitOnce(){
         if(!root || !line || !shell) return;
-        if(!mq.matches){ line.style.transform = ''; return; } // desktop untouched
 
-        line.style.transform = 'scale(1)';
+        if(!mq.matches){
+          // Desktop: do nothing (leave your existing desktop styles)
+          line.style.fontSize = ''; 
+          return;
+        }
 
-        const rectWidth = shell.getBoundingClientRect().width;
-        const cs = getComputedStyle(shell);
-        const padL = parseFloat(cs.paddingLeft)  || 0;
-        const padR = parseFloat(cs.paddingRight) || 0;
-        const available = rectWidth - padL - padR;   // respect your --xpad edits
-        const needed    = line.scrollWidth;          // natural width at base font-size
-        const scale     = available > 0 ? Math.min(1, available / needed) : 1;
+        // Start from the base size (no transforms used → no extra visual gap)
+        line.style.fontSize = BASE + 'px';
 
-        line.style.transform = 'scale(' + scale + ')';
+        // Available width = shell width minus actual computed padding
+        const rectW = shell.getBoundingClientRect().width;
+        const cs    = getComputedStyle(shell);
+        const padL  = parseFloat(cs.paddingLeft)  || 0;
+        const padR  = parseFloat(cs.paddingRight) || 0;
+        const available = Math.max(0, rectW - padL - padR);
+
+        // Natural width at current font-size
+        const needed = line.scrollWidth || 1;
+
+        // Scale font-size down to fit, cap at base (never upscale beyond BASE)
+        const scale   = Math.min(1, available / needed);
+        const newSize = Math.max(1, BASE * scale);
+
+        line.style.fontSize = newSize + 'px';
       }
 
-      function fit(){ fitOnce(); requestAnimationFrame(fitOnce); } // 2 passes for font reflow
+      function fit(){ fitOnce(); requestAnimationFrame(fitOnce); } // double pass for font load
       ['DOMContentLoaded','load','resize','orientationchange','pageshow'].forEach(ev=>{
         window.addEventListener(ev, fit, {passive:true});
       });
