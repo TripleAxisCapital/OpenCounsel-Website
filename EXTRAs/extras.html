@@ -1574,3 +1574,622 @@
   </div>
 </section>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- LARGE ASS CHUNK FROM PRIVACY AND FEATURES -->
+
+
+<!-- ────────────────────────── Privacy Section───────────────────────────────────── -->
+<section id="oc-privacy" class=" padTop relative mx-auto max-w-[1200px] oc-container reveal overflow-visible bg-white">
+  <!-- Header -->
+  <div class="w-full text-center">
+    <!-- Descender guard: extra bottom room without changing layout -->
+    <h2
+      class="text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.1] grad-text inline-block align-baseline overflow-visible pb-[0.28em] -mb-[0.28em]"
+      style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;"
+    >
+      Privacy-first
+      <!--Your data stays yours.-->
+    </h2>
+
+    <p class="mx-auto mt-4 max-w-[780px] text-[20px] leading-relaxed text-neutral-600">
+      ONX runs locally with optional cloud power. Personal details are removed before anything leaves your device.
+    </p>
+  </div>
+
+  <!-- Usage -->
+  <oc-pii-bubble></oc-pii-bubble>
+  <div class="h-6" aria-hidden="true"></div>
+
+  <!-- Single Unified Card -->
+  <article class="mx-auto max-w-[960px] rounded-2xl border border-neutral-200 bg-white p-8 md:p-10 shadow-[0_10px_30px_rgba(0,0,0,.06)]">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Local-first block -->
+      <div class="flex flex-col">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+            <i class="ph ph-desktop text-[18px]" aria-hidden="true"></i>
+          </div>
+          <h3 class="text-lg font-semibold tracking-tight text-neutral-900">Local-first</h3>
+        </div>
+        <p class="mt-3 text-sm text-neutral-700">
+          All processing happens on your device by default — no data leaves unless you choose cloud.
+        </p>
+      </div>
+
+      <!-- Private Cloud block -->
+      <div class="flex flex-col">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+            <i class="ph ph-lock-simple text-[18px]" aria-hidden="true"></i>
+          </div>
+          <h3 class="text-lg font-semibold tracking-tight text-neutral-900">Private Cloud</h3>
+        </div>
+        <p class="mt-3 text-sm text-neutral-700">
+          ONX redacts personal info locally, sends requests encrypted, and never stores your content.
+        </p>
+      </div>
+    </div>
+
+    <!-- Centered Checklist (applies to both Local-first & Private Cloud) -->
+    <div class="mt-8 md:mt-10 pt-6 border-t border-neutral-200">
+      <div class="flex flex-col items-center text-center">
+        <ul role="list" class="mx-auto max-w-[820px] grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 list-none">
+          <!-- Item 1 -->
+          <li class="flex items-center justify-center gap-2">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-white">
+              <i class="ph ph-check text-[14px]" aria-hidden="true"></i>
+            </span>
+            <span class="text-sm font-medium text-neutral-900">No PII</span>
+          </li>
+          <!-- Item 2 -->
+          <li class="flex items-center justify-center gap-2">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-white">
+              <i class="ph ph-check text-[14px]" aria-hidden="true"></i>
+            </span>
+            <span class="text-sm font-medium text-neutral-900">No records</span>
+          </li>
+          <!-- Item 3 -->
+          <li class="flex items-center justify-center gap-2">
+            <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-neutral-900 text-white">
+              <i class="ph ph-check text-[14px]" aria-hidden="true"></i>
+            </span>
+            <span class="text-sm font-medium text-neutral-900">Redacts and encrypts</span>
+          </li>
+        </ul>
+        <p class="sr-only">Applies to both Local-first and Private Cloud.</p>
+      </div>
+    </div>
+    <!-- /Checklist -->
+  </article>
+</section>
+
+
+<template id="oc-pii-bubble-template">
+  <style>
+    :host{
+      display:block; width:100%; box-sizing:border-box;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,"Segoe UI Emoji";
+      color:var(--oc-text,#0b0b0b);
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      max-width:100%;
+    }
+    .bubble{
+      display:block; margin:0 auto; position:relative; isolation:isolate;
+      width:var(--oc-bubble-width,560px); max-width:100%;
+      background:#f7f7f7;
+      border:1px solid rgba(0,0,0,.10);
+      border-radius:18px;
+      padding:14px 16px;
+      line-height:1.45; font-size:15px; color:inherit;
+      box-sizing:border-box;
+      /* Bubble is always present: never fades, scales, or moves */
+      opacity:1; filter:none; transform:none;
+      will-change:height;
+      transition:height 280ms cubic-bezier(.2,.7,0,1);
+    }
+
+    /* Only the message content animates */
+    .content{
+      display:inline-block;
+      opacity:0; filter:blur(8px);
+      will-change:opacity, filter;
+    }
+
+    /* Invisible in-DOM sizer to lock the bubble height up-front */
+    .sizer{
+      position:absolute; left:0; right:0; top:0;
+      visibility:hidden; pointer-events:none;
+      opacity:0; filter:none; transform:none;
+      white-space:normal;
+    }
+
+    .caret{
+      display:inline-block; width:1.5px; height:1em;
+      background:rgba(0,0,0,.65);
+      vertical-align:-.12em; margin-left:1px;
+      animation:blink 1s steps(2,end) infinite;
+      transform:translateY(.5px);
+    }
+    @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+    /* Detect pulse + scrub finish */
+    .pii{position:relative; white-space:nowrap; border-radius:8px; padding:0 2px;}
+    .pii.pulse::before{
+      content:""; position:absolute; inset:-1px -2px; border-radius:10px;
+      background:rgba(255,59,48,.12);
+      box-shadow:0 0 0 1px rgba(255,59,48,.22) inset;
+      animation:piiPulse 900ms cubic-bezier(.22,.61,.36,1) 2 both;
+      pointer-events:none;
+    }
+    @keyframes piiPulse{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+    .scrub{background:#ececec; border-radius:8px; padding:0 4px;}
+
+    @media (prefers-reduced-motion:reduce){
+      .pii.pulse::before{animation:none !important}
+      .caret{display:none}
+      .content{opacity:1 !important; filter:none !important}
+    }
+  </style>
+
+  <div class="bubble" aria-label="PII is redacted locally before sending">
+    <span class="content"></span>
+    <div class="sizer" aria-hidden="true"></div>
+  </div>
+</template>
+
+<script>
+(()=> {
+  /* ===== Global speed knobs =====
+     Increase values to go faster; decrease to slow down. */
+  const TYPING_SPEED = 3.0;  // typing cadence
+  const EFFECT_SPEED = 1.0;  // detect & scrub effects
+  /* ============================= */
+
+  const CONFIG = {
+    nameOriginal:"Alexander Gates",
+    nameScrubbed:"Person X",
+    emailOriginal:"alex.gates@gmail.com",
+    emailScrubbed:"personx@email.com",
+    phoneOriginal:"(555) 482-1937",
+    phoneScrubbed:"000-000-0000"
+  };
+
+  const SCRIPT = [
+    {type:"text", text:"My name is "},
+    {type:"pii",  key:"name",  text:CONFIG.nameOriginal,  cls:"name"},
+    {type:"text", text:". My email is "},
+    {type:"pii",  key:"email", text:CONFIG.emailOriginal, cls:"email"},
+    {type:"text", text:" and my phone is "},
+    {type:"pii",  key:"phone", text:CONFIG.phoneOriginal, cls:"phone"},
+    {type:"text", text:". Please book a call for tomorrow."}
+  ];
+
+  class OCPiiBubble extends HTMLElement{
+    constructor(){
+      super();
+      const root=this.attachShadow({mode:'open'});
+      const tpl=document.getElementById('oc-pii-bubble-template');
+      root.appendChild(tpl.content.cloneNode(true));
+
+      this.bubble=root.querySelector('.bubble');
+      this.content=root.querySelector('.content');
+      this.sizer=root.querySelector('.sizer');
+
+      this.reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      this.play=this.play.bind(this);
+      this.reset=this.reset.bind(this);
+      this._onClick=()=>this.play(true, true);
+      this._runId=0;
+      this._loopT=null;
+      this._anims={in:null,out:null};
+      this._hasRun=false;
+
+      // Recompute locked height when width changes (e.g., responsive)
+      this._ro = new ResizeObserver(()=> this._ensureStableHeight());
+      this._ro.observe(this.bubble);
+    }
+
+    msType(base){ return Math.max(1, Math.round(base/(TYPING_SPEED||1))); }
+    msFx(base){ return Math.max(1, Math.round(base/(EFFECT_SPEED||1))); }
+
+    connectedCallback(){
+      // Autoplay when visible
+      this._io=new IntersectionObserver((entries)=>{
+        for(const e of entries){
+          if(e.isIntersecting){
+            this._ensureStableHeight();
+            setTimeout(()=>this.play(),120);
+            this._io.disconnect();
+            break;
+          }
+        }
+      },{threshold:.35});
+      this._io.observe(this);
+
+      this.addEventListener('click', this._onClick);
+    }
+
+    disconnectedCallback(){
+      if(this._io) this._io.disconnect();
+      this.removeEventListener('click', this._onClick);
+      if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
+      this._cancelAnims();
+      this._ro?.disconnect();
+    }
+
+    _cancelAnims(){
+      try{ this._anims.in?.cancel(); }catch(_){}
+      try{ this._anims.out?.cancel(); }catch(_){}
+      this._anims.in=this._anims.out=null;
+    }
+
+    _prepContentInvisible(){
+      this.content.style.opacity='0';
+      this.content.style.filter='blur(8px)';
+    }
+    _prepContentVisible(){
+      this.content.style.opacity='1';
+      this.content.style.filter='none';
+    }
+
+    reset(){
+      // Do NOT touch bubble sizing/visibility; we only clear content
+      this._runId++;
+      if (this._loopT) { clearTimeout(this._loopT); this._loopT=null; }
+      this._cancelAnims();
+      while (this.content.firstChild) this.content.removeChild(this.content.firstChild);
+      this.nameEl=this.emailEl=this.phoneEl=null;
+    }
+
+    /* ------- Lock bubble height so it never grows/shrinks during typing ------- */
+    _finalFragment({scrubbed=true}={}){
+      const frag=document.createDocumentFragment();
+      for(const seg of SCRIPT){
+        if(seg.type==='text'){
+          frag.appendChild(document.createTextNode(seg.text));
+        }else{
+          const span=document.createElement('span');
+          span.className=`pii ${seg.cls} ${scrubbed?'scrub':''}`;
+          const map={
+            name: scrubbed? CONFIG.nameScrubbed: CONFIG.nameOriginal,
+            email: scrubbed? CONFIG.emailScrubbed: CONFIG.emailOriginal,
+            phone: scrubbed? CONFIG.phoneScrubbed: CONFIG.phoneOriginal
+          };
+          span.textContent = map[seg.key] ?? seg.text;
+          frag.appendChild(span);
+        }
+      }
+      return frag;
+    }
+
+    _measureHeight(scrubbed){
+      // Prepare sizer with the desired final content
+      this.sizer.replaceChildren();
+      this.sizer.appendChild(this._finalFragment({scrubbed}));
+      // Height of content; bubble must include its own padding
+      const cs=getComputedStyle(this.bubble);
+      const padTop=parseFloat(cs.paddingTop)||0, padBot=parseFloat(cs.paddingBottom)||0;
+      const total=Math.ceil(this.sizer.scrollHeight + padTop + padBot);
+      return total;
+    }
+
+    _ensureStableHeight(){
+      // Take max of original vs scrubbed text (whichever is taller)
+      const h1=this._measureHeight(false);
+      const h2=this._measureHeight(true);
+      const H=Math.max(h1,h2);
+      // Only update if changed to avoid layout thrash
+      if(this._lockedH !== H){
+        this._lockedH = H;
+        this.bubble.style.height = H + 'px';
+      }
+    }
+    /* ------------------------------------------------------------------------ */
+
+    // --- Core typing: ALWAYS insert new nodes *before the caret* to preserve order ---
+    async typeScript(runId){
+      const delay=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msType(t)));
+
+      // caret
+      const caret=document.createElement('span'); caret.className='caret';
+      this.content.appendChild(caret);
+
+      // helpers
+      const textWriterBeforeCaret = ()=>{
+        const tn=document.createTextNode("");
+        this.content.insertBefore(tn, caret);
+        return (ch)=>{ tn.nodeValue += ch; };
+      };
+      const spanWriterBeforeCaret = (cls)=>{
+        const span=document.createElement('span'); span.className=`pii ${cls}`;
+        this.content.insertBefore(span, caret);
+        const tn=document.createTextNode(""); span.appendChild(tn);
+        return {span, write:(ch)=>{ tn.nodeValue += ch; }};
+      };
+      const typeChar = async (writer, ch)=>{
+        writer(ch);
+        let base=26;
+        if(ch==='.'){ base=85; } else if(ch===',' ){ base=44; } else if(ch===' ' ){ base=20; }
+        await delay(base);
+      };
+
+      let write = textWriterBeforeCaret(); // start with plain text writer
+
+      for(const seg of SCRIPT){
+        if(runId!==this._runId) return;
+
+        if(seg.type==='text'){
+          for(let i=0;i<seg.text.length && runId===this._runId;i++){
+            await typeChar(write, seg.text[i]);
+          }
+        } else {
+          const sw = spanWriterBeforeCaret(seg.cls);
+          // save refs for effects
+          if(seg.key==='name')  this.nameEl  = sw.span;
+          if(seg.key==='email') this.emailEl = sw.span;
+          if(seg.key==='phone') this.phoneEl = sw.span;
+
+          for(let i=0;i<seg.text.length && runId===this._runId;i++){
+            await typeChar(sw.write, seg.text[i]);
+          }
+          // return to base text writer before caret for next segment
+          write = textWriterBeforeCaret();
+        }
+      }
+
+      caret.remove();
+    }
+
+    async _fadeIn(runId, isRestart){
+      // Animate ONLY the message content. Bubble remains constant.
+      if(this.reduced){ this._prepContentVisible(); return; }
+      this._prepContentInvisible();
+      const easeOut='cubic-bezier(.20,.70,0,1)';
+      this._anims.in=this.content.animate(
+        isRestart
+          ? [
+              { opacity:0, filter:'blur(10px)' },
+              { opacity:1, filter:'blur(0px)' }
+            ]
+          : [
+              { opacity:0, filter:'blur(8px)' },
+              { opacity:1, filter:'blur(0px)' }
+            ],
+        { duration:this.msFx(isRestart? 420:340), easing:easeOut, fill:'forwards' }
+      );
+      try{ await this._anims.in.finished; }catch(_){}
+      if(runId!==this._runId) return;
+      this._prepContentVisible();
+    }
+
+    async _fadeOut(runId){
+      if(this.reduced){ this._prepContentInvisible(); return; }
+      const easeIn='cubic-bezier(.4,0,.2,1)'; // graceful fade-out
+      this._anims.out=this.content.animate(
+        [
+          { opacity:1, filter:'blur(0px)' },
+          { opacity:0, filter:'blur(6px)' }
+        ],
+        { duration:this.msFx(260), easing:easeIn, fill:'forwards' }
+      );
+      try{ await this._anims.out.finished; }catch(_){}
+      if(runId!==this._runId) return;
+      this._prepContentInvisible();
+    }
+
+    async play(force=false, isRestart=false){
+      if(this._running && !force) return;
+      this._running=true;
+      this.reset();
+
+      // Lock height before any animation to prevent bubble resizing
+      this._ensureStableHeight();
+
+      const runId=this._runId;
+      const delayFx=(t)=>new Promise(r=>setTimeout(()=>{ if(runId===this._runId) r(); }, this.msFx(t)));
+
+      // Entrance (only the message appears; bubble remains static)
+      await this._fadeIn(runId, isRestart || this._hasRun);
+      if(runId!==this._runId) return;
+
+      // Streamed typing
+      if(this.reduced){
+        const frag=this._finalFragment({scrubbed:false});
+        // also store element refs for effects
+        frag.querySelectorAll?.('.pii').forEach(el=>{
+          if(el.classList.contains('name'))  this.nameEl=el;
+          if(el.classList.contains('email')) this.emailEl=el;
+          if(el.classList.contains('phone')) this.phoneEl=el;
+        });
+        this.content.appendChild(frag);
+      }else{
+        await this.typeScript(runId);
+      }
+      if(runId!==this._runId) return;
+
+      // Detect pulses (subtle)
+      if(!this.reduced){
+        [this.nameEl,this.emailEl,this.phoneEl].forEach((el,i)=>{
+          if(!el) return;
+          setTimeout(()=> el.classList.add('pulse'), this.msFx(90 + i*170));
+        });
+        await delayFx(980);
+      }
+
+      // Scrub (soft blur cross-fades)
+      const swap = async (el,to)=>{
+        if(!el) return;
+        if(this.reduced){ el.textContent=to; el.classList.add('scrub'); return; }
+        const out=el.animate(
+          [{opacity:1,filter:'blur(0px)'},
+           {opacity:1,filter:'blur(1px)'},
+           {opacity:0,filter:'blur(2px)'}],
+          {duration:this.msFx(220),easing:'cubic-bezier(.3,.6,.2,1)',fill:'forwards'}
+        );
+        await out.finished;
+        el.textContent=to;
+        el.classList.remove('pulse');
+        el.classList.add('scrub');
+        el.animate(
+          [{opacity:0,filter:'blur(2px)'},
+           {opacity:.6,filter:'blur(1px)'},
+           {opacity:1,filter:'blur(0px)'}],
+          {duration:this.msFx(240),easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}
+        );
+      };
+
+      await swap(this.nameEl,  CONFIG.nameScrubbed);
+      await swap(this.emailEl, CONFIG.emailScrubbed);
+      await swap(this.phoneEl, CONFIG.phoneScrubbed);
+
+      this._running=false;
+      this._hasRun=true;
+
+      /* ---- Rest 3s (visible), then smooth content fade-out, then blur-fade-in restart ---- */
+      if (this._loopT) { clearTimeout(this._loopT); }
+      this._loopT = setTimeout(async () => {
+        if (!this.isConnected || runId !== this._runId || this._running) return;
+        await this._fadeOut(runId);            // fade only the message
+        if (!this.isConnected || runId !== this._runId) return;
+        this.play(true, /*isRestart*/ true);   // then restart with a fresh blur-fade-in
+      }, 3000);
+    }
+  }
+
+  customElements.define('oc-pii-bubble', OCPiiBubble);
+})();
+</script>
+
+
+
+<!-- ────────────────────────── AI Unified Section───────────────────────────────────── -->
+
+<!-- ===============================
+     ONX Models — DROP-IN SECTION
+     Paste anywhere inside <body>. Tailwind + Phosphor already on page.
+     =============================== -->
+<section id="oc-Models" class="padTop section-clip relative mx-auto max-w-[1200px] oc-container reveal overflow-visible bg-white" style="overflow: visible;">
+  <!-- (Removed soft background glow divs) -->
+
+  <!-- Header -->
+  <div class="w-full text-center">
+    <h2
+      class="mt-0 text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight grad-text leading-[1.1] pt-[0.08em] pb-[0.08em]"
+      style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;">
+      AI Unified
+    </h2>
+
+    <!-- REPLACED PARAGRAPH -->
+    
+      <p class="mx-auto mt-4 max-w-[780px] text-[20px] leading-relaxed text-neutral-600">
+        ONX brings together the best AI tools into one seamless experience. Chat, write, research, and create — all with verified knowledge and context.
+      
+    </p>
+  </div>
+
+  <!-- Cards -->
+<div class="mt-8 grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-3 items-start content-start auto-rows-auto">
+
+  <!-- ONX-Chat (white) -->
+  <article
+    class="group rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-[0_10px_30px_rgba(0,0,0,.06)] transition-shadow duration-300 hover:shadow-[0_14px_36px_rgba(0,0,0,.08)] scroll-fade tilt">
+    <div class="flex items-center gap-3">
+      <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+        <!-- Chat-first icon -->
+        <i class="ph ph-chat-circle-text text-[20px]" aria-hidden="true"></i>
+      </div>
+      <h3 class="text-xl font-semibold tracking-tight text-neutral-900">ONX-Chat</h3>
+    </div>
+    <p class="mt-3 text-sm leading-relaxed text-neutral-700">
+      Ask. Explore. Invent. In private.
+    </p>
+    <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+      <li class="flex items-start gap-2">
+        <i class="ph ph-chats text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>One chat for every tool</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <i class="ph ph-shield-check text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Answers you can verify, with citations</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <i class="ph ph-sparkle text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Create without limits, instantly</span>
+      </li>
+    </ul>
+  </article>
+
+  <!-- ONX-Docs (white) -->
+  <article
+    class="group rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-[0_10px_30px_rgba(0,0,0,.06)] transition-shadow duration-300 hover:shadow-[0_14px_36px_rgba(0,0,0,.08)] scroll-fade tilt">
+    <div class="flex items-center gap-3">
+      <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+        <i class="ph ph-file-text text-[20px]" aria-hidden="true"></i>
+      </div>
+      <h3 class="text-xl font-semibold tracking-tight text-neutral-900">ONX-Docs</h3>
+    </div>
+    <p class="mt-3 text-sm leading-relaxed text-neutral-700">
+      Your private AI workspace for writing and research.
+    </p>
+    <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+      <li class="flex items-start gap-2">
+        <i class="ph ph-pencil-line text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Calm, distraction-free editor</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <i class="ph ph-magnifying-glass text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Document creator</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <i class="ph ph-check-circle text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Simple exports</span>
+      </li>
+    </ul>
+  </article>
+
+  <!-- ONX-Web (white) -->
+  <article
+    class="group rounded-2xl border border-neutral-200 bg-white p-6 md:p-7 shadow-[0_10px_30px_rgba(0,0,0,.06)] transition-shadow duration-300 hover:shadow-[0_14px_36px_rgba(0,0,0,.08)] scroll-fade tilt">
+    <div class="flex items-center gap-3">
+      <div class="h-11 w-11 shrink-0 rounded-2xl bg-neutral-900/90 text-white flex items-center justify-center">
+        <i class="ph ph-globe-hemisphere-east text-[20px]" aria-hidden="true"></i>
+      </div>
+      <h3 class="text-xl font-semibold tracking-tight text-neutral-900">ONX-Web</h3>
+    </div>
+    <p class="mt-3 text-sm leading-relaxed text-neutral-700">
+      The internet, unified.
+    </p>
+    <ul class="mt-4 space-y-2 text-sm text-neutral-800/90">
+      <li class="flex items-start gap-2">
+        <i class="ph ph-rss-simple text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Real-time view of news, blogs, and RSS</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <i class="ph ph-binoculars text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Meta-search across web and social</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <i class="ph ph-code-simple text-[18px] mt-[2px]" aria-hidden="true"></i>
+        <span>Extracts structured data from any page</span>
+      </li>
+    </ul>
+  </article>
+
+</div>
