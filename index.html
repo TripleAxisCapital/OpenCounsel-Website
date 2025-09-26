@@ -984,27 +984,68 @@
 
 
 
-
-
-
-
-
-
-
-
-<!-- ▸ ONX Word Pop (Apple-style, breathing color, random phrases) -->
+<!-- ▸ ONX Word Pop (random phrases + breathing color) -->
 <section class="onx-word-pop" data-hold="2600" data-fade="450">
   <div class="onx-word" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    (() => {
+      /* ── Edit your phrases here ─────────────────────── */
+      const WORDS = [
+        "FOR BUSINESS",
+        "FOR TEAMS",
+        "FOR INVESTORS",
+        "FOR CREATORS",
+        "FOR ENTERPRISE",
+        "FOR BUILDERS"
+      ];
+      /* ───────────────────────────────────────────────── */
+
+      const section = document.currentScript.parentElement;      // <-- reliable
+      const display = section.querySelector(".onx-word");
+      const HOLD = Number(section.dataset.hold || 2600);
+      const FADE = Number(section.dataset.fade || 450);
+      section.style.setProperty("--fade-ms", FADE + "ms");
+
+      // Shuffle without repeats per cycle
+      const shuffle = arr => {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      };
+
+      let queue = shuffle([...WORDS]);
+
+      function next() {
+        if (queue.length === 0) queue = shuffle([...WORDS]);
+        const phrase = queue.pop();
+        display.textContent = phrase;
+
+        section.classList.remove("fade-out");
+        requestAnimationFrame(() => section.classList.add("ready"));
+
+        setTimeout(() => {
+          section.classList.add("fade-out");
+          section.classList.remove("ready");
+          setTimeout(next, FADE + 20);
+        }, HOLD);
+      }
+
+      next();
+    })();
+  </script>
 </section>
 
 <style>
-  /* Scoped styles — safe to paste anywhere */
+  /* Scoped to .onx-word-pop so it won’t leak */
   .onx-word-pop{
-    /* Design tokens (tweak freely) */
+    /* Design tokens */
     --bg:#ffffff;
-    --c1:#3f6768;   /* deep teal from photo */
-    --c2:#57c7d9;   /* bright aqua from photo */
-    --breath:4.8s;  /* speed of color breathing */
+    --c1:#3f6768;     /* deep teal from your photo */
+    --c2:#57c7d9;     /* bright aqua from your photo */
+    --breath:4.8s;    /* color breathing speed */
     --size:clamp(28px,8vw,72px);
     --weight:500;
     --tracking:0.26em;
@@ -1031,8 +1072,6 @@
     color:var(--c1);
     opacity:0; transform:translateY(8px) scale(.985);
     will-change:opacity, transform, color, text-shadow;
-
-    /* “breathing” between your two colors */
     animation:onx-breathe var(--breath) ease-in-out infinite;
   }
 
@@ -1051,62 +1090,13 @@
   }
 </style>
 
-<script>
-(() => {
-  /* ── Edit your phrases here ─────────────────────────── */
-  const WORDS = [
-    "FOR BUSINESS",
-    "FOR TEAMS",
-    "FOR INVESTORS",
-    "FOR CREATORS",
-    "FOR ENTERPRISE",
-    "FOR BUILDERS"
-  ];
-  /* ───────────────────────────────────────────────────── */
 
-  const section = document.currentScript.previousElementSibling; // <section>
-  const display = section.querySelector(".onx-word");
-  const HOLD = Number(section.dataset.hold || 2600); // ms visible
-  const FADE = Number(section.dataset.fade || 450);  // ms fade in/out
-  section.style.setProperty("--fade-ms", FADE + "ms");
 
-  // Shuffle helper for random, non-repeating cycles
-  function shuffle(arr){
-    for(let i=arr.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [arr[i],arr[j]]=[arr[j],arr[i]];
-    }
-    return arr;
-  }
 
-  let queue = shuffle([...WORDS]);
 
-  function showNext(){
-    if(queue.length === 0) queue = shuffle([...WORDS]);
-    const phrase = queue.pop();
-    display.textContent = phrase;
 
-    // Fade in
-    section.classList.remove("fade-out");
-    requestAnimationFrame(() => section.classList.add("ready"));
 
-    // Hold, then fade out and schedule the next
-    setTimeout(() => {
-      section.classList.add("fade-out");
-      section.classList.remove("ready");
-      setTimeout(showNext, FADE + 30);
-    }, HOLD);
-  }
 
-  showNext();
-
-  // Clean up if removed from DOM
-  const obs = new MutationObserver(() => {
-    if (!document.body.contains(section)) obs.disconnect();
-  });
-  obs.observe(document.body, {childList:true, subtree:true});
-})();
-</script>
 
 
 
