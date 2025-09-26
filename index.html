@@ -712,7 +712,7 @@
     </script>
   </div>
 
- <!-- Title (mobile: max single line; desktop: unchanged) -->
+ <!-- Title (mobile: single line, max size; auto-squash gap above; desktop unchanged) -->
 <h1 class="hero-title" id="hero-onx-title">
   <span class="title-blur">
     <span class="fit-line">
@@ -721,30 +721,31 @@
   </span>
 
   <style>
-    /* Only affect this section on mobile */
+    /* Only affect this title on mobile */
     @media (max-width:600px){
       #hero-onx-title{
-        /* tweak these in-place */
-        --xpad: 50px;      /* left/right padding of the sentence */
-        --ypad: 0px;       /* top/bottom padding of the sentence */
-        --outer-top: 0px;  /* space above the whole block */
-        --outer-bottom: 0px;/* space below the whole block */
+        /* tune inner/outer spacing here only */
+        --xpad: 12px;          /* left/right padding of sentence */
+        --ypad: 0px;           /* top/bottom padding inside the sentence */
+        --outer-top: 0px;      /* space above this whole block (post-squash) */
+        --outer-bottom: 0px;   /* space below this whole block */
 
         margin: var(--outer-top) 0 var(--outer-bottom) !important; /* kill default h1 margins */
       }
       #hero-onx-title .title-blur{
         display:block;
-        width:100vw;                          /* span full viewport */
+        width:100vw;
         padding: var(--ypad) var(--xpad);
-        box-sizing:border-box;                /* include padding in width */
-        line-height:0;                        /* remove baseline line-box gap */
+        box-sizing:border-box;
+        line-height:0; /* remove baseline gap */
       }
       #hero-onx-title .fit-line{
-        display:block;                        /* avoids inline baseline gaps */
-        white-space:nowrap;                   /* always one line */
+        display:block;
+        white-space:nowrap;     /* force one line */
         line-height:1.05;
-        font-size:120px;                      /* base; JS will shrink to fit */
         font-weight:700;
+        font-size:120px;        /* base; JS will shrink to fit width */
+        transform: none;
       }
     }
   </style>
@@ -755,36 +756,31 @@
       const line  = root?.querySelector('.fit-line');
       const shell = root?.querySelector('.title-blur');
       const mq    = window.matchMedia('(max-width: 600px)');
-
-      let BASE = 120; // matches CSS
+      const BASE  = 120; // matches CSS
 
       function fitOnce(){
         if(!root || !line || !shell) return;
+        if(!mq.matches){ line.style.fontSize = ''; root.style.marginTop=''; return; }
 
-        if(!mq.matches){
-          // Desktop: do nothing (leave your existing desktop styles)
-          line.style.fontSize = ''; 
-          return;
-        }
-
-        // Start from the base size (no transforms used → no extra visual gap)
+        // 1) Fit text to available width (no transforms → no phantom space)
         line.style.fontSize = BASE + 'px';
-
-        // Available width = shell width minus actual computed padding
         const rectW = shell.getBoundingClientRect().width;
         const cs    = getComputedStyle(shell);
-        const padL  = parseFloat(cs.paddingLeft)  || 0;
-        const padR  = parseFloat(cs.paddingRight) || 0;
-        const available = Math.max(0, rectW - padL - padR);
+        const pad   = (parseFloat(cs.paddingLeft)||0) + (parseFloat(cs.paddingRight)||0);
+        const available = Math.max(0, rectW - pad);
+        const needed    = Math.max(1, line.scrollWidth);
+        const scale     = Math.min(1, available / needed);
+        line.style.fontSize = (BASE * scale) + 'px';
 
-        // Natural width at current font-size
-        const needed = line.scrollWidth || 1;
-
-        // Scale font-size down to fit, cap at base (never upscale beyond BASE)
-        const scale   = Math.min(1, available / needed);
-        const newSize = Math.max(1, BASE * scale);
-
-        line.style.fontSize = newSize + 'px';
+        // 2) Auto-squash any gap above (prev element margin or parent row-gap)
+        const prev = root.previousElementSibling;
+        if (prev){
+          const gap = Math.round(root.getBoundingClientRect().top - prev.getBoundingClientRect().bottom);
+          // If there’s visible space, pull the title up exactly that amount
+          root.style.marginTop = (gap > 0 ? (-gap) : 0) + 'px';
+        } else {
+          root.style.marginTop = '0px';
+        }
       }
 
       function fit(){ fitOnce(); requestAnimationFrame(fitOnce); } // double pass for font load
