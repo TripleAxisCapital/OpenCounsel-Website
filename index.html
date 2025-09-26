@@ -234,7 +234,6 @@
 
 <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
-
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
@@ -290,6 +289,13 @@
 
       /* Where words start from (closer to view so you see them sooner) */
       --startTop: 94%;
+
+      /* === NEW: Title glass plate tuning === */
+      --titleBlur: 12px;                        /* blur strength */
+      --titlePlate: rgba(255,255,255,.42);      /* plate tint (light mode) */
+      --titleInsetTB: .24em;                    /* glass expansion top/btm */
+      --titleInsetLR: .50em;                    /* glass expansion left/right */
+      --titleRadius: 24px;                      /* glass corner radius */
     }
 
     @media (min-width:768px){
@@ -408,6 +414,33 @@
       padding:0 12px;
     }
 
+    /* === NEW: Glass plate just behind the title text === */
+    #chat-hero .hero-title .title-blur{
+      position:relative;
+      display:inline-block;
+      z-index:1; /* keep text above the plate */
+    }
+    #chat-hero .hero-title .title-blur::before{
+      content:"";
+      position:absolute;
+      inset: calc(var(--titleInsetTB) * -1) calc(var(--titleInsetLR) * -1);
+      border-radius: var(--titleRadius);
+      background: var(--titlePlate);
+      -webkit-backdrop-filter: saturate(1.15) blur(var(--titleBlur));
+      backdrop-filter: saturate(1.15) blur(var(--titleBlur));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.55) inset,   /* subtle inner highlight */
+        0 6px 24px rgba(0,0,0,.05);              /* soft drop */
+      pointer-events:none;
+      z-index:0; /* behind the text, above the word stream */
+    }
+    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
+      /* Fallback when backdrop-filter isn't supported (e.g., some Firefox builds) */
+      #chat-hero .hero-title .title-blur::before{
+        background: rgba(255,255,255,.68);
+      }
+    }
+
     /* --------------- Bubble spot (center) ---------- */
     #chat-hero .bubble-spot{
       position:absolute;
@@ -496,6 +529,13 @@
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
+      /* Dark glass: darker plate so light title stays readable; still blurs stream */
+      #chat-hero{ --titlePlate: rgba(16,16,20,.42); }
+      #chat-hero .hero-title .title-blur::before{
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,.06) inset,
+          0 8px 26px rgba(0,0,0,.45);
+      }
     }
 
     /* ------------- Reduced motion ------------- */
@@ -508,15 +548,15 @@
     }
 
     /* Audiowide, solid black (no breathing/shimmer) */
-#chat-hero .hero-title .title-onx{
-  font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  font-weight:400;
-  color:#0B0B0C;            /* black */
-  background:none;
-  -webkit-background-clip:initial;
-  background-clip:initial;
-  animation:none;
-}
+    #chat-hero .hero-title .title-onx{
+      font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-weight:400;
+      color:#0B0B0C;            /* black */
+      background:none;
+      -webkit-background-clip:initial;
+      background-clip:initial;
+      animation:none;
+    }
   </style>
 
   <!-- Background floating words (starts ONLY after user scrolls) -->
@@ -661,7 +701,11 @@
   </div>
 
   <!-- Title (positioned relative to bubble center / viewport) -->
-  <h1 class="hero-title"><span class="title-onx">ONX</span> is Unstoppable</h1>
+  <h1 class="hero-title">
+    <span class="title-blur">
+      <span class="title-onx">ONX</span> is Unstoppable
+    </span>
+  </h1>
 
   <!-- The centered bubble -->
   <div class="bubble-spot">
@@ -775,6 +819,7 @@
     })();
   </script>
 </section>
+
 
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
