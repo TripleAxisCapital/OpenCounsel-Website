@@ -834,454 +834,304 @@
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
 
-<!-- ============================== ONX Orbit → Merge → Reveal (Apple-style) ============================== -->
-<!-- Drop this whole <section> anywhere inside your <body>. No external libs required. -->
-<section id="onx-orbit" aria-label="ONX Orbit → Merge → Reveal">
+<!-- ============ ONX Orbit → Suck-In → Roll → Reveal → Shelf (Apple-style) ============ -->
+<!-- Drop this whole snippet anywhere inside your <body>. It’s self-contained. -->
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+<section class="onx-orbit-block" aria-label="ONX animation">
   <style>
-    /* -------------------- Font (Audiowide) -------------------- */
-    @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
-
     /* -------------------- Design Tokens -------------------- */
-    #onx-orbit {
-      --bg: #ffffff;
-      --ink: #0a0b0c;
-      --muted: #7a828f;
-      --hairline: #e9ecf2;
-
-      /* Motion + Timings */
-      --t-orbit: 6200ms;       /* continuous orbit loop */
-      --t-suck: 900ms;         /* logos → center */
-      --t-roll: 1200ms;        /* O rolls right */
-      --t-pop: 550ms;          /* N/X pop out */
-      --t-shelf: 700ms;        /* logos bounce into shelf */
-      --stagger: 90ms;         /* per-logo stagger */
-      --delay-before-suck: 2200ms;
-      --delay-before-roll: 200ms;  /* after suck ends */
-      --delay-before-pop: 120ms;   /* after roll ends */
-      --delay-before-shelf: 120ms; /* after pop starts */
-
-      /* Easing (organic / boomerang) */
-      --ease-out: cubic-bezier(.18,.84,.44,1);    /* smooth out */
-      --ease-in:  cubic-bezier(.36,0,.66,-0.02);  /* sharp in */
-      --ease-io:  cubic-bezier(.22,.61,.36,1);    /* standard */
-      --ease-bounce: cubic-bezier(.2,1.35,.2,1);  /* boomerang pop */
-
-      /* Layout */
-      --stage-size: clamp(260px, 55vw, 720px);
-      --shelf-gap: 16px;
-      --shelf-pad: 20px;
-      --word-gap: 22px;      /* spacing between O N X */
-      --o-tilt: -7deg;       /* subtle O tilt at rest for flair */
-      --orbitR: 38%;         /* orbit radius (from center of stage) */
-      --chip-size: 44px;     /* logo chip size */
+    .onx-orbit-block{
+      --bg:#ffffff;
+      --ink:#0B0B0C;
+      --muted:#7A8491;
+      --chip-bg:#ffffff;
+      --chip-ring:#E7EBF0;
+      --chip-shadow: 0 6px 24px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.06);
+      --ring:#0B0B0C;
+      --gap: clamp(14px, 2.2vmin, 22px);   /* gap between O N X */
+      --ring-size: clamp(140px, 42vmin, 380px);
+      --chip-size: clamp(36px, 5.4vmin, 58px);
+      --logo-size: clamp(18px, 2.8vmin, 28px);
+      --stage-pad: clamp(24px, 6vmin, 80px);
+      --shelf-gap: clamp(10px, 1.8vmin, 18px);
+      --shelf-max: 980px;                  /* max width of logo shelf */
+      --nx-pop-delay: 0.05s;
     }
 
-    /* -------------------- Base -------------------- */
-    #onx-orbit {
+    /* -------------------- Stage -------------------- */
+    .onx-stage{
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 86vh;
       background: var(--bg);
       color: var(--ink);
-      display: grid;
-      place-items: center;
-      padding: clamp(32px, 5vw, 64px) 16px;
+      padding: var(--stage-pad);
+      overflow: clip;
       isolation: isolate;
-      user-select: none;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    /* -------------------- Wrapper -------------------- */
-    #onx-orbit .onx-wrap {
-      width: min(100%, 1000px);
-      display: grid;
-      gap: 28px;
-      justify-items: center;
-    }
-
-    /* -------------------- Stage (square) -------------------- */
-    #onx-orbit .stage {
-      position: relative;
-      width: var(--stage-size);
-      aspect-ratio: 1 / 1;
-      overflow: visible;
-    }
-
-    /* Center anchor for orbits */
-    #onx-orbit .center {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      transform: translateZ(0);
     }
 
     /* -------------------- Wordmark -------------------- */
-    #onx-orbit .wordmark {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      pointer-events: none;
-      font-family: "Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      letter-spacing: .02em;
-    }
-
-    #onx-orbit .wordmark .letters {
+    .onx-wordmark{
+      font-family: "Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 0.9;
+      letter-spacing: 0;
       display: inline-flex;
       align-items: baseline;
-      gap: var(--word-gap);
-      font-size: clamp(72px, 12vw, 168px);
-      line-height: .9;
-      will-change: transform;
+      gap: var(--gap);
+      z-index: 3;
+      user-select: none;
     }
-
-    #onx-orbit .letters .o,
-    #onx-orbit .letters .n,
-    #onx-orbit .letters .x {
+    .onx-wordmark .letter{
+      font-size: clamp(64px, 12vmin, 132px);
       display: inline-block;
-      transform-origin: 50% 60%;
-      filter: drop-shadow(0 1px 0 rgba(0,0,0,.02));
-    }
-
-    /* Start with only "O" visible */
-    #onx-orbit .letters .n,
-    #onx-orbit .letters .x {
-      opacity: 0;
-      transform: scale(.8) translateY(10px);
-    }
-
-    /* Subtle O glow (like an intake) */
-    #onx-orbit .letters .o {
-      position: relative;
-      transform: rotate(var(--o-tilt));
-    }
-    #onx-orbit .letters .o::after {
-      content: "";
-      position: absolute;
-      inset: -10% -8%;
-      border-radius: 50%;
-      background: radial-gradient(45% 45% at 50% 50%, rgba(20,120,255,.12), transparent 60%);
-      filter: blur(18px);
-      z-index: -1;
-    }
-
-    /* -------------------- Orbiters -------------------- */
-    #onx-orbit .orbit-field {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
+      transform: translateZ(0);
       will-change: transform;
     }
-
-    /* The rotating plate (to spin everyone smoothly) */
-    #onx-orbit .orbit-field.spin {
-      animation: onx-spin var(--t-orbit) linear infinite;
+    .onx-wordmark .letter-o{
+      position: relative;
+      /* “roll” shadow under the O (subtle, Apple-y) */
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.10)) drop-shadow(0 2px 4px rgba(0,0,0,.06));
     }
-    @keyframes onx-spin { to { transform: rotate(360deg); } }
+    .onx-wordmark .letter-n,
+    .onx-wordmark .letter-x{
+      opacity: 0;
+      transform: translateY(18px) scale(0.75);
+    }
 
-    #onx-orbit .orbiter {
+    /* -------------------- The Orbit Field (centered on the O) -------------------- */
+    .orbit-field{
       position: absolute;
-      width: var(--chip-size);
-      height: var(--chip-size);
-      transform-origin: center center;
-      will-change: transform, opacity, filter;
-      z-index: 2; /* behind letters so they appear to dive “into” the O */
+      width: var(--ring-size);
+      height: var(--ring-size);
+      display: grid;
+      place-items: center;
+      z-index: 2;
     }
-
-    /* Position each orbiter on a ring: rotate(angle) → translate(rad) → un-rotate to keep upright */
-    #onx-orbit .orbiter .rig {
+    /* O ring (visual guide / vibe cue) */
+    .orbit-ring{
       position: absolute;
       inset: 0;
-      display: grid;
-      place-items: center;
-      transform-origin: center center;
+      border-radius: 50%;
+      border: 2px solid color-mix(in srgb, var(--ring) 18%, transparent);
+      opacity: .30;
+      pointer-events: none;
     }
 
-    /* Apple-like “chip” for each logo */
-    #onx-orbit .chip {
+    /* Each orbiter starts at its own angle & radius (customize per element) */
+    .orbiter{
+      --angle: 0deg;            /* customize per-element (e.g. 15deg, 120deg, etc.) */
+      --radius: calc(var(--ring-size) * .46);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: rotate(var(--angle)) translateX(var(--radius)) rotate(calc(-1 * var(--angle)));
+      transform-origin: 0 0;    /* center of the field */
+      will-change: transform, opacity, filter;
+      z-index: 1;
+    }
+
+    /* Chip + logo inside */
+    .chip{
       width: var(--chip-size);
       height: var(--chip-size);
       display: grid;
       place-items: center;
-      border-radius: 14px;
-      background: rgba(255,255,255,.7);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      border: 1px solid var(--hairline);
-      box-shadow:
-        0 0.6px 1.4px rgba(0,0,0,.05),
-        0 4px 24px rgba(10,20,40,.06);
+      border-radius: 999px;
+      background: var(--chip-bg);
+      border: 1px solid var(--chip-ring);
+      box-shadow: var(--chip-shadow);
       overflow: hidden;
     }
-    #onx-orbit .logo {
-      display: block;
-      width: 66%;
-      height: 66%;
+    .chip .logo{
+      width: var(--logo-size);
+      height: var(--logo-size);
       object-fit: contain;
+      display: block;
+      transform: translateZ(0);
     }
 
-    /* Suck → center */
-    #onx-orbit .orbiter.suck {
-      animation: onx-suck var(--t-suck) var(--ease-in) forwards;
-    }
-    @keyframes onx-suck {
-      to {
-        transform: translate(0,0) scale(.06);
-        opacity: 0;
-        filter: blur(5px) saturate(1.2);
-      }
-    }
-
-    /* -------------------- O rolls → right -------------------- */
-    #onx-orbit .letters.roll .o {
-      animation: onx-roll var(--t-roll) var(--ease-io) forwards;
-    }
-    @keyframes onx-roll {
-      0%   { transform: rotate(var(--o-tilt)) translateX(0); }
-      60%  { transform: rotate(calc(360deg + var(--o-tilt))) translateX(clamp(80px, 12vw, 200px)); }
-      100% { transform: rotate(calc(360deg + var(--o-tilt))) translateX(clamp(90px, 13vw, 220px)); }
-    }
-
-    /* N and X pop out of the O (boomerang) */
-    #onx-orbit .letters.reveal .n {
-      animation: onx-popN var(--t-pop) var(--ease-bounce) forwards;
-    }
-    #onx-orbit .letters.reveal .x {
-      animation: onx-popX var(--t-pop) var(--ease-bounce) forwards calc(var(--t-pop) * .25);
-    }
-    @keyframes onx-popN {
-      0%   { opacity: 0; transform: scale(.6) translate(-14px, 8px); }
-      70%  { opacity: 1; transform: scale(1.08) translate(-2px, -2px); }
-      100% { opacity: 1; transform: scale(1) translate(0, 0); }
-    }
-    @keyframes onx-popX {
-      0%   { opacity: 0; transform: scale(.6) translate(16px, 8px); }
-      70%  { opacity: 1; transform: scale(1.08) translate(2px, -2px); }
-      100% { opacity: 1; transform: scale(1) translate(0, 0); }
-    }
-
-    /* -------------------- Logo Shelf (final resting row) -------------------- */
-    #onx-orbit .shelf {
-      width: min(100%, 860px);
-      display: flex;
-      flex-wrap: wrap;
+    /* -------------------- Logo Shelf (final resting place) -------------------- */
+    .logo-shelf{
+      position: relative;
+      width: min(100%, var(--shelf-max));
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(max(120px, 18vmin), 1fr));
       gap: var(--shelf-gap);
-      justify-content: center;
-      padding: var(--shelf-pad);
-      border-radius: 18px;
-      border: 1px solid var(--hairline);
-      background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.94));
-      box-shadow: 0 .5px 1px rgba(0,0,0,.02), 0 10px 30px rgba(10,20,40,.04);
-      min-height: calc(var(--chip-size) + var(--shelf-pad) * .6);
+      margin-top: clamp(16px, 5vmin, 40px);
+      z-index: 2;
+      opacity: 0;               /* revealed by JS */
     }
-    #onx-orbit .shelf .chip {
-      opacity: 0;
-      transform: translateY(12px) scale(.9);
-    }
-    #onx-orbit .shelf .chip.bounce-in {
-      animation: onx-bounce-in var(--t-shelf) var(--ease-bounce) forwards;
-    }
-    @keyframes onx-bounce-in {
-      0%   { opacity: 0; transform: translateY(18px) scale(.9); }
-      70%  { opacity: 1; transform: translateY(-6px) scale(1.05); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
+    .logo-shelf .chip{ margin-inline: auto; }
+
+    /* -------------------- Reduced Motion -------------------- */
+    @media (prefers-reduced-motion: reduce){
+      .orbit-ring{ display: none; }
     }
 
-    /* -------------------- Accessibility: Reduced Motion -------------------- */
-    @media (prefers-reduced-motion: reduce) {
-      #onx-orbit .orbit-field.spin,
-      #onx-orbit .orbiter.suck,
-      #onx-orbit .letters.roll .o,
-      #onx-orbit .letters.reveal .n,
-      #onx-orbit .letters.reveal .x,
-      #onx-orbit .shelf .chip.bounce-in { animation: none !important; }
-      #onx-orbit .letters .n,
-      #onx-orbit .letters .x { opacity: 1; transform: none; }
-      #onx-orbit .shelf .chip { opacity: 1; transform: none; }
-    }
+    /* -------------------- Nice selection color -------------------- */
+    ::selection{ background: #CCE4FF; color: var(--ink); }
   </style>
 
-  <div class="onx-wrap">
-    <!-- ===================== Animation Stage ===================== -->
-    <div class="stage">
-      <!-- Orbit plane (rotates all orbiters). Add/remove .spin in JS to stop spin when sucking. -->
-      <div class="orbit-field spin">
-        <div class="center" id="orbit-center">
-          <!-- Provide your logos below. You can control starting position with data-angle (deg)
-               and distance with data-radius (% of stage; defaults to --orbitR). -->
+  <div class="onx-stage" id="onxStage">
+    <!-- Orbit field centered on the O -->
+    <div class="orbit-field" aria-hidden="true">
+      <div class="orbit-ring"></div>
 
-          <!-- EXAMPLE LOGOS (you can add more; angles are just starters) -->
-          <div class="orbiter" data-angle="0"   data-radius="38">
-            <div class="rig" style="transform: rotate(0deg) translateX(0) rotate(0deg);">
-              <div class="chip"><img class="logo" src="grokLogo.svg"  alt="Grok"></div>
-            </div>
-          </div>
-
-          <div class="orbiter" data-angle="120" data-radius="38">
-            <div class="rig">
-              <div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div>
-            </div>
-          </div>
-
-          <div class="orbiter" data-angle="240" data-radius="38">
-            <div class="rig">
-              <div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div>
-            </div>
-          </div>
-
-          <div class="orbiter" data-angle="300" data-radius="38">
-            <div class="rig">
-              <div class="chip"><img class="logo" src="OAILogo.png"    alt="OpenAI"></div>
-            </div>
-          </div>
-        </div>
+      <!-- Customize placement by setting --angle (deg) and optional --radius -->
+      <!-- EXAMPLE LOGOS (use your paths). Add/remove as needed. -->
+      <div class="orbiter" style="--angle: 22deg;">
+        <div class="chip"><img class="logo" src="grokLogo.svg" alt="Grok"></div>
       </div>
-
-      <!-- ONX wordmark (Audiowide). We begin with only “O”, roll it, then reveal N and X. -->
-      <div class="wordmark">
-        <div class="letters" id="onx-letters" aria-label="ONX">
-          <span class="o">O</span>
-          <span class="n">N</span>
-          <span class="x">X</span>
-        </div>
+      <div class="orbiter" style="--angle: 138deg; --radius: calc(var(--ring-size)*.50);">
+        <div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div>
+      </div>
+      <div class="orbiter" style="--angle: 248deg;">
+        <div class="chip"><img class="logo" src="metaLogo.svg" alt="Meta"></div>
+      </div>
+      <div class="orbiter" style="--angle: 320deg; --radius: calc(var(--ring-size)*.42);">
+        <div class="chip"><img class="logo" src="OAILogo.png" alt="OpenAI"></div>
       </div>
     </div>
 
-    <!-- ===================== Final Logo Shelf ===================== -->
-    <div class="shelf" id="onx-shelf" aria-label="Model logos"></div>
+    <!-- “ONX” wordmark (Audiowide) -->
+    <h1 class="onx-wordmark" aria-label="O N X">
+      <span class="letter letter-o">O</span>
+      <span class="letter letter-n" aria-hidden="true">N</span>
+      <span class="letter letter-x" aria-hidden="true">X</span>
+    </h1>
+
+    <!-- Final logo shelf (logos bounce here and remain visible) -->
+    <div class="logo-shelf" role="list" aria-label="AI logos"></div>
   </div>
 
+  <!-- GSAP for silky, orchestrated motion -->
+  <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
   <script>
-    (function () {
-      const root = document.querySelector('#onx-orbit');
-      const orbitField = root.querySelector('.orbit-field');
-      const center = root.querySelector('#orbit-center');
-      const orbiters = Array.from(root.querySelectorAll('.orbiter'));
-      const letters = root.querySelector('#onx-letters');
-      const shelf = root.querySelector('#onx-shelf');
+    (function(){
+      const stage     = document.getElementById('onxStage');
+      const orbit     = stage.querySelector('.orbit-field');
+      const orbits    = Array.from(stage.querySelectorAll('.orbiter'));
+      const shelf     = stage.querySelector('.logo-shelf');
+      const o         = stage.querySelector('.letter-o');
+      const n         = stage.querySelector('.letter-n');
+      const x         = stage.querySelector('.letter-x');
+      const mediaRM   = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-      // Helpers
-      const cssMs = (v) => Number(String(getComputedStyle(root).getPropertyValue(v)).replace('ms','').trim());
-      const T = {
-        orbit:  cssMs('--t-orbit'),
-        suck:   cssMs('--t-suck'),
-        roll:   cssMs('--t-roll'),
-        pop:    cssMs('--t-pop'),
-        shelf:  cssMs('--t-shelf'),
-        delayBeforeSuck:  cssMs('--delay-before-suck'),
-        delayBeforeRoll:  cssMs('--delay-before-roll'),
-        delayBeforePop:   cssMs('--delay-before-pop'),
-        delayBeforeShelf: cssMs('--delay-before-shelf'),
-        stagger:          cssMs('--stagger')
-      };
+      // Helper to animate CSS custom properties cleanly
+      function tweenCSSVar(el, varName, toValue, opts){
+        const obj = {};
+        obj[varName] = toValue;
+        return gsap.to(el, { ...opts, onUpdate(){
+          const progress = this.progress();
+          // during animation GSAP sets inline style; leave as-is
+        }});
+      }
 
-      // Position each orbiter on the ring according to data-angle / data-radius.
-      function layoutOrbiters() {
-        const rect = center.getBoundingClientRect();
-        const baseR = parseFloat(getComputedStyle(root).getPropertyValue('--orbitR')) || 38;
-        orbiters.forEach((ob) => {
-          const angle = parseFloat(ob.dataset.angle || 0);
-          const radius = parseFloat(ob.dataset.radius || baseR);
-          const rig = ob.querySelector('.rig');
-          rig.style.transform = `rotate(${angle}deg) translateX(${radius}%) rotate(${-angle}deg)`;
+      function moveOrbitersToShelf(){
+        // detach orbiters → keep just the chips on the shelf
+        const frag = document.createDocumentFragment();
+        orbits.forEach((orb)=> {
+          const chip = orb.querySelector('.chip');
+          if (!chip) return;
+          const chipClone = chip.cloneNode(true);
+          chipClone.setAttribute('role','listitem');
+          frag.appendChild(chipClone);
         });
+        shelf.appendChild(frag);
       }
 
-      // Clone chips into the bottom shelf (will animate in later).
-      function seedShelf() {
-        shelf.innerHTML = '';
-        orbiters.forEach((ob, i) => {
-          const chip = ob.querySelector('.chip').cloneNode(true);
-          const holder = document.createElement('div');
-          holder.className = 'chip'; // keep chip styling
-          holder.innerHTML = chip.innerHTML;
-          // we want the same look, so ensure structure matches
-          shelf.appendChild(holder);
+      function finalStaticState(){
+        // Show ONX fully, shelf visible, no orbiters
+        gsap.set([n,x], {opacity:1, y:0, scale:1});
+        gsap.set(shelf, {opacity:1});
+        // Remove orbiters visually
+        orbits.forEach(o=> o.style.display = 'none');
+      }
+
+      function run(){
+        if (mediaRM.matches){
+          // Respect reduced motion: skip choreography
+          moveOrbitersToShelf();
+          finalStaticState();
+          return;
+        }
+
+        // Continuous subtle spin for the orbit field (background vibe)
+        const spin = gsap.to(orbit, {
+          rotate: 360,
+          ease: "none",
+          duration: 22,
+          repeat: -1,
+          transformOrigin: "50% 50%"
         });
+
+        // Master timeline
+        const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+        // 1) Give viewers a moment of orbit
+        tl.addLabel('orbiting').to({}, {duration: 1.0}); // pause marker
+
+        // 2) Suck-in: radius → 0, scale → .4, blur in, fade
+        tl.addLabel('suck')
+          .to(orbits, {
+            // Animate the CSS custom property --radius on each orbiter
+            keyframes: [
+              { "--radius": "calc(var(--ring-size)*.30)", duration: 0.28, ease: "power2.in" },
+              { "--radius": "0px", duration: 0.68, ease: "power4.in" }
+            ],
+            scale: 0.4,
+            opacity: 0,
+            filter: "blur(7px)",
+            stagger: { each: 0.08, from: "random" }
+          }, ">");
+
+        // 3) Roll the “O” to the right with a full spin
+        tl.addLabel('rollO')
+          .to(o, {
+            x: "min(12vmin, 120px)",
+            rotation: 360,
+            duration: 1.1,
+            ease: "power4.inOut",
+            transformOrigin: "50% 58%"
+          }, "-=0.35");
+
+        // 4) Reveal N and X with a boomerang/elastic pop
+        tl.addLabel('revealNX')
+          .to(n, {
+            opacity: 1, y: 0, scale: 1,
+            duration: 0.85,
+            ease: "back.out(1.8)"
+          }, ">+" + (parseFloat(getComputedStyle(stage).getPropertyValue('--nx-pop-delay')) || 0))
+          .to(x, {
+            opacity: 1, y: 0, scale: 1,
+            duration: 0.85,
+            ease: "back.out(1.8)"
+          }, "<+0.06");
+
+        // 5) Move chips to shelf and bounce them in
+        tl.add( () => { moveOrbitersToShelf(); }, ">-0.10" )
+          .to(shelf, { opacity: 1, duration: 0.2 }, "<")
+          .fromTo(shelf.querySelectorAll('.chip'),
+            { y: 26, scale: 0.82, opacity: 0 },
+            { y: 0,  scale: 1.0,  opacity: 1, duration: 0.9, ease: "elastic.out(1, 0.62)", stagger: 0.06 },
+          "<+0.02");
+
+        // Optional: slow the background spin and fade the ring after everything settles (polish)
+        tl.to(orbit, { opacity: 0.75, duration: 0.6, ease: "power2.out" }, ">-0.3");
       }
 
-      // Animate “suck” sequence: stop spin, then pull each logo into center with a stagger.
-      function suckLogos() {
-        orbitField.classList.remove('spin');
-        orbiters.forEach((ob, i) => {
-          // Re-center each orbiter immediately (so its transform basis is center), then animate “suck”
-          // NOTE: The "suck" keyframe moves to scale(.06) + fade/blur, so starting point is current rig transform.
-          setTimeout(() => {
-            ob.classList.add('suck');
-          }, i * T.stagger);
-        });
-      }
-
-      // O rolls right; then reveal N and X with boomerang pops.
-      function rollAndReveal() {
-        letters.classList.add('roll');
-        setTimeout(() => {
-          letters.classList.add('reveal');
-        }, T.delayBeforePop);
-      }
-
-      // Bounce logos into shelf (bottom row) with a stagger.
-      function bounceShelf() {
-        const chips = Array.from(shelf.querySelectorAll('.chip'));
-        chips.forEach((c, i) => {
-          setTimeout(() => c.classList.add('bounce-in'), i * T.stagger);
-        });
-      }
-
-      // Full sequence
-      function run() {
-        layoutOrbiters();
-        seedShelf();
-
-        // Wait for initial orbit time slice, then start the “suck”.
-        setTimeout(() => {
-          suckLogos();
-
-          // After suck completes, roll the O.
-          const afterSuck = orbiters.length * T.stagger + T.suck + T.delayBeforeRoll;
-          setTimeout(() => {
-            rollAndReveal();
-
-            // After a beat, bounce logos into shelf.
-            setTimeout(() => {
-              bounceShelf();
-            }, T.delayBeforeShelf + T.pop);
-
-          }, afterSuck);
-
-        }, T.delayBeforeSuck);
-      }
-
-      // Handle resizes (keeps orbits crisp on responsive layouts)
-      let resizeTO;
-      window.addEventListener('resize', () => {
-        clearTimeout(resizeTO);
-        resizeTO = setTimeout(layoutOrbiters, 120);
-      });
-
-      // Reduced motion → show final state instantly
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReduced) {
-        layoutOrbiters();
-        // Show N & X
-        letters.querySelector('.n').style.opacity = '1';
-        letters.querySelector('.n').style.transform = 'none';
-        letters.querySelector('.x').style.opacity = '1';
-        letters.querySelector('.x').style.transform = 'none';
-        // Seed + reveal shelf
-        seedShelf();
-        Array.from(shelf.querySelectorAll('.chip')).forEach(c => {
-          c.style.opacity = '1';
-          c.style.transform = 'none';
-        });
+      // Kickoff on ready
+      if (document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', run);
       } else {
-        // Auto-run on next frame to avoid layout thrash
-        requestAnimationFrame(run);
+        run();
       }
     })();
   </script>
 </section>
-<!-- ============================== /ONX Orbit → Merge → Reveal ============================== -->
+<!-- ============================== /ONX Orbit Block ============================== -->
 
 
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
