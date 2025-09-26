@@ -232,9 +232,7 @@
     <!-- Extra right-side action -->
   </onx-header>
 
-<!--=======================================================================START===============================================================================================-->
-<!--======================================================================CHAT SECTION================================================================================================-->
-<!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
+  <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -253,7 +251,6 @@
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
 
-      /* === Edit me (mobile & desktop controls) === */
       /* Mobile (default) */
       --padX-m:16px;
       --padY-m:14px;
@@ -279,23 +276,17 @@
       --c1:#3f6768;
       --c2:#57c7d9;
 
-      /* ===== Extended scroll track (shorter by default) =====
-         Increase/decrease --trail to change how long the floating-words area is.
-         Example: 60vh (short), 90vh (medium), 140vh (long). */
-      --trail: 20vh;
+      /* ===== Floating-words track ===== */
+      --trail: 20vh;                               /* length of stream area */
+      --rise: calc(125vh + (var(--trail) * 0.5));  /* travel distance */
+      --startTop: 112%;                             /* start fully off-screen (below) */
 
-      /* How far words travel upward; tied to trail length */
-      --rise: calc(125vh + (var(--trail) * 0.5));
-
-      /* Where words start from (closer to view so you see them sooner) */
-      --startTop: 94%;
-
-      /* === NEW: Title glass plate tuning === */
-      --titleBlur: 50px;                        /* blur strength */
-      --titlePlate: rgba(255,255,255,.42);      /* plate tint (light mode) */
-      --titleInsetTB: .24em;                    /* glass expansion top/btm */
-      --titleInsetLR: .50em;                    /* glass expansion left/right */
-      --titleRadius: 24px;                      /* glass corner radius */
+      /* ===== Title glass plate (behind text, above stream) ===== */
+      --titleBlur: 14px;
+      --titlePlate: rgba(255,255,255,.48);
+      --titleInsetTB: .30em;
+      --titleInsetLR: .60em;
+      --titleRadius: 26px;
     }
 
     @media (min-width:768px){
@@ -310,10 +301,8 @@
     /* --------------- Section layout --------------- */
     #chat-hero{
       position:relative;
-      /* was: min-height:100svh; min-height:100vh; */
-      min-height: calc(100vh + var(--trail));   /* fallback */
-      min-height: calc(100svh + var(--trail));  /* safe viewport on mobile */
-
+      min-height: calc(100vh + var(--trail));
+      min-height: calc(100svh + var(--trail));
       background:var(--bg);
       box-sizing:border-box;
       isolation:isolate;
@@ -331,25 +320,42 @@
     #chat-hero .word-stream{
       position:absolute;
       inset:0;
-      z-index:0;                 /* stays behind everything */
+      z-index:0;                 /* stays behind blur/title/bubble */
       pointer-events:none;
       overflow:hidden;
+      /* Soft edge fade (no pop at edges) */
+      -webkit-mask-image: linear-gradient(to top,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,.25) 6%,
+        rgba(0,0,0,.6) 12%,
+        rgba(0,0,0,1) 18%,
+        rgba(0,0,0,1) 82%,
+        rgba(0,0,0,.6) 90%,
+        rgba(0,0,0,0) 100%);
+      mask-image: linear-gradient(to top,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,.25) 6%,
+        rgba(0,0,0,.6) 12%,
+        rgba(0,0,0,1) 18%,
+        rgba(0,0,0,1) 82%,
+        rgba(0,0,0,.6) 90%,
+        rgba(0,0,0,0) 100%);
     }
 
-    /* rising word container */
+    /* rising word container (start below viewport, float in smoothly) */
     #chat-hero .ws-word{
       position:absolute;
       left:50%;
-      top:var(--startTop, 105%); /* start closer so first words appear faster */
-      transform:translate3d(-50%,0,0) scale(var(--scale,1));
-      margin-left:var(--x,0%);   /* lane offset from center in % */
+      top:var(--startTop);
+      transform:translate3d(-50%,24px,0) scale(var(--scale,1));
+      margin-left:var(--x,0%);
       opacity:0;
       will-change:transform,opacity;
       animation:ws-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
     }
     @keyframes ws-rise{
-      0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0%)), 0, 0) scale(var(--scale,1)); }
-      7%   { opacity:1; }
+      0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0%)), 36px, 0)  scale(var(--scale,1)); }
+      12%  { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), 0px, 0)   scale(var(--scale,1)); }
       100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), calc(var(--rise) * -1), 0) scale(var(--scale,1)); }
     }
 
@@ -396,8 +402,8 @@
     }
 
     /* ------------------ Foreground UI (above stream) --------------------- */
-    #chat-hero .hero-title{ z-index:2; }
-    #chat-hero .bubble-spot{ z-index:2; }
+    #chat-hero .hero-title{ z-index:3; }   /* title layer group */
+    #chat-hero .bubble-spot{ z-index:2; }  /* bubble above stream too */
 
     /* ------------------ Title --------------------- */
     #chat-hero .hero-title{
@@ -414,31 +420,30 @@
       padding:0 12px;
     }
 
-    /* === NEW: Glass plate just behind the title text === */
-    #chat-hero .hero-title .title-blur{
+    /* Title wrap creates a local stacking context: plate (z:1) under text (z:2) */
+    #chat-hero .hero-title .title-wrap{
       position:relative;
       display:inline-block;
-      z-index:1; /* keep text above the plate */
     }
-    #chat-hero .hero-title .title-blur::before{
-      content:"";
+    #chat-hero .hero-title .title-text{
+      position:relative;
+      z-index:2;     /* actual title text on top */
+    }
+    #chat-hero .hero-title .title-plate{
       position:absolute;
+      z-index:1;     /* plate is behind text, but hero-title (z:3) ensures it's above stream */
       inset: calc(var(--titleInsetTB) * -1) calc(var(--titleInsetLR) * -1);
       border-radius: var(--titleRadius);
       background: var(--titlePlate);
       -webkit-backdrop-filter: saturate(1.15) blur(var(--titleBlur));
       backdrop-filter: saturate(1.15) blur(var(--titleBlur));
       box-shadow:
-        0 0 0 1px rgba(255,255,255,.55) inset,   /* subtle inner highlight */
-        0 6px 24px rgba(0,0,0,.05);              /* soft drop */
+        0 0 0 1px rgba(255,255,255,.55) inset,
+        0 6px 24px rgba(0,0,0,.05);
       pointer-events:none;
-      z-index:0; /* behind the text, above the word stream */
     }
     @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
-      /* Fallback when backdrop-filter isn't supported (e.g., some Firefox builds) */
-      #chat-hero .hero-title .title-blur::before{
-        background: rgba(255,255,255,.68);
-      }
+      #chat-hero .hero-title .title-plate{ background: rgba(255,255,255,.70); }
     }
 
     /* --------------- Bubble spot (center) ---------- */
@@ -470,8 +475,6 @@
       transition:box-shadow .15s ease;
       box-sizing:border-box;
     }
-
-    /* Keyboard-only focus ring (no blue outline on load/click) */
     #chat-hero .bubble:has(.prompt:focus-visible){
       box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
@@ -510,7 +513,7 @@
       transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
       box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08);
       touch-action:manipulation;
-      z-index:3;
+      z-index:4; /* above everything interactive */
     }
     #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
     #chat-hero .send:active{ transform:translateY(-50%); }
@@ -529,12 +532,9 @@
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
-      /* Dark glass: darker plate so light title stays readable; still blurs stream */
-      #chat-hero{ --titlePlate: rgba(16,16,20,.42); }
-      #chat-hero .hero-title .title-blur::before{
-        box-shadow:
-          0 0 0 1px rgba(255,255,255,.06) inset,
-          0 8px 26px rgba(0,0,0,.45);
+      #chat-hero{ --titlePlate: rgba(16,16,20,.44); }
+      #chat-hero .hero-title .title-plate{
+        box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset, 0 8px 26px rgba(0,0,0,.45);
       }
     }
 
@@ -572,30 +572,15 @@
     aria-hidden="true">
     <script>
       (() => {
-        /* ── Edit your floating phrases here ───────────────────────── */
+        /* Phrases */
         const STREAM_WORDS = [
-  "FOR ENTREPRENEURS","DESIGN","FOR INVESTORS",
-  "FOR CREATORS","BUILD","FOR DEVELOPERS","CREATE",
-  "FOR FOUNDERS","LAUNCH","FOR DESIGNERS","MARKETING",
-
-  "SCALE","SHIP","INNOVATE","RESEARCH","OPTIMIZE","ANALYZE",
-  "AUTOMATE","MONETIZE","SECURE","DEPLOY","PROTOTYPE","ITERATE",
-  "COLLABORATE","LEARN","FOCUS","SIMPLIFY","POLISH","ELEVATE",
-  "REDEFINE","CRAFT","DISCOVER","STRATEGIZE","ORCHESTRATE",
-  "ACCELERATE","EXCEL","MASTER",
-
-  "FOR TRADERS","FOR HEDGE FUNDS","FOR EXECUTIVES","FOR PRODUCT TEAMS",
-  "FOR SALES","FOR MARKETERS","FOR ANALYSTS","FOR ENGINEERS",
-  "FOR WRITERS","FOR INVENTORS","FOR SCIENTISTS","FOR STUDENTS",
-  "FOR EDUCATORS","FOR RESEARCHERS","FOR OPERATORS","FOR STARTUPS",
-  "FOR ENTERPRISE","FOR LAW FIRMS","FOR LAWYERS","FOR AGENCIES",
-  "FOR TEAMS","FOR SOLOPRENEURS","FOR BUILDERS"
-];
-
-        /* ──────────────────────────────────────────────────────────── */
+          "FOR ENTREPRENEURS","DESIGN","FOR INVESTORS",
+          "FOR CREATORS","BUILD","FOR DEVELOPERS","CREATE",
+          "FOR FOUNDERS","LAUNCH","FOR DESIGNERS","MARKETING"
+        ];
 
         const host = document.currentScript.parentElement;
-        const RATE   = +(host.dataset.rate  || 900);   // normal cadence after intro
+        const RATE   = +(host.dataset.rate  || 900);   // cadence
         const DMIN   = +(host.dataset.dmin  || 9);
         const DMAX   = +(host.dataset.dmax  || 14);
         const BAND   = +(host.dataset.band  || 12);    // +/- from center (%)
@@ -603,18 +588,19 @@
         const LANE_GAP = +(host.dataset.gap || 1000);  // per-lane cooldown (ms)
         const MAXN   = +(host.dataset.max   || 28);
 
-        /* === Quick intro tuning (words appear faster, then slow down) === */
-        const EARLY_COUNT = 6;                          // how many fast spawns at the start
-        const EARLY_GAP   = Math.max(220, RATE * 0.35); // faster than normal
-        const EARLY_DUR_MULT = 0.72;                    // rise faster at the start
-        const SEED_BURST  = 3;                          // number of words instantly visible on first scroll
+        /* Smooth intro settings—NO negative delays (prevents mid-screen pop) */
+        const EARLY_COUNT = 6;
+        const EARLY_GAP   = Math.max(260, RATE * 0.42);
+        const EARLY_DUR_MULT = 0.78;
+        const SEED_BURST  = 3;
 
-        /* Lane geometry across [-BAND, +BAND] */
+        /* Lanes */
         const laneOffsets = Array.from({length: LANES}, (_, i) => {
           return (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND;
         });
         const laneReadyAt = new Array(LANES).fill(0);
 
+        /* Shuffle queue */
         const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
         let queue = shuffle([...STREAM_WORDS]);
 
@@ -638,7 +624,6 @@
           const scale  = 0.96 + Math.random()*0.14;
           const laneX  = laneOffsets[lane];
 
-          // lane span determines sway so words don't cross into neighbors
           const laneSpan = (LANES === 1) ? (BAND*2) : (2*BAND)/(LANES-1);
           const swayMax  = Math.max(0.6, (laneSpan*0.38));
           const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()*(swayMax - 0.6));
@@ -650,9 +635,8 @@
           outer.style.setProperty('--x',     laneX.toFixed(2)+'%');
           outer.style.setProperty('--scale', scale.toFixed(2));
 
-          // seed words appear already in-progress via negative delay;
-          // early words start immediately with tiny random delay.
-          const delaySeconds = opts.seed ? -(Math.random()*1.1) : (opts.early ? Math.random()*0.2 : Math.random()*0.8);
+          /* Smooth entrance: small positive delay only */
+          const delaySeconds = (opts.early ? Math.random()*0.25 : Math.random()*0.8);
           outer.style.setProperty('--delay', delaySeconds.toFixed(2) + 's');
 
           const sw = document.createElement('span');
@@ -675,7 +659,7 @@
           outer.addEventListener('animationend', () => outer.remove(), {once:true});
         }
 
-        /* Dynamic scheduler (fast → normal) */
+        /* Start only after user scrolls/touches/wheels */
         let started = false, earlyLeft = EARLY_COUNT, timerId = null;
         function scheduleNext(delay){
           timerId = setTimeout(() => {
@@ -691,18 +675,17 @@
           if (started) return;
           started = true;
 
-          /* immediate burst so words are visible right away */
+          /* Seed words: start from below with tiny stagger (no mid-path pop) */
           for (let i=0; i<SEED_BURST; i++) spawn({ seed:true, early:true });
 
-          /* then a quick run-in before settling to normal cadence */
-          scheduleNext(0);
+          scheduleNext(140);
         }
 
         window.addEventListener('wheel', start, {once:true, passive:true});
         window.addEventListener('scroll', start, {once:true, passive:true});
         window.addEventListener('touchmove', start, {once:true, passive:true});
 
-        /* Cleanup if host removed */
+        /* Cleanup */
         const obs = new MutationObserver(() => {
           if (!document.body.contains(host) && timerId){
             clearTimeout(timerId);
@@ -716,8 +699,9 @@
 
   <!-- Title (positioned relative to bubble center / viewport) -->
   <h1 class="hero-title">
-    <span class="title-blur">
-      <span class="title-onx">ONX</span> is Unstoppable
+    <span class="title-wrap">
+      <span class="title-plate" aria-hidden="true"></span>
+      <span class="title-text"><span class="title-onx">ONX</span> is Unstoppable</span>
     </span>
   </h1>
 
@@ -810,7 +794,7 @@
           if (e.propertyName && e.propertyName !== 'opacity') return;
           input.removeEventListener('transitionend', onEnd);
 
-       	  input.value = "";
+          input.value = "";
           autosize(); syncBubbleH();
 
           i = (i + 1) % SUGGESTIONS.length;
@@ -833,10 +817,6 @@
     })();
   </script>
 </section>
-
-
-<!--======================================================================================================================================================================-->
-<!--=====================================================================CHAT END=================================================================================================-->
 
 
 <!--======================================================================== ORBIT SECTION=================================================================================================-->
