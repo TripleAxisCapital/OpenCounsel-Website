@@ -1094,6 +1094,189 @@
 
 
 
+<!-- ▸ ONX Water-Stream Words (Apple-style, ultra-smooth) -->
+<section class="onx-stream" 
+         data-rate="900"     <!-- ms between spawns -->
+         data-dmin="9"       <!-- min rise duration (s) -->
+         data-dmax="14"      <!-- max rise duration (s) -->
+         data-band="12"      <!-- horizontal stream width from center (%) -->
+         data-max="28">      <!-- cap on simultaneous words -->
+  <script>
+    (() => {
+      /* ── Edit your phrases here ─────────────────────── */
+      const WORDS = [
+        "FOR BUSINESS",
+        "FOR TEAMS",
+        "FOR INVESTORS",
+        "FOR CREATORS",
+        "FOR ENTERPRISE",
+        "FOR BUILDERS"
+      ];
+      /* ───────────────────────────────────────────────── */
+
+      const $stage = document.currentScript.parentElement;
+      const RATE = +($stage.dataset.rate || 900);
+      const DMIN = +($stage.dataset.dmin || 9);
+      const DMAX = +($stage.dataset.dmax || 14);
+      const BAND = +($stage.dataset.band || 12);
+      const MAXN = +($stage.dataset.max  || 28);
+
+      const shuffle = a => { for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+      let queue = shuffle([...WORDS]);
+
+      function spawn(){
+        if(queue.length === 0) queue = shuffle([...WORDS]);
+        const phrase = queue.pop();
+
+        // Outer: vertical rise (transform only)
+        const outer = document.createElement("span");
+        outer.className = "onx-w";
+        const dur   = (DMIN + Math.random()*(DMAX - DMIN));          // 9–14s
+        const xoff  = (Math.random()*BAND*2 - BAND);                 // ±band %
+        const scale = (0.96 + Math.random()*0.14);                   // 0.96–1.10
+        const delay = (Math.random()*1.2);                           // desync shimmer/sway
+        outer.style.setProperty("--dur",   dur.toFixed(2) + "s");
+        outer.style.setProperty("--x",     xoff.toFixed(2) + "%");
+        outer.style.setProperty("--scale", scale.toFixed(2));
+        outer.style.setProperty("--delay", delay.toFixed(2) + "s");
+
+        // Middle: gentle sideways sway
+        const swayWrap = document.createElement("span");
+        swayWrap.className = "onx-sw";
+        const sway = (Math.random()<.5?-1:1) * (1.8 + Math.random()*2.6); // ±1.8–4.4%
+        const swayDur = (6 + Math.random()*6);                             // 6–12s
+        swayWrap.style.setProperty("--sway", sway.toFixed(2) + "%");
+        swayWrap.style.setProperty("--swaydur", swayDur.toFixed(2) + "s");
+
+        // Inner: text (shimmer + micro-float + breathe)
+        const inner = document.createElement("span");
+        inner.className = "onx-t";
+        inner.textContent = phrase;
+
+        swayWrap.appendChild(inner);
+        outer.appendChild(swayWrap);
+        $stage.appendChild(outer);
+
+        // Trim to MAXN to avoid DOM bloat
+        const nodes = $stage.querySelectorAll(".onx-w");
+        if (nodes.length > MAXN) nodes[0].remove();
+
+        // Remove after it exits top
+        outer.addEventListener("animationend", () => outer.remove());
+      }
+
+      spawn();
+      const id = setInterval(spawn, RATE);
+
+      // Cleanup if container is removed
+      const obs = new MutationObserver(() => {
+        if (!document.body.contains($stage)) { clearInterval(id); obs.disconnect(); }
+      });
+      obs.observe(document.body, {childList:true, subtree:true});
+    })();
+  </script>
+</section>
+
+<style>
+  /* ── Scoped, Apple-clean tokens ───────────────────────────────────────── */
+  .onx-stream{
+    --bg:#fff;
+    --c1:#3f6768;      /* deep teal */
+    --c2:#57c7d9;      /* aqua */
+    --shimmer:8s;      /* shimmer speed */
+    --breath:7s;       /* soft glow speed */
+    --float:3.8s;      /* micro float speed */
+    --size:clamp(28px,8vw,72px);
+    --weight:500;
+    --track:0.26em;
+
+    position:relative;
+    height:clamp(260px,48vh,560px);
+    background:var(--bg);
+    overflow:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  /* Outer: smooth vertical rise (ease-out, no flashing) */
+  .onx-w{
+    position:absolute;
+    left:50%; top:105%;                    /* start below frame */
+    transform:translate3d(-50%,0,0) scale(var(--scale,1));
+    margin-left:var(--x,0);
+    will-change:transform,opacity;
+    opacity:0;
+    pointer-events:none;
+    animation:onx-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
+  }
+  @keyframes onx-rise{
+    0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0)), 0, 0) scale(var(--scale,1)); }
+    6%   { opacity:1; }                          /* soft fade-in only once */
+    100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0)), -125vh, 0) scale(var(--scale,1)); }
+  }
+
+  /* Middle: gentle side sway (separate wrapper so transforms don't clash) */
+  .onx-sw{
+    display:inline-block;
+    will-change:transform;
+    animation:onx-sway var(--swaydur,8s) ease-in-out var(--delay,0s) infinite alternate;
+  }
+  @keyframes onx-sway{
+    from { transform:translateX(0); }
+    to   { transform:translateX(var(--sway,3%)); }
+  }
+
+  /* Inner: text—shimmer, breathe & micro-float, all very subtle */
+  .onx-t{
+    display:block;
+    font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size:var(--size);
+    font-weight:var(--weight);
+    letter-spacing:var(--track);
+    line-height:1.15;
+    text-transform:uppercase;
+    white-space:nowrap;
+
+    /* gradient text with moving highlight (no color flash) */
+    background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
+    background-size:220% 100%;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+
+    /* Soft glint + micro float + subtle glow */
+    animation:
+      onx-shimmer var(--shimmer) ease-in-out infinite,
+      onx-float   var(--float)   ease-in-out infinite alternate,
+      onx-breathe var(--breath)  ease-in-out infinite;
+    will-change:background-position, filter, transform, text-shadow;
+    text-shadow:none;
+  }
+
+  @keyframes onx-shimmer{
+    0%   { background-position:0% 50%; }
+    100% { background-position:200% 50%; }
+  }
+  @keyframes onx-float{
+    from { transform:translateY(0); }
+    to   { transform:translateY(-2px); } /* ultra subtle */
+  }
+  @keyframes onx-breathe{
+    0%,100% { filter:brightness(1) saturate(1); text-shadow:none; }
+    50%     { filter:brightness(1.06) saturate(1.03); text-shadow:0 0 12px rgba(87,199,217,.12); }
+  }
+
+  /* Accessibility & motion preference */
+  @media (prefers-reduced-motion: reduce){
+    .onx-w, .onx-sw, .onx-t{ animation:none !important; opacity:1 !important; top:auto; transform:none !important; }
+  }
+
+  /* Crisp type */
+  .onx-stream, .onx-t{
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+</style>
 
 
 
