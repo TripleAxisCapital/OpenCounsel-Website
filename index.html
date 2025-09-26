@@ -231,7 +231,10 @@
 
     <!-- Extra right-side action -->
   </onx-header>
-<!--=======================================================================START===============================================================================================-->
+
+
+
+  <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -278,18 +281,18 @@
       --c1:#3f6768;
       --c2:#57c7d9;
 
-      /* ===== Extended scroll track (shorter by default) ===== */
+      /* Track length for floating words */
       --trail: 20vh;
 
-      /* How far words travel upward; tied to trail length */
+      /* Travel distance upward */
       --rise: calc(125vh + (var(--trail) * 0.5));
 
-      /* START OFF-SCREEN to avoid mid-screen pop-ins */
+      /* START OFF-SCREEN to avoid pop-ins */
       --startTop: 110%;
 
-      /* Title glass plate tuning */
+      /* Title glass (blur-only, visually invisible on white) */
       --titleBlur: 50px;
-      --titlePlate: rgba(255,255,255,.42);
+      --titlePlate: rgba(255,255,255,0.0001);  /* nearly transparent: triggers backdrop-filter without visible tint */
       --titleInsetTB: .24em;
       --titleInsetLR: .50em;
       --titleRadius: 24px;
@@ -342,14 +345,13 @@
       will-change:transform,opacity;
       animation:ws-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
     }
-    /* smoother entrance: fade as they cross the bottom edge, rise from off-screen */
     @keyframes ws-rise{
       0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0%)), 0, 0) scale(var(--scale,1)); }
       10%  { opacity:1; }
       100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), calc(var(--rise) * -1), 0) scale(var(--scale,1)); }
     }
 
-    /* lateral sway wrapper to avoid transform conflicts */
+    /* lateral sway wrapper */
     #chat-hero .ws-sway{
       display:inline-block;
       will-change:transform;
@@ -410,7 +412,12 @@
       padding:0 12px;
     }
 
-    /* Glass plate behind the title text, but above the word stream */
+    /* Glass plate behind the title text, but above the word stream.
+       It is visually indistinguishable from the white background:
+       - no tint
+       - no halo
+       - blur-only, activated by backdrop-filter
+    */
     #chat-hero .hero-title .title-blur{
       position:relative;
       display:inline-block;
@@ -421,18 +428,16 @@
       position:absolute;
       inset: calc(var(--titleInsetTB) * -1) calc(var(--titleInsetLR) * -1);
       border-radius: var(--titleRadius);
-      background: var(--titlePlate);
-      -webkit-backdrop-filter: saturate(1.15) blur(var(--titleBlur));
-      backdrop-filter: saturate(1.15) blur(var(--titleBlur));
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,.55) inset,
-        0 6px 24px rgba(0,0,0,.05);
+      background: var(--titlePlate);                 /* ~fully transparent */
+      -webkit-backdrop-filter: blur(var(--titleBlur));
+      backdrop-filter: blur(var(--titleBlur));
+      box-shadow: none;                              /* no visible halo */
       pointer-events:none;
       z-index:-1; /* behind the title text, still above the word stream */
     }
     @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
       #chat-hero .hero-title .title-blur::before{
-        background: rgba(255,255,255,.68);
+        background: rgba(255,255,255,0);            /* stay invisible if blur unsupported */
       }
     }
 
@@ -471,7 +476,7 @@
       box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
 
-    /* ------------------ Multiline input ------------- */
+    /* ---------------- Multiline input ------------- */
     #chat-hero .prompt{
       flex:1 1 auto;
       display:block;
@@ -524,12 +529,9 @@
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
-      #chat-hero{ --titlePlate: rgba(16,16,20,.42); }
-      #chat-hero .hero-title .title-blur::before{
-        box-shadow:
-          0 0 0 1px rgba(255,255,255,.06) inset,
-          0 8px 26px rgba(0,0,0,.45);
-      }
+      /* Keep glass invisible in dark too (blur-only) */
+      #chat-hero{ --titlePlate: rgba(0,0,0,0.0001); }
+      #chat-hero .hero-title .title-blur::before{ box-shadow:none; }
     }
 
     /* ------------- Reduced motion ------------- */
@@ -592,10 +594,11 @@
         const LANE_GAP = +(host.dataset.gap || 1000);
         const MAXN   = +(host.dataset.max   || 28);
 
+        /* Immediate, smooth start on first scroll */
         const EARLY_COUNT = 6;
         const EARLY_GAP   = Math.max(220, RATE * 0.35);
         const EARLY_DUR_MULT = 0.72;
-        const SEED_BURST  = 3;
+        const SEED_BURST  = 4;  /* kick several words in right away */
 
         const laneOffsets = Array.from({length: LANES}, (_, i) => {
           return (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND;
@@ -636,10 +639,10 @@
           outer.style.setProperty('--x',     laneX.toFixed(2)+'%');
           outer.style.setProperty('--scale', scale.toFixed(2));
 
-          /* IMPORTANT: no negative delays so words always start off-screen */
+          /* No negative delays; immediate entrance from bottom on scroll */
           const delaySeconds = opts.seed
-            ? (0.05 + Math.random()*0.15)
-            : (opts.early ? Math.random()*0.2 : Math.random()*0.8);
+            ? 0                                    /* instant for seed words */
+            : (opts.early ? Math.random()*0.15 : Math.random()*0.6);
           outer.style.setProperty('--delay', delaySeconds.toFixed(2) + 's');
 
           const sw = document.createElement('span');
@@ -677,9 +680,10 @@
           if (started) return;
           started = true;
 
-          /* Seed words: still start off-screen; short positive delays for quick entrance */
+          /* Seed a few words immediately from bottom */
           for (let i=0; i<SEED_BURST; i++) spawn({ seed:true, early:true });
 
+          /* Then continue at a quick cadence before normalizing */
           scheduleNext(0);
         }
 
@@ -794,7 +798,7 @@
           if (e.propertyName && e.propertyName !== 'opacity') return;
           input.removeEventListener('transitionend', onEnd);
 
-       	  input.value = "";
+          input.value = "";
           autosize(); syncBubbleH();
 
           i = (i + 1) % SUGGESTIONS.length;
