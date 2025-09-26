@@ -835,364 +835,433 @@
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
-<!--============================== ONX — Orbit → Suck → Roll → “N X” Pop → Gallery ==============================-->
-<style>
-  @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
 
-  .onx-merge{
-    /* Design tokens */
-    --bg:#fff; --ink:#0B0B0C;
-    --stage-h:clamp(460px,78vh,980px);
 
-    --size:min(58vmin,640px);
-    --ring:calc(var(--size)*0.92);
-    --o-font:clamp(78px,17vmin,220px);
+<!-- ===================== ONX Orbit → Suck → Roll → Reveal → Shelf (Apple-style) ===================== -->
+<section id="onx-orbit" class="onx-orbit" aria-label="ONX animation">
+  <!-- Audiowide font for the wordmark -->
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
-    --logo:clamp(40px,6.2vmin,76px);
-    --radius:calc(var(--ring)/2.06);
+  <style>
+    .onx-orbit{
+      --stage-h:clamp(420px,72vh,940px);
+      --o-size:clamp(72px,16vmin,180px);
+      --gap:clamp(8px,2vmin,24px);
+      --chip:clamp(22px,5.2vmin,40px);
+      --chip-pad:clamp(8px,1.6vmin,12px);
+      --ink:#0B0B0C; --bg:#fff; --line:#E6E8EC;
+      position:relative; display:grid; place-items:center;
+      min-height:var(--stage-h); background:var(--bg); overflow:hidden;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      isolation:isolate;
+    }
 
-    --intro-delay:900ms;
-    --spin-duration:8s;
-    --suck-duration:880ms;
-    --suck-stagger:520ms;
-    --roll-duration:1200ms;
-    --reveal-gap:260ms;
-    --gallery-stagger:120ms;
+    /* Centered stage */
+    .onx-orbit .stage{
+      position:relative; width:min(1200px,92vw); height:var(--stage-h);
+      display:grid; place-items:center;
+    }
 
-    --ease-out:cubic-bezier(.16,1,.3,1);
-    --ease-inout:cubic-bezier(.2,.7,.2,1);
+    /* Solo O used for orbit/suck/roll phase (overlay) */
+    .onx-orbit .o-solo{
+      font-family:"Audiowide",ui-sans-serif,system-ui,-apple-system,"SF Pro Text",Segoe UI,Roboto,Arial;
+      font-weight:400; color:var(--ink); line-height:1;
+      font-size:var(--o-size);
+      position:absolute; inset:auto; z-index:3; user-select:none; pointer-events:none;
+      transform:translate3d(0,0,0); transform-origin:50% 50%;
+      will-change:transform;
+    }
 
-    --shadow-soft:0 2px 10px #00000018;
-    --shadow-deep:0 16px 52px #00000012;
+    /* Final wordmark (O N X) revealed after roll */
+    .onx-orbit .wordmark{
+      display:flex; align-items:center; gap:var(--gap);
+      font-family:"Audiowide",ui-sans-serif,system-ui,-apple-system,"SF Pro Text",Segoe UI,Roboto,Arial;
+      font-weight:400; color:var(--ink); line-height:1;
+      font-size:var(--o-size);
+      opacity:0; transform:translate3d(0,0,0);
+      position:relative; z-index:2; user-select:none;
+      letter-spacing:.06em;
+    }
+    .onx-orbit .wordmark .letter{ display:inline-block; transform:translate3d(0,0,0); }
 
-    position:relative; width:100%; height:var(--stage-h);
-    display:grid; place-items:center;
-    background:var(--bg); color:var(--ink);
-    overflow:hidden; isolation:isolate;
-    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  }
+    /* Orbit field with free-flying chips */
+    .onx-orbit .orbit-field{
+      position:absolute; inset:0; z-index:1; pointer-events:none; contain:layout paint;
+    }
+    .onx-orbit .orbiter{
+      position:absolute; top:50%; left:50%; translate:-50% -50%;
+      will-change:transform; z-index:1;
+    }
+    .onx-orbit .chip{
+      display:flex; align-items:center; justify-content:center;
+      width:calc(var(--chip) + var(--chip-pad)*2); height:calc(var(--chip) + var(--chip-pad)*2);
+      background:#fff; border:1px solid var(--line); border-radius:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      will-change:transform; transform:translate3d(0,0,0);
+    }
+    .onx-orbit .chip .logo{
+      display:block; width:var(--chip); height:var(--chip); object-fit:contain;
+    }
 
-  /* whisper-soft depth */
-  .onx-halo{
-    position:absolute; inset:0; margin:auto;
-    width:min(82vmin,780px); height:min(82vmin,780px);
-    border-radius:50%;
-    background:
-      radial-gradient(42% 42% at 50% 50%, #0b0b0c0a, #0000 72%),
-      radial-gradient(26% 26% at 58% 44%, #0b0b0c08, #0000 76%);
-    filter:blur(.8px); pointer-events:none; z-index:0;
-    opacity:0; transform:scale(1.03);
-    transition:opacity 700ms var(--ease-out), transform 900ms var(--ease-out);
-    will-change:opacity,transform;
-  }
-  .onx-merge.is-start .onx-halo{opacity:.9; transform:scale(1)}
+    /* Logo shelf that appears under ONX */
+    .onx-orbit .logo-shelf{
+      position:absolute; left:50%; transform:translateX(-50%);
+      bottom:clamp(20px,9vh,90px); display:flex; flex-wrap:wrap; gap:clamp(12px,2.2vmin,22px);
+      align-items:center; justify-content:center;
+      opacity:0; z-index:2;
+    }
 
-  .center-lock{
-    position:relative; width:var(--size); height:var(--size);
-    display:grid; place-items:center; z-index:2; contain:layout paint size;
-  }
+    /* Replay chip */
+    .onx-orbit .replay{
+      position:absolute; right:18px; bottom:18px; z-index:4;
+      appearance:none; border:1px solid var(--line); background:#fff; color:var(--ink);
+      border-radius:999px; padding:10px 14px; font-size:14px; cursor:pointer;
+      box-shadow:0 8px 24px rgba(0,0,0,.06);
+      transition:transform .2s ease, box-shadow .2s ease;
+    }
+    .onx-orbit .replay:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(0,0,0,.1); }
 
-  /* Wordmark */
-  .onx-word{
-    font-family:'Audiowide',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    line-height:1; letter-spacing:.012em;
-    filter:drop-shadow(var(--shadow-soft));
-    pointer-events:none; position:relative; z-index:10;
-    transform:translateX(var(--recenter,0px)) translateZ(0);
-    transition:transform 560ms var(--ease-out);
-    will-change:transform;
-  }
-  .glyph-o{
-    font-size:var(--o-font); display:inline-block;
-    transform:translateZ(0);
-    will-change:transform,filter,letter-spacing;
-  }
-  .glyph-nx{
-    font-size:var(--o-font);
-    position:absolute; left:100%; top:0;
-    margin-left:.10em; /* readable O→NX gap */
-    opacity:0; transform:translateX(-0.18em) scale(.96) translateZ(0);
-    letter-spacing:.02em;
-    -webkit-mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
-            mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
-    -webkit-mask-position:0% 50%; mask-position:0% 50%;
-    -webkit-mask-size:220% 100%;   mask-size:220% 100%;
-    transition:
-      opacity 560ms var(--ease-out),
-      transform 560ms var(--ease-out),
-      letter-spacing 560ms var(--ease-out),
-      -webkit-mask-position 760ms var(--ease-out);
-    will-change:opacity,transform;
-  }
+    /* Respect reduced motion: skip the choreography and just show final */
+    @media (prefers-reduced-motion: reduce){
+      .onx-orbit .o-solo{ display:none; }
+      .onx-orbit .wordmark{ opacity:1 !important; }
+      .onx-orbit .logo-shelf{ opacity:1 !important; }
+    }
+  </style>
 
-  /* Orbit */
-  .onx-orbit{
-    position:absolute; left:50%; top:50%;
-    width:var(--ring); height:var(--ring);
-    margin-left:calc(var(--ring)/-2); margin-top:calc(var(--ring)/-2);
-    border-radius:50%; pointer-events:none; z-index:3;
-    opacity:0; transform:scale(.985) translateZ(0);
-    transition:opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
-    will-change:transform,opacity;
-  }
-  .onx-merge.is-start .onx-orbit{
-    opacity:1; transform:scale(1) translateZ(0);
-    animation:onx-spin var(--spin-duration) linear infinite;
-  }
-  @keyframes onx-spin{to{transform:rotate(360deg)}}
+  <div class="stage">
+    <!-- Rolling / overlay O -->
+    <div class="o-solo" id="oSolo">O</div>
 
-  .orbiter{position:absolute; left:50%; top:50%; width:1px; height:1px; transform-origin:0 0}
-
-  /* Logos (chips) */
-  .chip{
-    position:relative; width:var(--logo); height:var(--logo);
-    transform:translateX(var(--radius)) translate(-50%,-50%) scale(1) translateZ(0);
-    transform-origin:50% 50%;
-    border-radius:14px;
-    background:radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
-    box-shadow:0 0 0 1px #0b0b0c12 inset, 0 10px 24px #00000014;
-    overflow:hidden; will-change:transform,opacity,filter;
-    backface-visibility:hidden;
-  }
-  .chip::before{
-    content:""; position:absolute; inset:0;
-    background:radial-gradient(80% 80% at 50% 50%, #ffffff80, #ffffff00 70%);
-    mix-blend-mode:screen; pointer-events:none;
-  }
-  .logo{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02)}
-
-  /* Suck into O (boomerang easing) */
-  .onx-merge.is-suck .chip{
-    animation:onx-suck var(--suck-duration) var(--ease-inout) forwards;
-    animation-delay:var(--delay,0ms);
-  }
-  @keyframes onx-suck{
-    0%{   opacity:1;   transform:translateX(var(--radius)) translate(-50%,-50%) scale(1) translateZ(0) }
-    60%{  opacity:.38; transform:translateX(0)             translate(-50%,-50%) scale(.48) translateZ(0) }
-    78%{  opacity:.22; transform:translateX(-10px)         translate(-50%,-50%) scale(.44) translateZ(0) }
-    90%{  opacity:.16; transform:translateX(4px)           translate(-50%,-50%) scale(.40) translateZ(0) }
-    100%{ opacity:0;   transform:translateX(0)             translate(-50%,-50%) scale(.30) translateZ(0); filter:blur(1px) }
-  }
-
-  /* O rolls right and eases to a stop */
-  .onx-merge.is-roll .glyph-o{
-    animation:onx-roll var(--roll-duration) var(--ease-inout) both;
-  }
-  @keyframes onx-roll{
-    0%{   transform:translateX(0) rotate(0turn) translateZ(0) }
-    72%{  transform:translateX(calc(var(--rollX)*.94)) rotate(1.08turn) translateZ(0) }
-    88%{  transform:translateX(calc(var(--rollX)*1.02)) rotate(1.22turn) translateZ(0) }
-    100%{ transform:translateX(var(--rollX)) rotate(1.20turn) translateZ(0) }
-  }
-
-  /* NX emerges */
-  .onx-merge.is-nx .glyph-nx{
-    opacity:1; transform:translateX(0) scale(1) translateZ(0); letter-spacing:.012em;
-    -webkit-mask-position:100% 50%; mask-position:100% 50%;
-  }
-
-  /* Fade orbit after NX */
-  .onx-merge.is-nx .onx-orbit{opacity:0; transition:opacity 420ms var(--ease-out) 80ms}
-
-  /* Bottom gallery */
-  .onx-gallery{
-    position:absolute; left:50%; transform:translateX(-50%);
-    display:flex; gap:clamp(10px,2.4vmin,22px);
-    opacity:0; pointer-events:none; z-index:9;
-    will-change:opacity,transform;
-  }
-  .onx-merge.is-final .onx-gallery{opacity:1; transition:opacity 420ms var(--ease-out)}
-
-  .gallery-chip{
-    position:relative; width:clamp(28px,5vmin,60px); height:clamp(28px,5vmin,60px);
-    border-radius:12px;
-    background:radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
-    box-shadow:0 0 0 1px #0b0b0c12 inset, 0 8px 20px #00000012;
-    overflow:hidden; opacity:0; transform:translateY(12px) scale(.92) translateZ(0);
-    will-change:transform,opacity;
-  }
-  .onx-merge.is-final .gallery-chip{
-    animation:onx-pop 700ms var(--ease-inout) forwards;
-    animation-delay:var(--gdelay,0ms);
-  }
-  .gallery-chip img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02)}
-  @keyframes onx-pop{
-    0%{   opacity:0; transform:translateY(12px) scale(.92) translateZ(0) }
-    58%{  opacity:1; transform:translateY(-3px) scale(1.08) translateZ(0) }
-    78%{  transform:translateY(1px)  scale(.99)  translateZ(0) }
-    100%{ transform:translateY(0)    scale(1)    translateZ(0) }
-  }
-
-  @media (prefers-reduced-motion:reduce){
-    .onx-orbit{animation:none!important}
-    .chip,.glyph-o,.glyph-nx,.gallery-chip{transition:none!important; animation-duration:.001ms!important; animation-iteration-count:1!important}
-  }
-</style>
-
-<section class="onx-merge" id="onx-merge" aria-label="ONX launch animation">
-  <div class="onx-halo" aria-hidden="true"></div>
-
-  <div class="center-lock">
-    <div class="onx-word" id="onx-word" aria-hidden="true">
-      <span class="glyph-o" id="glyph-o">O</span>
-      <!-- Spaced “N X” so it reads as O N X -->
-      <span class="glyph-nx" id="glyph-nx">N&nbsp;X</span>
+    <!-- Final wordmark -->
+    <div class="wordmark" id="wordmarkFinal" aria-hidden="true">
+      <span class="letter">O</span>
+      <span class="letter">N</span>
+      <span class="letter">X</span>
     </div>
 
-    <div class="onx-orbit" id="onx-orbit" aria-hidden="true">
-      <div class="orbiter"><div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div></div>
-      <div class="orbiter"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div></div>
-      <div class="orbiter"><div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div></div>
-      <div class="orbiter"><div class="chip"><img class="logo" src="OAILogo.png"    alt="OpenAI"></div></div>
+    <!-- Orbiting logos (you can add more). Control with data-angle (deg), data-radius, data-speed (deg/s) -->
+    <div class="orbit-field" id="orbitField">
+      <div class="orbiter" data-angle="-20" data-radius="28vmin" data-speed="32">
+        <div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div>
+      </div>
+      <div class="orbiter" data-angle="110" data-radius="24vmin" data-speed="-26">
+        <div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div>
+      </div>
+      <div class="orbiter" data-angle="210" data-radius="30vmin" data-speed="22">
+        <div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div>
+      </div>
+      <div class="orbiter" data-angle="45" data-radius="26vmin" data-speed="-28">
+        <div class="chip"><img class="logo" src="OAILogo.png"    alt="OpenAI"></div>
+      </div>
     </div>
+
+    <!-- Shelf for post-reveal logo lineup -->
+    <div class="logo-shelf" id="logoShelf" aria-hidden="true"></div>
   </div>
 
-  <div class="onx-gallery" id="onx-gallery" aria-hidden="true">
-    <div class="gallery-chip"><img src="grokLogo.svg"   alt="Grok"></div>
-    <div class="gallery-chip"><img src="googleLogo.svg" alt="Google"></div>
-    <div class="gallery-chip"><img src="metaLogo.svg"   alt="Meta"></div>
-    <div class="gallery-chip"><img src="OAILogo.png"    alt="OpenAI"></div>
-  </div>
+  <button class="replay" type="button" id="replayBtn" aria-label="Replay animation">Replay</button>
+
+  <script>
+    (() => {
+      const root = document.getElementById('onx-orbit');
+      const stage = root.querySelector('.stage');
+      const oSolo = root.querySelector('#oSolo');
+      const wordmark = root.querySelector('#wordmarkFinal');
+      const orbitField = root.querySelector('#orbitField');
+      const shelf = root.querySelector('#logoShelf');
+      const replayBtn = root.querySelector('#replayBtn');
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // Utility: convert simple length tokens to px (supports number, px, vmin, vw, vh)
+      const toPx = (val) => {
+        if (typeof val === 'number') return val;
+        const s = String(val).trim();
+        const num = parseFloat(s);
+        if (s.endsWith('vmin')){
+          const base = Math.min(window.innerWidth, window.innerHeight);
+          return base * (num/100);
+        }
+        if (s.endsWith('vw'))  return window.innerWidth  * (num/100);
+        if (s.endsWith('vh'))  return window.innerHeight * (num/100);
+        if (s.endsWith('px'))  return num;
+        return num; // assume px
+      };
+
+      // Choreography timings (ms)
+      const T_ORBIT   = 1900;  // free fly before suck
+      const T_SUCK    = 720;   // pull into O
+      const T_ROLL    = 900;   // O rolls to the right
+      const T_CROSS   = 260;   // small crossfade between solo O and final wordmark
+      const T_NX_POP  = 520;   // N and X pop
+      const T_SHELF   = 620;   // logos pop to shelf
+
+      // Easing helpers
+      const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+      const easeOutBack = (t, s=0.72) => {
+        // back overshoot (boomerang feel)
+        return 1 + (s+1)*Math.pow(t-1,3) + s*Math.pow(t-1,2);
+      };
+
+      let rafId = 0;
+      let running = false;
+      let orbiters = [];
+
+      function setupOrbiters(){
+        orbiters = Array.from(orbitField.querySelectorAll('.orbiter')).map((node, i) => {
+          const chip = node.querySelector('.chip');
+          const angle = parseFloat(node.dataset.angle ?? (i * (360/Math.max(1,orbitField.children.length))));
+          const radius = toPx(node.dataset.radius ?? '28vmin');
+          const speed = parseFloat(node.dataset.speed ?? (i%2 ? 26 : -24)); // deg/s
+          const bobAmp = Math.max(6, radius*0.06);
+          const bobSpd = 1 + (Math.abs(speed)/36);
+          return {
+            node, chip, angle, baseAngle: angle, radius, baseRadius: radius, speed, bobAmp, bobSpd,
+            phase:'orbit', // orbit | suck | done
+            tStart: performance.now(), sucked:false
+          };
+        });
+      }
+
+      function orbitLoop(t0){
+        const rect = stage.getBoundingClientRect();
+        const cx = rect.width/2;
+        const cy = rect.height/2;
+        let firstTime = true;
+        let tPrev = performance.now();
+
+        function frame(now){
+          rafId = requestAnimationFrame(frame);
+          if(!running) return;
+
+          const dt = (now - tPrev)/1000;
+          tPrev = now;
+
+          const eRatio = 0.62; // ellipse for faux perspective
+          let allSucked = true;
+
+          orbiters.forEach((o, idx) => {
+            if (o.phase === 'orbit' && now - o.tStart >= T_ORBIT){
+              o.phase = 'suck';
+              o.tPhase = now;
+            }
+            if (o.phase === 'orbit'){
+              o.angle += o.speed * dt;
+            }
+            // organic bobbing
+            const bob = Math.sin((now/1000)*o.bobSpd + idx*0.6) * o.bobAmp;
+
+            let rNow = o.radius;
+            if (o.phase === 'suck'){
+              const prog = Math.min(1, (now - o.tPhase)/T_SUCK);
+              rNow = o.baseRadius * (1 - easeOutBack(prog));
+              if (prog >= 1){
+                o.phase = 'done';
+                o.sucked = true;
+              } else {
+                allSucked = false;
+              }
+            }
+            if (o.phase === 'orbit'){ allSucked = false; }
+
+            const rad = (o.angle*Math.PI)/180;
+            const x = Math.cos(rad) * rNow;
+            const y = Math.sin(rad) * rNow * eRatio + bob;
+
+            o.node.style.transform = `translate(-50%,-50%) translate3d(${cx + x}px, ${cy + y}px, 0)`;
+            // depth layering
+            o.node.style.zIndex = (y > 0 ? 1 : 2).toString();
+
+            // pull opacity slightly as they enter (subtle)
+            if (o.phase !== 'done'){
+              const fade = Math.max(0.1, Math.min(1, rNow / (o.baseRadius*0.9)));
+              o.chip.style.opacity = fade;
+            } else {
+              o.chip.style.opacity = 0;
+            }
+          });
+
+          // Move to next phase when all are sucked
+          if (allSucked){
+            cancelAnimationFrame(rafId);
+            rollAndReveal(now);
+          }
+        }
+
+        rafId = requestAnimationFrame(frame);
+      }
+
+      async function rollAndReveal(now){
+        if (prefersReduced){
+          // Skip anims: show final
+          wordmark.style.opacity = '1';
+          // Move chips to shelf immediately
+          Array.from(orbitField.querySelectorAll('.chip')).forEach(ch => shelf.appendChild(ch));
+          shelf.style.opacity = '1';
+          running = false;
+          return;
+        }
+
+        // Place the solo O at the stage center at start
+        const st = stage.getBoundingClientRect();
+        const oRect0 = oSolo.getBoundingClientRect();
+        const startX = (st.width/2) - (oRect0.width/2);
+        const startY = (st.height/2) - (oRect0.height/2);
+        oSolo.style.left = `${startX}px`;
+        oSolo.style.top  = `${startY}px`;
+
+        // Determine roll distance and corresponding rotation for a "no-slip" feel
+        const R = oRect0.width/2;
+        const rollDist = Math.min(st.width*0.18, 320); // px
+        const thetaRad = rollDist / Math.max(1, R);
+        const thetaDeg = -(thetaRad * 180/Math.PI); // negative to roll right
+
+        // Animate the solo O rolling to the right
+        await oSolo.animate([
+          { transform:`translate3d(0,0,0) rotate(0deg)` },
+          { transform:`translate3d(${rollDist}px,0,0) rotate(${thetaDeg}deg)` }
+        ], { duration:T_ROLL, easing:'cubic-bezier(.18,.84,.16,1)', fill:'forwards' }).finished;
+
+        // Cross-fade from solo O to final wordmark, and align so the final O sits where the solo O ended
+        const oEndRect = oSolo.getBoundingClientRect();
+        wordmark.style.opacity = '0';
+        wordmark.style.transform = 'translate3d(0,0,0)';
+        wordmark.style.willChange = 'transform, opacity';
+        wordmark.style.opacity = '0';
+        // Make visible to measure
+        wordmark.style.display = 'flex';
+        const wmRect0 = wordmark.getBoundingClientRect();
+        const finalO = wordmark.querySelector('.letter'); // first letter O
+        const oInFinalRect = finalO.getBoundingClientRect();
+
+        const offsetX = (oEndRect.left + oEndRect.width/2) - (oInFinalRect.left + oInFinalRect.width/2);
+        await wordmark.animate([
+          { opacity:0, transform:`translate3d(${offsetX}px,0,0)` },
+          { opacity:1, transform:`translate3d(0,0,0)` }
+        ], { duration:T_CROSS, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards' }).finished;
+
+        // Hide solo O
+        oSolo.style.opacity = '0';
+
+        // Pop N and X out with a clean bounce
+        const letters = Array.from(wordmark.querySelectorAll('.letter'));
+        const [O, N, X] = letters;
+        N.style.opacity = '0'; X.style.opacity = '0';
+        N.style.transform = 'translate3d(-6px,6px,0) scale(.86)';
+        X.style.transform = 'translate3d(-8px,8px,0) scale(.86)';
+
+        const pop = (el, delay=0) => el.animate([
+          { opacity:0, transform:'translate3d(-8px,10px,0) scale(.82)' },
+          { opacity:1, transform:'translate3d(2px,-4px,0) scale(1.06)', offset:.68 },
+          { opacity:1, transform:'translate3d(0,0,0) scale(1)' }
+        ], { duration:T_NX_POP, delay, easing:'cubic-bezier(.18,.88,.22,1.08)', fill:'forwards' }).finished;
+
+        await Promise.all([ pop(N, 30), pop(X, 110) ]);
+
+        // Port sucked chips to the shelf and bounce them in
+        const suckedChips = Array.from(orbitField.querySelectorAll('.chip'));
+        suckedChips.forEach(ch => {
+          ch.style.opacity = '1';
+          ch.style.transform = 'translate3d(0,12px,0) scale(.5)';
+          shelf.appendChild(ch);
+        });
+
+        // Reveal shelf container
+        await shelf.animate([{ opacity:0 }, { opacity:1 }], {
+          duration:220, easing:'linear', fill:'forwards'
+        }).finished;
+
+        // Staggered bounce-in for chips (organic)
+        const chipAnims = suckedChips.map((ch, i) => ch.animate([
+          { transform:'translate3d(0,18px,0) scale(.64)', opacity:0 },
+          { transform:'translate3d(0,-6px,0) scale(1.08)', opacity:1, offset:.74 },
+          { transform:'translate3d(0,0,0) scale(1)', opacity:1 }
+        ], {
+          duration:T_SHELF,
+          delay: 40*i,
+          easing:'cubic-bezier(.16,.9,.18,1.08)',
+          fill:'forwards'
+        }).finished);
+        await Promise.all(chipAnims);
+
+        running = false;
+      }
+
+      function resetScene(){
+        cancelAnimationFrame(rafId);
+        running = false;
+
+        // Return chips to orbit field
+        Array.from(shelf.querySelectorAll('.chip')).forEach(ch => {
+          // rebuild orbiter wrapper so the loop can position again
+          const orb = document.createElement('div');
+          orb.className = 'orbiter';
+          // default placement; users can re-set data-* as needed
+          orb.dataset.angle = ch.dataset._angle ?? '0';
+          orb.dataset.radius = ch.dataset._radius ?? '28vmin';
+          orb.dataset.speed  = ch.dataset._speed  ?? '26';
+          orb.appendChild(ch);
+          orbitField.appendChild(orb);
+          ch.style.transform = 'translate3d(0,0,0) scale(1)';
+          ch.style.opacity = '1';
+        });
+
+        // Show solo O, hide final wordmark/shelf
+        oSolo.style.opacity = '1';
+        oSolo.style.transform = 'translate3d(0,0,0) rotate(0deg)';
+        wordmark.style.opacity = '0';
+        shelf.style.opacity = '0';
+
+        setupOrbiters();
+      }
+
+      function cacheChipData(){
+        // Preserve original per-chip placement so replay feels identical
+        Array.from(orbitField.querySelectorAll('.orbiter')).forEach(orb => {
+          const chip = orb.querySelector('.chip');
+          chip.dataset._angle = orb.dataset.angle ?? '';
+          chip.dataset._radius = orb.dataset.radius ?? '';
+          chip.dataset._speed  = orb.dataset.speed  ?? '';
+        });
+      }
+
+      async function run(){
+        if (prefersReduced){
+          wordmark.style.opacity = '1';
+          // Move any chips straight to shelf
+          Array.from(orbitField.querySelectorAll('.chip')).forEach(ch => shelf.appendChild(ch));
+          shelf.style.opacity = '1';
+          return;
+        }
+        running = true;
+        orbitLoop(performance.now());
+      }
+
+      // Init
+      cacheChipData();
+      setupOrbiters();
+      run();
+
+      // Replay
+      replayBtn.addEventListener('click', () => {
+        resetScene();
+        run();
+      });
+
+      // Handle resize to keep geometry crisp
+      let rAF = 0;
+      window.addEventListener('resize', () => {
+        if (rAF) cancelAnimationFrame(rAF);
+        rAF = requestAnimationFrame(() => {
+          // soft reset without rebuilding everything
+          resetScene();
+          run();
+        });
+      }, { passive:true });
+    })();
+  </script>
 </section>
 
-<script>
-/* ONX — stable, error-free choreo: Orbit → Suck → Roll → NX → Gallery (plays once in view) */
-(function(){
-  const root     = document.getElementById('onx-merge');
-  if(!root || root.dataset.init) return; root.dataset.init='1';
-
-  const word     = document.getElementById('onx-word');
-  const glyphO   = document.getElementById('glyph-o');
-  const nxEl     = document.getElementById('glyph-nx');
-  const orbit    = document.getElementById('onx-orbit');
-  const orbiters = Array.from(orbit.querySelectorAll('.orbiter'));
-  const chips    = Array.from(orbit.querySelectorAll('.chip'));
-  const gallery  = document.getElementById('onx-gallery');
-  const gchips   = Array.from(gallery.querySelectorAll('.gallery-chip'));
-
-  const css  = p => getComputedStyle(root).getPropertyValue(p).trim();
-  const toMs = v => v.endsWith('ms') ? parseFloat(v) : v.endsWith('s') ? parseFloat(v)*1000 : parseFloat(v)||0;
-
-  const INTRO_DELAY   = toMs(css('--intro-delay'))     || 900;
-  const STAGGER       = toMs(css('--suck-stagger'))    || 520;
-  const SUCK_DURATION = toMs(css('--suck-duration'))   || 880;
-  const ROLL_DURATION = toMs(css('--roll-duration'))   || 1200;
-  const REVEAL_GAP    = toMs(css('--reveal-gap'))      || 260;
-  const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
-
-  let started = false;
-  const timers = [];
-
-  /* 1) Even spacing around the orbit */
-  function distributeOrbiters(){
-    const n = Math.max(orbiters.length, 1);
-    const offset = -90; // one at the top
-    for(let i=0;i<n;i++){
-      const angle = offset + (360/n)*i;
-      orbiters[i].style.transform = `rotate(${angle}deg)`;
-    }
-  }
-  distributeOrbiters();
-
-  /* 2) Place gallery under ONX baseline (responsive) */
-  function placeGallery(){
-    const stageRect = root.getBoundingClientRect();
-    const wordRect  = word.getBoundingClientRect();
-    const offsetPx  = Math.max(32, Math.min(56, wordRect.height * 0.8));
-    const topPx     = (wordRect.bottom - stageRect.top) + offsetPx;
-    const gH        = gallery.offsetHeight || 0;
-    gallery.style.top = Math.min(topPx, stageRect.height - gH - 12) + 'px';
-  }
-
-  /* 3) Subtle pop staggering for bottom chips */
-  function setGalleryStagger(){
-    gchips.forEach((el,i)=> el.style.setProperty('--gdelay', (i * GALLERY_STAG) + 'ms'));
-  }
-
-  /* 4) Compute wheel roll distance and recentre so final ONX sits perfectly centered */
-  function computeRollAndRecenter(){
-    // Ensure font is baked for precise metrics
-    const nxW   = nxEl.getBoundingClientRect().width || 0;
-    const gapPx = parseFloat(getComputedStyle(nxEl).marginLeft) || 0;
-
-    const rollX = (nxW + gapPx) * 0.90; // natural wheel distance
-    root.style.setProperty('--rollX', rollX + 'px');
-
-    // Final center offset relative to initial center
-    const recenter = -(rollX + (gapPx + nxW)/2);
-    word.style.setProperty('--recenter', recenter + 'px');
-  }
-
-  /* 5) Timeline start */
-  async function start(){
-    if(started) return; started = true;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    root.classList.add('is-start'); // halo + orbit fade-in
-
-    // In reduced motion: snap to final
-    if(reduced){
-      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-      computeRollAndRecenter();
-      root.classList.add('is-nx','is-final');
-      setGalleryStagger(); placeGallery();
-      root.setAttribute('aria-label','ONX');
-      return;
-    }
-
-    // Prepare suck-in delays
-    chips.forEach((el,i)=> el.style.setProperty('--delay', (i*STAGGER)+'ms'));
-
-    // Suck sequence
-    timers.push(setTimeout(()=> root.classList.add('is-suck'), INTRO_DELAY));
-
-    // After last chip is gone → roll the O
-    const suckEndsAt = INTRO_DELAY + ((chips.length-1)*STAGGER) + SUCK_DURATION;
-
-    timers.push(setTimeout(async ()=>{
-      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-      computeRollAndRecenter();
-      root.classList.add('is-roll'); // kicks onx-roll on the O
-    }, suckEndsAt + 40)); // tiny cushion ensures clean handoff
-
-    // When the roll completes → reveal NX, then gallery
-    function onRollEnd(e){
-      if(e.animationName !== 'onx-roll') return;
-      glyphO.removeEventListener('animationend', onRollEnd, true);
-
-      timers.push(setTimeout(()=>{
-        root.classList.add('is-nx');
-        root.setAttribute('aria-label','ONX');
-
-        setGalleryStagger();
-        root.classList.add('is-final');
-        requestAnimationFrame(placeGallery);
-        requestAnimationFrame(placeGallery);
-      }, REVEAL_GAP));
-    }
-    glyphO.addEventListener('animationend', onRollEnd, true);
-  }
-
-  /* 6) Play once when scrolled ~40% into view (stable across browsers) */
-  const io = new IntersectionObserver((entries)=>{
-    for(const e of entries){
-      if(e.isIntersecting && e.intersectionRatio >= 0.4){ start(); io.disconnect(); break; }
-    }
-  }, {threshold:[0,.2,.4,.6,1]});
-  io.observe(root);
-
-  /* 7) Keep the gallery perfectly attached on resize or image load */
-  addEventListener('resize', ()=> { if(root.classList.contains('is-final')) placeGallery() }, {passive:true});
-  Array.from(gallery.querySelectorAll('img')).forEach(img=>{
-    if(!img.complete) img.addEventListener('load', ()=> { if(root.classList.contains('is-final')) placeGallery() }, {once:true});
-  });
-
-  /* 8) Be tidy if page hides mid-sequence */
-  document.addEventListener('visibilitychange', ()=> {
-    if(document.hidden){ timers.forEach(t=>clearTimeout(t)); timers.length=0; }
-  }, {passive:true});
-})();
-</script>
 
 
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
