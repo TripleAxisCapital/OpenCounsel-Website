@@ -635,8 +635,7 @@
 
   <!--======================================================================================================================================================================-->
 
-
-<!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + refined background word stream ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -650,20 +649,21 @@
       --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
       --maxW:940px;                  /* max bubble width */
       --screenPadX:20px;             /* bubble -> viewport side padding */
-      --titleGap:32px;               /* space between title and bubble */
+      --titleGap:28px;               /* space between title and bubble */
 
       /* Animation timings */
-      --fade:480ms;                  /* fade-out duration for sentence swap */
+      --fade:360ms;                  /* fade-out duration for sentence swap */
 
-      /* === Mobile (default) === */
+      /* === Edit me (mobile & desktop controls) === */
+      /* Mobile (default) */
       --padX-m:16px;
-      --padY-m:16px;
+      --padY-m:14px;
       --sendScale-m:.50;
 
-      /* === Desktop (>=768px) === */
+      /* Desktop (>=768px) */
       --padX-d:20px;
-      --padY-d:20px;
-      --sendScale-d:.78;
+      --padY-d:18px;
+      --sendScale-d:.75;
 
       /* Base + active mappings */
       --padX:var(--padX-m);
@@ -677,11 +677,8 @@
       --shadowB:0 18px 40px rgba(0,0,0,.06);
 
       /* Word stream colors */
-      --c1:#3f6768;
-      --c2:#57c7d9;
-
-      /* Hero length (more breathing room) */
-      --heroMinH:clamp(100svh, 1200px, 1400px);
+      --c1:#3f6768;                  /* deep teal (from your image) */
+      --c2:#57c7d9;                  /* aqua (from your image) */
     }
 
     @media (min-width:768px){
@@ -696,10 +693,11 @@
     /* --------------- Section layout --------------- */
     #chat-hero{
       position:relative;
-      min-height:var(--heroMinH);
+      min-height:100svh;
+      min-height:100vh;
       background:var(--bg);
       box-sizing:border-box;
-      isolation:isolate;
+      isolation:isolate; /* new stacking context so background can sit under UI cleanly */
       -webkit-tap-highlight-color: transparent;
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
                    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
@@ -710,41 +708,41 @@
       overflow:hidden;
     }
 
-    /* Subtle ambient glow for depth */
-    #chat-hero::before{
-      content:"";
-      position:absolute; inset:-12% -12% -18% -12%;
-      background:
-        radial-gradient(60% 40% at 50% 30%, rgba(87,199,217,.10), transparent 60%),
-        radial-gradient(30% 20% at 20% 80%, rgba(63,103,104,.08), transparent 60%);
-      filter:blur(20px);
-      z-index:0;
-      pointer-events:none;
-    }
-
     /* ---------------- Background word stream ---------------- */
     #chat-hero .word-stream{
-      position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+      position:absolute;
+      inset:0;
+      z-index:0;                 /* stays behind everything */
+      pointer-events:none;
+      overflow:hidden;
     }
+    /* rising word container */
     #chat-hero .ws-word{
-      position:absolute; left:50%; top:105%;
+      position:absolute;
+      left:50%; top:105%;
       transform:translate3d(-50%,0,0) scale(var(--scale,1));
-      margin-left:var(--x,0%);
+      margin-left:var(--x,0%);   /* lane offset from center in % */
       opacity:0;
       will-change:transform,opacity;
-      animation:ws-rise var(--dur,11s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
+      animation:ws-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
     }
     @keyframes ws-rise{
       0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0%)), 0, 0) scale(var(--scale,1)); }
-      10%  { opacity:.9; }
-      100% { opacity:.9; transform:translate3d(calc(-50% + var(--x,0%)), -130vh, 0) scale(var(--scale,1)); }
+      7%   { opacity:1; }
+      100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), -125vh, 0) scale(var(--scale,1)); }
     }
-    .ws-sway{
-      display:inline-block; will-change:transform;
+    /* lateral sway wrapper to avoid transform conflicts */
+    #chat-hero .ws-sway{
+      display:inline-block;
+      will-change:transform;
       animation:ws-sway var(--swaydur,8s) ease-in-out var(--delay,0s) infinite alternate;
     }
-    @keyframes ws-sway{ from{transform:translateX(0)} to{transform:translateX(var(--sway,3%))} }
-    .ws-text{
+    @keyframes ws-sway{
+      from { transform:translateX(0); }
+      to   { transform:translateX(var(--sway,3%)); }
+    }
+    /* gradient/shimmering text */
+    #chat-hero .ws-text{
       display:block;
       font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       font-size:clamp(28px,8vw,72px);
@@ -753,16 +751,19 @@
       line-height:1.15;
       text-transform:uppercase;
       white-space:nowrap;
+
       background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
       background-size:220% 100%;
-      -webkit-background-clip:text; background-clip:text; color:transparent;
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+
       animation:
         ws-shimmer 8s ease-in-out infinite,
         ws-float   3.8s ease-in-out infinite alternate,
         ws-breathe 7s  ease-in-out infinite;
       will-change:background-position, filter, transform;
       text-shadow:none;
-      opacity:.92;
     }
     @keyframes ws-shimmer{ 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
     @keyframes ws-float  { from{transform:translateY(0)} to{transform:translateY(-2px)} }
@@ -777,15 +778,24 @@
 
     /* ------------------ Title --------------------- */
     #chat-hero .hero-title{
-      position:absolute; left:50%; transform:translateX(-50%);
+      position:absolute;
+      left:50%;
+      transform:translateX(-50%);
       bottom:calc(50% + (var(--bubbleH)/2) + var(--titleGap));
-      margin:0; text-align:center; letter-spacing:-0.02em; line-height:1.1;
-      font-weight:700; font-size:clamp(28px, 5.2vw, 54px); padding:0 12px;
+      margin:0;
+      text-align:center;
+      letter-spacing:-0.02em;
+      line-height:1.1;
+      font-weight:700;
+      font-size:clamp(28px, 5.2vw, 54px);
+      padding:0 12px;
     }
 
     /* --------------- Bubble spot (center) ---------- */
     #chat-hero .bubble-spot{
-      position:absolute; left:50%; top:50%;
+      position:absolute;
+      left:50%;
+      top:50%;
       transform:translate(-50%, -50%);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW));
       height:auto;
@@ -793,48 +803,64 @@
 
     /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
-      position:relative; width:100%;
+      position:relative;
+      width:100%;
       min-height:var(--bubbleH);
-      display:flex; align-items:center;
-      border:1px solid var(--line); border-radius:var(--radius);
+      height:auto;
+      display:flex;
+      align-items:center;
+      border:1px solid var(--line);
+      border-radius:var(--radius);
       background:#fff;
       box-shadow:var(--shadowA), var(--shadowB);
       padding-left:var(--padX);
       padding-right:calc(var(--padX) + var(--sendSize) + 14px);
-      padding-top:var(--padY); padding-bottom:var(--padY);
+      padding-top:var(--padY);
+      padding-bottom:var(--padY);
       transition:box-shadow .15s ease;
       box-sizing:border-box;
     }
 
-    /* Keyboard-only focus ring */
+    /* Keyboard-only focus ring (no blue outline on load/click) */
     #chat-hero .bubble:has(.prompt:focus-visible){
       box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
     }
 
     /* ------------------ Multiline input ------------- */
     #chat-hero .prompt{
-      flex:1 1 auto; display:block; width:100%;
+      flex:1 1 auto;
+      display:block;
+      width:100%;
       min-height:1.35em;
-      font-size:clamp(16px, 2.2vw, 22px); line-height:1.35;
-      color:#0b0b0c; border:0; background:transparent; outline:0;
-      caret-color:#0b0b0c; resize:none; overflow:hidden; padding:0;
-      white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere;
+      font-size:clamp(16px, 2.2vw, 22px);
+      line-height:1.35;
+      color:#0b0b0c;
+      border:0; background:transparent; outline:0;
+      caret-color:#0b0b0c;
+      resize:none; overflow:hidden;
+      padding:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow-wrap:anywhere;
       -webkit-appearance:none; appearance:none;
-      transition:opacity var(--fade) ease; opacity:1;
+      transition:opacity var(--fade) ease;
+      opacity:1;
     }
     #chat-hero .prompt.is-fading{ opacity:0; }
     #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
     /* ---------------- Scalable Send button ---------- */
     #chat-hero .send{
-      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      position:absolute;
+      right:10px; top:50%; transform:translateY(-50%);
       width:var(--sendSize); height:var(--sendSize);
       border-radius:999px; border:1px solid #0b0b0c;
       background:#0b0b0c; display:grid; place-items:center;
       cursor:pointer;
       transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
       box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08);
-      touch-action:manipulation; z-index:3;
+      touch-action:manipulation;
+      z-index:3; /* ensure above any background */
     }
     #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
     #chat-hero .send:active{ transform:translateY(-50%); }
@@ -853,16 +879,12 @@
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
-      #chat-hero::before{
-        background:
-          radial-gradient(60% 40% at 50% 30%, rgba(87,199,217,.12), transparent 60%),
-          radial-gradient(30% 20% at 20% 80%, rgba(63,103,104,.12), transparent 60%);
-      }
     }
 
     /* ------------- Reduced motion ------------- */
     @media (prefers-reduced-motion: reduce){
-      #chat-hero .send, #chat-hero .prompt{ transition:none; }
+      #chat-hero .send{ transition:none; }
+      #chat-hero .prompt{ transition:none; }
       #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{
         animation:none !important; opacity:1 !important; transform:none !important;
       }
@@ -872,28 +894,36 @@
   <!-- Background floating words (starts ONLY after user scrolls) -->
   <div
     class="word-stream"
-    data-rate="900"
-    data-dmin="10"
-    data-dmax="16"
-    data-band="12"
-    data-lanes="5"
-    data-gap="1050"
-    data-max="28"
+    data-rate="900"   
+    data-dmin="9"    
+    data-dmax="14"    
+    data-band="12"   
+    data-lanes="5"     
+    data-gap="1000"   
+    data-max="28"      
     aria-hidden="true">
     <script>
       (() => {
-        const STREAM_WORDS = ["FOR BUSINESS","FOR TEAMS","FOR INVESTORS","FOR CREATORS","FOR ENTERPRISE","FOR BUILDERS"];
+        /* ── Edit your floating phrases here ───────────────────────── */
+        const STREAM_WORDS = [
+          "FOR BUSINESS","FOR TEAMS","FOR INVESTORS",
+          "FOR CREATORS","FOR ENTERPRISE","FOR BUILDERS"
+        ];
+        /* ──────────────────────────────────────────────────────────── */
 
         const host = document.currentScript.parentElement;
         const RATE  = +(host.dataset.rate  || 900);
-        const DMIN  = +(host.dataset.dmin  || 10);
-        const DMAX  = +(host.dataset.dmax  || 16);
-        const BAND  = +(host.dataset.band  || 12);
+        const DMIN  = +(host.dataset.dmin  || 9);
+        const DMAX  = +(host.dataset.dmax  || 14);
+        const BAND  = +(host.dataset.band  || 12);      // +/- from center (%)
         const LANES = Math.max(1, +(host.dataset.lanes || 5));
-        const GAP   = +(host.dataset.gap   || 1050);
+        const GAP   = +(host.dataset.gap   || 1000);    // ms
         const MAXN  = +(host.dataset.max   || 28);
 
-        const laneOffsets = Array.from({length: LANES}, (_, i) => (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND);
+        /* Lane geometry across [-BAND, +BAND] */
+        const laneOffsets = Array.from({length: LANES}, (_, i) => {
+          return (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND;
+        });
         const laneReadyAt = new Array(LANES).fill(0);
 
         const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
@@ -918,6 +948,7 @@
           const delay  = Math.random()*0.8;
           const laneX  = laneOffsets[lane];
 
+          // lane span determines sway so words don't cross into neighbors
           const laneSpan = (LANES === 1) ? (BAND*2) : (2*BAND)/(LANES-1);
           const swayMax  = Math.max(0.6, (laneSpan*0.38));
           const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()*(swayMax - 0.6));
@@ -950,11 +981,11 @@
           outer.addEventListener('animationend', () => outer.remove(), {once:true});
         }
 
+        /* Start ONLY after user scrolls (wheel/touch). */
         let started = false, intervalId = null;
         function start(){
           if (started) return;
           started = true;
-          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
           spawn();
           intervalId = setInterval(spawn, RATE);
         }
@@ -962,6 +993,7 @@
         window.addEventListener('scroll', start, {once:true, passive:true});
         window.addEventListener('touchmove', start, {once:true, passive:true});
 
+        /* Cleanup if host removed */
         const obs = new MutationObserver(() => {
           if (!document.body.contains(host) && intervalId){
             clearInterval(intervalId);
@@ -992,13 +1024,15 @@
       ></textarea>
 
       <button class="send" type="button" aria-label="Send">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M12 5l-6 6M12 5l6 6"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 19V5M12 5l-6 6M12 5l6 6"/>
+        </svg>
       </button>
     </form>
   </div>
 
   <script>
-    /* ===== Hero type-in lines (edgy, business-forward) ===== */
+    /* ===== Hero type-in lines (unchanged, polished) ===== */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
       "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
@@ -1012,7 +1046,7 @@
       "Audit pricing and add a premium tier that lifts ARPU by 40%."
     ];
 
-    const TYPER = { startDelay:600, type:32, hold:1700, gap:700, loop:true };
+    const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
       const input  = document.getElementById('prompt-input');
@@ -1020,7 +1054,9 @@
       const hero   = document.getElementById('chat-hero');
       if (!input || !bubble || !hero) return;
 
-      /* Dynamic bubble sizing */
+      input.addEventListener('keydown', e => e.preventDefault());
+      input.addEventListener('beforeinput', e => e.preventDefault());
+
       function autosize(){
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
@@ -1029,73 +1065,64 @@
         const h = bubble.getBoundingClientRect().height;
         hero.style.setProperty('--bubbleH', h + 'px');
       }
+
       const ro = new ResizeObserver(syncBubbleH);
       ro.observe(bubble);
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncBubbleH);
 
-      /* Type-in animation that stops on user input */
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let i = 0, j = 0, running = !reduceMotion, timer = null;
+      if (reduceMotion) {
+        input.value = SUGGESTIONS[0] || "";
+        autosize(); syncBubbleH();
+        return;
+      }
 
-      function clearTimers(){ if (timer) { clearTimeout(timer); timer = null; } }
-      function nextChar(){
-        if (!running) return;
+      let i = 0, j = 0;
+      function typeNextChar(){
         const phrase = SUGGESTIONS[i] || "";
         input.classList.remove('is-fading');
 
         if (j < phrase.length){
           input.value += phrase[j++];
           autosize(); syncBubbleH();
-          timer = setTimeout(nextChar, TYPER.type);
+          setTimeout(typeNextChar, TYPER.type);
         } else {
-          timer = setTimeout(fadeOutThenAdvance, TYPER.hold);
+          setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
         }
       }
+
       function fadeOutThenAdvance(){
-        if (!running) return;
         input.classList.add('is-fading');
 
         const onEnd = (e) => {
           if (e.propertyName && e.propertyName !== 'opacity') return;
           input.removeEventListener('transitionend', onEnd);
+
           input.value = "";
           autosize(); syncBubbleH();
+
           i = (i + 1) % SUGGESTIONS.length;
           j = 0;
-          timer = setTimeout(nextChar, TYPER.gap);
+
+          setTimeout(typeNextChar, TYPER.gap);
         };
+
         input.addEventListener('transitionend', onEnd, { once:true });
-
-        /* Safety in case transitionend is missed */
         setTimeout(() => {
-          if (input.classList.contains('is-fading')) onEnd({propertyName:'opacity'});
-        }, parseInt(getComputedStyle(input).transitionDuration)*1000 + 50 || 600);
+          if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend'));
+        }, 1000);
       }
 
-      function startTyping(){
-        if (!running) return;
-        input.value = "";
-        autosize(); syncBubbleH();
-        timer = setTimeout(nextChar, TYPER.startDelay);
-      }
-
-      /* Stop animation as soon as user interacts */
-      function stopTyping(){
-        running = false;
-        clearTimers();
-        input.classList.remove('is-fading');
-      }
-      input.addEventListener('keydown', stopTyping, {once:true});
-      input.addEventListener('pointerdown', stopTyping, {once:true});
-      input.addEventListener('focus', stopTyping, {once:true});
-
+      input.value = "";
       autosize(); syncBubbleH();
-      if (!reduceMotion) startTyping();
+      setTimeout(typeNextChar, TYPER.startDelay);
 
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
     })();
   </script>
 </section>
+
+
+
 
 
 
