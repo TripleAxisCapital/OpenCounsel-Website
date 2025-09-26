@@ -517,28 +517,6 @@
   background-clip:initial;
   animation:none;
 }
-
-/* Scroll cue (breathing blue arrow) */
-#chat-hero .scroll-cue{
-  position:absolute;
-  left:50%; bottom:24px; transform:translateX(-50%);
-  z-index:2; pointer-events:none;
-
-  font-size:34px; line-height:1; letter-spacing:0;
-
-  /* same blue gradient + breathing/shimmer as your words */
-  background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
-  background-size:220% 100%;
-  -webkit-background-clip:text; background-clip:text; color:transparent;
-
-  animation: ws-shimmer 8s ease-in-out infinite, ws-breathe 7s ease-in-out infinite;
-  opacity:.95;
-  transition: opacity .35s ease, transform .35s ease;
-}
-#chat-hero .scroll-cue.hide{
-  opacity:0; transform:translate(-50%, 8px);
-}
-
   </style>
 
   <!-- Background floating words (starts ONLY after user scrolls) -->
@@ -707,8 +685,6 @@
       </button>
     </form>
   </div>
-  
-<div class="scroll-cue" aria-hidden="true">↓</div>
 
   <script>
     /* ===== Hero type-in lines (unchanged, polished) ===== */
@@ -798,31 +774,6 @@
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
     })();
   </script>
-
-
-
-<script>
-(() => {
-  const cue = document.querySelector('#chat-hero .scroll-cue');
-  if (!cue) return;
-
-  let hidden = false;
-  const hide = () => {
-    if (hidden) return;
-    hidden = true;
-    cue.classList.add('hide');
-    setTimeout(() => cue.remove(), 600); // remove from DOM after fade
-  };
-
-  // Hide after a tiny bit of scroll or any wheel/touch move
-  const onScroll = () => { if (window.scrollY > 24) hide(); };
-
-  window.addEventListener('scroll', onScroll, { passive:true });
-  window.addEventListener('wheel', hide, { passive:true });
-  window.addEventListener('touchmove', hide, { passive:true });
-})();
-</script>
-
 </section>
 
 <!--======================================================================================================================================================================-->
