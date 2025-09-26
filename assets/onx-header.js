@@ -101,8 +101,8 @@ class ONXHeader extends HTMLElement {
 
           --pill-inner-x-mobile: 30px;
           --pill-inner-x-desktop: 12px;
-          --pill-outer-x-mobile: 16px;             /* smaller pill on scroll */
-          --pill-outer-x-mobile-large: 8px;        /* larger pill at top (mobile) */
+          --pill-outer-x-mobile: 16px;
+          --pill-outer-x-mobile-large: 8px;
           --pill-outer-x-desktop: 0px;
           --pill-height-mobile: 2.85rem;
           --pill-height-desktop: 2.85rem;
@@ -232,7 +232,6 @@ class ONXHeader extends HTMLElement {
         .desktop-actions{ display:none; align-items:center; gap:1rem; }
 
         @media (min-width:768px){
-          /* Desktop: prepare center nav for smooth reveal only in pill state */
           .center{
             display:flex;
             opacity:0;
@@ -599,7 +598,7 @@ class ONXHeader extends HTMLElement {
         :host([theme="onxpro-light"]) .hamburger,
         :host([theme="pro-light"]) .hamburger{ color:#0A0D10 !important; }
 
-        /* UPDATED: keep light/invert logos black ONLY at top (not floating) */
+        /* Keep light/invert logos black ONLY at top (not floating) */
         :host([invert]:not(.is-float)) .logo-anim,
         :host([theme="ONXProLight"]:not(.is-float)) .logo-anim,
         :host([theme="onxpro-light"]:not(.is-float)) .logo-anim,
@@ -607,7 +606,6 @@ class ONXHeader extends HTMLElement {
           background:#000000 !important;
           animation:none !important;
         }
-
         /* Force gradient back in pill state even if themes tried to override */
         :host([invert].is-float) .logo-anim,
         :host([theme="ONXProLight"].is-float) .logo-anim,
@@ -618,16 +616,27 @@ class ONXHeader extends HTMLElement {
           animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
         }
 
-        /* ── NEW: Desktop “Download” button → black at top, gradient in pill ───────── */
+        /* ───────────────────────── Desktop Download button behavior ─────────────────────────
+           No markup changes needed — we target the existing a[aria-label="Download"].
+           Top-of-page (not floating): black. When pill (floating): animated gradient.
+           We exclude ONXPro/Pro themes so they remain white per theme rules.
+        */
         @media (min-width:768px){
-          /* Apply to default + light/invert themes. Leave ONXPro/Pro themes as-is (white). */
-          :host(:not(.is-float)):is(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .desktop-actions .btn-download{
+          /* Top of page: black (default & light/invert variants) */
+          :host(:not(.is-float)):not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])
+            .desktop-actions a[aria-label="Download"]{
             background:#0A0D10 !important;
             color:#ffffff !important;
-            background-image:none !important;
+            background-image: none !important;
             animation:none !important;
           }
-          :host(.is-float):is(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .desktop-actions .btn-download{
+          /* When floating (pill): animated gradient */
+          :host(.is-float):not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])
+            .desktop-actions a[aria-label="Download"],
+          :host([invert].is-float) .desktop-actions a[aria-label="Download"],
+          :host([theme="ONXProLight"].is-float) .desktop-actions a[aria-label="Download"],
+          :host([theme="onxpro-light"].is-float) .desktop-actions a[aria-label="Download"],
+          :host([theme="pro-light"].is-float) .desktop-actions a[aria-label="Download"]{
             background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !important;
             background-size:300% 300% !important;
             animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
@@ -635,28 +644,29 @@ class ONXHeader extends HTMLElement {
           }
         }
 
-        /* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
-        @media (max-width: 767.98px){
-          :host(:not(.is-float)) .header-bar{
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            -webkit-box-shadow: none !important;
-          }
-          :host([theme="ONXPro"]) .header-bar,
-          :host([theme="onxpro"]) .header-bar,
-          :host([theme="pro"]) .header-bar,
-          :host([theme="ONXProLight"]) .header-bar,
-          :host([theme="onxpro-light"]) .header-bar,
-          :host([theme="pro-light"]) .header-bar,
-          :host([invert]) .header-bar,
-          :host([theme="ONXPro"].is-float) .header-bar,
-          :host([theme="onxpro"].is-float) .header-bar,
-          :host([theme="pro"].is-float) .header-bar{
-            border: none !important;
-            outline: none !important;
-          }
-        }
+/* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
+@media (max-width: 767.98px){
+  :host(:not(.is-float)) .header-bar{
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+  }
+  :host([theme="ONXPro"]) .header-bar,
+  :host([theme="onxpro"]) .header-bar,
+  :host([theme="pro"]) .header-bar,
+  :host([theme="ONXProLight"]) .header-bar,
+  :host([theme="onxpro-light"]) .header-bar,
+  :host([theme="pro-light"]) .header-bar,
+  :host([invert]) .header-bar,
+  :host([theme="ONXPro"].is-float) .header-bar,
+  :host([theme="onxpro"].is-float) .header-bar,
+  :host([theme="pro"].is-float) .header-bar{
+    border: none !important;
+    outline: none !important;
+  }
+}
+
       </style>
 
       <div class="oc-header">
@@ -681,8 +691,7 @@ class ONXHeader extends HTMLElement {
           <div class="right-area">
             <div class="desktop-actions">
               <slot name="actions"></slot>
-              <!-- ADDED btn-download class for precise targeting -->
-              <a class="btn g-grad grad-anim btn-download" href="/download.html" aria-label="Download">
+              <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
                 <span>Download</span>
               </a>
