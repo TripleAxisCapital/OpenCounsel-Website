@@ -636,232 +636,121 @@
   <!--======================================================================================================================================================================-->
 
 
-
-
-
-  <!-- === ONX Product Cards (Apple-style) =================================== -->
-<section id="onx-cards" aria-label="Product highlights">
-  <style>
-    /* ----- Scoped design tokens (won't leak) ----- */
-    #onx-cards{
-      --bg:#f6f7f9;            /* page backdrop behind cards */
-      --card:#ffffff;          /* card surface */
-      --ink:#0b0b0c;           /* primary text */
-      --muted:#5f6671;         /* secondary text */
-      --border:rgba(10,10,10,.06);
-      --shadow:0 2px 10px rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.06);
-      --radius:28px;
-      --pad:28px;
-      --gap:20px;
-      --trackPad:20px;
-      --titleSize:clamp(22px,2.2vw,30px);
-      --titleLead:1.15;
-      --titleMax:22ch;
-    }
-
-    /* ----- Layout ----- */
-    #onx-cards{background:var(--bg); padding:32px 0;}
-    #onx-cards .onx-track{
-      display:flex; gap:var(--gap);
-      overflow-x:auto; overscroll-behavior-x:contain;
-      padding:0 var(--trackPad);
-      scroll-snap-type:x mandatory;
-      -webkit-overflow-scrolling:touch;
-    }
-    #onx-cards .onx-track::-webkit-scrollbar{height:10px}
-    #onx-cards .onx-track::-webkit-scrollbar-thumb{
-      background:rgba(0,0,0,.08); border-radius:999px;
-    }
-
-    /* ----- Card ----- */
-    #onx-cards .onx-card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      min-width:clamp(280px, 82vw, 680px);
-      scroll-snap-align:center;
-      padding:var(--pad);
-      display:flex; flex-direction:column; align-items:center;
-      transition:transform .4s cubic-bezier(.2,.7,.2,1), box-shadow .4s;
-    }
-    #onx-cards .onx-card:where(:hover, :focus-within){
-      transform:translateY(-2px);
-      box-shadow:0 6px 18px rgba(0,0,0,.08), 0 24px 46px rgba(0,0,0,.08);
-    }
-
-    /* ----- Title ----- */
-    #onx-cards .onx-title{
-      font:600 var(--titleSize)/var(--titleLead) system-ui, -apple-system, "SF Pro Display", "SF Pro Text", Segoe UI, Roboto, Inter, Arial, sans-serif;
-      color:var(--ink); text-align:center;
-      letter-spacing:-.01em; margin:6px auto 18px; max-width:var(--titleMax);
-    }
-
-    /* ----- Media block (replace the image src) ----- */
-    #onx-cards .onx-media{
-      width:100%; display:grid; place-items:center;
-      margin-top:6px;
-    }
-    #onx-cards .onx-media img{
-      width:86%; height:auto; display:block;
-      border-radius:18px; /* looks premium when image is a screenshot */
-      box-shadow:0 8px 32px rgba(0,0,0,.10);
-      user-select:none; pointer-events:none;
-    }
-
-    /* ----- Dots pagination ----- */
-    #onx-cards .onx-dots{
-      display:flex; align-items:center; gap:14px;
-      justify-content:center; padding:18px 0 6px;
-    }
-    #onx-cards .onx-dot{
-      inline-size:8px; block-size:8px; border-radius:999px; border:none;
-      background:rgba(0,0,0,.18); cursor:pointer;
-      transform:translateZ(0); transition:all .25s ease;
-    }
-    #onx-cards .onx-dot[aria-selected="true"]{
-      inline-size:42px; background:#0b0b0c;
-    }
-
-    /* ----- Play/Pause (optional autoplay) ----- */
-    #onx-cards .onx-play{
-      width:58px; height:58px; border-radius:50%;
-      display:grid; place-items:center; border:1px solid var(--border);
-      background:#fff; box-shadow:var(--shadow); margin-left:8px;
-      cursor:pointer; transition:transform .25s ease, box-shadow .25s ease;
-    }
-    #onx-cards .onx-play:hover{transform:translateY(-1px)}
-    #onx-cards .onx-play svg{width:20px;height:20px; fill:#0b0b0c}
-    
-    /* ----- Small screens tweak ----- */
-    @media (min-width:900px){
-      #onx-cards .onx-card{min-width:680px}
-    }
-  </style>
-
-  <!-- Track -->
-  <div class="onx-track" id="onx-track">
-    <!-- Card 1 -->
-    <article class="onx-card" id="card-1" tabindex="-1">
-      <h3 class="onx-title">
-        48MP Dual Fusion camera system. Super-stunning shots up close and far away.
-      </h3>
-      <div class="onx-media">
-        <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop"
-             alt="Close-up macro sample photo on phone screen">
-      </div>
-    </article>
-
-    <!-- Card 2 (example) -->
-    <article class="onx-card" id="card-2" tabindex="-1">
-      <h3 class="onx-title">
-        Battery that powers through your day. Fast when you need it, efficient when you don’t.
-      </h3>
-      <div class="onx-media">
-        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop"
-             alt="Phone on desk with soft lighting">
-      </div>
-    </article>
-
-    <!-- Card 3 (example) -->
-    <article class="onx-card" id="card-3" tabindex="-1">
-      <h3 class="onx-title">
-        A16 performance with whisper-quiet efficiency. Smooth, instant, effortless.
-      </h3>
-      <div class="onx-media">
-        <img src="https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?q=80&w=1600&auto=format&fit=crop"
-             alt="Abstract performance visualization">
-      </div>
-    </article>
-  </div>
-
-  <!-- Controls -->
-  <div class="onx-dots" aria-label="Card pagination" role="tablist">
-    <button class="onx-dot" role="tab" aria-controls="card-1" aria-selected="true"></button>
-    <button class="onx-dot" role="tab" aria-controls="card-2" aria-selected="false"></button>
-    <button class="onx-dot" role="tab" aria-controls="card-3" aria-selected="false"></button>
-    <button class="onx-play" id="onx-play" aria-label="Play/Pause autoplay" title="Play/Pause">
-      <!-- Play icon (toggles to pause in JS) -->
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7-11-7z"/></svg>
-    </button>
-  </div>
-
-  <script>
-    (() => {
-      const track = document.getElementById('onx-track');
-      const cards = [...track.querySelectorAll('.onx-card')];
-      const dots  = [...document.querySelectorAll('#onx-cards .onx-dot')];
-      const play  = document.getElementById('onx-play');
-
-      // Scroll to a given card
-      function go(i, smooth=true){
-        const el = cards[i];
-        if(!el) return;
-        const left = el.offsetLeft - track.clientLeft - parseInt(getComputedStyle(track).paddingLeft);
-        track.scrollTo({left, behavior: smooth ? 'smooth' : 'auto'});
-      }
-
-      // Update active dot based on visibility
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{
-          if(e.isIntersecting){
-            const idx = cards.indexOf(e.target);
-            dots.forEach((d,i)=>d.setAttribute('aria-selected', i===idx ? 'true' : 'false'));
-          }
-        });
-      }, {root:track, threshold:.6});
-      cards.forEach(c=>io.observe(c));
-
-      // Dot clicks
-      dots.forEach((dot,i)=>dot.addEventListener('click', ()=>go(i)));
-
-      // Autoplay (optional)
-      let timer = null, idx = 0, playing = false;
-      function renderIcon(){
-        play.innerHTML = playing
-          ? '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'
-          : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7-11-7z"/></svg>';
-      }
-      function start(){
-        if(timer) return;
-        playing = true; renderIcon();
-        timer = setInterval(()=>{
-          idx = (idx+1) % cards.length;
-          go(idx);
-        }, 3500);
-      }
-      function stop(){
-        playing = false; renderIcon();
-        clearInterval(timer); timer = null;
-      }
-      play.addEventListener('click', ()=> (playing ? stop() : start()));
-      // Optional: start autoplay on load; comment out if not desired.
-      // start();
-
-      // Keyboard: left/right to navigate when section focused
-      track.addEventListener('keydown', (e)=>{
-        if(e.key==='ArrowRight'){ idx = Math.min(cards.length-1, idx+1); go(idx); }
-        if(e.key==='ArrowLeft'){  idx = Math.max(0, idx-1); go(idx); }
-      }, {passive:true});
-
-      // Initialize index to currently centered card
-      const init = () => {
-        let nearest = 0, dist = Infinity;
-        cards.forEach((c,i)=>{
-          const d = Math.abs(c.getBoundingClientRect().left - track.getBoundingClientRect().left);
-          if(d < dist){ dist = d; nearest = i; }
-        });
-        idx = nearest;
-      };
-      init();
-    })();
-  </script>
+  <!-- ▸ ONX Word Pop (Apple-style, breathing color, random phrases) -->
+<section class="onx-word-pop" data-hold="2600" data-fade="450">
+  <div class="onx-word" aria-live="polite" aria-atomic="true"></div>
 </section>
-<!-- === /ONX Product Cards ================================================== -->
 
+<style>
+  /* Scoped styles — safe to paste anywhere */
+  .onx-word-pop{
+    /* Design tokens (tweak freely) */
+    --bg:#ffffff;
+    --c1:#3f6768;   /* deep teal from photo */
+    --c2:#57c7d9;   /* bright aqua from photo */
+    --breath:4.8s;  /* speed of color breathing */
+    --size:clamp(28px,8vw,72px);
+    --weight:500;
+    --tracking:0.26em;
 
+    background:var(--bg);
+    width:100%;
+    min-height:150px;
+    display:grid;
+    place-items:center;
+    padding:48px 16px;
+    overflow:hidden;
+  }
 
+  .onx-word-pop .onx-word{
+    font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size:var(--size);
+    font-weight:var(--weight);
+    letter-spacing:var(--tracking);
+    line-height:1.15;
+    text-transform:uppercase;
+    text-align:center;
+    white-space:pre-wrap;
 
+    color:var(--c1);
+    opacity:0; transform:translateY(8px) scale(.985);
+    will-change:opacity, transform, color, text-shadow;
+
+    /* “breathing” between your two colors */
+    animation:onx-breathe var(--breath) ease-in-out infinite;
+  }
+
+  .onx-word-pop.ready .onx-word{
+    opacity:1; transform:translateY(0) scale(1);
+    transition:opacity var(--fade-ms,450ms), transform var(--fade-ms,450ms);
+  }
+  .onx-word-pop.fade-out .onx-word{
+    opacity:0; transform:translateY(-6px) scale(.995);
+    transition:opacity var(--fade-ms,450ms), transform var(--fade-ms,450ms);
+  }
+
+  @keyframes onx-breathe{
+    0%,100% { color:var(--c1); text-shadow:none; }
+    50%     { color:var(--c2); text-shadow:0 0 12px rgba(87,199,217,.18); }
+  }
+</style>
+
+<script>
+(() => {
+  /* ── Edit your phrases here ─────────────────────────── */
+  const WORDS = [
+    "FOR BUSINESS",
+    "FOR TEAMS",
+    "FOR INVESTORS",
+    "FOR CREATORS",
+    "FOR ENTERPRISE",
+    "FOR BUILDERS"
+  ];
+  /* ───────────────────────────────────────────────────── */
+
+  const section = document.currentScript.previousElementSibling; // <section>
+  const display = section.querySelector(".onx-word");
+  const HOLD = Number(section.dataset.hold || 2600); // ms visible
+  const FADE = Number(section.dataset.fade || 450);  // ms fade in/out
+  section.style.setProperty("--fade-ms", FADE + "ms");
+
+  // Shuffle helper for random, non-repeating cycles
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  let queue = shuffle([...WORDS]);
+
+  function showNext(){
+    if(queue.length === 0) queue = shuffle([...WORDS]);
+    const phrase = queue.pop();
+    display.textContent = phrase;
+
+    // Fade in
+    section.classList.remove("fade-out");
+    requestAnimationFrame(() => section.classList.add("ready"));
+
+    // Hold, then fade out and schedule the next
+    setTimeout(() => {
+      section.classList.add("fade-out");
+      section.classList.remove("ready");
+      setTimeout(showNext, FADE + 30);
+    }, HOLD);
+  }
+
+  showNext();
+
+  // Clean up if removed from DOM
+  const obs = new MutationObserver(() => {
+    if (!document.body.contains(section)) obs.disconnect();
+  });
+  obs.observe(document.body, {childList:true, subtree:true});
+})();
+</script>
 
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, responsive padding & send size, flawless wrapping ===== -->
 <section id="chat-hero" aria-label="Chat hero">
