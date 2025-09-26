@@ -634,6 +634,235 @@
 
 
   <!--======================================================================================================================================================================-->
+
+
+
+
+
+  <!-- === ONX Product Cards (Apple-style) =================================== -->
+<section id="onx-cards" aria-label="Product highlights">
+  <style>
+    /* ----- Scoped design tokens (won't leak) ----- */
+    #onx-cards{
+      --bg:#f6f7f9;            /* page backdrop behind cards */
+      --card:#ffffff;          /* card surface */
+      --ink:#0b0b0c;           /* primary text */
+      --muted:#5f6671;         /* secondary text */
+      --border:rgba(10,10,10,.06);
+      --shadow:0 2px 10px rgba(0,0,0,.06), 0 12px 30px rgba(0,0,0,.06);
+      --radius:28px;
+      --pad:28px;
+      --gap:20px;
+      --trackPad:20px;
+      --titleSize:clamp(22px,2.2vw,30px);
+      --titleLead:1.15;
+      --titleMax:22ch;
+    }
+
+    /* ----- Layout ----- */
+    #onx-cards{background:var(--bg); padding:32px 0;}
+    #onx-cards .onx-track{
+      display:flex; gap:var(--gap);
+      overflow-x:auto; overscroll-behavior-x:contain;
+      padding:0 var(--trackPad);
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+    }
+    #onx-cards .onx-track::-webkit-scrollbar{height:10px}
+    #onx-cards .onx-track::-webkit-scrollbar-thumb{
+      background:rgba(0,0,0,.08); border-radius:999px;
+    }
+
+    /* ----- Card ----- */
+    #onx-cards .onx-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      min-width:clamp(280px, 82vw, 680px);
+      scroll-snap-align:center;
+      padding:var(--pad);
+      display:flex; flex-direction:column; align-items:center;
+      transition:transform .4s cubic-bezier(.2,.7,.2,1), box-shadow .4s;
+    }
+    #onx-cards .onx-card:where(:hover, :focus-within){
+      transform:translateY(-2px);
+      box-shadow:0 6px 18px rgba(0,0,0,.08), 0 24px 46px rgba(0,0,0,.08);
+    }
+
+    /* ----- Title ----- */
+    #onx-cards .onx-title{
+      font:600 var(--titleSize)/var(--titleLead) system-ui, -apple-system, "SF Pro Display", "SF Pro Text", Segoe UI, Roboto, Inter, Arial, sans-serif;
+      color:var(--ink); text-align:center;
+      letter-spacing:-.01em; margin:6px auto 18px; max-width:var(--titleMax);
+    }
+
+    /* ----- Media block (replace the image src) ----- */
+    #onx-cards .onx-media{
+      width:100%; display:grid; place-items:center;
+      margin-top:6px;
+    }
+    #onx-cards .onx-media img{
+      width:86%; height:auto; display:block;
+      border-radius:18px; /* looks premium when image is a screenshot */
+      box-shadow:0 8px 32px rgba(0,0,0,.10);
+      user-select:none; pointer-events:none;
+    }
+
+    /* ----- Dots pagination ----- */
+    #onx-cards .onx-dots{
+      display:flex; align-items:center; gap:14px;
+      justify-content:center; padding:18px 0 6px;
+    }
+    #onx-cards .onx-dot{
+      inline-size:8px; block-size:8px; border-radius:999px; border:none;
+      background:rgba(0,0,0,.18); cursor:pointer;
+      transform:translateZ(0); transition:all .25s ease;
+    }
+    #onx-cards .onx-dot[aria-selected="true"]{
+      inline-size:42px; background:#0b0b0c;
+    }
+
+    /* ----- Play/Pause (optional autoplay) ----- */
+    #onx-cards .onx-play{
+      width:58px; height:58px; border-radius:50%;
+      display:grid; place-items:center; border:1px solid var(--border);
+      background:#fff; box-shadow:var(--shadow); margin-left:8px;
+      cursor:pointer; transition:transform .25s ease, box-shadow .25s ease;
+    }
+    #onx-cards .onx-play:hover{transform:translateY(-1px)}
+    #onx-cards .onx-play svg{width:20px;height:20px; fill:#0b0b0c}
+    
+    /* ----- Small screens tweak ----- */
+    @media (min-width:900px){
+      #onx-cards .onx-card{min-width:680px}
+    }
+  </style>
+
+  <!-- Track -->
+  <div class="onx-track" id="onx-track">
+    <!-- Card 1 -->
+    <article class="onx-card" id="card-1" tabindex="-1">
+      <h3 class="onx-title">
+        48MP Dual Fusion camera system. Super-stunning shots up close and far away.
+      </h3>
+      <div class="onx-media">
+        <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600&auto=format&fit=crop"
+             alt="Close-up macro sample photo on phone screen">
+      </div>
+    </article>
+
+    <!-- Card 2 (example) -->
+    <article class="onx-card" id="card-2" tabindex="-1">
+      <h3 class="onx-title">
+        Battery that powers through your day. Fast when you need it, efficient when you don’t.
+      </h3>
+      <div class="onx-media">
+        <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1600&auto=format&fit=crop"
+             alt="Phone on desk with soft lighting">
+      </div>
+    </article>
+
+    <!-- Card 3 (example) -->
+    <article class="onx-card" id="card-3" tabindex="-1">
+      <h3 class="onx-title">
+        A16 performance with whisper-quiet efficiency. Smooth, instant, effortless.
+      </h3>
+      <div class="onx-media">
+        <img src="https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?q=80&w=1600&auto=format&fit=crop"
+             alt="Abstract performance visualization">
+      </div>
+    </article>
+  </div>
+
+  <!-- Controls -->
+  <div class="onx-dots" aria-label="Card pagination" role="tablist">
+    <button class="onx-dot" role="tab" aria-controls="card-1" aria-selected="true"></button>
+    <button class="onx-dot" role="tab" aria-controls="card-2" aria-selected="false"></button>
+    <button class="onx-dot" role="tab" aria-controls="card-3" aria-selected="false"></button>
+    <button class="onx-play" id="onx-play" aria-label="Play/Pause autoplay" title="Play/Pause">
+      <!-- Play icon (toggles to pause in JS) -->
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7-11-7z"/></svg>
+    </button>
+  </div>
+
+  <script>
+    (() => {
+      const track = document.getElementById('onx-track');
+      const cards = [...track.querySelectorAll('.onx-card')];
+      const dots  = [...document.querySelectorAll('#onx-cards .onx-dot')];
+      const play  = document.getElementById('onx-play');
+
+      // Scroll to a given card
+      function go(i, smooth=true){
+        const el = cards[i];
+        if(!el) return;
+        const left = el.offsetLeft - track.clientLeft - parseInt(getComputedStyle(track).paddingLeft);
+        track.scrollTo({left, behavior: smooth ? 'smooth' : 'auto'});
+      }
+
+      // Update active dot based on visibility
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if(e.isIntersecting){
+            const idx = cards.indexOf(e.target);
+            dots.forEach((d,i)=>d.setAttribute('aria-selected', i===idx ? 'true' : 'false'));
+          }
+        });
+      }, {root:track, threshold:.6});
+      cards.forEach(c=>io.observe(c));
+
+      // Dot clicks
+      dots.forEach((dot,i)=>dot.addEventListener('click', ()=>go(i)));
+
+      // Autoplay (optional)
+      let timer = null, idx = 0, playing = false;
+      function renderIcon(){
+        play.innerHTML = playing
+          ? '<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'
+          : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7-11-7z"/></svg>';
+      }
+      function start(){
+        if(timer) return;
+        playing = true; renderIcon();
+        timer = setInterval(()=>{
+          idx = (idx+1) % cards.length;
+          go(idx);
+        }, 3500);
+      }
+      function stop(){
+        playing = false; renderIcon();
+        clearInterval(timer); timer = null;
+      }
+      play.addEventListener('click', ()=> (playing ? stop() : start()));
+      // Optional: start autoplay on load; comment out if not desired.
+      // start();
+
+      // Keyboard: left/right to navigate when section focused
+      track.addEventListener('keydown', (e)=>{
+        if(e.key==='ArrowRight'){ idx = Math.min(cards.length-1, idx+1); go(idx); }
+        if(e.key==='ArrowLeft'){  idx = Math.max(0, idx-1); go(idx); }
+      }, {passive:true});
+
+      // Initialize index to currently centered card
+      const init = () => {
+        let nearest = 0, dist = Infinity;
+        cards.forEach((c,i)=>{
+          const d = Math.abs(c.getBoundingClientRect().left - track.getBoundingClientRect().left);
+          if(d < dist){ dist = d; nearest = i; }
+        });
+        idx = nearest;
+      };
+      init();
+    })();
+  </script>
+</section>
+<!-- === /ONX Product Cards ================================================== -->
+
+
+
+
+
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, responsive padding & send size, flawless wrapping ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
