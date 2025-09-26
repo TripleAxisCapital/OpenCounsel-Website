@@ -1092,6 +1092,164 @@
 
 
 
+<!-- ▸ ONX Upstream Words — stream-of-water effect (Apple-minimal) -->
+<section class="onx-stream"
+         data-rate="700"        <!-- ms between spawns -->
+         data-dmin="6.5"        <!-- min rise duration (s) -->
+         data-dmax="10"         <!-- max rise duration (s) -->
+         data-band="16"         <!-- stream width around center (%) -->
+         data-max="24">         <!-- max simultaneous words -->
+  <!-- script stays INSIDE so it can bind to this section -->
+  <script>
+    (() => {
+      /* ── Edit your phrases here ───────────────────────── */
+      const WORDS = [
+        "FOR BUSINESS",
+        "FOR TEAMS",
+        "FOR INVESTORS",
+        "FOR CREATORS",
+        "FOR ENTERPRISE",
+        "FOR BUILDERS"
+      ];
+      /* ─────────────────────────────────────────────────── */
+
+      const $stage = document.currentScript.parentElement;
+      const RATE   = +($stage.dataset.rate || 700);      // spawn cadence (ms)
+      const DMIN   = +($stage.dataset.dmin || 6.5);      // min rise sec
+      const DMAX   = +($stage.dataset.dmax || 10);       // max rise sec
+      const BAND   = +($stage.dataset.band || 16);       // center band %
+      const MAXN   = +($stage.dataset.max  || 24);       // simultaneous caps
+
+      // non-repeating cycle
+      const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a };
+      let queue = shuffle([...WORDS]);
+
+      function nextWord(){
+        if (queue.length === 0) queue = shuffle([...WORDS]);
+        const phrase = queue.pop();
+
+        const outer = document.createElement("span");
+        outer.className = "onx-stream-word";
+        // random center offset, duration, sway, and size
+        const dur  = (DMIN + Math.random()*(DMAX-DMIN)).toFixed(2);
+        const off  = (Math.random()*BAND*2 - BAND).toFixed(2) + "%";
+        const sway = (Math.random()<.5?-1:1) * (2 + Math.random()*6); // ±2-8%
+        const scale= (0.92 + Math.random()*0.18).toFixed(2);          // 0.92–1.10
+        outer.style.setProperty("--dur",  dur+"s");
+        outer.style.setProperty("--off",  off);
+        outer.style.setProperty("--sway", sway+"%");
+        outer.style.setProperty("--scale",scale);
+
+        const inner = document.createElement("span");
+        inner.className = "onx-stream-inner";
+        inner.textContent = phrase;
+        outer.appendChild(inner);
+
+        // cap children to avoid DOM bloat
+        if ($stage.children.length >= MAXN) {
+          const firstWord = $stage.querySelector(".onx-stream-word");
+          firstWord && firstWord.remove();
+        }
+
+        $stage.appendChild(outer);
+        outer.addEventListener("animationend", () => outer.remove());
+      }
+
+      // kick off stream
+      nextWord();
+      const id = setInterval(nextWord, RATE);
+
+      // cleanup if removed from DOM
+      const obs = new MutationObserver(() => {
+        if (!document.body.contains($stage)) { clearInterval(id); obs.disconnect(); }
+      });
+      obs.observe(document.body, {childList:true, subtree:true});
+    })();
+  </script>
+</section>
+
+<style>
+  /* ── Scoped, Apple-clean styles ───────────────────────────────────────── */
+  .onx-stream{
+    /* Design tokens */
+    --bg:#fff;
+    --c1:#3f6768;   /* deep teal (photo) */
+    --c2:#57c7d9;   /* aqua (photo) */
+    --breath:4.8s;  /* color breathing speed */
+    --size:clamp(28px,8vw,72px);
+    --weight:500;
+    --track:0.26em;
+
+    position:relative;
+    background:var(--bg);
+    height:clamp(260px,48vh,560px);
+    overflow:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  .onx-stream-word{
+    position:absolute;
+    left:50%;
+    top:105%;                         /* start just below frame */
+    margin-left:var(--off, 0%);
+    transform:translateX(-50%);
+    animation:onx-rise var(--dur,8s) linear forwards;
+    pointer-events:none;
+  }
+
+  .onx-stream-inner{
+    display:block;
+    font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size:var(--size);
+    font-weight:var(--weight);
+    letter-spacing:var(--track);
+    line-height:1.15;
+    text-transform:uppercase;
+    white-space:nowrap;
+
+    color:var(--c1);
+    opacity:0;
+    transform:scale(var(--scale,1));
+    animation:
+      onx-breathe var(--breath) ease-in-out infinite,
+      onx-sway calc(var(--dur,8s)*.85) ease-in-out infinite alternate,
+      onx-fadein 900ms ease-out forwards;
+    text-shadow: none;
+    will-change: transform, color, text-shadow, opacity;
+  }
+
+  /* Vertical rise (outer) */
+  @keyframes onx-rise{
+    0%   { top:105%; }
+    8%   { top:85%; }       /* early ease-in look (handled by inner fade) */
+    100% { top:-18%; }
+  }
+
+  /* Gentle side sway (inner) */
+  @keyframes onx-sway{
+    0%   { transform:translateX(0) scale(var(--scale,1)); }
+    100% { transform:translateX(var(--sway,6%)) scale(var(--scale,1)); }
+  }
+
+  /* Color breathing (inner) */
+  @keyframes onx-breathe{
+    0%,100% { color:var(--c1); text-shadow:none; }
+    50%     { color:var(--c2); text-shadow:0 0 14px rgba(87,199,217,.18); }
+  }
+
+  /* Soft appear (inner) */
+  @keyframes onx-fadein{
+    0%   { opacity:0; transform:translateY(4px) scale(var(--scale,1)); }
+    60%  { opacity:1; transform:translateY(0)   scale(var(--scale,1)); }
+    100% { opacity:1; }
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce){
+    .onx-stream-word, .onx-stream-inner{ animation:none !important; opacity:1 !important; top:auto; }
+  }
+</style>
 
 
 
