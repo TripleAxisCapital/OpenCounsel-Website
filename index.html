@@ -940,423 +940,626 @@ const SUGGESTIONS = [
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
 
-<!--======================================================================== ORBIT SECTION=================================================================================================-->
-<!-- ────────────────────────────────────────────────────────────────────────────
-     ONX Orbit→Merge→Reveal→Showcase — Drop‑in Snippet (Apple‑style)
-     • Keeps your blue gradients / typography vibe.
-     • Adds: Models card → collapse → “Built on the best.” → atom‑orbit → suck‑into‑O
-       → O rolls right → NX pops out → “AI Unified” → logos pop‑showcase.
-     • Starts only when scrolled into view. No external libraries.
-     • Replace logo src paths as needed (see <img class="logo" ... />).
-     ──────────────────────────────────────────────────────────────────────────── -->
+<!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
+<div id="onx-card-reveal" class="padTop"
+     data-speed="1.6"
+     data-menu-scale="1.5"
+     data-overshoot-x-enabled="false"
+     data-overshoot-y-enabled="true"
+     data-overshoot-x="1.5"
+     data-overshoot-y="1.5"
+     data-peak-x="0.58"
+     data-peak-y="0.60"
+     style="max-width:100%; margin:0 auto;">
 
-<style>
-  /* Audiowide for the ONX wordmark */
-  @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
+    #onx-card-reveal * { box-sizing: border-box; }
+    #onx-stage{
+      position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
+      border-radius:28px; overflow:hidden; box-shadow:none; will-change:transform; transform-origin:center top;
+      contain: paint;  /* reduce outside interference */
+    }
+    #onx-stage canvas{width:100%; height:100%; display:block;}
 
-  /* ===== Design tokens (tweak here, styling preserved) ===== */
-  .onx-merge {
-    --bg: radial-gradient(1200px 600px at 50% -10%, rgba(64,129,255,.35), transparent 60%),
-          linear-gradient(180deg, #0a0f1d 0%, #0b1024 40%, #0a0f1d 100%);
-    --ink: #e7efff;
-    --sub: #9bb6ff;
-    --accent: #71a2ff;
-    --glow: 0 0 40px rgba(113,162,255,.35), 0 0 120px rgba(113,162,255,.2);
-    --edge: rgba(255,255,255,.06);
+    /* --- DEBUG KILL SWITCHS: neutralize any external animations hiding the stage --- */
+    .onx-debug-kill .g-grad, .onx-debug-kill .grad-animi { animation: none !important; }
+    .onx-debug-kill #onx-stage, .onx-debug-kill #onx-stage canvas {
+      opacity: 1 !important; visibility: visible !important; filter: none !important;
+      transform: none !important;
+    }
+    /* Tiny phase badge */
+    #onx-phase-badge {
+      position:absolute; top:8px; left:8px; padding:4px 8px; font:600 12px/1.2 ui-sans-serif,system-ui;
+      background:rgba(0,0,0,.6); color:#fff; border-radius:999px; pointer-events:none; z-index:2;
+    }
 
-    /* Motion timing — feel free to tune */
-    --t-intro: 900ms;
-    --t-collapse: 800ms;
-    --t-built: 900ms;
-    --t-suck: 360ms;
-    --t-suck-gap: 120ms;
-    --t-roll: 1200ms;
-    --t-pop: 520ms;
-    --t-fade: 500ms;
-    --ease-smooth: cubic-bezier(.2,.8,.2,1);
-    --ease-pop: cubic-bezier(.17,.89,.32,1.27);
-  }
+    /* Controls (kept) */
+    #onx-controls{ display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
+      font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui; touch-action: manipulation; }
+    #onx-controls button{ border:0; border-radius:999px; padding:10px 16px; cursor:pointer; background:#000; color:#fff; font-weight:600; letter-spacing:.2px;
+      box-shadow:0 6px 18px rgba(0,0,0,.12); transition:transform .15s ease, box-shadow .2s ease; }
+    #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-  /* ===== Section scaffold (keeps existing vibe) ===== */
-  .onx-merge {
-    position: relative;
-    background: var(--bg);
-    color: var(--ink);
-    padding: clamp(56px, 10vw, 120px) 0;
-    overflow: hidden;
-    isolation: isolate;
-  }
-  .onx-merge .container {
-    width: min(1100px, 92vw);
-    margin: 0 auto;
-    position: relative;
-  }
+    @media (max-width: 640px){
+      #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
+      #onx-controls{ margin-top:10px; }
+      #onx-controls button{ padding:9px 14px; font-size:14px; }
+    }
+  </style>
 
-  /* Soft top/bottom fade so copy feels like it emerges from the page */
-  .onx-merge::before,
-  .onx-merge::after {
-    content: "";
-    position: absolute;
-    left: 0; right: 0; height: 90px; pointer-events: none;
-    z-index: 1;
-  }
-  .onx-merge::before { top: 0; background: linear-gradient(#0a0f1d, transparent); }
-  .onx-merge::after  { bottom: 0; background: linear-gradient(transparent, #0a0f1d); }
-
-  /* ===== Models card (collapses out) ===== */
-  .models-card {
-    width: min(760px, 90%);
-    margin: 0 auto clamp(24px, 4vw, 40px);
-    border: 1px solid var(--edge);
-    border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-    box-shadow: var(--glow);
-    overflow: clip;
-    transform-origin: top center;
-  }
-  .models-card .row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1px;
-    background: var(--edge);
-  }
-  .models-card .cell {
-    background: rgba(8,10,20,.7);
-    padding: 18px 20px;
-    text-align: center;
-    font: 500 14px/1.2 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
-    color: var(--sub);
-    letter-spacing: .02em;
-  }
-
-  /* ===== Headline between phases ===== */
-  .built-line {
-    text-align: center;
-    font: 600 clamp(18px, 3.2vw, 28px)/1.2 ui-sans-serif, system-ui, Inter, "SF Pro Text";
-    color: var(--ink);
-    opacity: 0; transform: translateY(10px);
-    filter: drop-shadow(0 6px 40px rgba(113,162,255,.2));
-    margin: 20px 0 24px 0;
-  }
-
-  /* ===== Stage: O + orbiters + final showcase ===== */
-  .stage {
-    height: clamp(380px, 58vw, 560px);
-    position: relative;
-    border-radius: 32px;
-    border: 1px solid var(--edge);
-    background:
-      radial-gradient(600px 320px at 50% 0%, rgba(76,139,255,.18), transparent 70%),
-      linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-    box-shadow: 0 40px 120px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
-    overflow: hidden;
-  }
-
-  /* Wordmark container */
-  .wordmark { position: absolute; inset: 0; display: grid; place-items: center; }
-  .wordmark .letters { display: inline-grid; grid-auto-flow: column; gap: .12em; align-items: center; }
-  .letter {
-    font-family: "Audiowide", ui-sans-serif;
-    font-size: clamp(72px, 16vw, 180px);
-    line-height: .85; letter-spacing: .04em; color: var(--ink);
-    text-shadow: 0 6px 80px rgba(113,162,255,.25);
-    will-change: transform;
-  }
-  .letter.N, .letter.X { opacity: 0; transform: translateY(16px) scale(.9); }
-
-  /* Big O halo (keeps the blue glow styling, but no extra ring) */
-  .O-wrap { position: relative; display: inline-block; }
-  .O-wrap::after {
-    content: ""; position: absolute; inset: -16%;
-    background: radial-gradient(closest-side, rgba(113,162,255,.22), transparent);
-    filter: blur(20px); z-index: -1; border-radius: 50%;
-  }
-
-  /* Center reference for suck‑in */
-  .o-center { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
-  .o-dot { width: 2px; height: 2px; border-radius: 50%; background: transparent; }
-
-  /* Orbiters */
-  .orbit-layer { position: absolute; inset: 0; }
-  .orbiter { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-  .chip {
-    display: grid; place-items: center;
-    width: clamp(42px, 6vw, 64px); height: clamp(42px, 6vw, 64px);
-    border-radius: 14px; background: rgba(10,16,36,.7);
-    border: 1px solid var(--edge);
-    box-shadow: var(--glow);
-    overflow: hidden; will-change: transform, filter;
-    backdrop-filter: blur(6px);
-  }
-  .logo { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 4px 14px rgba(113,162,255,.25)); }
-
-  /* Orbital motion (atom‑like) */
-  @keyframes orbit {
-    from { transform: rotate(var(--a, 0deg)) translate(var(--r, 120px)) rotate(calc(-1 * var(--a, 0deg))); }
-    to   { transform: rotate(calc(var(--a, 0deg) + 360deg)) translate(var(--r, 120px)) rotate(calc(-1 * (var(--a, 0deg) + 360deg))); }
-  }
-  .orbiter[data-spin="1"] { animation: orbit 9s linear infinite; }
-  .orbiter[data-spin="2"] { animation: orbit 12s linear infinite; }
-  .orbiter[data-spin="3"] { animation: orbit 15s linear infinite; }
-
-  /* Tagline */
-  .tagline {
-    position: absolute; left: 50%; bottom: clamp(26px, 4vw, 40px);
-    transform: translateX(-50%) translateY(12px);
-    font: 600 clamp(16px, 2.4vw, 22px)/1.2 ui-sans-serif, system-ui, Inter;
-    color: var(--sub); opacity: 0;
-  }
-
-  /* Final showcase row */
-  .showcase {
-    position: absolute; left: 50%; bottom: clamp(74px, 9vw, 120px);
-    transform: translateX(-50%);
-    display: grid; grid-auto-flow: column; gap: clamp(12px, 1.8vw, 18px);
-    opacity: 0;
-  }
-  .showcase .chip { width: clamp(34px, 5.2vw, 56px); height: clamp(34px, 5.2vw, 56px); }
-
-  /* Prefers-reduced-motion: show static end-state */
-  @media (prefers-reduced-motion: reduce) {
-    .orbiter { animation: none !important; }
-  }
-</style>
-
-<section class="onx-merge" id="onx-merge">
-  <div class="container">
-
-    <!-- Models card (example content, collapses away) -->
-    <div class="models-card" id="modelsCard" aria-hidden="true">
-      <div class="row">
-        <div class="cell">GPT‑4.1</div>
-        <div class="cell">GPT‑4o</div>
-        <div class="cell">Claude 3.5</div>
-      </div>
-      <div class="row">
-        <div class="cell">Gemini 1.5</div>
-        <div class="cell">Mistral Large</div>
-        <div class="cell">Qwen 2.5</div>
-      </div>
-    </div>
-
-    <!-- Transition headline -->
-    <h2 class="built-line" id="builtLine">Built on the best.</h2>
-
-    <!-- Main stage: O + orbiters + showcase -->
-    <div class="stage" id="stage">
-      <div class="wordmark" aria-label="ONX">
-        <div class="letters">
-          <span class="letter O"><span class="O-wrap">O</span></span>
-          <span class="letter N">N</span>
-          <span class="letter X">X</span>
-        </div>
-        <!-- Invisible center target for logo suck‑in -->
-        <div class="o-center"><div class="o-dot" id="oDot"></div></div>
-      </div>
-
-      <!-- Orbit layer (logos initially orbit, then get sucked into O) -->
-      <div class="orbit-layer" id="orbitLayer">
-        <!-- Adjust --r for orbital radius, --a for starting angle; data-spin selects speed. -->
-        <div class="orbiter" style="--r: 150px; --a: 0deg;" data-spin="1">
-          <div class="chip"><img class="logo" src="grokLogo.svg" alt="Grok"></div>
-        </div>
-        <div class="orbiter" style="--r: 120px; --a: 60deg;" data-spin="2">
-          <div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div>
-        </div>
-        <div class="orbiter" style="--r: 180px; --a: 120deg;" data-spin="3">
-          <div class="chip"><img class="logo" src="metaLogo.svg" alt="Meta"></div>
-        </div>
-        <div class="orbiter" style="--r: 140px; --a: 180deg;" data-spin="2">
-          <div class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI"></div>
-        </div>
-        <div class="orbiter" style="--r: 170px; --a: 240deg;" data-spin="1">
-          <div class="chip"><img class="logo" src="xaiLogo.svg" alt="xAI"></div>
-        </div>
-        <div class="orbiter" style="--r: 130px; --a: 300deg;" data-spin="3">
-          <div class="chip"><img class="logo" src="mistralLogo.svg" alt="Mistral"></div>
-        </div>
-        <div class="orbiter" style="--r: 200px; --a: 20deg;" data-spin="2">
-          <div class="chip"><img class="logo" src="nvidiaLogo.svg" alt="NVIDIA"></div>
-        </div>
-      </div>
-
-      <!-- Final tagline + showcase row (revealed at end) -->
-      <div class="showcase" id="showcase" aria-hidden="true"></div>
-      <div class="tagline" id="tagline">AI Unified</div>
-    </div>
+  <div id="onx-stage" class="g-grad grad-animi">
+    <div id="onx-phase-badge" aria-hidden="true">PHASE: A</div>
+    <canvas id="onx-canvas"></canvas>
   </div>
-</section>
+  <div id="onx-controls"></div>
+  <div id="onx-play" aria-label="Play" title="Play" role="button" style="display:none"></div>
 
-<script>
-(() => {
-  const root = document.getElementById('onx-merge');
-  const models = document.getElementById('modelsCard');
-  const built = document.getElementById('builtLine');
-  const stage = document.getElementById('stage');
-  const orbitLayer = document.getElementById('orbitLayer');
-  const showcase = document.getElementById('showcase');
-  const tagline = document.getElementById('tagline');
-  const letterO = stage.querySelector('.letter.O');
-  const letterN = stage.querySelector('.letter.N');
-  const letterX = stage.querySelector('.letter.X');
-  const oDot = document.getElementById('oDot');
+  <script>
+  (()=>{ 'use strict';
 
-  let started = false;
+    /* ======================= TRAPS & DEBUG ======================= */
+    // Toggle this to true if you want to force-disable external CSS animations
+    const DEBUG_KILL_CSS = true;
+    if (DEBUG_KILL_CSS) document.getElementById('onx-card-reveal').classList.add('onx-debug-kill');
 
-  const EASE_SMOOTH = getComputedStyle(root).getPropertyValue('--ease-smooth').trim() || 'cubic-bezier(.2,.8,.2,1)';
-  const EASE_POP = getComputedStyle(root).getPropertyValue('--ease-pop').trim() || 'cubic-bezier(.17,.89,.32,1.27)';
+    window.onerror = (msg, src, line, col, err)=>console.error('[ONX] error:', msg, src, line, col, err);
+    window.onunhandledrejection = e=>console.error('[ONX] unhandled:', e?.reason || e);
 
-  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+    const phaseBadge = document.getElementById('onx-phase-badge');
+    const setPhase = (name)=>{ if (phaseBadge) phaseBadge.textContent = 'PHASE: ' + name; console.log('[ONX] →', name); };
 
-  function inViewStart(){
-    if(started) return;
-    const io = new IntersectionObserver((entries) => {
-      for(const e of entries){
-        if(e.isIntersecting){ started = true; io.disconnect(); run(); break; }
+    /* ======================= ASSETS ======================= */
+    const LOGOS = [
+      { src: '/grokLogo.svg',   label: 'Grok'   },
+      { src: '/googleLogo.svg', label: 'Google' },
+      { src: '/metaLogo.svg',   label: 'Meta'   },
+      { src: '/OAILogo.png',    label: 'OpenAI' },
+    ];
+    const FINAL_LOGO_SRC = 'onxlogo.svg';
+    const FINAL_SUBTITLE = 'Unified AI';
+
+    /* ======================= ELEMENTS / SETUP ======================= */
+    const host    = document.getElementById('onx-card-reveal');
+    const stageEl = document.getElementById('onx-stage');
+    const canvas  = document.getElementById('onx-canvas');
+    const ASPECT  = 16/9;
+
+    const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+    const isMobile = () =>
+      window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+
+    const vp = () => {
+      const vv = window.visualViewport;
+      if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
+      return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
+    };
+
+    const TEMPO = {
+      speed: parseFloat(host.dataset.speed) || 1.6,
+      menuScale: parseFloat(host.dataset.menuScale) || 1.5,
+      overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false,
+      overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true,
+      overshootX: parseFloat(host.dataset.overshootX) || 1.5,
+      overshootY: parseFloat(host.dataset.overshootY) || 1.5,
+      peakX: parseFloat(host.dataset.peakX) || 0.58,
+      peakY: parseFloat(host.dataset.peakY) || 0.60
+    };
+    const S = v => v / TEMPO.speed;
+
+    /* ======================= CANVAS ======================= */
+    let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 };
+    const dprRaw = window.devicePixelRatio || 1;
+    let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
+
+    canvas.width  = CONFIG.w * dpr;
+    canvas.height = CONFIG.h * dpr;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    ctx.scale(dpr, dpr);
+    ctx.imageSmoothingEnabled = true;
+
+    let BG_CANVAS = document.createElement('canvas');
+    BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
+    let BG_CTX = BG_CANVAS.getContext('2d');
+    BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
+
+    function clearStage(){
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+
+    /* ======================= STYLE / LAYOUT ======================= */
+    const DESIGN = {
+      padX: 20, padY: 20, rowGap: 16, subGap: 6,
+      titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
+      minW: 360, maxW: 720, stageMargin: 56
+    };
+    const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
+
+    let STYLE = buildStyle();
+    function buildStyle(){
+      const SCALE = getMenuScale();
+      return {
+        padX: Math.round(DESIGN.padX * SCALE),
+        padY: Math.round(DESIGN.padY * SCALE),
+        rowGap: Math.round(DESIGN.rowGap * SCALE),
+        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
+        titleSize: DESIGN.titleSize * SCALE,
+        subSize: DESIGN.subSize * SCALE,
+        titleWeight: DESIGN.titleWeight,
+        subWeight: DESIGN.subWeight,
+        minW: DESIGN.minW * SCALE,
+        maxW: DESIGN.maxW * SCALE,
+        stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
+      };
+    }
+
+    const rows = [
+      { title:'ONX FAST', sub:'Fastest for instant answers' },
+      { title:'ONX',      sub:'Default model' },
+      { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
+    ];
+
+    const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
+    const lerp=(a,b,t)=>a+(b-a)*t;
+    const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
+    const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    const easeOutBack=(t,s=1.70158)=>{ t=clamp(t); return 1 + (s+1)*Math.pow(t-1,3) + s*Math.pow(t-1,2); };
+    function boomerang(t, factor=1.10, peak=0.55){
+      if (t <= 0) return 0;
+      if (t >= 1) return 1;
+      if (t < peak) return easeOutCubic(t/peak) * factor;
+      const u = (t - peak) / (1 - peak);
+      return 1 + (factor - 1) * (1 - easeOutCubic(u));
+    }
+    function setFont(weight,size,family='ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'){
+      ctx.font = `${weight} ${size}px ${family}`;
+    }
+    function roundedRect(ctx,x,y,w,h,r){
+      const rr=Math.min(r,w/2,h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+    }
+
+    const BASE = {
+      widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50,
+      morphMenuToText: 0.85, textToLogos: 0.80, suction: 1.40, oToFinal: 0.90
+    };
+
+    function measureFinalLayout(){
+      let maxTextW = 0;
+      setFont(800, STYLE.titleSize);
+      rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+      setFont(500, STYLE.subSize);
+      rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+
+      const contentW = Math.ceil(maxTextW);
+      const cardW = Math.min(
+        clamp(contentW + STYLE.padX*2, STYLE.minW, STYLE.maxW),
+        CONFIG.w - 2*STYLE.stageMargin
+      );
+      const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
+      const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
+      const cardH = Math.min(
+        Math.ceil(contentH + STYLE.padY*2),
+        CONFIG.h - 2*STYLE.stageMargin
+      );
+      const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+      return { cardW, cardH, rowHeights, radius };
+    }
+    let layout = measureFinalLayout();
+
+    const seed = { w: 120, h: 80, r: 20 };
+    const ROW_POP_DUR = S(BASE.rowPop);
+    const ROW_PAUSE   = S(BASE.rowPause);
+    const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
+    const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
+    const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
+
+    function controlHeight(){
+      const ctrl = document.getElementById('onx-controls');
+      return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
+    }
+    function applyMobileScale(){
+      if (!isMobile()){
+        stageEl.style.transform = ''; stageEl.style.transformOrigin = 'center top'; return;
       }
-    }, { threshold: 0.35 });
-    io.observe(root);
-  }
-
-  async function collapseModels(){
-    if(!models) return;
-    const h = models.offsetHeight;
-    models.animate([
-      { height: h + 'px', opacity: 1, transform: 'scaleY(1)' },
-      { height: '0px', opacity: 0, transform: 'scaleY(.92)' }
-    ], { duration: parseFloat(getCSS('--t-collapse')), easing: EASE_SMOOTH, fill: 'forwards' });
-    await wait(parseFloat(getCSS('--t-collapse')) + 60);
-  }
-
-  async function showBuilt(){
-    built.animate([
-      { opacity: 0, transform: 'translateY(10px)' },
-      { opacity: 1, transform: 'translateY(0px)' }
-    ], { duration: parseFloat(getCSS('--t-built')), easing: EASE_SMOOTH, fill: 'forwards' });
-    await wait(parseFloat(getCSS('--t-built')) + 420);
-    built.animate([
-      { opacity: 1, filter: 'blur(0px)' },
-      { opacity: 0, filter: 'blur(2px)' }
-    ], { duration: parseFloat(getCSS('--t-fade')), easing: EASE_SMOOTH, fill: 'forwards' });
-    await wait(parseFloat(getCSS('--t-fade')));
-  }
-
-  function getCSS(name){
-    return getComputedStyle(root).getPropertyValue(name).replace('ms','').trim() || '800';
-  }
-
-  function stopOrbiters(){
-    orbitLayer.querySelectorAll('.orbiter').forEach(o => {
-      const computed = getComputedStyle(o);
-      const m = computed.transform;
-      o.style.transform = m === 'none' ? 'translate(-50%, -50%)' : m;
-      o.style.animation = 'none';
-    });
-  }
-
-  function centerOfODot(){
-    const r = oDot.getBoundingClientRect();
-    return { x: r.left + r.width/2, y: r.top + r.height/2 };
-  }
-
-  async function suckLogosIntoO(){
-    const center = centerOfODot();
-    const orbiters = Array.from(orbitLayer.querySelectorAll('.orbiter'));
-    // Stagger each logo
-    for(let i=0;i<orbiters.length;i++){
-      const o = orbiters[i];
-      const chip = o.querySelector('.chip');
-      const cr = chip.getBoundingClientRect();
-      const dx = center.x - (cr.left + cr.width/2);
-      const dy = center.y - (cr.top + cr.height/2);
-      chip.animate([
-        { transform: 'translate(0,0) scale(1)', filter: 'blur(0px) brightness(1)' },
-        { transform: `translate(${dx}px, ${dy}px) scale(.15)`, filter: 'blur(1px) brightness(1.3)' }
-      ], { duration: parseFloat(getCSS('--t-suck')), easing: EASE_SMOOTH, fill: 'forwards' });
-      await wait(parseFloat(getCSS('--t-suck')));
-      // Hide the orbiter after it reaches the center
-      o.style.opacity = 0;
-      await wait(parseFloat(getCSS('--t-suck-gap')));
+      const { vw, vh, top, bottom } = vp();
+      const safeSide = 16, safeTop = 16 + top, safeBot = 16 + bottom, ctrlH = controlHeight(), hostMargins = 24 + 28;
+      const baseW = Math.min(900, 0.92 * vw), baseH = baseW / ASPECT;
+      const availW = Math.max(240, vw - 2*safeSide), availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+      const scaleW = availW / baseW, scaleH = availH / baseH;
+      const scale = Math.max(0.6, Math.min(2.0, scaleW, scaleH));
+      stageEl.style.transform = `scale(${scale})`; stageEl.style.transformOrigin = 'center top';
     }
-  }
 
-  async function rollORevealNX(){
-    // Roll the O to the right, then pop N and X from it
-    const distance = Math.min(stage.clientWidth * 0.22, 240);
-    letterO.animate([
-      { transform: 'translateX(0) rotate(0deg)' },
-      { transform: `translateX(${distance}px) rotate(360deg)` }
-    ], { duration: parseFloat(getCSS('--t-roll')), easing: EASE_SMOOTH, fill: 'forwards' });
-    await wait(parseFloat(getCSS('--t-roll')) - 200);
+    /* ======================= PHASE A ======================= */
+    function renderCard(t){
+      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+      const widthEnd = S(BASE.widthGrow);
+      const tw = clamp(t / widthEnd);
+      const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
+      const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
+      let contentVisibleH = 0, visibleRows = 0, poppingIndex = -1, poppingProgress = 0;
+      for (let i=0; i<rows.length; i++){
+        const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
+        if (local <= 0) break;
+        visibleRows++;
+        if (local < 1){ poppingIndex = i; poppingProgress = clamp(local); const rowScale = boomerang(poppingProgress, 1.08, 0.55); contentVisibleH += layout.rowHeights[i] * rowScale; }
+        else { contentVisibleH += layout.rowHeights[i]; }
+      }
+      if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
+      let springY = 1; if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.06, 0.5);
+      const h = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
+      const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w));
+      const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
+      const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
-    // Pop N, then X
-    letterN.animate([
-      { opacity: 0, transform: 'translateY(16px) scale(.9)' },
-      { opacity: 1, transform: 'translateY(0) scale(1)' }
-    ], { duration: parseFloat(getCSS('--t-pop')), easing: EASE_POP, fill: 'forwards' });
-    await wait(140);
-    letterX.animate([
-      { opacity: 0, transform: 'translateY(16px) scale(.9)' },
-      { opacity: 1, transform: 'translateY(0) scale(1)' }
-    ], { duration: parseFloat(getCSS('--t-pop')), easing: EASE_POP, fill: 'forwards' });
-  }
+      ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
+      ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
+      ctx.shadowOffsetY = lerp(6, 15, growT);
+      ctx.fillStyle = '#ffffff';
+      roundedRect(ctx, x, y, w, h, r); ctx.fill();
+      ctx.shadowColor='transparent';
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-  async function revealTagline(){
-    tagline.animate([
-      { opacity: 0, transform: 'translateX(-50%) translateY(12px)' },
-      { opacity: 1, transform: 'translateX(-50%) translateY(0)' }
-    ], { duration: 640, easing: EASE_SMOOTH, fill: 'forwards' });
-  }
+      ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
+      const contentX = x + STYLE.padX; let cursorY = y + STYLE.padY;
+      for (let i=0; i<rows.length; i++){
+        const local = (t - rowStartTimes[i]) / ROW_POP_DUR; if (local <= 0) break;
+        const pr = clamp(local), a = easeOutCubic(pr), s = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06;
+        const dy = lerp(10, 0, a), blurPx = (1 - a) * 1.5 * MOBILE_BLUR_SCALE;
+        ctx.save(); ctx.translate(contentX, cursorY + dy); ctx.scale(s, s);
+        ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.globalAlpha=a; if (blurPx>0.05) ctx.filter = `blur(${blurPx}px)`;
+        setFont(STYLE.titleWeight, STYLE.titleSize); ctx.fillStyle='#0b0b10'; ctx.fillText(rows[i].title, 0, STYLE.titleSize);
+        if (rows[i].sub){ setFont(STYLE.subWeight, STYLE.subSize); ctx.fillStyle='#5f646c'; ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize); }
+        ctx.filter='none'; ctx.globalAlpha=1; ctx.restore();
+        cursorY += layout.rowHeights[i] + STYLE.rowGap;
+      }
+      ctx.restore();
 
-  function cloneLogosToShowcase(){
-    showcase.innerHTML = '';
-    const chips = orbitLayer.querySelectorAll('.chip');
-    chips.forEach(chip => {
-      const c = chip.cloneNode(true);
-      c.style.opacity = 1; c.style.transform = 'none';
-      showcase.appendChild(c);
-    });
-  }
-
-  async function popShowcase(){
-    showcase.style.opacity = 1;
-    const items = showcase.querySelectorAll('.chip');
-    for(let i=0;i<items.length;i++){
-      const el = items[i];
-      el.style.opacity = 0;
-      el.animate([
-        { opacity: 0, transform: 'translateY(12px) scale(.92)' },
-        { opacity: 1, transform: 'translateY(0) scale(1)' }
-      ], { duration: 380, easing: EASE_POP, fill: 'forwards', delay: i*60 });
+      const lastEnd = rowStartTimes[rows.length - 1] + ROW_POP_DUR;
+      const total = lastEnd + S(BASE.holdA) + S(BASE.holdB);
+      return { total, x, y, w, h, r };
     }
-  }
 
-  async function run(){
-    // Phase 0: models card appears briefly (already visible), then collapses
-    await wait(parseFloat(getCSS('--t-intro')));
-    await collapseModels();
+    /* ======================= PHASE B ======================= */
+    function renderMorphCardToText(startBox, t){
+      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+      const mobile = isMobile();
+      const targetText = 'The Best AI';
+      setFont(800, mobile ? 34 : Math.max(38, 40 * getMenuScale()));
+      const tw = ctx.measureText(targetText).width;
+      const paddingX = mobile ? 22 : 28;
+      const pillW = Math.min(CONFIG.w - 2*STYLE.stageMargin, tw + paddingX*2);
+      const pillH = mobile ? 60 : 70;
+      const pillR = pillH/2;
 
-    // Phase 1: headline appears then fades
-    await showBuilt();
+      const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
+      const heightF = TEMPO.overshootYEnabled ? boomerang(t, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(t);
+      const radiusF = easeInOutCubic(t);
 
-    // Phase 2: start orbit (already animating); then stop and suck logos
-    await wait(140);
-    stopOrbiters();
-    await suckLogosIntoO();
+      const w = startBox.w + (pillW - startBox.w) * widthF;
+      const h = startBox.h + (pillH - startBox.h) * heightF;
+      const r = startBox.r + (pillR - startBox.r) * radiusF;
+      const x = (CONFIG.w - w)/2;
+      const y = (CONFIG.h - h)/2 + 28 * radiusF;
 
-    // Phase 3: O rolls → NX pops out
-    await rollORevealNX();
+      ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
+      ctx.shadowBlur = lerp(12, 22, radiusF) * MOBILE_SHADOW_SCALE;
+      ctx.shadowOffsetY = lerp(10, 14, radiusF);
+      ctx.fillStyle = '#ffffff';
+      roundedRect(ctx, x, y, w, h, r); ctx.fill();
+      ctx.shadowColor='transparent';
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-    // Phase 4: tagline and final logo showcase
-    await revealTagline();
-    cloneLogosToShowcase();
-    await popShowcase();
-  }
+      const menuFade = clamp(1 - t * 2);
+      if (menuFade > 0){
+        ctx.save(); ctx.globalAlpha = 0.35 * menuFade; setFont(STYLE.titleWeight, STYLE.titleSize); ctx.fillStyle='#0b0b10';
+        const barX = x + STYLE.padX, barY = y + STYLE.padY;
+        const barGap = STYLE.rowGap + STYLE.titleSize + Math.max(0, STYLE.subGap + STYLE.subSize);
+        for (let i=0;i<rows.length;i++){ ctx.fillRect(barX, barY + i*barGap, Math.max(60, w*0.5), 10); }
+        ctx.restore();
+      }
 
-  // Kickoff when in view (only once)
-  inViewStart();
-})();
-</script>
+      const textAlpha = easeInOutCubic(clamp((t - 0.15)/0.65));
+      ctx.save(); ctx.globalAlpha = textAlpha; ctx.textAlign='center'; ctx.textBaseline='middle';
+      setFont(800, mobile ? 34 : Math.max(38, 40 * getMenuScale())); ctx.fillStyle = '#0b0b10';
+      ctx.fillText(targetText, CONFIG.w/2, y + h/2 + (mobile ? 1 : 2));
+      ctx.restore();
+
+      return { pill: { x: (CONFIG.w - pillW)/2, y: (CONFIG.h - pillH)/2 + 28, w: pillW, h: pillH, r: pillR }, text: targetText };
+    }
+
+    /* ======================= PHASE C/D/E helpers ======================= */
+    const images = []; let finalLogoImg = null; let assetsPromise = null;
+    function loadAssets(){
+      if (assetsPromise) return assetsPromise;
+      assetsPromise = new Promise((resolve)=>{
+        let remaining = LOGOS.length + 1; let resolved = false;
+        const done = ()=>{ if (!resolved && --remaining <= 0) { resolved = true; resolve(); } };
+        LOGOS.forEach((l,i)=>{ const img = new Image(); img.crossOrigin='anonymous'; img.decoding='async'; images[i] = img; img.onload=done; img.onerror=done; img.src=l.src; });
+        finalLogoImg = new Image(); finalLogoImg.crossOrigin='anonymous'; finalLogoImg.decoding='async'; finalLogoImg.onload=done; finalLogoImg.onerror=done; finalLogoImg.src=FINAL_LOGO_SRC;
+        setTimeout(()=>{ if (!resolved){ resolved=true; resolve(); } }, 1000); // hard safety
+      });
+      return assetsPromise;
+    }
+
+    function renderTextToLogos(pill, t){
+      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+      const mobile = isMobile();
+      const centerY = CONFIG.h/2 + 28;
+      const textOut = clamp(1 - t*1.2);
+      const logosIn = easeOutBack(clamp((t - 0.15)/0.85));
+
+      ctx.save(); ctx.globalAlpha = Math.max(0, textOut); ctx.fillStyle='#ffffff';
+      roundedRect(ctx, pill.x, pill.y, pill.w, pill.h, pill.r); ctx.fill();
+      ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.stroke();
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      setFont(800, mobile ? 34 : Math.max(38, 40 * getMenuScale())); ctx.fillStyle='#0b0b10';
+      ctx.fillText('The Best AI', CONFIG.w/2, centerY); ctx.restore();
+
+      const n = LOGOS.length;
+      if (n>0){
+        const chipH = mobile ? 44 : 54;
+        const chipR = Math.min(22, chipH/2);
+        const gap   = mobile ? 10 : 14;
+        const logoW = chipH - 12;
+        const totalW = n*chipH + (n-1)*gap;
+        let rowX = (CONFIG.w - totalW)/2;
+        const rowY = centerY - chipH/2;
+
+        for (let i=0;i<n;i++){
+          const appearT = clamp((logosIn - i*0.06) / 0.9); if (appearT<=0) continue;
+          const alpha = appearT, dy = lerp(18, 0, easeOutCubic(appearT));
+          ctx.save(); ctx.globalAlpha=alpha; ctx.translate(rowX, rowY + dy);
+          ctx.shadowColor='rgba(0,0,0,0.12)'; ctx.shadowBlur=16* (isMobile()?0.7:1); ctx.shadowOffsetY=10;
+          ctx.fillStyle='#ffffff'; roundedRect(ctx, 0, 0, chipH, chipH, chipR); ctx.fill();
+          ctx.shadowColor='transparent'; ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1; ctx.stroke();
+          const img = images[i]; if (img && img.complete){ const iw=logoW, ih=logoW; ctx.drawImage(img, (chipH - iw)/2, (chipH - ih)/2, iw, ih); }
+          ctx.restore(); rowX += (chipH + gap);
+        }
+        return {
+          rowY, chipH, gap, totalW, centerY,
+          positions: new Array(n).fill(0).map((_,i)=>{
+            const x0 = (CONFIG.w - totalW)/2 + i*(chipH + gap);
+            return { x: x0 + chipH/2, y: rowY + chipH/2, r: chipH*0.5 };
+          })
+        };
+      }
+      return { positions: [], centerY };
+    }
+
+    function drawAudiowideO(cx, cy, size, alpha=1){
+      ctx.save(); ctx.globalAlpha=alpha; ctx.textAlign='center'; ctx.textBaseline='middle';
+      setFont(700, size, '"Audiowide", ui-sans-serif'); ctx.fillStyle='#0b0b10'; ctx.fillText('O', cx, cy + size*0.02); ctx.restore();
+    }
+    function drawChipLogo(cx, cy, size, img, alpha=1){
+      const r = size/2; ctx.save(); ctx.globalAlpha=alpha; ctx.shadowColor='rgba(0,0,0,0.12)'; ctx.shadowBlur=14*(isMobile()?0.7:1); ctx.shadowOffsetY=8;
+      ctx.fillStyle='#ffffff'; roundedRect(ctx, cx - r, cy - r, size, size, Math.min(22, r)); ctx.fill();
+      ctx.shadowColor='transparent'; ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1; ctx.stroke();
+      if (img && img.complete){ const iw=size-12, ih=size-12; ctx.drawImage(img, cx - iw/2, cy - ih/2, iw, ih); }
+      ctx.restore();
+    }
+    function startLogoSuction(positions, centerY, done){
+      const start = performance.now();
+      const centerX = CONFIG.w/2;
+      const Osize = Math.min(CONFIG.w, CONFIG.h) * (isMobile()? 0.26 : 0.22);
+      const n = positions.length;
+      const stagger = 110, travel = S(BASE.suction) * 1000;
+
+      function loop(now){
+        clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+        const tAll = clamp((now - start)/ (travel + n*stagger));
+        const oA = easeOutCubic(clamp((now - start)/ 600));
+        drawAudiowideO(centerX, centerY, Osize, Math.max(0, oA));
+
+        for (let i=0;i<n;i++){
+          const t0 = start + i*stagger;
+          const t  = clamp((now - t0) / travel);
+          if (t<=0) { drawChipLogo(positions[i].x, positions[i].y, positions[i].r*2, images[i], 1); continue; }
+          const p = easeInOutCubic(t);
+          const sx = positions[i].x, sy = positions[i].y;
+          const cx1 = lerp(sx, centerX, 0.3);
+          const cy1 = sy - 60 - 20 * Math.sin(i);
+          const ex = centerX, ey = centerY;
+          const qx = Math.pow(1-p,2)*sx + 2*(1-p)*p*cx1 + Math.pow(p,2)*ex;
+          const qy = Math.pow(1-p,2)*sy + 2*(1-p)*p*cy1 + Math.pow(p,2)*ey;
+          const scale = lerp(1, 0.05, p), alpha = clamp(1 - t + 0.05);
+          drawChipLogo(qx, qy, positions[i].r*2*scale, images[i], alpha);
+        }
+
+        if (tAll < 1){ requestAnimationFrame(loop); }
+        else { done({ centerX, centerY, Osize }); }
+      }
+      requestAnimationFrame(loop);
+    }
+    function renderOtoFinal(oGeom, t){
+      clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+      const { centerX, centerY, Osize } = oGeom;
+      const oOut   = clamp(1 - t*1.2);
+      const logoIn = easeOutBack(clamp((t - 0.05)/0.95));
+
+      if (oOut > 0) drawAudiowideO(centerX, centerY, Osize, oOut);
+
+      const L = finalLogoImg;
+      if (L && L.complete){
+        const baseW = Math.min(CONFIG.w*0.28, Osize*1.1);
+        const w = baseW * (0.85 + 0.15*logoIn);
+        const h = w;
+        ctx.save(); ctx.globalAlpha = logoIn; ctx.drawImage(L, centerX - w/2, centerY - h/2, w, h); ctx.restore();
+      }
+
+      const subA = easeInOutCubic(clamp((t - 0.35)/0.55));
+      ctx.save(); ctx.globalAlpha = subA; ctx.textAlign='center'; ctx.textBaseline='top';
+      setFont(700, isMobile()? 22 : 24); ctx.fillStyle='#0b0b10';
+      ctx.fillText(FINAL_SUBTITLE, centerX, centerY + (Osize*0.65));
+      ctx.restore();
+    }
+
+    /* ======================= WATCHDOG (anti-stall) ======================= */
+    function watchdog(ms, label, fallback){
+      const id = setTimeout(()=>{ console.warn('[ONX] Watchdog fired:', label); fallback?.(); }, ms);
+      return { cancel: ()=>clearTimeout(id) };
+    }
+
+    /* ======================= ORCHESTRATION ======================= */
+    let isAnimating = false;
+
+    function play(){
+      if (isAnimating) return;
+      isAnimating = true;
+
+      // --- Phase A
+      setPhase('A');
+      const start = performance.now();
+      function stepA(now){
+        const t = (now - start)/1000;
+        const A = renderCard(t);
+        if (t < A.total){ requestAnimationFrame(stepA); }
+        else {
+          // Immediate Phase B
+          const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
+
+          // --- Phase B (with watchdog)
+          setPhase('B');
+          const morphStart = performance.now();
+          let wdB = watchdog(1800, 'Phase B stalled', ()=>{ // force-complete B
+            const Bf = renderMorphCardToText(finalBox, 1);
+            startPhaseC(Bf);
+          });
+
+          function stepB(now2){
+            const t2 = (now2 - morphStart)/1000 / S(BASE.morphMenuToText);
+            const B = renderMorphCardToText(finalBox, clamp(t2));
+            if (t2 < 1){ requestAnimationFrame(stepB); }
+            else { wdB.cancel(); startPhaseC(B); }
+          }
+          requestAnimationFrame(stepB);
+
+          function startPhaseC(B){
+            // --- Phase C (assets safe)
+            setPhase('C');
+            loadAssets().then(()=>{
+              const textMorphStart = performance.now();
+              let lastRowGeom = null;
+              let wdC = watchdog(2000, 'Phase C stalled', ()=>{
+                lastRowGeom = renderTextToLogos(B.pill, 1);
+                startPhaseD(lastRowGeom);
+              });
+
+              function stepC(now3){
+                const t3 = (now3 - textMorphStart)/1000 / S(BASE.textToLogos);
+                lastRowGeom = renderTextToLogos(B.pill, clamp(t3));
+                if (t3 < 1){ requestAnimationFrame(stepC); }
+                else { wdC.cancel(); startPhaseD(lastRowGeom); }
+              }
+              requestAnimationFrame(stepC);
+            });
+          }
+
+          function startPhaseD(rowGeom){
+            setPhase('D');
+            if (!rowGeom || !rowGeom.positions) rowGeom = renderTextToLogos({x:0,y:0,w:0,h:0,r:0},1);
+            let wdD = watchdog(2500, 'Phase D stalled', ()=>{
+              const centerX = CONFIG.w/2, centerY = rowGeom.centerY || (CONFIG.h/2);
+              startPhaseE({ centerX, centerY, Osize: Math.min(CONFIG.w, CONFIG.h)*0.22 });
+            });
+            startLogoSuction(rowGeom.positions, rowGeom.centerY, (oGeom)=>{ wdD.cancel(); startPhaseE(oGeom); });
+          }
+
+          function startPhaseE(oGeom){
+            setPhase('E');
+            const oStart = performance.now();
+            let wdE = watchdog(1800, 'Phase E stalled', ()=>{ renderOtoFinal(oGeom, 1); isAnimating=false; setPhase('DONE'); });
+
+            (function stepE(now4){
+              const t4 = (now4 - oStart)/1000 / S(BASE.oToFinal);
+              renderOtoFinal(oGeom, clamp(t4));
+              if (t4 < 1){ requestAnimationFrame(stepE); }
+              else { wdE.cancel(); isAnimating = false; setPhase('DONE'); }
+            })(performance.now());
+          }
+        }
+      }
+      requestAnimationFrame(stepA);
+    }
+
+    // Initial static frame + autoplay
+    clearStage(); renderCard(0);
+
+    const playTarget = document.getElementById('onx-play');
+    if (playTarget) playTarget.addEventListener('click', play, { passive: true });
+
+    let autoplayed = false;
+    function centerIsVisible(el){
+      const rect = el.getBoundingClientRect();
+      const H = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+      const vpCenterY = H / 2;
+      return (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
+    }
+    function tryAutoplay(){
+      if (!autoplayed && !isAnimating && centerIsVisible(stageEl)) {
+        autoplayed = true; play();
+      }
+    }
+    const io = new IntersectionObserver((entries)=>{ for (const e of entries){ if (e.isIntersecting) tryAutoplay(); } }, { root: null, threshold: 0.1 });
+    io.observe(stageEl);
+
+    applyMobileScale();
+
+    // IMPORTANT: never rebuild mid-timeline (only scale)
+    let rid = null;
+    function rebuildIfNeeded(){
+      if (isAnimating) return; // do not wipe canvas mid-timeline
+      const NOW_MOBILE = isMobile();
+      const newCONFIG = NOW_MOBILE ? { w:1024, h:576 } : { w:1920, h:1080 };
+      const newDPR = NOW_MOBILE ? Math.min(1.15, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
+      if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h || Math.abs(newDPR - dpr) > 0.001){
+        CONFIG = newCONFIG; dpr = newDPR;
+        canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
+        ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
+        BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h; BG_CTX = BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
+      }
+      STYLE = buildStyle(); layout = measureFinalLayout();
+      // Do NOT re-render here. Leave the frame as-is.
+    }
+
+    window.addEventListener('resize', ()=>{
+      if (isAnimating) { applyMobileScale(); return; }
+      cancelAnimationFrame(rid); rid = requestAnimationFrame(()=>{ applyMobileScale(); rebuildIfNeeded(); });
+    }, { passive: true });
+
+    if (window.visualViewport){
+      window.visualViewport.addEventListener('resize', ()=>{
+        if (isAnimating) { applyMobileScale(); return; }
+        cancelAnimationFrame(rid); rid = requestAnimationFrame(()=>{ applyMobileScale(); rebuildIfNeeded(); });
+      }, { passive: true });
+      window.visualViewport.addEventListener('scroll', ()=>{
+        if (isAnimating) { applyMobileScale(); return; }
+        cancelAnimationFrame(rid); rid = requestAnimationFrame(applyMobileScale);
+      }, { passive: true });
+    }
+
+    window.addEventListener('scroll', tryAutoplay, { passive: true });
+
+    // Preload assets & warm font
+    loadAssets();
+    try { document.fonts && document.fonts.load('700 120px "Audiowide"'); } catch(e){}
+
+    // If already in view on load, go
+    tryAutoplay();
+
+  })();
+  </script>
+</div>
 
 
 <!--======================================================================================================================================================================-->
