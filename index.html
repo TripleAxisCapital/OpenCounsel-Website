@@ -836,355 +836,367 @@
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
 
-
-<!-- ============================== ONX Orbit → Absorb → Morph (Apple-style) ============================== -->
+<!--============================== ONX — Orbit → Suck → Roll → “N X” Pop → Gallery ==============================-->
 <style>
-  /* Audiowide for the ONX wordmark */
+  /* Font (safe to import here for drop-in snippets) */
   @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
 
-  /* ===== Design tokens ===== */
-  .onx-orbit {
-    --bg: #fff;
-    --ink: #0B0B0C;
+  /* ───────── Tokens & Stage ───────── */
+  .onx-merge{
+    --bg:#fff; --ink:#0B0B0C;
+    --stage-h:clamp(420px,78vh,980px);
 
-    /* Stage sizing (mobile → desktop) */
-    --stage-h: clamp(420px, 78vh, 980px);
-    --size: min(60vmin, 640px);           /* square lock for center choreography */
-    --ring: calc(var(--size) * 0.90);     /* orbit diameter */
-    --o-font: clamp(72px, 17vmin, 220px); /* wordmark scale */
+    --size:min(58vmin,620px);              /* square anchor in center */
+    --ring:calc(var(--size)*0.92);         /* orbit diameter */
+    --o-font:clamp(72px,17vmin,220px);     /* “O / O N X” size */
+    --logo:clamp(40px,6.2vmin,76px);       /* orbit chip size */
+    --radius:calc(var(--ring)/2.06);       /* orbit radius */
 
-    /* Orbiting chip sizing */
-    --chip: clamp(40px, 6.2vmin, 76px);
-    --chip-radius: 14px;
-    --orbit-radius: calc(var(--ring) / 2.05);
+    --intro-delay:900ms;                   /* spin settle before suck */
+    --spin-duration:8s;                    /* orbit spin speed */
+    --suck-duration:880ms;                 /* each logo suck-in time */
+    --suck-stagger:520ms;                  /* between logo sucks */
+    --roll-duration:1200ms;                /* O roll duration */
+    --reveal-gap:260ms;                    /* small pause before NX */
+    --gallery-stagger:120ms;               /* bottom-row pop delay */
 
-    /* Motion timings (tuned for “Apple” feel) */
-    --spin-duration: 9.2s;
-    --suck-start: 1300ms;     /* wait a beat before the pull */
-    --suck-stagger: 480ms;    /* delay between chip pulls */
-    --suck-duration: 900ms;   /* each chip’s absorb time */
-    --reveal-gap: 400ms;      /* pause between last pull and reveal */
-    --final-gap: 620ms;       /* pause before locking final state */
+    --ease-out:cubic-bezier(.16,1,.3,1);
+    --ease-inout:cubic-bezier(.2,.7,.2,1);
 
-    /* Easing */
-    --ease-out: cubic-bezier(.16, 1, .3, 1);
-    --ease-in: cubic-bezier(.36, 0, .66, -.01);
-    --ease-io: cubic-bezier(.2, .7, .2, 1);
+    --shadow-soft:0 2px 10px #00000018;
+    --shadow-deep:0 16px 52px #00000012;
 
-    /* Shadows / polish */
-    --shadow-soft: 0 2px 10px #00000018;
-    --shadow-deep: 0 16px 52px #00000012;
-
-    position: relative;
-    width: 100%;
-    height: var(--stage-h);
-    background: var(--bg);
-    color: var(--ink);
-    display: grid;
-    place-items: center;
-    overflow: clip;
-    isolation: isolate;
+    position:relative; width:100%; height:var(--stage-h);
+    display:grid; place-items:center;
+    background:var(--bg); color:var(--ink);
+    overflow:clip; isolation:isolate;
   }
 
-  /* Subtle, classy halo depth */
-  .onx-orbit .halo {
-    position: absolute; inset: 0;
-    display: grid; place-items: center; pointer-events: none; z-index: 0;
-  }
-  .onx-orbit .halo::before {
-    content: "";
-    width: min(84vmin, 820px);
-    height: min(84vmin, 820px);
-    border-radius: 50%;
+  /* Whisper-soft depth (barely there; Apple-clean) */
+  .onx-merge .onx-halo{
+    position:absolute; inset:0; margin:auto;
+    width:min(82vmin,780px); height:min(82vmin,780px);
+    border-radius:50%;
     background:
       radial-gradient(42% 42% at 50% 50%, #0b0b0c0a, #0000 72%),
       radial-gradient(26% 26% at 58% 44%, #0b0b0c08, #0000 76%);
-    filter: blur(.8px);
+    filter:blur(.8px); pointer-events:none; z-index:0;
+    opacity:.9; transform:scale(1);
+    transition:opacity 700ms var(--ease-out), transform 900ms var(--ease-out);
+  }
+  .onx-merge:not(.is-start) .onx-halo{opacity:0; transform:scale(1.03)}
+
+  /* Anchor square */
+  .onx-merge .center-lock{
+    position:relative; width:var(--size); height:var(--size);
+    display:grid; place-items:center; z-index:2; contain:layout paint size;
   }
 
-  /* Center lock for choreography */
-  .onx-orbit .center {
-    position: relative;
-    width: var(--size);
-    height: var(--size);
-    display: grid;
-    place-items: center;
-    z-index: 2;
-    contain: layout paint size;
+  /* Wordmark (“O” initially; later becomes “O N X”) */
+  .onx-merge .onx-word{
+    font-family:'Audiowide',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1; letter-spacing:.012em;
+    filter:drop-shadow(var(--shadow-soft));
+    pointer-events:none; position:relative; z-index:10;
+    transform:translateX(var(--recenter,0px));
+    transition:transform 560ms var(--ease-out);
+    will-change:transform;
   }
-
-  /* Wordmark (Audiowide). NX is absolutely positioned to the right of O. */
-  .onx-orbit .onx-word {
-    font-family: 'Audiowide', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    line-height: 1;
-    letter-spacing: .01em;
-    filter: drop-shadow(var(--shadow-soft));
-    pointer-events: none;
-    position: relative;
-    z-index: 10;
-    transform: translateX(var(--recenter, 0px)); /* JS sets so ONX stays centered */
-    transition: transform 560ms var(--ease-out);
-    will-change: transform;
+  .onx-merge .glyph-o{
+    font-size:var(--o-font); display:inline-block;
+    will-change:transform,filter,letter-spacing;
   }
-  .onx-orbit .glyph-o {
-    font-size: var(--o-font);
-    display: inline-block;
-    will-change: transform, filter, letter-spacing;
-  }
-  .onx-orbit .glyph-nx {
-    font-size: var(--o-font);
-    position: absolute;
-    left: calc(100% + var(--nx-gap, 0px));
-    top: 0;
-    margin-left: 0.08em;            /* design gap → JS copies to --nx-gap (px) */
-    opacity: 0;
-    transform: translateX(-0.18em); /* gentle slide-in */
-    letter-spacing: .02em;
-    -webkit-mask: linear-gradient(90deg, #0000 0%, #000 20% 100%);
-            mask: linear-gradient(90deg, #0000 0%, #000 20% 100%);
-    -webkit-mask-size: 220% 100%;   mask-size: 220% 100%;
-    -webkit-mask-position: 0% 50%;  mask-position: 0% 50%;
+  .onx-merge .glyph-nx{
+    font-size:var(--o-font);
+    position:absolute; left:100%; top:0;
+    margin-left:.10em; /* design gap to the right of “O” */
+    opacity:0; transform:translateX(-0.18em) scale(.96);
+    letter-spacing:.02em;
+    -webkit-mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
+            mask:linear-gradient(90deg,#0000 0%,#000 20% 100%);
+    -webkit-mask-position:0% 50%; mask-position:0% 50%;
+    -webkit-mask-size:220% 100%;   mask-size:220% 100%;
     transition:
-      opacity         560ms var(--ease-out),
-      transform       560ms var(--ease-out),
-      letter-spacing  560ms var(--ease-out),
+      opacity 560ms var(--ease-out),
+      transform 560ms var(--ease-out),
+      letter-spacing 560ms var(--ease-out),
       -webkit-mask-position 760ms var(--ease-out);
   }
 
-  /* Elegant aperture around the O (adds “suction” realism) */
-  .onx-orbit .aperture {
-    position: absolute;
-    width: calc(var(--chip) * 1.6);
-    height: calc(var(--chip) * 1.6);
-    border-radius: 50%;
-    z-index: 4; pointer-events: none;
-    background:
-      radial-gradient(60% 60% at 50% 50%, #ffffff 0%, #f6f7f9 62%, #eef1f6 100%);
-    box-shadow:
-      0 0 0 1px #0b0b0c12 inset,
-      0 16px 40px #0000001a;
-    transform: translate(-50%, -50%);
-    left: 50%; top: 50%;
+  /* Orbit ring and motion */
+  .onx-merge .onx-orbit{
+    position:absolute; left:50%; top:50%;
+    width:var(--ring); height:var(--ring);
+    margin-left:calc(var(--ring)/-2); margin-top:calc(var(--ring)/-2);
+    border-radius:50%; pointer-events:none; z-index:3;
+    will-change:transform,opacity;
+    opacity:0; transform:scale(.985);
+    transition:opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  .onx-merge.is-start .onx-orbit{
+    opacity:1; transform:scale(1);
+    animation:onx-spin var(--spin-duration) linear infinite;
+  }
+  @keyframes onx-spin{to{transform:rotate(360deg)}}
+
+  .onx-merge .orbiter{position:absolute; left:50%; top:50%; width:1px; height:1px; transform-origin:0 0}
+
+  /* Orbiting logos (chips) */
+  .onx-merge .chip{
+    position:relative; width:var(--logo); height:var(--logo);
+    transform:translateX(var(--radius)) translate(-50%,-50%) scale(1);
+    transform-origin:50% 50%;
+    border-radius:14px;
+    background:radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
+    box-shadow:0 0 0 1px #0b0b0c12 inset, 0 10px 24px #00000014;
+    overflow:hidden; will-change:transform,opacity,filter;
+  }
+  .onx-merge .chip::before{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(80% 80% at 50% 50%, #ffffff80, #ffffff00 70%);
+    mix-blend-mode:screen; pointer-events:none;
+  }
+  .onx-merge .logo{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02)}
+
+  /* Suck into the “O” (with a soft boomerang) */
+  .onx-merge.is-suck .chip{
+    animation:onx-suck var(--suck-duration) var(--ease-inout) forwards;
+    animation-delay:var(--delay,0ms);
+  }
+  @keyframes onx-suck{
+    0%{   opacity:1;   transform:translateX(var(--radius)) translate(-50%,-50%) scale(1) }
+    60%{  opacity:.34; transform:translateX(0)             translate(-50%,-50%) scale(.46) }
+    78%{  opacity:.20; transform:translateX(-10px)         translate(-50%,-50%) scale(.42) }
+    90%{  opacity:.16; transform:translateX(4px)           translate(-50%,-50%) scale(.38) }
+    100%{ opacity:0;   transform:translateX(0)             translate(-50%,-50%) scale(.28); filter:blur(1px) }
   }
 
-  /* Orbit path */
-  .onx-orbit .ring {
-    position: absolute;
-    left: 50%; top: 50%;
-    width: var(--ring);
-    height: var(--ring);
-    margin-left: calc(var(--ring) / -2);
-    margin-top:  calc(var(--ring) / -2);
-    border-radius: 50%;
-    z-index: 3; pointer-events: none;
-    animation: ring-spin var(--spin-duration) linear infinite;
+  /* The O “rolls” to the right and eases to a stop (organic overshoot) */
+  .onx-merge.is-roll .glyph-o{
+    animation:onx-roll var(--roll-duration) var(--ease-inout) both;
   }
-  @keyframes ring-spin { to { transform: rotate(360deg); } }
-
-  /* Orbiter anchors (we rotate anchors; chips advance from anchors) */
-  .onx-orbit .orbiter {
-    position: absolute; left: 50%; top: 50%;
-    width: 1px; height: 1px; transform-origin: 0 0;
+  @keyframes onx-roll{
+    0%{   transform:translateX(0) rotate(0turn) }
+    72%{  transform:translateX(calc(var(--rollX)*.94)) rotate(1.08turn) }
+    88%{  transform:translateX(calc(var(--rollX)*1.02)) rotate(1.22turn) } /* tiny overshoot */
+    100%{ transform:translateX(var(--rollX)) rotate(1.20turn) }
   }
 
-  /* Logo chips */
-  .onx-orbit .chip {
-    position: relative;
-    width: var(--chip); height: var(--chip);
-    transform: translateX(var(--orbit-radius)) translate(-50%, -50%) scale(1);
-    transform-origin: 50% 50%;
-    border-radius: var(--chip-radius);
-    background: radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
-    box-shadow: 0 0 0 1px #0b0b0c12 inset, 0 10px 24px #00000014;
-    overflow: hidden;
-    will-change: transform, opacity, filter;
-  }
-  .onx-orbit .chip::before {
-    content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(80% 80% at 50% 50%, #ffffff80, #ffffff00 70%);
-    mix-blend-mode: screen;
-  }
-  .onx-orbit .logo {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: contain;
-    filter: saturate(1.05) contrast(1.02);
+  /* When NX appears (from inside the O) */
+  .onx-merge.is-nx .glyph-nx{
+    opacity:1; transform:translateX(0) scale(1); letter-spacing:.012em;
+    -webkit-mask-position:100% 50%; mask-position:100% 50%;
   }
 
-  /* Absorb (suck) motion */
-  .onx-orbit.run .chip {
-    animation: chip-suck var(--suck-duration) var(--ease-io) forwards;
-    animation-delay: var(--delay, 0ms);
+  /* After NX reveal, fade orbit away */
+  .onx-merge.is-nx .onx-orbit{opacity:0; transition:opacity 420ms var(--ease-out) 80ms}
+
+  /* Bottom gallery pops & stays (under the baseline) */
+  .onx-merge .onx-gallery{
+    position:absolute; left:50%; transform:translateX(-50%);
+    display:flex; gap:clamp(10px,2.4vmin,22px);
+    opacity:0; pointer-events:none; z-index:9; /* under word, above orbit */
+    will-change:opacity,transform;
   }
-  @keyframes chip-suck {
-    0%   { opacity: 1;  transform: translateX(var(--orbit-radius)) translate(-50%, -50%) scale(1);               filter: blur(0px); }
-    55%  { opacity: .36;transform: translateX(16px)                  translate(-50%, -50%) scale(.50) rotate(-6deg); filter: blur(.2px); }
-    78%  { opacity: .24;transform: translateX(-6px)                  translate(-50%, -50%) scale(.42) rotate( 4deg); filter: blur(.6px); }
-    100% { opacity: 0;  transform: translateX(0px)                   translate(-50%, -50%) scale(.30);             filter: blur(1.2px); }
+  .onx-merge.is-final .onx-gallery{opacity:1; transition:opacity 420ms var(--ease-out)}
+
+  .onx-merge .gallery-chip{
+    position:relative; width:clamp(28px,5vmin,60px); height:clamp(28px,5vmin,60px);
+    border-radius:12px;
+    background:radial-gradient(120% 120% at 30% 20%, #fff 0%, #f8fafc 60%, #f2f4f8 100%);
+    box-shadow:0 0 0 1px #0b0b0c12 inset, 0 8px 20px #00000012;
+    overflow:hidden; opacity:0; transform:translateY(12px) scale(.92);
+    will-change:transform,opacity;
+  }
+  .onx-merge.is-final .gallery-chip{
+    animation:onx-pop 700ms var(--ease-inout) forwards;
+    animation-delay:var(--gdelay,0ms);
+  }
+  .onx-merge .gallery-chip img{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; filter:saturate(1.05) contrast(1.02)}
+  @keyframes onx-pop{
+    0%{   opacity:0; transform:translateY(12px) scale(.92) }
+    58%{  opacity:1; transform:translateY(-3px) scale(1.08) }
+    78%{  transform:translateY(1px)  scale(.99) }
+    100%{ transform:translateY(0)    scale(1) }
   }
 
-  /* Wordmark reveal & morph */
-  .onx-orbit.reveal .glyph-o {
-    animation:
-      o-spin 900ms var(--ease-io) both,
-      o-bounce 900ms var(--ease-io) both;
-  }
-  @keyframes o-spin   { to { transform: rotate(360deg); } }
-  @keyframes o-bounce {
-    0%   { letter-spacing: .010em; filter: drop-shadow(var(--shadow-soft)); transform: scale(1);    }
-    54%  { letter-spacing: .024em; filter: drop-shadow(var(--shadow-deep)); transform: scale(1.085);}
-    78%  { transform: scale(.985); }
-    100% { letter-spacing: .012em; filter: drop-shadow(var(--shadow-soft)); transform: scale(1);    }
-  }
-  .onx-orbit.reveal .glyph-nx {
-    opacity: 1;
-    transform: translateX(0);
-    letter-spacing: .012em;
-    -webkit-mask-position: 100% 50%;
-            mask-position: 100% 50%;
-  }
-
-  /* Fade the orbit ring away after reveal */
-  .onx-orbit.reveal .ring { opacity: 0; transition: opacity 420ms var(--ease-out); }
-
-  /* Reduced motion: jump to final state */
-  @media (prefers-reduced-motion: reduce) {
-    .onx-orbit .ring { animation: none !important; }
-    .onx-orbit .chip { animation: none !important; opacity: 0 !important; }
-    .onx-orbit .glyph-nx { opacity: 1 !important; transform: none !important; -webkit-mask: none !important; mask: none !important; }
+  @media (prefers-reduced-motion:reduce){
+    .onx-merge .onx-orbit{animation:none}
+    .onx-merge .chip,
+    .onx-merge .glyph-o,
+    .onx-merge .glyph-nx,
+    .onx-merge .gallery-chip{
+      transition:none; animation-duration:.001ms !important; animation-iteration-count:1 !important
+    }
   }
 </style>
 
-<section class="onx-orbit" id="onx-orbit" aria-label="ONX Neural Network animation">
-  <div class="halo" aria-hidden="true"></div>
+<section class="onx-merge" id="onx-merge" aria-label="ONX launch animation">
+  <div class="onx-halo" aria-hidden="true"></div>
 
-  <div class="center">
-    <!-- Wordmark (O morphs into ONX) -->
-    <h1 class="onx-word" id="onx-word" aria-hidden="true">
+  <div class="center-lock">
+    <!-- Wordmark (O morphs into “O N X”) -->
+    <div class="onx-word" id="onx-word" aria-hidden="true">
       <span class="glyph-o" id="glyph-o">O</span>
-      <span class="glyph-nx" id="glyph-nx">NX</span>
-    </h1>
+      <span class="glyph-nx" id="glyph-nx">N&nbsp;X</span>
+    </div>
 
-    <!-- Elegant aperture around O (gives “suction” realism) -->
-    <div class="aperture" aria-hidden="true"></div>
-
-    <!-- Orbit path with evenly spaced logos -->
-    <div class="ring" id="ring" aria-hidden="true">
-      <!-- Add / remove orbiters; spacing auto-distributes -->
+    <!-- Orbiting AI logos — replace srcs with your assets -->
+    <div class="onx-orbit" id="onx-orbit" aria-hidden="true">
       <div class="orbiter"><div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div></div>
       <div class="orbiter"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div></div>
       <div class="orbiter"><div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div></div>
       <div class="orbiter"><div class="chip"><img class="logo" src="OAILogo.png"    alt="OpenAI"></div></div>
-      <!-- Example extras (optional) -->
-      <!-- <div class="orbiter"><div class="chip"><img class="logo" src="anthropic.svg" alt="Anthropic"></div></div> -->
-      <!-- <div class="orbiter"><div class="chip"><img class="logo" src="xai.svg"       alt="xAI"></div></div> -->
     </div>
+  </div>
+
+  <!-- Bottom gallery (pops and persists) -->
+  <div class="onx-gallery" id="onx-gallery" aria-hidden="true">
+    <div class="gallery-chip"><img src="grokLogo.svg"   alt="Grok"></div>
+    <div class="gallery-chip"><img src="googleLogo.svg" alt="Google"></div>
+    <div class="gallery-chip"><img src="metaLogo.svg"   alt="Meta"></div>
+    <div class="gallery-chip"><img src="OAILogo.png"    alt="OpenAI"></div>
   </div>
 </section>
 
 <script>
-(() => {
-  const root   = document.getElementById('onx-orbit');
-  if (!root || root.dataset.init) return;
-  root.dataset.init = '1';
+/* ONX — Orbit → Suck → Roll → “N X” Pop → Gallery (plays once when scrolled into view) */
+(function(){
+  const root     = document.getElementById('onx-merge');
+  if(!root || root.dataset.init) return; root.dataset.init='1';
 
-  const word   = root.querySelector('#onx-word');
-  const nxEl   = root.querySelector('#glyph-nx');
-  const ring   = root.querySelector('#ring');
-  const orbiters = Array.from(ring.querySelectorAll('.orbiter'));
-  const chips    = Array.from(ring.querySelectorAll('.chip'));
+  const word     = document.getElementById('onx-word');
+  const glyphO   = document.getElementById('glyph-o');
+  const nxEl     = document.getElementById('glyph-nx');
+  const orbit    = document.getElementById('onx-orbit');
+  const orbiters = Array.from(orbit.querySelectorAll('.orbiter'));
+  const chips    = Array.from(root.querySelectorAll('.chip'));
+  const gallery  = document.getElementById('onx-gallery');
+  const gchips   = Array.from(gallery.querySelectorAll('.gallery-chip'));
 
-  // CSS helpers
   const css  = p => getComputedStyle(root).getPropertyValue(p).trim();
   const toMs = v => v.endsWith('ms') ? parseFloat(v) : v.endsWith('s') ? parseFloat(v)*1000 : parseFloat(v)||0;
 
-  const SUCK_START    = toMs(css('--suck-start'))    || 1300;
-  const STAGGER       = toMs(css('--suck-stagger'))  || 480;
-  const SUCK_DURATION = toMs(css('--suck-duration')) || 900;
-  const REVEAL_GAP    = toMs(css('--reveal-gap'))    || 400;
-  const FINAL_GAP     = toMs(css('--final-gap'))     || 620;
+  const INTRO_DELAY   = toMs(css('--intro-delay'))   || 900;
+  const STAGGER       = toMs(css('--suck-stagger'))  || 520;
+  const SUCK_DURATION = toMs(css('--suck-duration')) || 880;
+  const ROLL_DURATION = toMs(css('--roll-duration')) || 1200;
+  const REVEAL_GAP    = toMs(css('--reveal-gap'))    || 260;
+  const GALLERY_STAG  = toMs(css('--gallery-stagger')) || 120;
 
-  // 1) Even spacing for orbiters (no nth-child assumptions)
-  function distributeOrbiters() {
+  let timers = [];
+  let started = false;
+
+  /* Distribute orbiters evenly */
+  function distributeOrbiters(){
     const n = orbiters.length;
-    const offset = -90; // start a chip at 12 o’clock for hero presence
-    orbiters.forEach((el, i) => {
-      const angle = offset + (360 / n) * i;
+    const offset = -90;
+    orbiters.forEach((el,i)=>{
+      const angle = offset + (360/n)*i;
       el.style.transform = `rotate(${angle}deg)`;
     });
   }
   distributeOrbiters();
 
-  // 2) Sync NX design gap (em) to pixel custom property for perfect centering
-  (function setNxGap(){
-    const s = getComputedStyle(nxEl);
-    const gapEm = parseFloat(s.marginLeft || '0') || 0;
-    // Convert em to px by multiplying with computed font-size of NX
-    const fontSizePx = parseFloat(s.fontSize || '16') || 16;
-    const gapPx = gapEm * fontSizePx; // 0.08em * font-size
-    word.style.setProperty('--nx-gap', gapPx + 'px');
-  })();
-
-  // 3) Keep ONX centered when NX appears (compute recenter in px)
-  function computeRecenter() {
-    const nxWidth = nxEl.getBoundingClientRect().width; // measurable even at opacity 0
-    const gapPx   = parseFloat(getComputedStyle(word).getPropertyValue('--nx-gap')) || 0;
-    const delta   = nxWidth + gapPx; // width added to the right when NX shows
-    word.style.setProperty('--recenter', (-delta / 2) + 'px');
+  /* Place gallery under the “O N X” baseline */
+  function placeGallery(){
+    const stageRect = root.getBoundingClientRect();
+    const wordRect  = word.getBoundingClientRect();
+    const offsetPx  = Math.max(32, Math.min(56, wordRect.height * 0.8));
+    const topPx     = (wordRect.bottom - stageRect.top) + offsetPx;
+    const gH        = gallery.offsetHeight || 0;
+    gallery.style.top = Math.min(topPx, stageRect.height - gH - 12) + 'px';
   }
 
-  // 4) Stagger chip absorb delays (start when .run is applied)
-  chips.forEach((el, i) => el.style.setProperty('--delay', (i * STAGGER) + 'ms'));
-
-  // IntersectionObserver: start only when stage is visible (Apple feels deliberate)
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  function startTimeline() {
-    if (root.dataset.started) return;
-    root.dataset.started = '1';
-
-    // a) Start absorb after SUCK_START
-    setTimeout(() => root.classList.add('run'), SUCK_START);
-
-    // b) Last absorb end time
-    const lastEnd = SUCK_START + ((chips.length - 1) * STAGGER) + SUCK_DURATION;
-
-    // c) Reveal ONX after a small pause
-    setTimeout(async () => {
-      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch(e){}
-      computeRecenter();
-      root.classList.add('reveal');
-      root.setAttribute('aria-label', 'ONX');
-    }, lastEnd + REVEAL_GAP);
-
-    // (Optional) Final polish could be scheduled here using (lastEnd + REVEAL_GAP + FINAL_GAP)
-    // Reserved for any post-reveal accent if you add one later.
+  /* Stagger bottom gallery pop */
+  function setGalleryStagger(){
+    gchips.forEach((el,i)=> el.style.setProperty('--gdelay', (i * GALLERY_STAG) + 'ms'));
   }
 
-  if (prefersReduced) {
-    // Respect reduced motion: jump to final state immediately
-    computeRecenter();
-    root.classList.add('reveal');
-    root.setAttribute('aria-label', 'ONX');
-  } else {
-    // Trigger when ~45% of the stage is visible
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.45) {
-          startTimeline();
-          io.disconnect();
-        }
-      });
-    }, { threshold: [0.1, 0.3, 0.45, 0.75] });
-    io.observe(root);
+  /* Calculate roll distance and recenter to keep final word centered */
+  function computeRollAndRecenter(){
+    const nxStyle = getComputedStyle(nxEl);
+    const nxW     = nxEl.getBoundingClientRect().width || 0;
+    const gapPx   = parseFloat(nxStyle.marginLeft) || 0; // computed px from .08/.10em
+    const rollX   = (nxW + gapPx) * 0.90;               // natural distance for the O wheel roll
+    root.style.setProperty('--rollX', rollX + 'px');
+
+    // After NX appears, recentre group so final “O N X” is balanced in the stage:
+    // final center offset relative to initial center = rollX + (gap + nxW)/2
+    const recenter = -(rollX + (gapPx + nxW)/2);
+    word.style.setProperty('--recenter', recenter + 'px');
   }
 
-  // Recompute recenter on resize (keeps ONX perfectly centered)
-  addEventListener('resize', () => {
-    if (root.classList.contains('reveal')) computeRecenter();
-  }, { passive: true });
+  /* Kick the timeline */
+  async function start(){
+    if(started) return; started = true;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    root.classList.add('is-start'); // orbit fades in & spins
+
+    if(reduced){
+      // Minimal path: no choreography, just show final state
+      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+      computeRollAndRecenter();
+      root.classList.add('is-nx');      // Reveal NX
+      root.classList.add('is-final');   // Show gallery
+      setGalleryStagger(); placeGallery();
+      root.setAttribute('aria-label','ONX');
+      return;
+    }
+
+    // Suck-in sequence
+    chips.forEach((el,i)=> el.style.setProperty('--delay', (i*STAGGER)+'ms'));
+    timers.push(setTimeout(()=> root.classList.add('is-suck'), INTRO_DELAY));
+
+    // After the last chip is absorbed → roll the O
+    const suckEndsAt = INTRO_DELAY + ((chips.length-1)*STAGGER) + SUCK_DURATION;
+    timers.push(setTimeout(async ()=>{
+      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+      computeRollAndRecenter();
+      root.classList.add('is-roll'); // triggers onx-roll on the O
+    }, suckEndsAt + 60));
+
+    // When roll ends → pop NX out of the O
+    function onRollEnd(e){
+      if(e.animationName !== 'onx-roll') return;
+      glyphO.removeEventListener('animationend', onRollEnd);
+      timers.push(setTimeout(()=>{
+        root.classList.add('is-nx');     // NX wipe + settle
+        root.setAttribute('aria-label','ONX');
+        // Then the gallery pops under
+        setGalleryStagger();
+        root.classList.add('is-final');
+        requestAnimationFrame(placeGallery);
+        requestAnimationFrame(placeGallery);
+      }, REVEAL_GAP));
+    }
+    glyphO.addEventListener('animationend', onRollEnd);
+  }
+
+  // Start only when ~45% visible
+  const io = new IntersectionObserver((entries)=>{
+    for(const e of entries){
+      if(e.isIntersecting && e.intersectionRatio >= 0.45){ start(); io.disconnect(); break; }
+    }
+  }, {threshold:[0,.25,.45,.75,1]});
+  io.observe(root);
+
+  // Keep gallery attached to baseline on resize
+  addEventListener('resize', ()=> { if(root.classList.contains('is-final')) placeGallery() }, {passive:true});
+
+  // Re-place when images arrive (cache misses)
+  Array.from(document.images).forEach(img=>{
+    if(!gallery.contains(img)) return;
+    if(!img.complete) img.addEventListener('load', ()=> { if(root.classList.contains('is-final')) placeGallery() }, {once:true});
+  });
+
+  // Safety: clear timers if page is hidden
+  document.addEventListener('visibilitychange', ()=> {
+    if(document.hidden){ timers.forEach(t=>clearTimeout(t)); timers.length=0; }
+  }, {passive:true});
 })();
 </script>
-<!-- ===================================================================================================== -->
 
 
 
