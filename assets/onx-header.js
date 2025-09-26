@@ -164,6 +164,18 @@ class ONXHeader extends HTMLElement {
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
           -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain;
+          transition: background .2s ease, background-size .2s ease;
+        }
+
+        /* ── NEW: Logo behavior — black at top, gradient when pill header is active ── */
+        :host(:not(.is-float)) .logo-anim{
+          background:#000000 !important;
+          animation:none !important;
+        }
+        :host(.is-float) .logo-anim{
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !important;
+          background-size: 300% 300% !important;
+          animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
         }
 
         .oc-header{
@@ -594,15 +606,24 @@ class ONXHeader extends HTMLElement {
         :host([theme="onxpro-light"]) .hamburger,
         :host([theme="pro-light"]) .hamburger{ color:#0A0D10 !important; }
 
-        :host([invert]) .logo-anim,
-        :host([theme="ONXProLight"]) .logo-anim,
-        :host([theme="onxpro-light"]) .logo-anim,
-        :host([theme="pro-light"]) .logo-anim{
+        /* UPDATED: keep light/invert logos black ONLY at top (not floating) */
+        :host([invert]:not(.is-float)) .logo-anim,
+        :host([theme="ONXProLight"]:not(.is-float)) .logo-anim,
+        :host([theme="onxpro-light"]:not(.is-float)) .logo-anim,
+        :host([theme="pro-light"]:not(.is-float)) .logo-anim{
           background:#000000 !important;
           animation:none !important;
         }
 
-
+        /* Force gradient back in pill state even if themes tried to override */
+        :host([invert].is-float) .logo-anim,
+        :host([theme="ONXProLight"].is-float) .logo-anim,
+        :host([theme="onxpro-light"].is-float) .logo-anim,
+        :host([theme="pro-light"].is-float) .logo-anim{
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !important;
+          background-size: 300% 300% !important;
+          animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
+        }
 
 /* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
 @media (max-width: 767.98px){
