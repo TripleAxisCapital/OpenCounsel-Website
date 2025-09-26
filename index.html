@@ -940,8 +940,6 @@ const SUGGESTIONS = [
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
 
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- ──────────────────────────Showcase Video Section───────────────────────────────────── -->
 <!-- ONX Card Reveal → "The Best AI" → Logos Row → Suction into O → Final logo + "Unified AI" -->
@@ -957,21 +955,18 @@ const SUGGESTIONS = [
      style="max-width:100%; margin:0 auto;">
 
   <style>
-    /* Keep your existing look + add Audiowide for the “O” and final mark */
     @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
 
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      /* Stage background supplied by your gradient utility classes */
       box-shadow: none;
       will-change: transform;
-      transform-origin:center top; /* mobile will scale from top-center */
+      transform-origin:center top;
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
 
-    /* Optional controls shell you already had; left intact for structure */
     #onx-controls{
       display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
       font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
@@ -986,7 +981,6 @@ const SUGGESTIONS = [
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    /* MOBILE ONLY */
     @media (max-width: 640px){
       #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
       #onx-controls{ margin-top:10px; }
@@ -994,9 +988,7 @@ const SUGGESTIONS = [
     }
   </style>
 
-  <!-- Gradient/animation lives on the stage container -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
-
   <div id="onx-controls"></div>
   <div id="onx-play" aria-label="Play" title="Play" role="button" style="display:none"></div>
 
@@ -1042,7 +1034,7 @@ const SUGGESTIONS = [
       };
       const S = v => v / TEMPO.speed;
 
-      // ===== CANVAS CONFIG (mobile perf caps) =====
+      // ===== CANVAS CONFIG =====
       let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 };
       const dprRaw = window.devicePixelRatio || 1;
       let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
@@ -1053,11 +1045,11 @@ const SUGGESTIONS = [
       ctx.scale(dpr, dpr);
       ctx.imageSmoothingEnabled = true;
 
-      // Transparent BG buffer (kept for structure; now just clears)
+      // Transparent BG buffer
       let BG_CANVAS = document.createElement('canvas');
       BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
-      (function cacheBG(){ BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); })();
+      BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
 
       function clearStage(){
         ctx.setTransform(1,0,0,1,0,0);
@@ -1065,7 +1057,7 @@ const SUGGESTIONS = [
         ctx.setTransform(dpr,0,0,dpr,0,0);
       }
 
-      // ===== DESIGN BASE / STYLE =====
+      // ===== DESIGN / STYLE =====
       const DESIGN = {
         padX: 20, padY: 20, rowGap: 16, subGap: 6,
         titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
@@ -1091,7 +1083,7 @@ const SUGGESTIONS = [
         };
       }
 
-      // ===== MODELS =====
+      // ===== CONTENT =====
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Default model' },
@@ -1160,19 +1152,15 @@ const SUGGESTIONS = [
       }
       let layout = measureFinalLayout();
 
-      // Seed shape
       const seed = { w: 120, h: 80, r: 20 };
 
-      // Row schedule
       const ROW_POP_DUR = S(BASE.rowPop);
       const ROW_PAUSE   = S(BASE.rowPause);
       const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
 
-      // MOBILE tuning
       const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
       const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
-      // MOBILE AUTO-FIT SCALE (unchanged)
       function controlHeight(){
         const ctrl = document.getElementById('onx-controls');
         return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
@@ -1244,7 +1232,6 @@ const SUGGESTIONS = [
         const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
         const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
-        // Card
         ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
         ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
         ctx.shadowOffsetY = lerp(6, 15, growT);
@@ -1253,7 +1240,6 @@ const SUGGESTIONS = [
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Content
         ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
         const contentX = x + STYLE.padX;
         let cursorY = y + STYLE.padY;
@@ -1359,7 +1345,6 @@ const SUGGESTIONS = [
       let finalLogoImg = null;
       let assetsPromise = null;
 
-      // Non-blocking, fail-safe loader (prevents stalls)
       function loadAssets(){
         if (assetsPromise) return assetsPromise;
         assetsPromise = new Promise((resolve)=>{
@@ -1382,7 +1367,6 @@ const SUGGESTIONS = [
           finalLogoImg.onload = done; finalLogoImg.onerror = done;
           finalLogoImg.src = FINAL_LOGO_SRC;
 
-          // Safety net in case events never fire
           setTimeout(()=>{ if (!resolved) { resolved = true; resolve(); } }, 1000);
         });
         return assetsPromise;
@@ -1476,8 +1460,8 @@ const SUGGESTIONS = [
         const centerX = CONFIG.w/2;
         const Osize = Math.min(CONFIG.w, CONFIG.h) * (isMobile()? 0.26 : 0.22);
         const n = positions.length;
-        const stagger = 110;         // ms per-logo
-        const travel = S(BASE.suction) * 1000; // ms
+        const stagger = 110;
+        const travel = S(BASE.suction) * 1000;
 
         function loop(now){
           clearStage(); ctx.drawImage(BG_CANVAS,0,0);
@@ -1564,12 +1548,10 @@ const SUGGESTIONS = [
 
       /* =========================== ORCHESTRATION ============================== */
       let isAnimating = false;
-      let waitTimer = null;
 
       function play(){
         if (isAnimating) return;
         isAnimating = true;
-        if (waitTimer){ clearTimeout(waitTimer); waitTimer = null; }
 
         const start = performance.now();
 
@@ -1581,7 +1563,7 @@ const SUGGESTIONS = [
           else {
             const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
 
-            // ▼▼ FIX: remove artificial pause; hand off immediately ▼▼
+            // Immediate handoff to Phase B (no pause)
             const morphStart = performance.now();
             function stepB(now2){
               const t2 = (now2 - morphStart)/1000 / S(BASE.morphMenuToText);
@@ -1606,9 +1588,7 @@ const SUGGESTIONS = [
                           const t4 = (now4 - oStart)/1000 / S(BASE.oToFinal);
                           renderOtoFinal(oGeom, clamp(t4));
                           if (t4 < 1){ requestAnimationFrame(stepE); }
-                          else {
-                            isAnimating = false;
-                          }
+                          else { isAnimating = false; }
                         })(performance.now());
                       });
                     }
@@ -1618,24 +1598,22 @@ const SUGGESTIONS = [
               }
             }
             requestAnimationFrame(stepB);
-            // ▲▲ FIX END ▲▲
           }
         }
         requestAnimationFrame(stepA);
       }
 
-      // First static frame (clean)
+      // First static frame and potential immediate autoplay
       clearStage(); renderCard(0);
 
-      // Manual control (left as a hidden div to avoid null listeners)
       const playTarget = document.getElementById('onx-play');
       if (playTarget) playTarget.addEventListener('click', play, { passive: true });
 
-      // Autoplay when section center visible
       let autoplayed = false;
       function centerIsVisible(el){
         const rect = el.getBoundingClientRect();
-        const vpCenterY = (window.visualViewport ? window.visualViewport.height : window.innerHeight) / 2;
+        const H = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+        const vpCenterY = H / 2;
         return (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
       }
       function tryAutoplay(){
@@ -1644,6 +1622,7 @@ const SUGGESTIONS = [
           play();
         }
       }
+
       const io = new IntersectionObserver((entries)=>{
         for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
       }, { root: null, threshold: 0.1 });
@@ -1652,14 +1631,13 @@ const SUGGESTIONS = [
       // Initial mobile fit
       applyMobileScale();
 
-      // Resize / orientation / viewport chrome changes
+      // --------- CRITICAL FIXES BELOW ----------
       let rid = null;
       function rebuildIfNeeded(){
-        // ▼▼ FIX: do not rebuild while animating (prevents mid-timeline reset) ▼▼
+        // Do not rebuild while animating — avoids wiping canvas between phases
         if (isAnimating) return;
 
-        applyMobileScale();
-
+        // Only adjust canvas size/scale; DO NOT redraw frame 0 or restart autoplay here.
         const NOW_MOBILE = isMobile();
         const newCONFIG = NOW_MOBILE ? { w:1024, h:576 } : { w:1920, h:1080 };
         const newDPR = NOW_MOBILE ? Math.min(1.15, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
@@ -1677,27 +1655,23 @@ const SUGGESTIONS = [
         STYLE = buildStyle();
         layout = measureFinalLayout();
 
-        clearStage(); renderCard(0);
-
-        // Allow autoplay again after a rebuild
-        autoplayed = false;
-        tryAutoplay();
+        // No re-render or autoplay reset here.
       }
 
       window.addEventListener('resize', ()=>{
-        if (isAnimating) return;                 // guard during animation
+        if (isAnimating) { applyMobileScale(); return; } // only scale while animating
         cancelAnimationFrame(rid);
-        rid = requestAnimationFrame(rebuildIfNeeded);
+        rid = requestAnimationFrame(()=>{ applyMobileScale(); rebuildIfNeeded(); });
       }, { passive: true });
 
       if (window.visualViewport){
         window.visualViewport.addEventListener('resize', ()=>{
-          if (isAnimating) return;               // guard during animation
+          if (isAnimating) { applyMobileScale(); return; } // only scale while animating
           cancelAnimationFrame(rid);
-          rid = requestAnimationFrame(rebuildIfNeeded);
+          rid = requestAnimationFrame(()=>{ applyMobileScale(); rebuildIfNeeded(); });
         }, { passive: true });
         window.visualViewport.addEventListener('scroll', ()=>{
-          if (isAnimating) return;               // guard during animation
+          if (isAnimating) { applyMobileScale(); return; } // only scale while animating
           cancelAnimationFrame(rid);
           rid = requestAnimationFrame(applyMobileScale);
         }, { passive: true });
@@ -1705,9 +1679,12 @@ const SUGGESTIONS = [
 
       window.addEventListener('scroll', tryAutoplay, { passive: true });
 
-      // Start preloading quietly so assets are ready in time
+      // Preload assets and warm Audiowide
       loadAssets();
       try { document.fonts && document.fonts.load('700 120px "Audiowide"'); } catch(e){}
+
+      // If already in view on load, start now
+      tryAutoplay();
     })();
   </script>
 </div>
