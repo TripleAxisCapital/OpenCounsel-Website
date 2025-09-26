@@ -167,7 +167,7 @@ class ONXHeader extends HTMLElement {
           transition: background .2s ease, background-size .2s ease;
         }
 
-        /* ── NEW: Logo behavior — black at top, gradient when pill header is active ── */
+        /* Logo: black at top, gradient when pill header is active */
         :host(:not(.is-float)) .logo-anim{
           background:#000000 !important;
           animation:none !important;
@@ -281,33 +281,26 @@ class ONXHeader extends HTMLElement {
         @media (max-width: 767.98px){
           .header-bar{
             background: rgba(255,255,255,.96);
-            /* 🔻 remove outline on mobile pill header */
             border: none !important;
             outline: none !important;
             border-radius: var(--header-radius);
             box-shadow: 0 18px 38px -18px rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.06);
             -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-
-            /* width tied to --outer-x-mobile-dyn (set by JS on scroll) */
             width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile-large)))));
-
             transition:
               background-color .18s ease,
               border-radius .18s cubic-bezier(.2,.8,.2,1),
               box-shadow .18s ease,
               -webkit-backdrop-filter .18s ease,
               backdrop-filter .18s ease;
-
             will-change: width;
           }
           :host(.is-float) .header-bar{
-            /* keep border removed even when "floating" on mobile */
             border: none !important;
             outline: none !important;
             width: min(var(--header-max-w), calc(100% - (2 * var(--outer-x-mobile-dyn, var(--pill-outer-x-mobile)))));
           }
 
-          /* Ensure theme variants don't reintroduce a border on mobile */
           :host([theme="ONXPro"]) .header-bar,
           :host([theme="onxpro"]) .header-bar,
           :host([theme="pro"]) .header-bar,
@@ -351,7 +344,7 @@ class ONXHeader extends HTMLElement {
           color:#fff; font-size:.9rem; font-weight:700;
           border-radius: 16px; padding:.55rem 1rem;
           box-shadow: 0 18px 30px rgba(0,0,0,.18);
-          transition: transform .2s ease, box-shadow .2s ease;
+          transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
           box-sizing: border-box;
         }
         .btn:hover{ transform: translateY(-1px); box-shadow: 0 26px 40px rgba(0,0,0,.26); }
@@ -625,35 +618,45 @@ class ONXHeader extends HTMLElement {
           animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
         }
 
-/* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
-@media (max-width: 767.98px){
-  /* At page top (not floating): remove ALL edges */
-  :host(:not(.is-float)) .header-bar{
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    -webkit-box-shadow: none !important;
-    /* keep the rest of your styling (background, blur, radius) */
-  }
+        /* ── NEW: Desktop “Download” button → black at top, gradient in pill ───────── */
+        @media (min-width:768px){
+          /* Apply to default + light/invert themes. Leave ONXPro/Pro themes as-is (white). */
+          :host(:not(.is-float)):is(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .desktop-actions .btn-download{
+            background:#0A0D10 !important;
+            color:#ffffff !important;
+            background-image:none !important;
+            animation:none !important;
+          }
+          :host(.is-float):is(:not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"])) .desktop-actions .btn-download{
+            background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !important;
+            background-size:300% 300% !important;
+            animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
+            color:#ffffff !important;
+          }
+        }
 
-  /* Belt-and-suspenders: prevent any theme from re-adding a border */
-  :host([theme="ONXPro"]) .header-bar,
-  :host([theme="onxpro"]) .header-bar,
-  :host([theme="pro"]) .header-bar,
-  :host([theme="ONXProLight"]) .header-bar,
-  :host([theme="onxpro-light"]) .header-bar,
-  :host([theme="pro-light"]) .header-bar,
-  :host([invert]) .header-bar,
-  :host([theme="ONXPro"].is-float) .header-bar,
-  :host([theme="onxpro"].is-float) .header-bar,
-  :host([theme="pro"].is-float) .header-bar{
-    border: none !important;
-    outline: none !important;
-  }
-}
-
-
-
+        /* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
+        @media (max-width: 767.98px){
+          :host(:not(.is-float)) .header-bar{
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+          }
+          :host([theme="ONXPro"]) .header-bar,
+          :host([theme="onxpro"]) .header-bar,
+          :host([theme="pro"]) .header-bar,
+          :host([theme="ONXProLight"]) .header-bar,
+          :host([theme="onxpro-light"]) .header-bar,
+          :host([theme="pro-light"]) .header-bar,
+          :host([invert]) .header-bar,
+          :host([theme="ONXPro"].is-float) .header-bar,
+          :host([theme="onxpro"].is-float) .header-bar,
+          :host([theme="pro"].is-float) .header-bar{
+            border: none !important;
+            outline: none !important;
+          }
+        }
       </style>
 
       <div class="oc-header">
@@ -678,7 +681,8 @@ class ONXHeader extends HTMLElement {
           <div class="right-area">
             <div class="desktop-actions">
               <slot name="actions"></slot>
-              <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
+              <!-- ADDED btn-download class for precise targeting -->
+              <a class="btn g-grad grad-anim btn-download" href="/download.html" aria-label="Download">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
                 <span>Download</span>
               </a>
@@ -946,10 +950,8 @@ class ONXHeader extends HTMLElement {
     this._centerVisible = visible;
 
     this._center.setAttribute('aria-hidden', String(!visible));
-    // Prefer the inert property if available
     try { this._center.inert = !visible; } catch(_e){ /* noop */ }
 
-    // Make links unfocusable when hidden for perfect a11y
     const nodes = this._root.querySelectorAll('.center a, .center button, .center [tabindex]');
     nodes.forEach(el => {
       if (!visible) el.setAttribute('tabindex','-1');
@@ -976,9 +978,7 @@ class ONXHeader extends HTMLElement {
         else { this.classList.remove("is-float"); floated = false; }
       }
 
-      // Only show desktop center nav when floating (pill) and on desktop
       this._syncCenterVisibility(!isMobile && floated);
-
       this._raf = null;
     });
   }
