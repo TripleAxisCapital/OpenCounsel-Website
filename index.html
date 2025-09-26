@@ -954,10 +954,8 @@ const SUGGESTIONS = [
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
-<!-- ONX Card Reveal → "The Best AI" → Logos line (bigger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" -->
+<!-- ONX Card Reveal → "The Best AI" → Logos line (larger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
      data-menu-scale="1.5"
@@ -969,43 +967,53 @@ const SUGGESTIONS = [
      data-peak-y="0.60"
      style="max-width:100%; margin:0 auto;">
 
-  <!-- Audiowide for O / headings -->
+  <!-- Fonts: Audiowide (for the O) + Inter (system-like Apple feel) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     #onx-card-reveal * { box-sizing: border-box; }
+
+    /* Keep the MAIN section window (stage) size the same; we scale everything inside via drawing sizes */
     #onx-stage{
       position:relative; width:min(1100px,96vw); aspect-ratio:16/9; margin:0 auto;
-      border-radius:32px; overflow:hidden;
+      border-radius:40px; overflow:hidden; /* slightly larger radius for Apple polish */
       box-shadow:none;
       will-change:transform;
       transform-origin:center top;
     }
     #onx-stage canvas{ width:100%; height:100%; display:block; }
+
+    /* Controls: larger, airier, Apple-like pill buttons */
     #onx-controls{
-      display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
+      display:flex; gap:14px; justify-content:center; align-items:center; margin-top:20px;
       font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
       touch-action: manipulation;
     }
     #onx-controls button{
-      border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
-      background:#000; color:#fff; font-weight:600; letter-spacing:.2px;
-      box-shadow:0 6px 18px rgba(0,0,0,.12);
-      transition:transform .15s ease, box-shadow .2s ease;
+      border:1px solid rgba(255,255,255,0.18);
+      border-radius:999px; padding:14px 22px; cursor:pointer;
+      background: rgba(0,0,0,0.85); color:#fff; font-weight:700; letter-spacing:.2px; font-size:16px;
+      box-shadow:0 14px 34px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,0.06);
+      transition:transform .15s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+      -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
     }
-    #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:hover{
+      transform:translateY(-1px);
+      box-shadow:0 18px 44px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.92); border-color: rgba(255,255,255,0.26);
+    }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
     @media (max-width: 640px){
       #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
-      #onx-controls{ margin-top:10px; }
-      #onx-controls button{ padding:9px 14px; font-size:14px; }
+      #onx-controls{ margin-top:14px; gap:10px; }
+      #onx-controls button{ padding:12px 18px; font-size:15px; }
     }
   </style>
 
-  <!-- Stage with your gradient classes -->
+  <!-- Stage with your gradient classes (kept) -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
   <div id="onx-controls"></div>
@@ -1052,7 +1060,7 @@ const SUGGESTIONS = [
     };
 
     // ===== CANVAS =====
-    let CONFIG = isMobile() ? { w: 1152, h: 648 } : { w: 2048, h: 1152 }; // 16:9, a bit larger for crispness
+    let CONFIG = isMobile() ? { w: 1152, h: 648 } : { w: 2048, h: 1152 }; // 16:9, crisp
     const dprRaw = window.devicePixelRatio || 1;
     let dpr = isMobile() ? Math.min(1.25, dprRaw) : Math.max(1, dprRaw);
 
@@ -1074,11 +1082,12 @@ const SUGGESTIONS = [
       ctx.setTransform(dpr,0,0,dpr,0,0);
     }
 
-    // ===== STYLE / SIZING =====
+    // ===== STYLE / SIZING (LARGER EVERYTHING EXCEPT THE MAIN STAGE WINDOW) =====
+    // Boosted sizes for Apple-like presence (bigger type, more air, larger logos).
     const DESIGN = {
-      padX: 26, padY: 26, rowGap: 18, subGap: 8,
-      titleSize: 36, subSize: 20, titleWeight: 800, subWeight: 500,
-      minW: 420, maxW: 820, stageMargin: 56
+      padX: 34, padY: 34, rowGap: 24, subGap: 10,
+      titleSize: 52, subSize: 26, titleWeight: 900, subWeight: 500,
+      minW: 520, maxW: 980, stageMargin: 64
     };
     const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
 
@@ -1100,13 +1109,13 @@ const SUGGESTIONS = [
       };
     }
 
-    // Dynamic logo line height: fill ~84% of stage width, with caps
+    // Dynamic logo line height: bigger caps for a bolder row while preserving width fit
     function computeLogoLineHeight(logoImgs){
-      const pad = isMobile()? 24 : 36;
-      const maxH = isMobile()? 72 : 96;   // caps for aesthetic
-      const minH = isMobile()? 44 : 60;
+      const pad = isMobile()? 28 : 40;
+      const maxH = isMobile()? 98 : 140;  // larger caps
+      const minH = isMobile()? 56 : 72;   // larger minimums
       const sumAspect = logoImgs.reduce((s, img)=> s + (img.aspect || 1), 0);
-      const fitH = ((CONFIG.w * 0.84) - pad*(logoImgs.length-1)) / Math.max(1, sumAspect);
+      const fitH = ((CONFIG.w * 0.86) - pad*(logoImgs.length-1)) / Math.max(1, sumAspect);
       return Math.max(minH, Math.min(maxH, fitH));
     }
 
@@ -1150,9 +1159,9 @@ const SUGGESTIONS = [
     // ===== LAYOUT =====
     function measureFinalLayout(){
       let maxTextW = 0;
-      setFont(800, STYLE.titleSize);
+      setFont(900, STYLE.titleSize, 'Inter, ui-sans-serif, system-ui');
       rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
-      setFont(500, STYLE.subSize);
+      setFont(500, STYLE.subSize, 'Inter, ui-sans-serif, system-ui');
       rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
       const contentW = Math.ceil(maxTextW);
@@ -1165,7 +1174,7 @@ const SUGGESTIONS = [
       const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
       const cardH = Math.min(Math.ceil(contentH + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin);
 
-      const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+      const radius = Math.max(26, Math.min(40, Math.round(Math.min(cardW, cardH) * 0.085)));
       return { cardW, cardH, rowHeights, radius };
     }
     let layout = measureFinalLayout();
@@ -1182,7 +1191,7 @@ const SUGGESTIONS = [
     const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
     const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
-    // ===== MOBILE AUTO-FIT SCALE =====
+    // ===== MOBILE AUTO-FIT SCALE (keep stage size logic intact) =====
     function controlHeight(){
       const ctrl = document.getElementById('onx-controls');
       return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
@@ -1250,9 +1259,9 @@ const SUGGESTIONS = [
       const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
       // Card
-      ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
-      ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
-      ctx.shadowOffsetY = lerp(6, 15, growT);
+      ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.18,growT)})`;
+      ctx.shadowBlur = lerp(8, 30, growT) * MOBILE_SHADOW_SCALE;
+      ctx.shadowOffsetY = lerp(6, 16, growT);
       ctx.fillStyle = '#ffffff';
       roundedRect(ctx, x, y, w, h, r); ctx.fill();
       ctx.shadowColor='transparent';
@@ -1269,8 +1278,8 @@ const SUGGESTIONS = [
 
         const pr = clamp(local);
         const a  = easeOutCubic(pr);
-        const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06;
-        const dy = lerp(10, 0, a);
+        const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.05;
+        const dy = lerp(12, 0, a);
         const blurPx = (1 - a) * 1.5 * MOBILE_BLUR_SCALE;
 
         ctx.save();
@@ -1280,12 +1289,12 @@ const SUGGESTIONS = [
         ctx.globalAlpha = a;
         if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
 
-        setFont(STYLE.titleWeight, STYLE.titleSize);
+        setFont(STYLE.titleWeight, STYLE.titleSize, '"Inter", ui-sans-serif, system-ui');
         ctx.fillStyle = '#0b0b10';
         ctx.fillText(rows[i].title, 0, STYLE.titleSize);
 
         if (rows[i].sub){
-          setFont(STYLE.subWeight, STYLE.subSize);
+          setFont(STYLE.subWeight, STYLE.subSize, '"Inter", ui-sans-serif, system-ui');
           ctx.fillStyle = 'rgba(0,0,0,0.58)';
           ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
         }
@@ -1308,21 +1317,21 @@ const SUGGESTIONS = [
       const inv = 1 - out;
 
       const w = lerp(startBox.w, startBox.w*0.9, out);
-      const h = lerp(startBox.h, Math.max(100, startBox.h*0.6), out);
+      const h = lerp(startBox.h, Math.max(120, startBox.h*0.58), out);
       const r = lerp(startBox.r, Math.min(startBox.r, h/2), out);
       const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
 
       ctx.save();
       ctx.globalAlpha = Math.max(0, inv * 0.9);
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = `rgba(0,0,0,${0.08*inv})`;
-      ctx.shadowBlur = 16 * inv * MOBILE_SHADOW_SCALE;
-      ctx.shadowOffsetY = 12 * inv;
+      ctx.shadowColor = `rgba(0,0,0,${0.10*inv})`;
+      ctx.shadowBlur = 20 * inv * MOBILE_SHADOW_SCALE;
+      ctx.shadowOffsetY = 14 * inv;
       roundedRect(ctx, x, y, w, h, r); ctx.fill();
       ctx.shadowColor='transparent'; ctx.restore();
 
       const scale = boomerang(t, 1.08, 0.55);
-      const titleSize = Math.round( lerp(72, isMobile() ? 88 : 120, scale) );
+      const titleSize = Math.round( lerp(96, isMobile() ? 120 : 144, scale) );
       setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
 
       ctx.save();
@@ -1340,7 +1349,7 @@ const SUGGESTIONS = [
 
       const titleOut = clamp((t-0.35)/0.30);
       const titleIn  = 1 - titleOut;
-      const titleSize = Math.round( isMobile() ? 88 : 120 );
+      const titleSize = Math.round( isMobile() ? 120 : 144 );
       setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1349,9 +1358,9 @@ const SUGGESTIONS = [
       ctx.restore();
 
       const inT = easeOutCubic(clamp((t-0.1)/0.7));
-      const lineY = Math.round(CONFIG.h/2 + lerp(60, 0, inT));
-      const pad = isMobile()? 24 : 36;
-      const logoH = computeLogoLineHeight(logoImgs); // auto fit width
+      const lineY = Math.round(CONFIG.h/2 + lerp(70, 0, inT));
+      const pad = isMobile()? 28 : 40;
+      const logoH = computeLogoLineHeight(logoImgs);
       const totalW = logoImgs.reduce((acc,img,i)=> acc + logoH * (img.aspect||1) + (i?pad:0), 0);
       let x = (CONFIG.w - totalW)/2;
 
@@ -1360,7 +1369,7 @@ const SUGGESTIONS = [
         const w = logoH * (img.aspect||1);
         const appear = clamp((inT - i*0.06)/0.8);
         const a = easeOutCubic(appear);
-        const s = 0.9 + 0.1 * boomerang(appear, 1.1, 0.55);
+        const s = 0.9 + 0.12 * boomerang(appear, 1.1, 0.55);
         const y = lineY;
 
         ctx.save();
@@ -1390,21 +1399,21 @@ const SUGGESTIONS = [
 
       const centerX = CONFIG.w/2;
       const centerY = CONFIG.h/2 - (isMobile()? 6 : 10);
-      const baseSize = isMobile()? 180 : 260;
-      const size = Math.round( lerp(baseSize*0.9, baseSize*1.05, boomerang(clamp(t), 1.05, 0.55)) );
+      const baseSize = isMobile()? 220 : 320; // larger O
+      const size = Math.round( lerp(baseSize*0.9, baseSize*1.06, boomerang(clamp(t), 1.05, 0.55)) );
 
       ctx.save();
       setFont(900, size, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.15)';
-      ctx.shadowBlur = 18 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 10;
+      ctx.shadowColor = 'rgba(0,0,0,0.16)';
+      ctx.shadowBlur = 20 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 12;
       ctx.fillStyle = '#ffffff';
       ctx.fillText('O', centerX, centerY);
       ctx.shadowColor = 'transparent';
       ctx.restore();
 
       const pull = easeInOutCubic(clamp(t));
-      const suckRadius = Math.max(22, size*0.06);
+      const suckRadius = Math.max(26, size*0.06);
       logoImgs.forEach((img, i) => {
         const p = startPositions[i];
         const delay = i * 0.06;
@@ -1413,7 +1422,7 @@ const SUGGESTIONS = [
 
         const curX = lerp(p.x, centerX, a);
         const curY = lerp(p.y, centerY, a);
-        const scale = 1 - 0.85*a;
+        const scale = 1 - 0.86*a;
         const opacity = 1 - a;
 
         const w = (p.w) * scale, h = (p.h) * scale;
@@ -1431,14 +1440,14 @@ const SUGGESTIONS = [
         ctx.save();
         ctx.globalAlpha = glowA;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, suckRadius*2.2, 0, Math.PI*2);
+        ctx.arc(centerX, centerY, suckRadius*2.4, 0, Math.PI*2);
         ctx.fillStyle = '#aab3ff';
         ctx.fill();
         ctx.restore();
       }
     }
 
-    // -------------------- Phase E: O → final ONX logo (white, correct aspect) + "Unified AI" --------------------
+    // -------------------- Phase E: O → final ONX logo (white, correct aspect) + larger "Unified AI" --------------------
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1449,7 +1458,7 @@ const SUGGESTIONS = [
       const logoIn = easeOutCubic(clamp(t));
 
       // Fade O
-      const oSize = Math.round(lerp(isMobile()? 180 : 260, isMobile()? 130 : 180, 1 - oOut));
+      const oSize = Math.round(lerp(isMobile()? 220 : 320, isMobile()? 150 : 200, 1 - oOut));
       ctx.save();
       setFont(900, oSize, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1458,12 +1467,12 @@ const SUGGESTIONS = [
       ctx.fillText('O', centerX, centerY);
       ctx.restore();
 
-      // Final logo – compute width relative to stage, preserve aspect
+      // Final logo – bigger target width, preserve aspect
       const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420);
+      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.42 : 0.40), isMobile()? 340 : 520);
       const w = baseTargetW * bounceScale;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1); // aspect = width/height
-      const h = w / aspect;                                   // <-- correct ratio (FIX)
+      const aspect = Math.max(0.01, finalLogoImg.aspect || 1); // width/height
+      const h = w / aspect; // correct ratio
       ctx.save();
       ctx.globalAlpha = logoIn;
       if (finalLogoImg.image){
@@ -1474,16 +1483,16 @@ const SUGGESTIONS = [
       }
       ctx.restore();
 
-      // Subtitle
+      // Subtitle (larger)
       const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
       if (subtitleA > 0){
-        const size = isMobile()? 28 : 40;
-        setFont(700, size, '"Inter", ui-sans-serif, system-ui');
+        const size = isMobile()? 34 : 50;
+        setFont(800, size, '"Inter", ui-sans-serif, system-ui');
         ctx.save();
         ctx.globalAlpha = subtitleA;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', centerX, centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)));
+        ctx.fillText('Unified AI', centerX, centerY + (isMobile()? (h/2 + 40) : (h/2 + 50)));
         ctx.restore();
       }
     }
@@ -1624,7 +1633,7 @@ const SUGGESTIONS = [
       playSequence(prepared);
     }, { passive: true }); }
 
-    // Mobile fit + rebuild on resize
+    // Mobile fit + rebuild on resize (keeps main stage size policy intact)
     applyMobileScale();
     let rid = null;
     function rebuildIfNeeded(){
