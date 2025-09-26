@@ -232,9 +232,7 @@
     <!-- Extra right-side action -->
   </onx-header>
 
-
-
-  <!--=======================================================================START===============================================================================================-->
+<!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -290,12 +288,15 @@
       /* START OFF-SCREEN to avoid pop-ins */
       --startTop: 110%;
 
-      /* Title glass (blur-only, visually invisible on white) */
-      --titleBlur: 50px;
-      --titlePlate: rgba(255,255,255,0.0001);  /* nearly transparent: triggers backdrop-filter without visible tint */
-      --titleInsetTB: .24em;
-      --titleInsetLR: .50em;
-      --titleRadius: 24px;
+      /* Title legibility shield (no visible plate; adaptive glow) */
+      --titleStroke: .35px;          /* micro stroke width */
+      --titleGlow1: .70;             /* inner halo strength */
+      --titleGlow2: .55;             /* mid halo */
+      --titleGlow3: .35;             /* outer halo */
+
+      /* Section edge fades (Apple-style blend) */
+      --fadeH-bottom: 14vh;          /* bottom reveal fade height */
+      --fadeH-top: 10vh;             /* top dissolve fade height */
     }
 
     @media (min-width:768px){
@@ -304,6 +305,8 @@
         --padY:var(--padY-d);
         --sendScale:var(--sendScale-d);
         --sendSize:calc(var(--sendBase) * var(--sendScale));
+        --fadeH-bottom: 16vh;
+        --fadeH-top: 12vh;
       }
     }
 
@@ -323,6 +326,27 @@
       text-rendering:optimizeLegibility;
       color:var(--ink);
       overflow:hidden;
+    }
+
+    /* ---- Apple-style edge fades (above words, below UI) ---- */
+    #chat-hero::before,
+    #chat-hero::after{
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      pointer-events:none;
+      z-index:1; /* between word-stream (0) and UI (2) */
+    }
+    /* top dissolve */
+    #chat-hero::before{
+      top:0; height:var(--fadeH-top);
+      background:linear-gradient(to bottom, var(--bg) 0%, rgba(255,255,255,0) 100%);
+      /* Dark-mode friendly: var(--bg) adapts below */
+    }
+    /* bottom reveal */
+    #chat-hero::after{
+      bottom:0; height:var(--fadeH-bottom);
+      background:linear-gradient(to top, var(--bg) 0%, rgba(255,255,255,0) 100%);
     }
 
     /* ---------------- Background word stream ---------------- */
@@ -412,33 +436,15 @@
       padding:0 12px;
     }
 
-    /* Glass plate behind the title text, but above the word stream.
-       It is visually indistinguishable from the white background:
-       - no tint
-       - no halo
-       - blur-only, activated by backdrop-filter
-    */
+    /* Adaptive legibility shield (no plate; glow + micro stroke) */
     #chat-hero .hero-title .title-blur{
-      position:relative;
-      display:inline-block;
-      z-index:1; /* establishes stacking context for ::before */
-    }
-    #chat-hero .hero-title .title-blur::before{
-      content:"";
-      position:absolute;
-      inset: calc(var(--titleInsetTB) * -1) calc(var(--titleInsetLR) * -1);
-      border-radius: var(--titleRadius);
-      background: var(--titlePlate);                 /* ~fully transparent */
-      -webkit-backdrop-filter: blur(var(--titleBlur));
-      backdrop-filter: blur(var(--titleBlur));
-      box-shadow: none;                              /* no visible halo */
-      pointer-events:none;
-      z-index:-1; /* behind the title text, still above the word stream */
-    }
-    @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))){
-      #chat-hero .hero-title .title-blur::before{
-        background: rgba(255,255,255,0);            /* stay invisible if blur unsupported */
-      }
+      /* This element wraps the entire line, so shadows apply to both ONX and the rest */
+      text-shadow:
+        0 0 0 rgba(0,0,0,0),                                    /* placeholder for transition matching */
+        0 0 8px rgba(255,255,255, var(--titleGlow1)),
+        0 0 18px rgba(255,255,255, var(--titleGlow2)),
+        0 0 28px rgba(255,255,255, var(--titleGlow3));
+      -webkit-text-stroke: var(--titleStroke) rgba(255,255,255,.55); /* micro outline, invisible on white */
     }
 
     /* --------------- Bubble spot (center) ---------- */
@@ -529,9 +535,15 @@
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
-      /* Keep glass invisible in dark too (blur-only) */
-      #chat-hero{ --titlePlate: rgba(0,0,0,0.0001); }
-      #chat-hero .hero-title .title-blur::before{ box-shadow:none; }
+      /* Fades adapt automatically via var(--bg) */
+      /* Title shield stays invisible yet effective on dark */
+      #chat-hero .hero-title .title-blur{
+        -webkit-text-stroke: var(--titleStroke) rgba(0,0,0,.55);
+        text-shadow:
+          0 0 8px rgba(0,0,0,.55),
+          0 0 18px rgba(0,0,0,.45),
+          0 0 28px rgba(0,0,0,.35);
+      }
     }
 
     /* ------------- Reduced motion ------------- */
@@ -641,7 +653,7 @@
 
           /* No negative delays; immediate entrance from bottom on scroll */
           const delaySeconds = opts.seed
-            ? 0                                    /* instant for seed words */
+            ? 0
             : (opts.early ? Math.random()*0.15 : Math.random()*0.6);
           outer.style.setProperty('--delay', delaySeconds.toFixed(2) + 's');
 
@@ -823,6 +835,7 @@
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
+
 
 <!-- ============================== ONX Orbit → Absorb → Morph (Apple-style) ============================== -->
 <style>
