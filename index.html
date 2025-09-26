@@ -835,290 +835,225 @@
 <!--=====================================================================CHAT END=================================================================================================-->
 
 
-<!-- ============================== ONX ORBIT SEQUENCE ===============================
-Drop-in, single-file snippet. No chat bar. Apple-minimal, blue gradients, boomerang
-motions. Uses GSAP (CDN). Replace logo src paths with your own.
-================================================================================ -->
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
-
-<section id="onx-hero" aria-label="ONX hero sequence">
+<!-- =====================================================================
+  ONX Orbit→Merge→Reveal Sequence (Apple‑style) — PRODUCTION DROP‑IN
+  • No chat bar. Keeps blue gradients + boomerang/organic motion.
+  • Sequence: Models Card → collapse → "Built on the best." → logos orbit →
+    suck into O (Audiowide) → O bounces → prints NX → shows "AI Unified".
+  • Starts when scrolled into view. Responsive. Prefers‑reduced‑motion safe.
+  • Replace logo src paths with your own assets.
+  ====================================================================== -->
+<section id="onx-sequence" aria-label="ONX Orbit Merge Sequence">
   <style>
-    /* ------------------------- Design tokens ------------------------- */
-    #onx-hero {
-      --bg: #ffffff;
-      --ink: #0B0B0C;
-      --muted: #6B7280;
-      --c1: #0ea5ff;    /* light blue */
-      --c2: #2563eb;    /* deep blue  */
-      --c3: #60a5fa;    /* mid blue   */
-      --ring: rgba(14,165,255,0.15);
-      --chip: #0B0B0C;
-      --chip-ink: #E5F3FF;
-      --radius: 18px;
+    /* ------------------ Design tokens ------------------ */
+    @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
+    :root{
+      --ink:#0b1020;                /* base ink */
+      --bg:#ffffff;                  /* section bg */
+      --c1:#00A8FF;                  /* blue A */
+      --c2:#5B8CFF;                  /* blue B */
+      --c3:#7BC7FF;                  /* blue C */
+      --card:#0b102006;              /* soft card fill */
+      --stroke:#0b102012;            /* soft stroke */
+      --glow:0 10px 30px rgba(80,150,255,.25);
     }
 
-    #onx-hero {
-      position: relative; isolation: isolate; overflow: hidden;
-      background: var(--bg); color: var(--ink);
-      min-height: 90dvh; display: grid; place-items: center;
-      padding: clamp(24px, 6vw, 64px);
-    }
+    #onx-sequence{position:relative; isolation:isolate; display:grid; place-items:center; min-height:100vh; background:var(--bg);}
+    #onx-sequence .wrap{width:min(1120px,92vw); margin:auto; padding:8vh 0;}
 
-    .onx-wrap { width: min(1120px, 92vw); margin-inline: auto; }
+    /* --- Blue glow gradient reused across text --- */
+    .blue-gradient{background:linear-gradient(120deg,var(--c1) 10%,var(--c2) 50%,var(--c3) 90%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;}
+    @keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 
-    /* Shared blue gradient text */
-    .blue-grad {
-      background: linear-gradient(120deg, var(--c1) 20%, var(--c3) 50%, var(--c2) 80%);
-      background-size: 220% 100%;
-      -webkit-background-clip: text; background-clip: text; color: transparent;
-      animation: shimmer 8s ease-in-out infinite, breathe 7s ease-in-out infinite;
-    }
-    @keyframes shimmer { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-    @keyframes breathe { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.2)} }
+    /* ---------- Models card (appears then collapses) ---------- */
+    .models-card{position:relative; margin:0 auto 6vh; width:min(860px,92vw); border-radius:20px; background:linear-gradient(180deg,#ffffffcc,#ffffffa8); box-shadow:var(--glow); border:1px solid var(--stroke); backdrop-filter:saturate(140%) blur(8px); -webkit-backdrop-filter:saturate(140%) blur(8px); overflow:hidden; transform-origin:50% 0%;}
+    .models-card .hdr{display:flex; gap:10px; align-items:center; padding:18px 22px; border-bottom:1px solid var(--stroke); font:600 14px/1.2 ui-sans-serif,system-ui,"SF Pro Text",Inter,Arial; color:var(--ink)}
+    .models-card .grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:18px 18px 22px;}
+    .chip{display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:14px; background:#ffffffd8; border:1px solid var(--stroke); box-shadow:0 1px 0 #00000008 inset;}
+    .chip img{width:22px; height:22px; object-fit:contain}
+    .chip span{font:600 13px/1.1 ui-sans-serif,system-ui,"SF Pro Text",Inter,Arial; color:#0b1220}
 
-    /* Subtle backdrop glow */
-    .glow {
-      position: absolute; inset: -20% -10% auto -10%; height: 60%; z-index: 0;
-      background: radial-gradient(60% 60% at 50% 50%, var(--ring), transparent 60%);
-      transform: translateY(10%);
-      pointer-events: none;
-    }
+    /* ---------- Interstitial headline ---------- */
+    .built-line{margin:2vh auto 5vh; text-align:center; font:700 clamp(22px,3.4vw,42px)/1.15 ui-sans-serif,system-ui,"SF Pro Display",Inter,Arial; letter-spacing:-.01em}
+    .built-line span{display:inline-block}
 
-    /* --------------------- Models Card (shows → collapses) --------------------- */
-    .models {
-      position: relative; z-index: 2;
-      width: 100%; max-width: 880px; margin: 8vh auto 0;
-      border-radius: 24px; background: rgba(240,248,255,0.9);
-      box-shadow: 0 10px 30px rgba(2, 132, 199, 0.12), inset 0 0 0 1px rgba(14, 165, 255, 0.15);
-      backdrop-filter: saturate(1.1) blur(6px);
-      padding: clamp(18px, 3vw, 28px);
-      transform-origin: top center;
-    }
-    .models h3 { font: 600 14px/1.2 ui-sans-serif, system-ui; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
-    .chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 14px; border-radius: 999px;
-      background: linear-gradient(180deg, #0b1524, #0b0f1a);
-      color: var(--chip-ink); border: 1px solid rgba(99, 179, 237, 0.25);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 18px rgba(37,99,235,0.18);
-      font: 500 13px/1 ui-sans-serif, system-ui;
-    }
-    .chip img.logo { width: 18px; height: 18px; display: block; filter: saturate(0) brightness(2); opacity: .9; }
+    /* ---------- ONX Stage ---------- */
+    .onx-stage{position:relative; display:grid; place-items:center; min-height:52vh}
 
-    /* ------------------------- Built on the best. ------------------------- */
-    .built-line {
-      position: relative; z-index: 2; margin: 8vh auto 0; text-align: center;
-      font: 600 clamp(24px, 5.2vw, 48px)/1.1 "Audiowide", ui-sans-serif, system-ui;
-      letter-spacing: .01em;
-    }
+    .onx-word{display:flex; align-items:baseline; gap:clamp(10px,2.2vw,18px);}
+    .onx-word .letter{font-family:"Audiowide", ui-sans-serif, system-ui; font-size:clamp(72px,12vw,160px); line-height:.9; letter-spacing:.02em;}
+    .onx-word .letter.o{filter:drop-shadow(0 10px 30px rgba(75,130,255,.25));}
 
-    /* ------------------------- O → ONX Stage ------------------------- */
-    .stage { position: relative; z-index: 2; width: 100%; height: min(60dvh, 520px); margin-top: 6vh; }
-    .o-wrap { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
+    .onx-tagline{margin-top:16px; text-align:center; font:700 clamp(14px,2.2vw,22px)/1.1 ui-sans-serif,system-ui,"SF Pro Text",Inter,Arial; letter-spacing:.08em; text-transform:uppercase}
 
-    .wordmark {
-      display: flex; align-items: baseline; justify-content: center; gap: clamp(14px, 2.4vw, 26px);
-      font-family: "Audiowide", ui-sans-serif, system-ui; letter-spacing: .02em; user-select: none;
-    }
-    .wordmark .o-core {
-      font-size: clamp(72px, 14vw, 180px); line-height: .8; position: relative; z-index: 3;
-    }
-    .wordmark .nx { font-size: clamp(48px, 10vw, 128px); line-height: .82; opacity: 0; transform: scale(.8); }
+    /* ---------- Logo Orbit ---------- */
+    .logo-orbit{position:relative; width:clamp(260px,46vmin,520px); aspect-ratio:1; margin:6vh auto 0; opacity:0;}
+    .logo-orbit .logo-chip{position:absolute; left:50%; top:50%; transform:rotate(var(--angle)) translate(var(--r)) rotate(calc(-1*var(--angle))); transform-origin:0 0;}
+    .logo-orbit .logo-chip .chip{background:#ffffff;}
 
-    /* Orbiters ring */
-    .ring { position: absolute; inset: 0; z-index: 2; }
-    .orbiter {
-      position: absolute; width: 44px; height: 44px; border-radius: 14px; overflow: hidden;
-      display: grid; place-items: center; background: #0b0f1a; border: 1px solid rgba(99, 179, 237, 0.25);
-      box-shadow: 0 8px 20px rgba(37,99,235,0.22), inset 0 1px 0 rgba(255,255,255,0.06);
-      transform: translate(-50%, -50%);
-    }
-    .orbiter img { width: 60%; height: 60%; object-fit: contain; filter: saturate(0) brightness(2); opacity: .95; }
+    /* Default radius + angle positions (8 logos) */
+    .logo-orbit{--r:clamp(90px,18vmin,210px)}
+    .logo-orbit .logo-chip:nth-child(1){--angle:0deg}
+    .logo-orbit .logo-chip:nth-child(2){--angle:45deg}
+    .logo-orbit .logo-chip:nth-child(3){--angle:90deg}
+    .logo-orbit .logo-chip:nth-child(4){--angle:135deg}
+    .logo-orbit .logo-chip:nth-child(5){--angle:180deg}
+    .logo-orbit .logo-chip:nth-child(6){--angle:225deg}
+    .logo-orbit .logo-chip:nth-child(7){--angle:270deg}
+    .logo-orbit .logo-chip:nth-child(8){--angle:315deg}
 
-    /* Initial polar placement (JS sets custom properties) */
-    .ring.orbiting .orbiter { animation: orbit 9s linear infinite; }
-    @keyframes orbit { to { transform: rotate(360deg) translate(var(--r)) rotate(-360deg); } }
-
-    /* --------------------------- AI Unified tagline --------------------------- */
-    .tagline {
-      position: relative; z-index: 2; margin: 24px auto 0; text-align: center;
-      font: 600 clamp(16px, 2.6vw, 24px)/1.2 ui-sans-serif, system-ui; letter-spacing: .12em; text-transform: uppercase;
-      opacity: 0; transform: translateY(10px);
-    }
-
-    /* --------------------------- Motion preferences --------------------------- */
-    @media (prefers-reduced-motion: reduce) {
-      .blue-grad { animation: none; }
-      .ring.orbiting .orbiter { animation: none; }
+    /* --------- Reduced motion: show end state --------- */
+    @media (prefers-reduced-motion: reduce){
+      .models-card,.logo-orbit{display:none !important}
+      .built-line{display:none !important}
+      .onx-word .letter{opacity:1 !important; transform:none !important}
+      .onx-tagline{opacity:1 !important}
     }
   </style>
 
-  <div class="glow" aria-hidden="true"></div>
-
-  <div class="onx-wrap">
-    <!-- 1) MODELS CARD (shows → collapses) -->
-    <div class="models" id="models-card" aria-live="polite">
-      <h3>Models</h3>
-      <div class="chips">
-        <span class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI"> GPT‑5</span>
-        <span class="chip"><img class="logo" src="deepseekLogo.svg" alt="DeepSeek"> DeepSeek</span>
-        <span class="chip"><img class="logo" src="metaLogo.svg" alt="Meta"> Llama</span>
-        <span class="chip"><img class="logo" src="googleLogo.svg" alt="Google"> Gemma</span>
-        <span class="chip"><img class="logo" src="qwenLogo.svg" alt="Qwen"> Qwen</span>
-        <span class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic"> Claude</span>
+  <div class="wrap">
+    <!-- 1) MODELS CARD → Appears then collapses -->
+    <div class="models-card" aria-label="Models">
+      <div class="hdr">Models available</div>
+      <div class="grid">
+        <div class="chip"><img src="grokLogo.svg" alt="Grok"><span>Grok</span></div>
+        <div class="chip"><img src="googleLogo.svg" alt="Google"><span>Gemini</span></div>
+        <div class="chip"><img src="metaLogo.svg" alt="Meta"><span>Llama</span></div>
+        <div class="chip"><img src="openaiLogo.svg" alt="OpenAI"><span>o3 / GPT‑4</span></div>
+        <div class="chip"><img src="anthropicLogo.svg" alt="Anthropic"><span>Claude</span></div>
+        <div class="chip"><img src="mistralLogo.svg" alt="Mistral"><span>Mistral</span></div>
       </div>
     </div>
 
-    <!-- 2) Built on the best. (appears → disappears) -->
-    <div class="built-line blue-grad" id="built-line" aria-hidden="true" style="opacity:0;">Built on the best.</div>
+    <!-- 2) Interstitial headline → Built on the best. -->
+    <h2 class="built-line" aria-live="polite"><span class="blue-gradient" style="animation:shimmer 8s ease-in-out infinite;">Built on the best.</span></h2>
 
-    <!-- 3) O → ONX with orbiters that get sucked in -->
-    <div class="stage" id="stage">
-      <div class="o-wrap">
-        <div class="ring" id="ring">
-          <!-- Replace src paths as needed. JS will position these on a circle. -->
-          <div class="orbiter" data-angle="0"><img src="grokLogo.svg" alt="Grok"></div>
-          <div class="orbiter" data-angle="60"><img src="googleLogo.svg" alt="Google"></div>
-          <div class="orbiter" data-angle="120"><img src="metaLogo.svg" alt="Meta"></div>
-          <div class="orbiter" data-angle="180"><img src="openaiLogo.svg" alt="OpenAI"></div>
-          <div class="orbiter" data-angle="240"><img src="anthropicLogo.svg" alt="Anthropic"></div>
-          <div class="orbiter" data-angle="300"><img src="deepseekLogo.svg" alt="DeepSeek"></div>
-        </div>
+    <!-- 3) ONX Stage (O → NX) & Tagline -->
+    <div class="onx-stage">
+      <div class="onx-word" aria-label="ONX wordmark">
+        <span class="letter o blue-gradient" style="animation:shimmer 10s ease-in-out infinite;">O</span>
+        <span class="letter n blue-gradient" style="animation:shimmer 10s ease-in-out infinite;">N</span>
+        <span class="letter x blue-gradient" style="animation:shimmer 10s ease-in-out infinite;">X</span>
+      </div>
+      <div class="onx-tagline blue-gradient" style="animation:shimmer 9s ease-in-out infinite;">AI Unified</div>
 
-        <div class="wordmark" aria-label="ONX wordmark">
-          <div class="o-core blue-grad" id="o-core">O</div>
-          <div class="nx blue-grad" id="n-letter">N</div>
-          <div class="nx blue-grad" id="x-letter">X</div>
-        </div>
+      <!-- 4) Logos orbiting before being pulled into the O -->
+      <div class="logo-orbit" aria-hidden="true">
+        <div class="logo-chip"><div class="chip"><img class="logo" src="grokLogo.svg" alt="Grok" width="24" height="24"><span>Grok</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google" width="24" height="24"><span>Gemini</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="metaLogo.svg" alt="Meta" width="24" height="24"><span>Llama</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI" width="24" height="24"><span>OpenAI</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic" width="24" height="24"><span>Claude</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="mistralLogo.svg" alt="Mistral" width="24" height="24"><span>Mistral</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="xaiLogo.svg" alt="xAI" width="24" height="24"><span>xAI</span></div></div>
+        <div class="logo-chip"><div class="chip"><img class="logo" src="deepseekLogo.svg" alt="DeepSeek" width="24" height="24"><span>DeepSeek</span></div></div>
       </div>
     </div>
-
-    <!-- 4) Tagline under ONX -->
-    <div class="tagline blue-grad" id="tagline">AI Unified</div>
   </div>
 
-  <!-- GSAP (CDN) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-</section>
+  <!-- GSAP + ScrollTrigger (animation starts when section enters viewport) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    (function(){
+      if(!window.gsap) return; // fail-safe
+      gsap.registerPlugin(ScrollTrigger);
 
-<script>
-(function(){
-  const startWhenReady = () => {
-    if (!window.gsap) { console.warn("GSAP not loaded; showing final state."); finalize(); return; }
+      const root = document.querySelector('#onx-sequence');
+      const models = root.querySelector('.models-card');
+      const built = root.querySelector('.built-line');
+      const orbit = root.querySelector('.logo-orbit');
+      const oLetter = root.querySelector('.onx-word .letter.o');
+      const nLetter = root.querySelector('.onx-word .letter.n');
+      const xLetter = root.querySelector('.onx-word .letter.x');
+      const tagline = root.querySelector('.onx-tagline');
+      const chips = gsap.utils.toArray('.logo-orbit .logo-chip');
 
-    const tl = gsap.timeline({ defaults: { ease: "back.out(1.4)", duration: 0.8 } });
+      // Initial states
+      gsap.set([built, orbit], {autoAlpha:0});
+      gsap.set([nLetter, xLetter], {autoAlpha:0, scale:0.6});
+      gsap.set(tagline, {autoAlpha:0, y:12});
 
-    const models = document.getElementById('models-card');
-    const built = document.getElementById('built-line');
-    const ring = document.getElementById('ring');
-    const orbiters = Array.from(ring.querySelectorAll('.orbiter'));
-    const oCore = document.getElementById('o-core');
-    const nL = document.getElementById('n-letter');
-    const xL = document.getElementById('x-letter');
-    const tagline = document.getElementById('tagline');
+      // Orbit gentle spin before suction
+      const orbitSpin = gsap.to(orbit, {rotate:360, ease:'none', repeat:-1, duration:20, paused:true, transformOrigin:'50% 50%'});
 
-    // --- Place orbiters on a circle and prep state ---
-    const ringBox = ring.getBoundingClientRect();
-    const r = Math.min(ringBox.width, ringBox.height) * 0.32; // orbit radius
-    orbiters.forEach(ob => {
-      const ang = (+ob.dataset.angle || 0) * Math.PI / 180;
-      const ox = Math.cos(ang) * r; const oy = Math.sin(ang) * r;
-      // Using CSS transform compose: rotate(angle) translate(r) rotate(-angle)
-      ob.style.setProperty('--r', r + 'px');
-      ob.style.left = '50%'; ob.style.top = '50%';
-      // initial transform at angle
-      ob.style.transform = `rotate(${ob.dataset.angle || 0}deg) translate(${r}px) rotate(-${ob.dataset.angle || 0}deg)`;
-    });
+      // Helper to animate all chips into the center of the O
+      function suckLogosIntoO(){
+        // compute center of the "O"
+        const oRect = oLetter.getBoundingClientRect();
+        const oCx = oRect.left + oRect.width/2;
+        const oCy = oRect.top + oRect.height/2;
 
-    // Prep elements
-    gsap.set(built, { opacity: 0, y: 20, filter: 'blur(2px)' });
-    gsap.set([nL, xL], { opacity: 0, scale: 0.8 });
-    gsap.set(tagline, { opacity: 0, y: 10 });
-
-    // 1) Show Models card
-    tl.fromTo(models, { opacity: 0, y: 24, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.6)' })
-      .to(models, { duration: 0.8, ease: 'power1.out' }) // tiny hold via empty tween
-      // Collapse card (scaleY + height trick)
-      .to(models, { transformOrigin: 'top center', scaleY: 0.6, duration: 0.32, ease: 'power2.in' })
-      .to(models, { height: 0, opacity: 0, paddingTop: 0, paddingBottom: 0, marginTop: 0, duration: 0.48, ease: 'power2.in', onComplete(){ models.style.display='none'; }}, '<');
-
-    // 2) Built on the best. (in → out)
-    tl.to(built, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'back.out(1.8)' })
-      .to(built, { opacity: 0, y: -16, filter: 'blur(4px)', duration: 0.55, ease: 'power2.in' }, '+=0.7');
-
-    // 3) Show O and begin orbit
-    tl.call(() => ring.classList.add('orbiting'))
-      .fromTo(oCore, { opacity: 0, y: 18, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.8)' }, '<');
-
-    // 3b) Suck orbiters into the O (center) one-by-one
-    tl.add(() => {
-      const coreBox = oCore.getBoundingClientRect();
-      const cx = coreBox.left + coreBox.width/2;
-      const cy = coreBox.top + coreBox.height/2;
-
-      // Stop orbit animation to capture real positions
-      ring.classList.remove('orbiting');
-
-      // Stagger the pulls
-      gsap.to(orbiters, {
-        duration: 0.55,
-        ease: 'power2.in',
-        opacity: 0,
-        scale: 0.2,
-        stagger: 0.2,
-        onStart: function(){
-          // during the tween, compute dx/dy once per element
-          this.targets().forEach(el => {
-            const b = el.getBoundingClientRect();
-            const ex = b.left + b.width/2;
-            const ey = b.top + b.height/2;
-            const dx = cx - ex; const dy = cy - ey;
-            gsap.set(el, { x: "+=" + dx, y: "+=" + dy });
+        chips.forEach((chip, i) => {
+          const r = chip.getBoundingClientRect();
+          const cX = r.left + r.width/2;
+          const cY = r.top + r.height/2;
+          const dx = oCx - cX;
+          const dy = oCy - cY;
+          gsap.to(chip, {
+            x: "+=" + dx,
+            y: "+=" + dy,
+            scale: 0.2,
+            autoAlpha: 0,
+            ease: 'back.in(1.4)',
+            duration: 0.9,
+            delay: i * 0.06
           });
+        });
+      }
+
+      const tl = gsap.timeline({
+        paused:true,
+        defaults:{ease:'power2.out'},
+        scrollTrigger:{
+          trigger: root,
+          start: 'top 70%',
+          once: true,
+          onEnter: () => tl.play()
         }
       });
-    }, "+=0.2");
 
-    // 3c) O bounce → reveal NX on landing
-    tl.to(oCore, { y: -40, duration: 0.35, ease: 'power2.out' }, "+=0.6")
-      .to(oCore, {
-        y: 0, duration: 0.45, ease: 'bounce.out',
-        onComplete(){
-          gsap.to([nL, xL], { opacity: 1, scale: 1, duration: 0.48, ease: 'back.out(2)', stagger: 0.08 });
+      // 1) Show models card (boomerang in)
+      tl.from(models, {y:40, opacity:0, scale:0.96, duration:0.7, ease:'back.out(1.4)'});
+      // hold briefly, then collapse upward
+      tl.to(models, {scaleY:0, opacity:0, duration:0.65, ease:'power3.inOut'}, "+=0.6");
+
+      // 2) Built on the best. (fade up then away)
+      tl.to(built, {autoAlpha:1, y:0, duration:0.5}, ">-0.1");
+      tl.to(built, {autoAlpha:0, y:-18, duration:0.5, ease:'power2.in'}, "+=1.1");
+
+      // 3) Orbit appears & spins a moment
+      tl.to(orbit, {autoAlpha:1, duration:0.001});
+      tl.add(() => orbitSpin.play(), ">-0.2");
+      tl.to(orbit, {scale:1.02, duration:0.5, ease:'sine.out'});
+
+      // 4) Suck logos into O
+      tl.add(() => {
+        suckLogosIntoO();
+        // stop the spin as they start getting pulled in
+        orbitSpin.pause();
+      }, ">-0.15");
+
+      // 5) O bounce (slap) then print NX
+      tl.to(oLetter, {y:-38, duration:0.38, ease:'power2.out'}, "+=0.4");
+      tl.to(oLetter, {y:0, duration:0.55, ease:'bounce.out',
+        onStart: () => {
+          // Print N then X as the O slaps down
+          gsap.to(nLetter, {autoAlpha:1, scale:1, duration:0.35, ease:'back.out(1.6)'});
+          gsap.to(xLetter, {autoAlpha:1, scale:1, duration:0.35, ease:'back.out(1.6)', delay:0.1});
         }
       });
 
-    // 4) Tagline under ONX
-    tl.to(tagline, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.6)' }, "+=0.1");
+      // 6) Tagline appears
+      tl.to(tagline, {autoAlpha:1, y:0, duration:0.55, ease:'power2.out'}, "+=0.1");
 
-    // Fire timeline when section is in view; if already visible, start immediately
-    const root = document.getElementById('onx-hero');
-    const play = () => { if (!tl._hasPlayed) { tl._hasPlayed = true; tl.play(0); } };
-
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) { play(); io.disconnect(); } });
-    }, { root: null, threshold: 0.35 });
-
-    io.observe(root);
-  };
-
-  const finalize = () => {
-    // Minimal static fallback if GSAP missing
-    document.getElementById('built-line').style.opacity = 1;
-    document.getElementById('o-core').style.opacity = 1;
-    document.getElementById('n-letter').style.opacity = 1;
-    document.getElementById('x-letter').style.opacity = 1;
-    document.getElementById('tagline').style.opacity = 1;
-  };
-
-  if (document.readyState === 'complete' || document.readyState === 'interactive') startWhenReady();
-  else document.addEventListener('DOMContentLoaded', startWhenReady);
-})();
-</script>
+      // Safety: recalc positions on resize before play if not started
+      let played = false;
+      tl.eventCallback('onStart', () => { played = true; });
+      window.addEventListener('resize', () => { if(!played) return; });
+    })();
+  </script>
+</section>
 
 
 
