@@ -3148,3 +3148,590 @@
     })();
   </script>
 </div>
+
+
+
+
+
+
+
+
+
+<!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
+<!-- ──────────────────────────Showcase Video Section───────────────────────────────────── -->
+<!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
+<div id="onx-card-reveal" class="padTop"
+     data-speed="1.6"
+     data-menu-scale="1.5"
+     data-overshoot-x-enabled="false"
+     data-overshoot-y-enabled="true"
+     data-overshoot-x="1.5"
+     data-overshoot-y="1.5"
+     data-peak-x="0.58"
+     data-peak-y="0.60"
+     style="max-width:100%; margin:0 auto;">
+
+  <style>
+    #onx-card-reveal * { box-sizing: border-box; }
+    #onx-stage{
+      position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
+      border-radius:28px; overflow:hidden;
+      /* Stage background comes from gradient utility classes below */
+      box-shadow: none;
+      will-change: transform;
+      transform-origin:center top; /* mobile will scale from top-center */
+    }
+    #onx-stage canvas{width:100%; height:100%; display:block;}
+     #onx-controls{
+      display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
+      font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
+      touch-action: manipulation;
+    }
+    #onx-controls button{
+      border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
+      background:#000; color:#fff; font-weight:600; letter-spacing:.2px;
+      box-shadow:0 6px 18px rgba(0,0,0,.12);
+      transition:transform .15s ease, box-shadow .2s ease;
+    }
+    #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
+
+    /* MOBILE ONLY */
+    @media (max-width: 640px){
+      #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
+      #onx-controls{ margin-top:10px; }
+      #onx-controls button{ padding:9px 14px; font-size:14px; }
+    }
+  </style>
+
+  <!-- Gradient/animation lives on the stage container -->
+  <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
+
+  <div id="onx-controls"></div> 
+  <div id="onx-play"></div> 
+
+  <script>
+    (()=>{ 'use strict';
+
+      // ===== ELEMENTS =====
+      const host    = document.getElementById('onx-card-reveal');
+      const stageEl = document.getElementById('onx-stage');
+      const canvas  = document.getElementById('onx-canvas');
+
+      // ===== UTILS =====
+      const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+      const ASPECT = 16/9;
+
+      const isMobile = () =>
+        window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+
+      const vp = () => {
+        const vv = window.visualViewport;
+        if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
+        return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
+      };
+
+      // ===== OPTIONS =====
+      const TEMPO = {
+        speed: parseFloat(host.dataset.speed) || 1.6,
+        menuScale: parseFloat(host.dataset.menuScale) || 1.5,
+        overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false,
+        overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true,
+        overshootX: parseFloat(host.dataset.overshootX) || 1.5,
+        overshootY: parseFloat(host.dataset.overshootY) || 1.5,
+        peakX: parseFloat(host.dataset.peakX) || 0.58,
+        peakY: parseFloat(host.dataset.peakY) || 0.60
+      };
+
+      // ===== CANVAS CONFIG (mobile perf caps) =====
+      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9
+      const dprRaw = window.devicePixelRatio || 1;
+      let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
+
+      canvas.width  = CONFIG.w * dpr;
+      canvas.height = CONFIG.h * dpr;
+      const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
+      ctx.scale(dpr, dpr);
+      ctx.imageSmoothingEnabled = true;
+
+      // Transparent BG buffer (kept for structure; now just clears)
+      let BG_CANVAS = document.createElement('canvas');
+      BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
+      let BG_CTX = BG_CANVAS.getContext('2d');
+      (function cacheBG(){
+        BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); // fully transparent
+      })();
+
+      // Helper: clear the main canvas every frame (prevents trails)
+      function clearStage(){
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr);
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
+
+      // ===== DESIGN BASE / STYLE (recomputable) =====
+      const DESIGN = {
+        padX: 20, padY: 20, rowGap: 16, subGap: 6,
+        titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
+        minW: 360, maxW: 720, stageMargin: 56
+      };
+      const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
+
+      let STYLE = buildStyle();
+      function buildStyle(){
+        const SCALE = getMenuScale();
+        return {
+          padX: Math.round(DESIGN.padX * SCALE),
+          padY: Math.round(DESIGN.padY * SCALE),
+          rowGap: Math.round(DESIGN.rowGap * SCALE),
+          subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
+          titleSize: DESIGN.titleSize * SCALE,
+          subSize: DESIGN.subSize * SCALE,
+          titleWeight: DESIGN.titleWeight,
+          subWeight: DESIGN.subWeight,
+          minW: DESIGN.minW * SCALE,
+          maxW: DESIGN.maxW * SCALE,
+          stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
+        };
+      }
+
+      // ===== MODELS (content unchanged) =====
+      const rows = [
+        { title:'ONX FAST', sub:'Fastest for instant answers' },
+        { title:'ONX',      sub:'Default model' },
+        { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
+      ];
+
+      // ===== HELPERS =====
+      const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
+      const lerp=(a,b,t)=>a+(b-a)*t;
+      const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
+      const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+      function boomerang(t, factor=1.10, peak=0.55){
+        if (t <= 0) return 0;
+        if (t >= 1) return 1;
+        if (t < peak) return easeOutCubic(t/peak) * factor;
+        const u = (t - peak) / (1 - peak);
+        return 1 + (factor - 1) * (1 - easeOutCubic(u));
+      }
+      function setFont(weight,size){
+        ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
+      }
+      function roundedRect(ctx,x,y,w,h,r){
+        const rr=Math.min(r,w/2,h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+rr,y);
+        ctx.arcTo(x+w,y,x+w,y+h,rr);
+        ctx.arcTo(x+w,y+h,x,y+h,rr);
+        ctx.arcTo(x,y+h,x,y,rr);
+        ctx.arcTo(x,y,x+w,y,rr);
+        ctx.closePath();
+      }
+
+      // ===== TIMINGS =====
+      const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
+      const S = v => v / TEMPO.speed;
+
+      // ===== LAYOUT =====
+      function measureFinalLayout(){
+        let maxTextW = 0;
+        setFont(800, STYLE.titleSize);
+        rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+        setFont(500, STYLE.subSize);
+        rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+
+        const contentW = Math.ceil(maxTextW);
+        const cardW = Math.min(
+          clamp(contentW + STYLE.padX*2, STYLE.minW, STYLE.maxW),
+          CONFIG.w - 2*STYLE.stageMargin
+        );
+
+        const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
+        const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
+        const cardH = Math.min(
+          Math.ceil(contentH + STYLE.padY*2),
+          CONFIG.h - 2*STYLE.stageMargin
+        );
+
+        const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+        return { cardW, cardH, rowHeights, radius };
+      }
+      let layout = measureFinalLayout();
+
+      // Seed shape
+      const seed = { w: 120, h: 80, r: 20 };
+
+      // Row schedule
+      const ROW_POP_DUR = S(BASE.rowPop);
+      const ROW_PAUSE   = S(BASE.rowPause);
+      const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
+
+      // MOBILE tuning
+      const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
+      const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
+
+      // ===== MOBILE AUTO-FIT SCALE =====
+      function controlHeight(){
+        const ctrl = document.getElementById('onx-controls');
+        return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
+      }
+      function applyMobileScale(){
+        if (!isMobile()){
+          stageEl.style.transform = '';
+          stageEl.style.transformOrigin = 'center top';
+          return;
+        }
+        const { vw, vh, top, bottom } = vp();
+        const safeSide = 16;
+        const safeTop  = 16 + top;
+        const safeBot  = 16 + bottom;
+        const ctrlH    = controlHeight();
+        const hostMargins = 24 + 28;
+
+        const baseW = Math.min(900, 0.92 * vw);
+        const baseH = baseW / ASPECT;
+
+        const availW = Math.max(240, vw - 2*safeSide);
+        const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+
+        const scaleW = availW / baseW;
+        const scaleH = availH / baseH;
+        const desired = 2.0;
+        const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH));
+
+        stageEl.style.transform = `scale(${scale})`;
+        stageEl.style.transformOrigin = 'center top';
+      }
+
+      // --------- Phase A: Card build ----------
+      function renderCard(t){
+        clearStage();                       // <— crucial: clear frame
+        ctx.drawImage(BG_CANVAS, 0, 0);     // transparent buffer (no fill)
+
+        const widthEnd = S(BASE.widthGrow);
+        const tw = clamp(t / widthEnd);
+        const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
+
+        const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
+
+        let contentVisibleH = 0, visibleRows = 0, poppingIndex = -1, poppingProgress = 0;
+        for (let i=0; i<rows.length; i++){
+          const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
+          if (local <= 0) break;
+          visibleRows++;
+          if (local < 1){
+            poppingIndex = i;
+            poppingProgress = clamp(local);
+            const rowScale = boomerang(poppingProgress, 1.08, 0.55);
+            contentVisibleH += layout.rowHeights[i] * rowScale;
+          } else {
+            contentVisibleH += layout.rowHeights[i];
+          }
+        }
+        if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
+
+        let springY = 1;
+        if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.06, 0.5);
+
+        const h = Math.max(
+          seed.h,
+          Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin)
+        );
+
+        const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w));
+        const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
+        const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
+
+        // Card
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
+        ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
+        ctx.shadowOffsetY = lerp(6, 15, growT);
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, x, y, w, h, r); ctx.fill();
+        ctx.shadowColor='transparent';
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+        // Content
+        ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
+        const contentX = x + STYLE.padX;
+        let cursorY = y + STYLE.padY;
+
+        for (let i=0; i<rows.length; i++){
+          const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
+          if (local <= 0) break;
+
+          const pr = clamp(local);
+          const a  = easeOutCubic(pr);
+          const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06;
+          const dy = lerp(10, 0, a);
+          const blurPx = (1 - a) * 1.5 * MOBILE_BLUR_SCALE;
+
+          ctx.save();
+          ctx.translate(contentX, cursorY + dy);
+          ctx.scale(s, s);
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.globalAlpha = a;
+          if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
+
+          setFont(STYLE.titleWeight, STYLE.titleSize);
+          ctx.fillStyle = '#0b0b10';
+          ctx.fillText(rows[i].title, 0, STYLE.titleSize);
+
+          if (rows[i].sub){
+            setFont(STYLE.subWeight, STYLE.subSize);
+            ctx.fillStyle = '#5f646c';
+            ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
+          }
+          ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
+
+          cursorY += layout.rowHeights[i] + STYLE.rowGap;
+        }
+        ctx.restore();
+
+        const lastEnd = rowStartTimes[rows.length - 1] + ROW_POP_DUR;
+        const total = lastEnd + S(BASE.holdA) + S(BASE.holdB);
+        return { total, x, y, w, h, r };
+      }
+
+      // --------- Phase B: Morph card → chat bubble ----------
+      function renderMorphCardToBubble(startBox, t){
+        clearStage();                    // <— clear frame
+        ctx.drawImage(BG_CANVAS, 0, 0);  // transparent buffer
+
+        const mobile = isMobile();
+
+        const maxBubbleW = CONFIG.w - 2*STYLE.stageMargin;
+        const targetBubbleW = mobile
+          ? Math.min(maxBubbleW, Math.max(520, startBox.w * 1.35))
+          : Math.max(startBox.w * 1.8, 1100);
+        const bubbleW = Math.round(Math.min(maxBubbleW, targetBubbleW));
+        const bubbleH = Math.round(mobile ? Math.min(96, 104) : Math.min(100 * getMenuScale(), 130));
+        const bubbleR = Math.round(bubbleH / 2);
+
+        const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
+        const heightF = TEMPO.overshootYEnabled ? boomerang(t, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(t);
+        const radiusF = easeInOutCubic(t);
+
+        const w = startBox.w + (bubbleW - startBox.w) * widthF;
+        const h = startBox.h + (bubbleH - startBox.h) * heightF;
+        const r = startBox.r + (bubbleR - startBox.r) * radiusF;
+        const x = (CONFIG.w - w)/2;
+        const y = (CONFIG.h - h)/2 + 30 * radiusF;
+
+        // Shape
+        ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
+        ctx.shadowBlur = lerp(12, 22, radiusF) * MOBILE_SHADOW_SCALE;
+        ctx.shadowOffsetY = lerp(10, 14, radiusF);
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, x, y, w, h, r); ctx.fill();
+        ctx.shadowColor='transparent';
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+        // Fade out ghost rows
+        const contentFadeOut = 1 - clamp(t / 0.25);
+        if (contentFadeOut > 0){
+          ctx.save();
+          roundedRect(ctx, x, y, w, h, r); ctx.clip();
+          const contentX = x + STYLE.padX, contentTop = y + STYLE.padY;
+          setFont(STYLE.titleWeight, STYLE.titleSize);
+          ctx.globalAlpha = 0.4 * contentFadeOut; ctx.fillStyle = '#0b0b10';
+          const ghostLines = Math.min(3, rows.length);
+          for (let i=0;i<ghostLines;i++){
+            let yRow = contentTop;
+            for (let j=0;j<i;j++) yRow += layout.rowHeights[j] + STYLE.rowGap;
+            ctx.fillText(rows[i].title, contentX, yRow + STYLE.titleSize);
+          }
+          ctx.restore();
+        }
+
+        // Minimal UI bits at end (desktop only)
+        const uiAlpha = clamp((t - 0.6)/0.25);
+        if (uiAlpha > 0 && !mobile){
+          const plusCx = x + 28, plusCy = y + h/2;
+          ctx.save();
+          ctx.globalAlpha = uiAlpha;
+          ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+          ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7);
+          ctx.stroke();
+          const micCx = x + w - 36, micCy = y + h/2;
+          ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+          ctx.restore();
+        }
+
+        const bx = (CONFIG.w - bubbleW)/2;
+        const by = (CONFIG.h - bubbleH)/2 + 30;
+        return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
+      }
+
+      // --------- Phase C: Idle bubble with blinking caret ----------
+      let caretLoop = null;
+      function startBubbleIdle(bubble){
+        let rafId = null;
+        const caretPeriod = 900; // ms
+        const mobile = isMobile();
+
+        function loop(nowMS){
+          clearStage();                  // <— clear frame
+          ctx.drawImage(BG_CANVAS, 0, 0);
+
+          // Bubble
+          ctx.shadowColor = 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 20 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 14;
+          ctx.fillStyle = '#ffffff';
+          roundedRect(ctx, bubble.x, bubble.y, bubble.w, bubble.h, bubble.r); ctx.fill();
+          ctx.shadowColor='transparent';
+          ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+
+          // Icons (desktop only)
+          if (!mobile){
+            const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
+            ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
+            ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
+            const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
+            ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+          }
+
+          // Placeholder text + caret
+          const textLeft = mobile ? (bubble.x + 20) : (bubble.x + 56);
+          const textY = bubble.y + bubble.h/2 + (mobile ? 8 : 10);
+          const baseText = 'Ask the impossible';
+          setFont(600, mobile ? Math.max(16, 16 * getMenuScale()) : Math.max(18, 18 * getMenuScale()));
+          ctx.fillStyle = '#8a8f96';
+          ctx.fillText(baseText, textLeft, textY);
+
+          const showCaret = Math.floor((nowMS % (caretPeriod)) / (caretPeriod/2)) === 0;
+          if (showCaret){
+            const textWidth = ctx.measureText(baseText).width;
+            const cx = textLeft + textWidth + 6;
+            const caretH = mobile ? 20 : 24;
+            const cy = bubble.y + bubble.h/2 - caretH/2;
+            ctx.fillStyle = '#8a8f96';
+            ctx.fillRect(cx, cy, 2, caretH);
+          }
+          rafId = requestAnimationFrame(loop);
+        }
+        rafId = requestAnimationFrame(loop);
+        caretLoop = { stop: ()=> cancelAnimationFrame(rafId) };
+      }
+
+      // --------- Orchestrator ----------
+      let isAnimating = false;
+      let waitTimer = null;
+
+      function play(){
+        if (isAnimating) return;
+        isAnimating = true;
+        if (caretLoop){ caretLoop.stop(); caretLoop = null; }
+        if (waitTimer){ clearTimeout(waitTimer); waitTimer = null; }
+
+        const btn = document.getElementById('onx-play'); if (btn) btn.disabled = true;
+        const start = performance.now();
+
+        function stepA(now){
+          const t = (now - start)/1000;
+          const A = renderCard(t);
+          if (t < A.total){ requestAnimationFrame(stepA); }
+          else {
+            const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
+            waitTimer = setTimeout(()=>{
+              const morphStart = performance.now();
+              function stepB(now2){
+                const t2 = (now2 - morphStart)/1000 / S(BASE.morph);
+                const B = renderMorphCardToBubble(finalBox, clamp(t2));
+                if (t2 < 1){ requestAnimationFrame(stepB); }
+                else {
+                  startBubbleIdle({ x: B.bubble.x, y: B.bubble.y, w: B.bubble.w, h: B.bubble.h, r: B.bubble.r });
+                  isAnimating = false; if (btn) btn.disabled = false;
+                }
+              }
+              requestAnimationFrame(stepB);
+            }, 1000);
+          }
+        }
+        requestAnimationFrame(stepA);
+      }
+
+      // First static frame (clean)
+      clearStage();
+      renderCard(0);
+
+      // Manual controls
+      document.getElementById('onx-play').addEventListener('click', play, { passive: true });
+
+      // Autoplay when section center visible
+      let autoplayed = false;
+      function centerIsVisible(el){
+        const rect = el.getBoundingClientRect();
+        const vpCenterY = (window.visualViewport ? window.visualViewport.height : window.innerHeight) / 2;
+        return (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
+      }
+      function tryAutoplay(){
+        if (!autoplayed && !isAnimating && centerIsVisible(stageEl)) {
+          autoplayed = true;
+          play();
+        }
+      }
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
+      }, { root: null, threshold: 0.1 });
+      io.observe(stageEl);
+
+      // Initial mobile fit
+      applyMobileScale();
+
+      // Resize / orientation / viewport chrome changes
+      let rid = null;
+      function rebuildIfNeeded(){
+        applyMobileScale();
+
+        const NOW_MOBILE = isMobile();
+        const newCONFIG = NOW_MOBILE ? { w:1024, h:576 } : { w:1920, h:1080 };
+        const newDPR = NOW_MOBILE ? Math.min(1.15, window.devicePixelRatio || 1) : Math.max(1, window.devicePixelRatio || 1);
+
+        if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h || Math.abs(newDPR - dpr) > 0.001){
+          CONFIG = newCONFIG; dpr = newDPR;
+          canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
+          ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
+
+          // Rebuild transparent BG buffer
+          BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
+          BG_CTX = BG_CANVAS.getContext('2d');
+          BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
+        }
+
+        // Update style & layout
+        STYLE = buildStyle();
+        layout = measureFinalLayout();
+
+        clearStage();
+        renderCard(0);
+        tryAutoplay();
+      }
+
+      window.addEventListener('resize', ()=>{
+        if (caretLoop){ caretLoop.stop(); caretLoop = null; }
+        cancelAnimationFrame(rid);
+        rid = requestAnimationFrame(rebuildIfNeeded);
+      }, { passive: true });
+
+      if (window.visualViewport){
+        window.visualViewport.addEventListener('resize', ()=>{
+          cancelAnimationFrame(rid);
+          rid = requestAnimationFrame(rebuildIfNeeded);
+        }, { passive: true });
+        window.visualViewport.addEventListener('scroll', ()=>{
+          cancelAnimationFrame(rid);
+          rid = requestAnimationFrame(applyMobileScale);
+        }, { passive: true });
+      }
+
+      window.addEventListener('scroll', tryAutoplay, { passive: true });
+    })();
+  </script>
+</div>

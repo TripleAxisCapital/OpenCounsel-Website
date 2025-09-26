@@ -836,7 +836,7 @@
 
 
 
-<!-- =============================== ONX Sequence (Apple-style, no chat bar) =============================== -->
+<!-- =============================== ONX Sequence (Apple-style, blue gradient kept) =============================== -->
 <section id="onx-sequence" aria-label="ONX launch sequence">
   <style>
     /* Audiowide for ONX */
@@ -848,7 +848,11 @@
       --ink:#0B0B0C;
       --muted:#6b7280;
       --line:#E5E7EB;
-      --accent:#1463FF;                /* deep apple-like blue */
+
+      /* Blue gradient tokens (your style) */
+      --c1:#1463FF;
+      --c2:#4DB2FF;
+
       --chip:#0b0b0c08;
       --radius: clamp(80px, 18vw, 140px); /* orbit radius */
       --boomerang: cubic-bezier(.2,.7,.1,1);
@@ -856,15 +860,37 @@
       color:var(--ink);
       position:relative;
       overflow:hidden;
+      padding: 8vh 0;
+    }
+
+    /* ---------- Shared blue gradient + breathing/shimmer ---------- */
+    .blue-text{
+      background: linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
+      background-size: 220% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: ws-shimmer 8s ease-in-out infinite, ws-breathe 7s ease-in-out infinite;
+    }
+    @keyframes ws-shimmer{
+      0%{ background-position: 0% 50% }
+      50%{ background-position: 100% 50% }
+      100%{ background-position: 0% 50% }
+    }
+    @keyframes ws-breathe{
+      0%  { filter: drop-shadow(0 0 0 rgba(20,99,255,0)); transform: translateZ(0) }
+      50% { filter: drop-shadow(0 8px 24px rgba(20,99,255,.35)); transform: translateZ(0) }
+      100%{ filter: drop-shadow(0 0 0 rgba(20,99,255,0)); transform: translateZ(0) }
     }
 
     /* ---------- Stage layout ---------- */
     .onx-stage{
       max-width: min(1100px, 92vw);
-      margin: 12vh auto;
+      margin: 0 auto;
       display:grid;
       place-items:center;
       text-align:center;
+      gap: 4vh;
     }
 
     /* ---------- Models Card ---------- */
@@ -881,10 +907,11 @@
     }
     .models-head{
       font-size: clamp(18px, 2.2vw, 22px);
-      font-weight:600;
+      font-weight:700;
       letter-spacing:.2px;
       margin-bottom:12px;
     }
+    .models-head.blue-text{ display:inline-block }
     .models-grid{
       display:grid;
       grid-template-columns: repeat(6, minmax(0,1fr));
@@ -903,15 +930,16 @@
       padding: 10px 12px;
       height: 52px; width: 120px;
       backdrop-filter: blur(2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
     }
     .chip img.logo{ max-height: 28px; max-width: 96px; object-fit: contain; }
 
     /* ---------- Interstitial sentence ---------- */
     .built-line{
       font-size: clamp(22px, 4vw, 40px);
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: .2px;
-      margin: 10vh 0 2vh;
+      margin: 6vh 0 0;
       opacity:0; transform: translateY(16px);
       will-change: transform, opacity;
     }
@@ -931,29 +959,29 @@
       font-weight: 400;
       font-size: clamp(140px, 18vw, 220px);
       line-height: 1;
-      color: var(--ink);
       transform: translateY(6px);
       will-change: transform;
       z-index: 2;
       pointer-events:none;
       user-select:none;
     }
+    /* Keep your blue gradient on the O too */
+    .big-o.blue-text{ display:inline-block }
 
-    /* Orbiters group spins; each orbiter positioned by rotate() translate(R) */
+    /* Orbiters spin; each orbiter positioned by rotate() translate(R) */
     .orbiters{
       position:absolute; inset:0; display:block;
-      z-index: 3; pointer-events:none;
+      z-index: 1; /* keep slightly behind O for clarity */
       animation: orbit 16s linear infinite;
     }
     @keyframes orbit{
       from{ transform: rotate(0deg); }
       to  { transform: rotate(360deg); }
     }
-
     .orbiter{
       position:absolute; top:50%; left:50%;
       transform: translate(-50%,-50%);
-      will-change: transform;
+      will-change: transform, opacity, filter;
     }
     .orbiter .chip{
       width: 84px; height: 48px; padding:8px 10px; border-radius:12px;
@@ -962,7 +990,7 @@
     }
     .orbiter .logo{ max-height:22px; max-width:70px; }
 
-    /* NX reveal */
+    /* NX reveal (blue gradient kept) */
     .nx{
       font-family:"Audiowide", ui-sans-serif, system-ui;
       font-size: clamp(48px, 8vw, 90px);
@@ -970,6 +998,7 @@
       opacity:0; transform: translateY(12px) scaleY(.92);
       will-change: transform, opacity;
     }
+    .nx.blue-text{ display:inline-block }
 
     /* Tagline */
     .tagline{
@@ -979,17 +1008,27 @@
       opacity:0; transform: translateY(10px);
       will-change: transform, opacity;
     }
+    .tagline.blue-text{
+      /* subtle, lighter gradient feel for the tagline */
+      background: linear-gradient(120deg, var(--c2) 20%, var(--c1) 50%, var(--c2) 80%);
+      background-size: 220% 100%;
+      -webkit-background-clip:text;
+      background-clip:text;
+      color: transparent;
+      animation: ws-shimmer 10s ease-in-out infinite, ws-breathe 9s ease-in-out infinite;
+    }
 
-    /* Prefer reduced motion */
+    /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
       .orbiters{ animation: none; }
+      .blue-text{ animation: none; }
     }
   </style>
 
   <div class="onx-stage">
     <!-- 1) MODELS CARD -->
     <div class="models-card" id="modelsCard">
-      <div class="models-head">Models</div>
+      <div class="models-head blue-text">Models</div>
       <div class="models-grid">
         <!-- Replace logo src paths with your own -->
         <div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div>
@@ -1002,12 +1041,12 @@
     </div>
 
     <!-- 2) INTERSTITIAL SENTENCE -->
-    <div class="built-line" id="builtLine">Built on the best.</div>
+    <div class="built-line blue-text" id="builtLine">Built on the best.</div>
 
     <!-- 3) O + ORBIT + NX + TAGLINE -->
     <div class="onx-stack">
       <div class="o-field" id="oField" aria-live="polite">
-        <div class="big-o" id="bigO">O</div>
+        <div class="big-o blue-text" id="bigO">O</div>
 
         <!-- Orbiters (angles set in JS; sucked into center later) -->
         <div class="orbiters" id="orbiters">
@@ -1021,8 +1060,8 @@
         </div>
       </div>
 
-      <div class="nx" id="nx">N&nbsp;&nbsp;X</div>
-      <div class="tagline" id="tagline">AI&nbsp;Unified</div>
+      <div class="nx blue-text" id="nx">N&nbsp;&nbsp;X</div>
+      <div class="tagline blue-text" id="tagline">AI&nbsp;Unified</div>
     </div>
   </div>
 
@@ -1046,7 +1085,7 @@
         node.style.transform = `translate(-50%,-50%) rotate(${angle}deg) translate(${R}px) rotate(${-angle}deg)`;
       });
 
-      // Promise helpers
+      // Helpers
       const wait = (ms)=> new Promise(r=> setTimeout(r, ms));
       const animate = (el, keyframes, options) =>
         new Promise(res => {
@@ -1054,31 +1093,30 @@
           a.addEventListener('finish', res, {once:true});
         });
 
-      // Boomerang-ish easing
+      // Boomerang easing (kept)
       const BOOM = 'cubic-bezier(.2,.7,.1,1)';
 
       async function playSequence(){
-        // 0) Safety: only once
         if(root.dataset.ran === '1') return;
         root.dataset.ran = '1';
 
         // 1) MODELS CARD in
-        modelsCard.style.opacity = 1; // ensure we can animate from this base
+        modelsCard.style.opacity = 1;
         await animate(modelsCard, [
           {opacity:0, transform:'translateY(14px) scale(.98)'},
-          {opacity:1, transform:'translateY(0) scale(1)'}
+          {opacity:1, transform:'translateY(0)   scale(1)'}
         ], {duration:650, easing:BOOM, fill:'forwards'});
 
-        // Hold briefly then collapse away
+        // Hold briefly then collapse (boomerang-style)
         await wait(900);
         await animate(modelsCard, [
-          {transform:'scaleY(1)', opacity:1},
-          {transform:'scaleY(.94)', opacity:.9, offset:.3, filter:'blur(0px)'},
-          {transform:'scaleY(0)', opacity:0, filter:'blur(2px)'}
-        ], {duration:520, easing:BOOM, fill:'forwards', composite:'replace'});
+          {transform:'scaleY(1)',   opacity:1},
+          {transform:'scaleY(.94)', opacity:.9, offset:.35, filter:'blur(0px)'},
+          {transform:'scaleY(0)',   opacity:0,  filter:'blur(2px)'}
+        ], {duration:520, easing:BOOM, fill:'forwards'});
 
-        // 2) "Built on the best." in → out
-        await wait(120);
+        // 2) "Built on the best." in → out (blue gradient retained by class)
+        await wait(140);
         await animate(builtLine, [
           {opacity:0, transform:'translateY(16px)'},
           {opacity:1, transform:'translateY(0)'}
@@ -1089,16 +1127,12 @@
           {opacity:0, transform:'translateY(-10px)'}
         ], {duration:420, easing:BOOM, fill:'forwards'});
 
-        // 3) Orbiters run, then SUCK into the O center (staggered)
-        // Let them spin a touch before the pull
+        // 3) Orbiters spin a touch, then SUCK into the O center (staggered)
         await wait(250);
-
-        // Staggered suck into center
-        const stagger = 120; // ms between each
+        const stagger = 120; // ms between each — organic cadence
         for (let i=0; i<orbiters.length; i++){
           const node = orbiters[i];
           const ang = parseFloat(node.dataset.angle||'0');
-          // animate from current rotate/translate(R) to translate(0)
           node.animate([
             { transform: `translate(-50%,-50%) rotate(${ang}deg) translate(${R}px) rotate(${-ang}deg) scale(1)`,
               filter: 'blur(0px)', opacity:1 },
@@ -1108,31 +1142,30 @@
           await wait(stagger);
         }
 
-        // 4) O bounces (like boomerang slap)
-        // little up, then hard down + settle
+        // 4) O boomerang bounce
         await animate(bigO, [
           { transform:'translateY(6px) scale(1)' },
           { transform:'translateY(-14px) scale(1.02)', offset:.45, easing:'ease-out'},
-          { transform:'translateY(0px) scale(.98)',    offset:.72, easing:'ease-in'},
-          { transform:'translateY(2px) scale(1.002)',  offset:.88, easing:'ease-out'},
-          { transform:'translateY(0px) scale(1)' }
+          { transform:'translateY(0px)  scale(.98)',   offset:.72, easing:'ease-in'},
+          { transform:'translateY(2px)  scale(1.002)', offset:.88, easing:'ease-out'},
+          { transform:'translateY(0px)  scale(1)' }
         ], {duration:760, easing:BOOM, fill:'forwards'});
 
-        // 5) On the slap down, print NX
+        // 5) NX prints on the slap (blue gradient kept)
         await animate(nx, [
           {opacity:0, transform:'translateY(14px) scaleY(.86)'},
           {opacity:1, transform:'translateY(0)    scaleY(1)'}
         ], {duration:520, easing:BOOM, fill:'forwards'});
 
-        // 6) Tagline
-        await wait(120);
+        // 6) Tagline: AI Unified
+        await wait(140);
         await animate(tagline, [
           {opacity:0, transform:'translateY(10px)'},
           {opacity:1, transform:'translateY(0)'}
         ], {duration:520, easing:BOOM, fill:'forwards'});
       }
 
-      // Start the whole thing once scrolled into view
+      // Start once scrolled into view (same behavior)
       const io = new IntersectionObserver((entries)=>{
         entries.forEach(e=>{
           if(e.isIntersecting && e.intersectionRatio > 0.6){
