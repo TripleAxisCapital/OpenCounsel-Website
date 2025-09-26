@@ -1369,23 +1369,35 @@ const SUGGESTIONS = [
       const images = [];
       let finalLogoImg = null;
       let assetsPromise = null;
-      function loadAssets(){
-        if (assetsPromise) return assetsPromise;
-        assetsPromise = new Promise((resolve)=>{
-          let done=0, target = LOGOS.length + 1;
-          const check=()=>{ if (++done>=target) resolve(); };
-          LOGOS.forEach((l,i)=>{
-            const img = new Image();
-            img.onload = check; img.onerror = check;
-            img.src = l.src;
-            images[i] = img;
-          });
-          finalLogoImg = new Image();
-          finalLogoImg.onload = check; finalLogoImg.onerror = check;
-          finalLogoImg.src = FINAL_LOGO_SRC;
-        });
-        return assetsPromise;
-      }
+   // Preload images (never blocks the timeline)
+function loadAssets(){
+  if (assetsPromise) return assetsPromise;
+  assetsPromise = new Promise((resolve)=>{
+    let remaining = LOGOS.length + 1;           // all logos + final mark
+    let resolved = false;
+    const done = ()=>{ if (!resolved && --remaining <= 0) { resolved = true; resolve(); } };
+
+    LOGOS.forEach((l,i)=>{
+      const img = new Image();
+      img.crossOrigin = 'anonymous';            // avoid CORS taint stalls
+      img.decoding   = 'async';
+      img.onload = done; img.onerror = done;
+      img.src = l.src;
+      images[i] = img;
+    });
+
+    finalLogoImg = new Image();
+    finalLogoImg.crossOrigin = 'anonymous';
+    finalLogoImg.decoding   = 'async';
+    finalLogoImg.onload = done; finalLogoImg.onerror = done;
+    finalLogoImg.src = FINAL_LOGO_SRC;
+
+    // Absolute safety net: continue even if events never fire
+    setTimeout(()=>{ if (!resolved) { resolved = true; resolve(); } }, 1000);
+  });
+  return assetsPromise;
+}
+
 
       function renderTextToLogos(pill, t){
         clearStage();
