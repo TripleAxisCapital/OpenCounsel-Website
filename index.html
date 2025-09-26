@@ -635,9 +635,7 @@
 
   <!--======================================================================================================================================================================-->
 
-
-  
-<!-- ===== Full-screen Chat Hero (Apple-minimal) — bubble perfectly centered, responsive padding & send size, flawless wrapping ===== -->
+<!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
   <style>
     /* ---------------- Design tokens ---------------- */
@@ -656,30 +654,31 @@
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
 
-      /* === Edit me (mobile & desktop controls) ===
-         Mobile values apply by default; desktop overrides at 768px+.
-         Send size = --sendBase * --sendScale-(m|d). Icon scales with the button. */
-
+      /* === Edit me (mobile & desktop controls) === */
       /* Mobile (default) */
-      --padX-m:16px;                 /* inside bubble L/R on mobile */
-      --padY-m:14px;                 /* inside bubble T/B on mobile */
-      --sendScale-m:.50;             /* mobile send size scale (0.5 = half of base) */
+      --padX-m:16px;
+      --padY-m:14px;
+      --sendScale-m:.50;
 
       /* Desktop (>=768px) */
-      --padX-d:20px;                 /* inside bubble L/R on desktop */
-      --padY-d:18px;                 /* inside bubble T/B on desktop */
-      --sendScale-d:.75;             /* desktop send size scale */
+      --padX-d:20px;
+      --padY-d:18px;
+      --sendScale-d:.75;
 
-      /* Base + active mappings (do not edit below unless you know why) */
+      /* Base + active mappings */
       --padX:var(--padX-m);
       --padY:var(--padY-m);
       --sendBase:56px;
       --sendScale:var(--sendScale-m);
       --sendSize:calc(var(--sendBase) * var(--sendScale));
-      --sendIconRatio:.3928571429;   /* 22 / 56 keeps icon proportional */
+      --sendIconRatio:.3928571429;   /* 22/56 */
 
       --shadowA:0 1px 0 rgba(0,0,0,.04);
       --shadowB:0 18px 40px rgba(0,0,0,.06);
+
+      /* Word stream colors */
+      --c1:#3f6768;                  /* deep teal (from your image) */
+      --c2:#57c7d9;                  /* aqua (from your image) */
     }
 
     @media (min-width:768px){
@@ -698,7 +697,7 @@
       min-height:100vh;
       background:var(--bg);
       box-sizing:border-box;
-      isolation:isolate;
+      isolation:isolate; /* new stacking context so background can sit under UI cleanly */
       -webkit-tap-highlight-color: transparent;
       font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
                    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
@@ -706,7 +705,76 @@
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
       color:var(--ink);
+      overflow:hidden;
     }
+
+    /* ---------------- Background word stream ---------------- */
+    #chat-hero .word-stream{
+      position:absolute;
+      inset:0;
+      z-index:0;                 /* stays behind everything */
+      pointer-events:none;
+      overflow:hidden;
+    }
+    /* rising word container */
+    #chat-hero .ws-word{
+      position:absolute;
+      left:50%; top:105%;
+      transform:translate3d(-50%,0,0) scale(var(--scale,1));
+      margin-left:var(--x,0%);   /* lane offset from center in % */
+      opacity:0;
+      will-change:transform,opacity;
+      animation:ws-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
+    }
+    @keyframes ws-rise{
+      0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0%)), 0, 0) scale(var(--scale,1)); }
+      7%   { opacity:1; }
+      100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), -125vh, 0) scale(var(--scale,1)); }
+    }
+    /* lateral sway wrapper to avoid transform conflicts */
+    #chat-hero .ws-sway{
+      display:inline-block;
+      will-change:transform;
+      animation:ws-sway var(--swaydur,8s) ease-in-out var(--delay,0s) infinite alternate;
+    }
+    @keyframes ws-sway{
+      from { transform:translateX(0); }
+      to   { transform:translateX(var(--sway,3%)); }
+    }
+    /* gradient/shimmering text */
+    #chat-hero .ws-text{
+      display:block;
+      font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size:clamp(28px,8vw,72px);
+      font-weight:500;
+      letter-spacing:0.26em;
+      line-height:1.15;
+      text-transform:uppercase;
+      white-space:nowrap;
+
+      background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
+      background-size:220% 100%;
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+
+      animation:
+        ws-shimmer 8s ease-in-out infinite,
+        ws-float   3.8s ease-in-out infinite alternate,
+        ws-breathe 7s  ease-in-out infinite;
+      will-change:background-position, filter, transform;
+      text-shadow:none;
+    }
+    @keyframes ws-shimmer{ 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+    @keyframes ws-float  { from{transform:translateY(0)} to{transform:translateY(-2px)} }
+    @keyframes ws-breathe{
+      0%,100% { filter:brightness(1) saturate(1); text-shadow:none; }
+      50%     { filter:brightness(1.06) saturate(1.03); text-shadow:0 0 12px rgba(87,199,217,.12); }
+    }
+
+    /* ------------------ Foreground UI (above stream) --------------------- */
+    #chat-hero .hero-title{ z-index:2; }
+    #chat-hero .bubble-spot{ z-index:2; }
 
     /* ------------------ Title --------------------- */
     #chat-hero .hero-title{
@@ -720,7 +788,7 @@
       line-height:1.1;
       font-weight:700;
       font-size:clamp(28px, 5.2vw, 54px);
-      padding:0 12px; /* tiny guard so long words don't touch edges on very small screens */
+      padding:0 12px;
     }
 
     /* --------------- Bubble spot (center) ---------- */
@@ -729,15 +797,15 @@
       left:50%;
       top:50%;
       transform:translate(-50%, -50%);
-      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); /* exactly 20px per side to viewport edges */
-      height:auto; /* let content drive height for flawless expansion */
+      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW));
+      height:auto;
     }
 
     /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
       position:relative;
       width:100%;
-      min-height:var(--bubbleH);    /* initial min height; JS keeps var(--bubbleH) in sync with real height */
+      min-height:var(--bubbleH);
       height:auto;
       display:flex;
       align-items:center;
@@ -746,7 +814,7 @@
       background:#fff;
       box-shadow:var(--shadowA), var(--shadowB);
       padding-left:var(--padX);
-      padding-right:calc(var(--padX) + var(--sendSize) + 14px); /* pad + scalable send + breathing room */
+      padding-right:calc(var(--padX) + var(--sendSize) + 14px);
       padding-top:var(--padY);
       padding-bottom:var(--padY);
       transition:box-shadow .15s ease;
@@ -763,23 +831,19 @@
       flex:1 1 auto;
       display:block;
       width:100%;
-      min-height:1.35em;                /* at least one line */
+      min-height:1.35em;
       font-size:clamp(16px, 2.2vw, 22px);
       line-height:1.35;
       color:#0b0b0c;
-      border:0;
-      background:transparent;
-      outline:0; /* no browser outline */
+      border:0; background:transparent; outline:0;
       caret-color:#0b0b0c;
-      resize:none;                      /* we auto-grow with JS */
-      overflow:hidden;                  /* no scrollbars; expand instead */
-      padding:0;                        /* vertical rhythm handled by bubble padding */
-      white-space:pre-wrap;             /* wrap like Apple Notes */
-      word-break:break-word;            /* break long tokens */
-      overflow-wrap:anywhere;           /* extra guard for ultra-long tokens */
-      -webkit-appearance:none;
-      appearance:none;
-      transition:opacity var(--fade) ease;   /* enables fade-out between lines */
+      resize:none; overflow:hidden;
+      padding:0;
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+      -webkit-appearance:none; appearance:none;
+      transition:opacity var(--fade) ease;
       opacity:1;
     }
     #chat-hero .prompt.is-fading{ opacity:0; }
@@ -788,28 +852,22 @@
     /* ---------------- Scalable Send button ---------- */
     #chat-hero .send{
       position:absolute;
-      right:10px;
-      top:50%;
-      transform:translateY(-50%);
-      width:var(--sendSize);
-      height:var(--sendSize);
-      border-radius:999px;
-      border:1px solid #0b0b0c;      /* black ring */
-      background:#0b0b0c;            /* black circle */
-      display:grid;
-      place-items:center;
+      right:10px; top:50%; transform:translateY(-50%);
+      width:var(--sendSize); height:var(--sendSize);
+      border-radius:999px; border:1px solid #0b0b0c;
+      background:#0b0b0c; display:grid; place-items:center;
       cursor:pointer;
       transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
       box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08);
       touch-action:manipulation;
+      z-index:3; /* ensure above any background */
     }
     #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
     #chat-hero .send:active{ transform:translateY(-50%); }
     #chat-hero .send svg{
       width:calc(var(--sendSize) * var(--sendIconRatio));
       height:calc(var(--sendSize) * var(--sendIconRatio));
-      display:block;
-      fill:none; stroke:#fff;         /* white arrow */
+      display:block; fill:none; stroke:#fff;
       stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
     }
 
@@ -818,20 +876,136 @@
       #chat-hero{ --bg:#0B0B0C; --ink:#F3F6FB; --muted:#B8BFCA; --line:#22262D; }
       #chat-hero .bubble{ background:#0F1217; }
       #chat-hero .prompt{ color:#F3F6FB; caret-color:#F3F6FB; }
-      /* keep send button black/white as requested */
       #chat-hero .bubble:has(.prompt:focus-visible){
         box-shadow:0 0 0 2px #2A3550 inset, var(--shadowA), var(--shadowB);
       }
     }
 
-    /* ------------- Reduced motion safe ------------- */
+    /* ------------- Reduced motion ------------- */
     @media (prefers-reduced-motion: reduce){
       #chat-hero .send{ transition:none; }
       #chat-hero .prompt{ transition:none; }
+      #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{
+        animation:none !important; opacity:1 !important; transform:none !important;
+      }
     }
   </style>
 
-  <!-- Title is positioned relative to bubble center so the bubble stays EXACTLY centered -->
+  <!-- Background floating words (starts ONLY after user scrolls) -->
+  <div
+    class="word-stream"
+    data-rate="900"     <!-- spawn attempt cadence (ms) -->
+    data-dmin="9"      <!-- min rise duration (s) -->
+    data-dmax="14"     <!-- max rise duration (s) -->
+    data-band="12"     <!-- half-width of stream from center (%) -->
+    data-lanes="5"     <!-- number of lanes across the band -->
+    data-gap="1000"    <!-- min gap per lane (ms) -->
+    data-max="28"      <!-- max simultaneous words -->
+    aria-hidden="true">
+    <script>
+      (() => {
+        /* ── Edit your floating phrases here ───────────────────────── */
+        const STREAM_WORDS = [
+          "FOR BUSINESS","FOR TEAMS","FOR INVESTORS",
+          "FOR CREATORS","FOR ENTERPRISE","FOR BUILDERS"
+        ];
+        /* ──────────────────────────────────────────────────────────── */
+
+        const host = document.currentScript.parentElement;
+        const RATE  = +(host.dataset.rate  || 900);
+        const DMIN  = +(host.dataset.dmin  || 9);
+        const DMAX  = +(host.dataset.dmax  || 14);
+        const BAND  = +(host.dataset.band  || 12);      // +/- from center (%)
+        const LANES = Math.max(1, +(host.dataset.lanes || 5));
+        const GAP   = +(host.dataset.gap   || 1000);    // ms
+        const MAXN  = +(host.dataset.max   || 28);
+
+        /* Lane geometry across [-BAND, +BAND] */
+        const laneOffsets = Array.from({length: LANES}, (_, i) => {
+          return (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND;
+        });
+        const laneReadyAt = new Array(LANES).fill(0);
+
+        const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; };
+        let queue = shuffle([...STREAM_WORDS]);
+
+        function pickLane(now){
+          const free = [];
+          for (let i=0;i<LANES;i++) if (now >= laneReadyAt[i]) free.push(i);
+          return free.length ? free[Math.floor(Math.random()*free.length)] : -1;
+        }
+
+        function spawn(){
+          const now = performance.now();
+          const lane = pickLane(now);
+          if (lane < 0) return;
+
+          if (queue.length === 0) queue = shuffle([...STREAM_WORDS]);
+          const phrase = queue.pop();
+
+          const dur    = DMIN + Math.random()*(DMAX - DMIN);
+          const scale  = 0.96 + Math.random()*0.14;
+          const delay  = Math.random()*0.8;
+          const laneX  = laneOffsets[lane];
+
+          // lane span determines sway so words don't cross into neighbors
+          const laneSpan = (LANES === 1) ? (BAND*2) : (2*BAND)/(LANES-1);
+          const swayMax  = Math.max(0.6, (laneSpan*0.38));
+          const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()*(swayMax - 0.6));
+          const swayDur  = 6 + Math.random()*6;
+
+          const outer = document.createElement('span');
+          outer.className = 'ws-word';
+          outer.style.setProperty('--dur',   dur.toFixed(2)+'s');
+          outer.style.setProperty('--x',     laneX.toFixed(2)+'%');
+          outer.style.setProperty('--scale', scale.toFixed(2));
+          outer.style.setProperty('--delay', delay.toFixed(2)+'s');
+
+          const sw = document.createElement('span');
+          sw.className = 'ws-sway';
+          sw.style.setProperty('--sway',    sway.toFixed(2)+'%');
+          sw.style.setProperty('--swaydur', swayDur.toFixed(2)+'s');
+
+          const t = document.createElement('span');
+          t.className = 'ws-text';
+          t.textContent = phrase;
+
+          sw.appendChild(t);
+          outer.appendChild(sw);
+          host.appendChild(outer);
+
+          const nodes = host.querySelectorAll('.ws-word');
+          if (nodes.length > MAXN) nodes[0]?.remove();
+
+          laneReadyAt[lane] = now + GAP;
+          outer.addEventListener('animationend', () => outer.remove(), {once:true});
+        }
+
+        /* Start ONLY after user scrolls (wheel/touch). */
+        let started = false, intervalId = null;
+        function start(){
+          if (started) return;
+          started = true;
+          spawn();
+          intervalId = setInterval(spawn, RATE);
+        }
+        window.addEventListener('wheel', start, {once:true, passive:true});
+        window.addEventListener('scroll', start, {once:true, passive:true});
+        window.addEventListener('touchmove', start, {once:true, passive:true});
+
+        /* Cleanup if host removed */
+        const obs = new MutationObserver(() => {
+          if (!document.body.contains(host) && intervalId){
+            clearInterval(intervalId);
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.body, {childList:true, subtree:true});
+      })();
+    </script>
+  </div>
+
+  <!-- Title (positioned relative to bubble center) -->
   <h1 class="hero-title">ONX is Unstoppable</h1>
 
   <!-- The centered bubble -->
@@ -858,11 +1032,7 @@
   </div>
 
   <script>
-    /**
-     * ===== Edit me easily =====
-     * Add, remove, or change the lines below. They will type in beautifully.
-     * Now: type-in → hold → fade-out → next (no type-out/backspacing).
-     */
+    /* ===== Hero type-in lines (unchanged, polished) ===== */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
       "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
@@ -876,26 +1046,17 @@
       "Audit pricing and add a premium tier that lifts ARPU by 40%."
     ];
 
-    /* Typing speeds (ms). Tweak to taste. */
-    const TYPER = {
-      startDelay: 500,
-      type: 34,          /* letter delay */
-      hold: 1600,        /* time to keep full line visible before fade */
-      gap: 650,          /* delay before starting the next line after fade */
-      loop: true
-    };
+    const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
-      const input  = document.getElementById('prompt-input');      // textarea
+      const input  = document.getElementById('prompt-input');
       const bubble = document.querySelector('#chat-hero .bubble');
       const hero   = document.getElementById('chat-hero');
       if (!input || !bubble || !hero) return;
 
-      // --- Prevent real typing for clean hero demo (keeps original behavior) ---
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      // --- Auto-size textarea to content, then sync CSS var for title positioning ---
       function autosize(){
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
@@ -905,11 +1066,9 @@
         hero.style.setProperty('--bubbleH', h + 'px');
       }
 
-      // Keep --bubbleH updated whenever the bubble resizes (typing, wrap, etc.)
       const ro = new ResizeObserver(syncBubbleH);
       ro.observe(bubble);
 
-      // Reduced motion fallback (no typing/fading)
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) {
         input.value = SUGGESTIONS[0] || "";
@@ -918,10 +1077,8 @@
       }
 
       let i = 0, j = 0;
-
       function typeNextChar(){
         const phrase = SUGGESTIONS[i] || "";
-        // Ensure visible (in case we just faded)
         input.classList.remove('is-fading');
 
         if (j < phrase.length){
@@ -929,20 +1086,17 @@
           autosize(); syncBubbleH();
           setTimeout(typeNextChar, TYPER.type);
         } else {
-          // Full line shown; hold, then fade out and advance
           setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
         }
       }
 
       function fadeOutThenAdvance(){
-        // Fade the textarea content (keeps height until cleared)
         input.classList.add('is-fading');
 
         const onEnd = (e) => {
           if (e.propertyName && e.propertyName !== 'opacity') return;
           input.removeEventListener('transitionend', onEnd);
 
-          // After fade completes: clear, shrink, and move to next phrase
           input.value = "";
           autosize(); syncBubbleH();
 
@@ -952,13 +1106,9 @@
           setTimeout(typeNextChar, TYPER.gap);
         };
 
-        // Use transitionend for precise timing; also set a safety timeout fallback
-        input.addEventListener('transitionend', onEnd, { once: true });
+        input.addEventListener('transitionend', onEnd, { once:true });
         setTimeout(() => {
-          // Fallback in case transitionend doesn't fire
-          if (input.classList.contains('is-fading')) {
-            input.dispatchEvent(new Event('transitionend'));
-          }
+          if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend'));
         }, 1000);
       }
 
@@ -966,13 +1116,10 @@
       autosize(); syncBubbleH();
       setTimeout(typeNextChar, TYPER.startDelay);
 
-      // Keep layout perfect on viewport changes
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
     })();
   </script>
 </section>
-
-
 
 
 
