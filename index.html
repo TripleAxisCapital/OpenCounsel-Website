@@ -835,226 +835,328 @@
 <!--=====================================================================CHAT END=================================================================================================-->
 
 
-<!-- =====================================================================
-  ONX Orbit→Merge→Reveal Sequence (Apple‑style) — PRODUCTION DROP‑IN
-  • No chat bar. Keeps blue gradients + boomerang/organic motion.
-  • Sequence: Models Card → collapse → "Built on the best." → logos orbit →
-    suck into O (Audiowide) → O bounces → prints NX → shows "AI Unified".
-  • Starts when scrolled into view. Responsive. Prefers‑reduced‑motion safe.
-  • Replace logo src paths with your own assets.
-  ====================================================================== -->
-<section id="onx-sequence" aria-label="ONX Orbit Merge Sequence">
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ONX — Orbit → Collapse → Built on the best → Ingest → Bounce → ONX → AI Unified</title>
+  <!-- Audiowide for ONX wordmark -->
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet" />
   <style>
-    /* ------------------ Design tokens ------------------ */
-    @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
     :root{
-      --ink:#0b1020;                /* base ink */
-      --bg:#ffffff;                  /* section bg */
-      --c1:#00A8FF;                  /* blue A */
-      --c2:#5B8CFF;                  /* blue B */
-      --c3:#7BC7FF;                  /* blue C */
-      --card:#0b102006;              /* soft card fill */
-      --stroke:#0b102012;            /* soft stroke */
-      --glow:0 10px 30px rgba(80,150,255,.25);
+      /* Blue gradient tokens */
+      --c0:#0a0f1f;         /* deep backdrop */
+      --c1:#0b1b45;         /* midnight blue */
+      --c2:#0e5bd8;         /* vivid blue */
+      --c3:#63b3ff;         /* soft cyan */
+      --ink:#0b1226;        /* near-black ink */
+      --white:#fff;
+
+      /* Motion tokens */
+      --boomerang: cubic-bezier(.2,1.2,.2,1);  /* overshoot-in */
+      --boomerang-out: cubic-bezier(.3,-0.2,.2,1); /* overshoot-out */
+      --gentle: cubic-bezier(.2,.8,.2,1);
     }
 
-    #onx-sequence{position:relative; isolation:isolate; display:grid; place-items:center; min-height:100vh; background:var(--bg);}
-    #onx-sequence .wrap{width:min(1120px,92vw); margin:auto; padding:8vh 0;}
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 700px at 50% 20%, rgba(14,91,216,.20), transparent 60%) ,
+                  radial-gradient(800px 600px at 10% 90%, rgba(99,179,255,.18), transparent 60%),
+                  linear-gradient(180deg, var(--c0), var(--c1));
+      color:var(--white);
+      font: 16px/1.4 ui-sans-serif, system-ui, -apple-system, "SF Pro Text","Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
 
-    /* --- Blue glow gradient reused across text --- */
-    .blue-gradient{background:linear-gradient(120deg,var(--c1) 10%,var(--c2) 50%,var(--c3) 90%); background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;}
-    @keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    /* ===== Section (no chat bar anywhere) ===== */
+    .onx-showcase{
+      min-height:100svh; display:grid; place-items:center; position:relative; overflow:hidden;
+      padding: clamp(24px, 6vw, 64px);
+      isolation:isolate;
+    }
 
-    /* ---------- Models card (appears then collapses) ---------- */
-    .models-card{position:relative; margin:0 auto 6vh; width:min(860px,92vw); border-radius:20px; background:linear-gradient(180deg,#ffffffcc,#ffffffa8); box-shadow:var(--glow); border:1px solid var(--stroke); backdrop-filter:saturate(140%) blur(8px); -webkit-backdrop-filter:saturate(140%) blur(8px); overflow:hidden; transform-origin:50% 0%;}
-    .models-card .hdr{display:flex; gap:10px; align-items:center; padding:18px 22px; border-bottom:1px solid var(--stroke); font:600 14px/1.2 ui-sans-serif,system-ui,"SF Pro Text",Inter,Arial; color:var(--ink)}
-    .models-card .grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; padding:18px 18px 22px;}
-    .chip{display:flex; align-items:center; gap:10px; padding:12px 14px; border-radius:14px; background:#ffffffd8; border:1px solid var(--stroke); box-shadow:0 1px 0 #00000008 inset;}
-    .chip img{width:22px; height:22px; object-fit:contain}
-    .chip span{font:600 13px/1.1 ui-sans-serif,system-ui,"SF Pro Text",Inter,Arial; color:#0b1220}
+    /* Soft vignette edges */
+    .onx-showcase::after{
+      content:""; position:absolute; inset:-10vmax; pointer-events:none; z-index:0;
+      background: radial-gradient(1200px 700px at 50% -10%, rgba(14,91,216,.12), transparent 60%),
+                  radial-gradient(900px 600px at 110% 120%, rgba(11,27,69,.55), transparent 70%),
+                  radial-gradient(1000px 700px at -10% 110%, rgba(11,27,69,.55), transparent 70%);
+      filter: saturate(120%);
+    }
 
-    /* ---------- Interstitial headline ---------- */
-    .built-line{margin:2vh auto 5vh; text-align:center; font:700 clamp(22px,3.4vw,42px)/1.15 ui-sans-serif,system-ui,"SF Pro Display",Inter,Arial; letter-spacing:-.01em}
-    .built-line span{display:inline-block}
+    /* ===== Stack ===== */
+    .stack{width:min(1100px, 94vw); margin:auto; position:relative; z-index:1;}
 
-    /* ---------- ONX Stage ---------- */
-    .onx-stage{position:relative; display:grid; place-items:center; min-height:52vh}
+    /* ========== 1) MODELS CARD (enter → collapse) ========== */
+    .models-card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 20px 60px rgba(14,91,216,.18), inset 0 1px 0 rgba(255,255,255,.08);
+      border-radius: 20px; backdrop-filter: blur(8px) saturate(120%);
+      padding: 22px clamp(18px, 4vw, 28px);
+      transform-origin:50% 60%; opacity:0; transform: translateY(30px) scale(.98);
+      overflow:hidden; max-height:0; /* collapsed by default */
+    }
+    .models-card.in{ opacity:1; max-height: 420px; transform: translateY(0) scale(1);
+      transition: max-height .8s var(--boomerang), opacity .6s var(--gentle), transform .8s var(--boomerang);
+    }
+    .models-card.out{ max-height:0; opacity:0; transform: translateY(-10px) scale(.98);
+      transition: max-height .6s var(--boomerang-out), opacity .4s var(--gentle), transform .6s var(--boomerang-out);
+    }
+    .models-grid{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+    .pill{font-size:14px; letter-spacing:.2px; padding:10px 14px; border-radius:999px;
+      background:linear-gradient(120deg, rgba(14,91,216,.35), rgba(99,179,255,.25));
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 6px 18px rgba(11,27,69,.25);
+      white-space:nowrap;
+    }
+    .models-title{font-size: clamp(20px, 3.2vw, 28px); font-weight:600; margin:0 0 10px}
 
-    .onx-word{display:flex; align-items:baseline; gap:clamp(10px,2.2vw,18px);}
-    .onx-word .letter{font-family:"Audiowide", ui-sans-serif, system-ui; font-size:clamp(72px,12vw,160px); line-height:.9; letter-spacing:.02em;}
-    .onx-word .letter.o{filter:drop-shadow(0 10px 30px rgba(75,130,255,.25));}
+    /* ========== 2) TEXT: Built on the best. ========== */
+    .built-line{ opacity:0; text-align:center; margin:40px 0 0; font-weight:700;
+      font-size: clamp(26px, 4.6vw, 48px);
+      background: linear-gradient(120deg, var(--c3) 10%, var(--c2) 45%, var(--c3) 80%);
+      background-size:220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: drop-shadow(0 8px 24px rgba(14,91,216,.25));
+    }
+    .built-line.in{animation: shimmer 1.2s var(--gentle) forwards, fadeUp .8s var(--boomerang) forwards}
+    .built-line.out{animation: fadeDown .5s var(--gentle) forwards}
 
-    .onx-tagline{margin-top:16px; text-align:center; font:700 clamp(14px,2.2vw,22px)/1.1 ui-sans-serif,system-ui,"SF Pro Text",Inter,Arial; letter-spacing:.08em; text-transform:uppercase}
+    /* Shimmer */
+    @keyframes shimmer{ to{ background-position: 200% 0 } }
+    @keyframes fadeUp{ from{ opacity:0; transform: translateY(14px)} to{opacity:1; transform:none} }
+    @keyframes fadeDown{ to{ opacity:0; transform: translateY(-10px)} }
 
-    /* ---------- Logo Orbit ---------- */
-    .logo-orbit{position:relative; width:clamp(260px,46vmin,520px); aspect-ratio:1; margin:6vh auto 0; opacity:0;}
-    .logo-orbit .logo-chip{position:absolute; left:50%; top:50%; transform:rotate(var(--angle)) translate(var(--r)) rotate(calc(-1*var(--angle))); transform-origin:0 0;}
-    .logo-orbit .logo-chip .chip{background:#ffffff;}
+    /* ========== 3) ORBIT STAGE ========== */
+    .stage{ position:relative; height: clamp(420px, 56vw, 620px); margin: 26px 0; }
 
-    /* Default radius + angle positions (8 logos) */
-    .logo-orbit{--r:clamp(90px,18vmin,210px)}
-    .logo-orbit .logo-chip:nth-child(1){--angle:0deg}
-    .logo-orbit .logo-chip:nth-child(2){--angle:45deg}
-    .logo-orbit .logo-chip:nth-child(3){--angle:90deg}
-    .logo-orbit .logo-chip:nth-child(4){--angle:135deg}
-    .logo-orbit .logo-chip:nth-child(5){--angle:180deg}
-    .logo-orbit .logo-chip:nth-child(6){--angle:225deg}
-    .logo-orbit .logo-chip:nth-child(7){--angle:270deg}
-    .logo-orbit .logo-chip:nth-child(8){--angle:315deg}
+    /* Center group containing O + future NX */
+    .onx-wrap{ position:absolute; inset:0; display:grid; place-items:center; }
 
-    /* --------- Reduced motion: show end state --------- */
+    /* The letter O (Audiowide) */
+    .onx-word{ display:flex; align-items:center; gap: .06em; }
+    .letter{
+      font-family: 'Audiowide', ui-sans-serif, system-ui, -apple-system, 'SF Pro Text';
+      font-weight:400; line-height:1; letter-spacing: .02em;
+      font-size: clamp(92px, 12vw, 164px);
+      background: linear-gradient(120deg, var(--c3) 20%, var(--c2) 55%, var(--c3) 80%);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      background-size: 220% 100%; animation: wordGlow 8s ease-in-out infinite;
+      filter: drop-shadow(0 12px 40px rgba(14,91,216,.24));
+    }
+    @keyframes wordGlow{ 50%{ filter: drop-shadow(0 18px 60px rgba(14,91,216,.34)) } }
+
+    .letter.N, .letter.X{ opacity:0; transform: translateY(14px) scale(.96); }
+
+    /* Orbiters (logos) */
+    .orbit{
+      position:absolute; inset:0; margin:auto; width:min(560px, 70%); height:min(560px, 70%);
+      filter: drop-shadow(0 6px 22px rgba(14,91,216,.25));
+      pointer-events:none;
+    }
+    .orbiter{ position:absolute; top:50%; left:50%; transform: translate(-50%, -50%); }
+    .chip{
+      width:56px; height:56px; border-radius:14px; backdrop-filter: blur(6px) saturate(140%);
+      background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
+      border:1px solid rgba(255,255,255,.22);
+      display:grid; place-items:center; overflow:hidden;
+      animation: float 4.8s ease-in-out infinite;
+    }
+    .logo{ width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,.25)); }
+
+    /* Place each orbiter on a circle using CSS vars */
+    .orbiter{ --r: 180px; --a: 0deg; }
+    .orbiter{ transform: translate(-50%, -50%) rotate(var(--a)) translateX(var(--r)); }
+    .orbit.spin .orbiter{ animation: spin 14s linear infinite; transform-origin: calc(-1 * var(--r)) 0; }
+    @keyframes spin{ to{ transform: translate(-50%, -50%) rotate(calc(var(--a) + 1turn)) translateX(var(--r)); } }
+    @keyframes float{ 50%{ transform: translateY(-4px) } }
+
+    /* Suck into center */
+    .orbiter.to-center{
+      animation: none !important;
+      transition: transform .75s var(--boomerang), opacity .75s var(--gentle), filter .75s var(--gentle);
+      transform: translate(-50%, -50%) rotate(var(--a)) translateX(0) scale(.2);
+      filter: blur(2px) saturate(140%);
+      opacity:.0;
+    }
+
+    /* O bounce squash */
+    .letter.O.bounce{ animation: oBounce .6s var(--boomerang) 1; }
+    @keyframes oBounce{
+      0%{ transform:translateY(0) scale(1,1) }
+      35%{ transform:translateY(18px) scale(1.05,.9)}
+      60%{ transform:translateY(-10px) scale(.96,1.06)}
+      85%{ transform:translateY(4px) scale(1.02,.98)}
+      100%{ transform:translateY(0) scale(1,1)}
+    }
+
+    /* Reveal NX */
+    .letter.reveal{ opacity:1; transform:none; transition: opacity .5s var(--gentle), transform .6s var(--boomerang); }
+
+    /* ========== 4) TAGLINE: AI Unified ========== */
+    .tagline{
+      opacity:0; text-align:center; margin-top: 8px;
+      font-family:'Audiowide', ui-sans-serif, system-ui, -apple-system, 'SF Pro Text';
+      letter-spacing:.16em; text-transform:uppercase;
+      font-size: clamp(14px, 1.8vw, 18px);
+      background: linear-gradient(120deg, var(--c3) 15%, var(--c2) 55%, var(--c3) 85%);
+      background-size: 220% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+      filter: drop-shadow(0 6px 20px rgba(14,91,216,.28));
+    }
+    .tagline.in{ animation: shimmer 1.4s var(--gentle) forwards, fadeUp .8s var(--boomerang) forwards; }
+
+    /* Utility */
+    .center{ text-align:center }
+    .muted{ color: rgba(255,255,255,.72) }
+    .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+    /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
-      .models-card,.logo-orbit{display:none !important}
-      .built-line{display:none !important}
-      .onx-word .letter{opacity:1 !important; transform:none !important}
-      .onx-tagline{opacity:1 !important}
+      .orbit.spin .orbiter, .chip{ animation: none !important; }
+      .letter.O.bounce{ animation:none !important }
+      .built-line.in,.tagline.in{ animation: fadeUp .6s var(--gentle) forwards }
     }
   </style>
+</head>
+<body>
+  <section class="onx-showcase" id="onx-seq" aria-label="ONX Animation">
+    <div class="stack">
 
-  <div class="wrap">
-    <!-- 1) MODELS CARD → Appears then collapses -->
-    <div class="models-card" aria-label="Models">
-      <div class="hdr">Models available</div>
-      <div class="grid">
-        <div class="chip"><img src="grokLogo.svg" alt="Grok"><span>Grok</span></div>
-        <div class="chip"><img src="googleLogo.svg" alt="Google"><span>Gemini</span></div>
-        <div class="chip"><img src="metaLogo.svg" alt="Meta"><span>Llama</span></div>
-        <div class="chip"><img src="openaiLogo.svg" alt="OpenAI"><span>o3 / GPT‑4</span></div>
-        <div class="chip"><img src="anthropicLogo.svg" alt="Anthropic"><span>Claude</span></div>
-        <div class="chip"><img src="mistralLogo.svg" alt="Mistral"><span>Mistral</span></div>
+      <!-- 1) MODELS CARD (appears first, then collapses) -->
+      <div class="models-card" id="modelsCard">
+        <h2 class="models-title">Models</h2>
+        <div class="models-grid">
+          <span class="pill">GPT‑4.1</span>
+          <span class="pill">Llama‑3.1</span>
+          <span class="pill">Qwen‑2.5</span>
+          <span class="pill">Gemma‑2</span>
+          <span class="pill">DeepSeek</span>
+          <span class="pill">Mistral</span>
+        </div>
       </div>
+
+      <!-- 2) Built on the best. (shows after card collapses, then fades) -->
+      <div class="built-line center" id="builtLine">Built on the best.</div>
+
+      <!-- 3) Orbit stage (logos orbit → get sucked into the O) -->
+      <div class="stage" id="stage">
+        <div class="onx-wrap">
+          <div class="onx-word" aria-label="ONX">
+            <span class="letter O" id="letterO">O</span>
+            <span class="letter N" id="letterN">N</span>
+            <span class="letter X" id="letterX">X</span>
+          </div>
+        </div>
+
+        <div class="orbit" id="orbit">
+          <!-- Replace src paths with your assets. Add/remove orbiters freely. -->
+          <div class="orbiter" style="--a: 0deg; --r: 180px">
+            <div class="chip"><img class="logo" src="grokLogo.svg" alt="Grok" /></div>
+          </div>
+          <div class="orbiter" style="--a: 60deg; --r: 180px">
+            <div class="chip"><img class="logo" src="googleLogo.svg" alt="Google" /></div>
+          </div>
+          <div class="orbiter" style="--a: 120deg; --r: 180px">
+            <div class="chip"><img class="logo" src="metaLogo.svg" alt="Meta" /></div>
+          </div>
+          <div class="orbiter" style="--a: 180deg; --r: 180px">
+            <div class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI" /></div>
+          </div>
+          <div class="orbiter" style="--a: 240deg; --r: 180px">
+            <div class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic" /></div>
+          </div>
+          <div class="orbiter" style="--a: 300deg; --r: 180px">
+            <div class="chip"><img class="logo" src="xaiLogo.svg" alt="xAI" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4) Tagline appears after ONX locks in -->
+      <div class="tagline center" id="tagline">AI Unified</div>
+
+      <p class="center muted" style="margin-top:20px">(Animation starts when this section scrolls into view. No chat bar included.)</p>
     </div>
+  </section>
 
-    <!-- 2) Interstitial headline → Built on the best. -->
-    <h2 class="built-line" aria-live="polite"><span class="blue-gradient" style="animation:shimmer 8s ease-in-out infinite;">Built on the best.</span></h2>
-
-    <!-- 3) ONX Stage (O → NX) & Tagline -->
-    <div class="onx-stage">
-      <div class="onx-word" aria-label="ONX wordmark">
-        <span class="letter o blue-gradient" style="animation:shimmer 10s ease-in-out infinite;">O</span>
-        <span class="letter n blue-gradient" style="animation:shimmer 10s ease-in-out infinite;">N</span>
-        <span class="letter x blue-gradient" style="animation:shimmer 10s ease-in-out infinite;">X</span>
-      </div>
-      <div class="onx-tagline blue-gradient" style="animation:shimmer 9s ease-in-out infinite;">AI Unified</div>
-
-      <!-- 4) Logos orbiting before being pulled into the O -->
-      <div class="logo-orbit" aria-hidden="true">
-        <div class="logo-chip"><div class="chip"><img class="logo" src="grokLogo.svg" alt="Grok" width="24" height="24"><span>Grok</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google" width="24" height="24"><span>Gemini</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="metaLogo.svg" alt="Meta" width="24" height="24"><span>Llama</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI" width="24" height="24"><span>OpenAI</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic" width="24" height="24"><span>Claude</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="mistralLogo.svg" alt="Mistral" width="24" height="24"><span>Mistral</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="xaiLogo.svg" alt="xAI" width="24" height="24"><span>xAI</span></div></div>
-        <div class="logo-chip"><div class="chip"><img class="logo" src="deepseekLogo.svg" alt="DeepSeek" width="24" height="24"><span>DeepSeek</span></div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- GSAP + ScrollTrigger (animation starts when section enters viewport) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script>
-    (function(){
-      if(!window.gsap) return; // fail-safe
-      gsap.registerPlugin(ScrollTrigger);
+    // Helper: sleep
+    const wait = (ms) => new Promise(r => setTimeout(r, ms));
 
-      const root = document.querySelector('#onx-sequence');
-      const models = root.querySelector('.models-card');
-      const built = root.querySelector('.built-line');
-      const orbit = root.querySelector('.logo-orbit');
-      const oLetter = root.querySelector('.onx-word .letter.o');
-      const nLetter = root.querySelector('.onx-word .letter.n');
-      const xLetter = root.querySelector('.onx-word .letter.x');
-      const tagline = root.querySelector('.onx-tagline');
-      const chips = gsap.utils.toArray('.logo-orbit .logo-chip');
+    async function runSequence(){
+      const card = document.getElementById('modelsCard');
+      const built = document.getElementById('builtLine');
+      const orbit = document.getElementById('orbit');
+      const o = document.getElementById('letterO');
+      const n = document.getElementById('letterN');
+      const x = document.getElementById('letterX');
+      const tagline = document.getElementById('tagline');
 
-      // Initial states
-      gsap.set([built, orbit], {autoAlpha:0});
-      gsap.set([nLetter, xLetter], {autoAlpha:0, scale:0.6});
-      gsap.set(tagline, {autoAlpha:0, y:12});
+      // 1) Show Models card
+      card.classList.add('in');
+      await wait(1100);
 
-      // Orbit gentle spin before suction
-      const orbitSpin = gsap.to(orbit, {rotate:360, ease:'none', repeat:-1, duration:20, paused:true, transformOrigin:'50% 50%'});
+      // Gentle dwell
+      await wait(700);
 
-      // Helper to animate all chips into the center of the O
-      function suckLogosIntoO(){
-        // compute center of the "O"
-        const oRect = oLetter.getBoundingClientRect();
-        const oCx = oRect.left + oRect.width/2;
-        const oCy = oRect.top + oRect.height/2;
+      // 1b) Collapse Models card
+      card.classList.replace('in','out');
+      await wait(700);
 
-        chips.forEach((chip, i) => {
-          const r = chip.getBoundingClientRect();
-          const cX = r.left + r.width/2;
-          const cY = r.top + r.height/2;
-          const dx = oCx - cX;
-          const dy = oCy - cY;
-          gsap.to(chip, {
-            x: "+=" + dx,
-            y: "+=" + dy,
-            scale: 0.2,
-            autoAlpha: 0,
-            ease: 'back.in(1.4)',
-            duration: 0.9,
-            delay: i * 0.06
-          });
-        });
+      // 2) Built on the best. in → hold → out
+      built.classList.add('in');
+      await wait(1200);
+      await wait(600);
+      built.classList.replace('in','out');
+      await wait(520);
+
+      // 3) Start orbit
+      orbit.classList.add('spin');
+      await wait(800);
+
+      // 3b) Suck logos into center (one by one, boomerang cadence)
+      const nodes = [...orbit.querySelectorAll('.orbiter')];
+      for (let i=0; i<nodes.length; i++){
+        await wait(260); // cadence between ingests
+        nodes[i].classList.add('to-center');
       }
+      // give the last one time to finish
+      await wait(720);
 
-      const tl = gsap.timeline({
-        paused:true,
-        defaults:{ease:'power2.out'},
-        scrollTrigger:{
-          trigger: root,
-          start: 'top 70%',
-          once: true,
-          onEnter: () => tl.play()
+      // 3c) O bounce on impact
+      o.classList.add('bounce');
+      await wait(620);
+
+      // 3d) Reveal N then X with pop-in
+      n.classList.add('reveal');
+      await wait(220);
+      x.classList.add('reveal');
+      await wait(420);
+
+      // 4) Tagline
+      tagline.classList.add('in');
+    }
+
+    // Start when in view (once)
+    const once = { fired:false };
+    const sec = document.getElementById('onx-seq');
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(async e =>{
+        if(e.isIntersecting && !once.fired){
+          once.fired = true;
+          try{ await runSequence(); }catch(err){ console.error(err); }
         }
-      });
+      })
+    }, { root:null, threshold:.45 });
+    io.observe(sec);
 
-      // 1) Show models card (boomerang in)
-      tl.from(models, {y:40, opacity:0, scale:0.96, duration:0.7, ease:'back.out(1.4)'});
-      // hold briefly, then collapse upward
-      tl.to(models, {scaleY:0, opacity:0, duration:0.65, ease:'power3.inOut'}, "+=0.6");
-
-      // 2) Built on the best. (fade up then away)
-      tl.to(built, {autoAlpha:1, y:0, duration:0.5}, ">-0.1");
-      tl.to(built, {autoAlpha:0, y:-18, duration:0.5, ease:'power2.in'}, "+=1.1");
-
-      // 3) Orbit appears & spins a moment
-      tl.to(orbit, {autoAlpha:1, duration:0.001});
-      tl.add(() => orbitSpin.play(), ">-0.2");
-      tl.to(orbit, {scale:1.02, duration:0.5, ease:'sine.out'});
-
-      // 4) Suck logos into O
-      tl.add(() => {
-        suckLogosIntoO();
-        // stop the spin as they start getting pulled in
-        orbitSpin.pause();
-      }, ">-0.15");
-
-      // 5) O bounce (slap) then print NX
-      tl.to(oLetter, {y:-38, duration:0.38, ease:'power2.out'}, "+=0.4");
-      tl.to(oLetter, {y:0, duration:0.55, ease:'bounce.out',
-        onStart: () => {
-          // Print N then X as the O slaps down
-          gsap.to(nLetter, {autoAlpha:1, scale:1, duration:0.35, ease:'back.out(1.6)'});
-          gsap.to(xLetter, {autoAlpha:1, scale:1, duration:0.35, ease:'back.out(1.6)', delay:0.1});
-        }
-      });
-
-      // 6) Tagline appears
-      tl.to(tagline, {autoAlpha:1, y:0, duration:0.55, ease:'power2.out'}, "+=0.1");
-
-      // Safety: recalc positions on resize before play if not started
-      let played = false;
-      tl.eventCallback('onStart', () => { played = true; });
-      window.addEventListener('resize', () => { if(!played) return; });
-    })();
+    // Optional: expose a manual trigger for debugging
+    // window.__onxPlay = runSequence;
   </script>
-</section>
-
+</body>
+</html>
 
 
 
