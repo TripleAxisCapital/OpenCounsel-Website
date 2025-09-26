@@ -232,10 +232,8 @@
     <!-- Extra right-side action -->
   </onx-header>
 
-
-
-  <!--=======================================================================START===============================================================================================-->
-  <!--======================================================================CHAT SECTION================================================================================================-->
+<!--=======================================================================START===============================================================================================-->
+<!--======================================================================CHAT SECTION================================================================================================-->
 
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -279,8 +277,12 @@
       --shadowB:0 18px 40px rgba(0,0,0,.06);
 
       /* Word stream colors */
-      --c1:#3f6768;                  /* deep teal (from your image) */
-      --c2:#57c7d9;                  /* aqua (from your image) */
+      --c1:#3f6768;                  /* deep teal */
+      --c2:#57c7d9;                  /* aqua */
+
+      /* ===== Extended scroll track for floating words ===== */
+      --trail: 140vh;  /* EXTRA scroll length after first screen; increase for longer zone */
+      --rise: calc(125vh + (var(--trail) * 0.5)); /* how far words travel upward */
     }
 
     @media (min-width:768px){
@@ -295,8 +297,11 @@
     /* --------------- Section layout --------------- */
     #chat-hero{
       position:relative;
-      min-height:100svh;
-      min-height:100vh;
+
+      /* was: min-height:100svh; min-height:100vh; */
+      min-height: calc(100vh + var(--trail));   /* fallback */
+      min-height: calc(100svh + var(--trail));  /* safe viewport on mobile */
+
       background:var(--bg);
       box-sizing:border-box;
       isolation:isolate; /* new stacking context so background can sit under UI cleanly */
@@ -331,7 +336,8 @@
     @keyframes ws-rise{
       0%   { opacity:0; transform:translate3d(calc(-50% + var(--x,0%)), 0, 0) scale(var(--scale,1)); }
       7%   { opacity:1; }
-      100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), -125vh, 0) scale(var(--scale,1)); }
+      /* was: translateY(-125vh) */
+      100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), calc(var(--rise) * -1), 0) scale(var(--scale,1)); }
     }
     /* lateral sway wrapper to avoid transform conflicts */
     #chat-hero .ws-sway{
@@ -382,8 +388,12 @@
     #chat-hero .hero-title{
       position:absolute;
       left:50%;
-      transform:translateX(-50%);
-      bottom:calc(50% + (var(--bubbleH)/2) + var(--titleGap));
+      /* was:
+         transform:translateX(-50%);
+         bottom:calc(50% + (var(--bubbleH)/2) + var(--titleGap));
+      */
+      top: calc(50vh - (var(--bubbleH) / 2) - var(--titleGap));
+      transform: translate(-50%, -100%); /* anchor by bottom edge for consistent spacing */
       margin:0;
       text-align:center;
       letter-spacing:-0.02em;
@@ -397,7 +407,8 @@
     #chat-hero .bubble-spot{
       position:absolute;
       left:50%;
-      top:50%;
+      /* was: top:50%; */
+      top:50vh;                              /* keep bubble centered in the viewport */
       transform:translate(-50%, -50%);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW));
       height:auto;
@@ -493,39 +504,36 @@
     }
 
     /* Audiowide + same blue breathing/shimmer as river words */
-#chat-hero .hero-title .title-onx{
-  font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  font-weight:400;
-  /* reuse stream colors/animation */
-  background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
-  background-size:220% 100%;
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-  /* match “river” feel (breathing + shimmer, no floating movement for a steady title) */
-  animation:ws-shimmer 8s ease-in-out infinite, ws-breathe 7s ease-in-out infinite;
-}
-
-
+    #chat-hero .hero-title .title-onx{
+      font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      font-weight:400;
+      background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
+      background-size:220% 100%;
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      animation:ws-shimmer 8s ease-in-out infinite, ws-breathe 7s ease-in-out infinite;
+    }
   </style>
 
   <!-- Background floating words (starts ONLY after user scrolls) -->
   <div
     class="word-stream"
-    data-rate="900"   
-    data-dmin="9"    
-    data-dmax="14"    
-    data-band="12"   
-    data-lanes="5"     
-    data-gap="1000"   
-    data-max="28"      entrepreneurs
+    data-rate="900"
+    data-dmin="9"
+    data-dmax="14"
+    data-band="12"
+    data-lanes="5"
+    data-gap="1000"
+    data-max="28"
     aria-hidden="true">
     <script>
       (() => {
         /* ── Edit your floating phrases here ───────────────────────── */
         const STREAM_WORDS = [
           "FOR ENTREPRENEURS","DESIGN","FOR INVESTORS",
-          "FOR CREATORS","BUILD","FOR DEVELOPERS", "CREATE", "FOR FOUNDERS","LAUNCH", "FOR DESIGNERS", "MARKETING"
+          "FOR CREATORS","BUILD","FOR DEVELOPERS","CREATE",
+          "FOR FOUNDERS","LAUNCH","FOR DESIGNERS","MARKETING"
         ];
         /* ──────────────────────────────────────────────────────────── */
 
@@ -623,9 +631,8 @@
     </script>
   </div>
 
-  <!-- Title (positioned relative to bubble center) -->
-<h1 class="hero-title"><span class="title-onx">ONX</span> is Unstoppable</h1>
-
+  <!-- Title (positioned relative to bubble center / viewport) -->
+  <h1 class="hero-title"><span class="title-onx">ONX</span> is Unstoppable</h1>
 
   <!-- The centered bubble -->
   <div class="bubble-spot">
@@ -739,7 +746,6 @@
     })();
   </script>
 </section>
-
 
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
