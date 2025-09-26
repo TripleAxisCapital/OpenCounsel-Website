@@ -835,350 +835,291 @@
 <!--=====================================================================CHAT END=================================================================================================-->
 
 
+<!-- ============================== ONX ORBIT SEQUENCE ===============================
+Drop-in, single-file snippet. No chat bar. Apple-minimal, blue gradients, boomerang
+motions. Uses GSAP (CDN). Replace logo src paths with your own.
+================================================================================ -->
 
-<!-- =============================== ONX Sequence (Apple-style, blue gradient kept) =============================== -->
-<section id="onx-sequence" aria-label="ONX launch sequence">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+<section id="onx-hero" aria-label="ONX hero sequence">
   <style>
-    /* Audiowide for ONX */
-    @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
-
-    /* ---------- Design tokens ---------- */
-    #onx-sequence{
-      --bg:#ffffff;
-      --ink:#0B0B0C;
-      --muted:#6b7280;
-      --line:#E5E7EB;
-
-      /* Blue gradient tokens (your style) */
-      --c1:#1463FF;
-      --c2:#4DB2FF;
-
-      --chip:#0b0b0c08;
-      --radius: clamp(80px, 18vw, 140px); /* orbit radius */
-      --boomerang: cubic-bezier(.2,.7,.1,1);
-      background:var(--bg);
-      color:var(--ink);
-      position:relative;
-      overflow:hidden;
-      padding: 8vh 0;
+    /* ------------------------- Design tokens ------------------------- */
+    #onx-hero {
+      --bg: #ffffff;
+      --ink: #0B0B0C;
+      --muted: #6B7280;
+      --c1: #0ea5ff;    /* light blue */
+      --c2: #2563eb;    /* deep blue  */
+      --c3: #60a5fa;    /* mid blue   */
+      --ring: rgba(14,165,255,0.15);
+      --chip: #0B0B0C;
+      --chip-ink: #E5F3FF;
+      --radius: 18px;
     }
 
-    /* ---------- Shared blue gradient + breathing/shimmer ---------- */
-    .blue-text{
-      background: linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
+    #onx-hero {
+      position: relative; isolation: isolate; overflow: hidden;
+      background: var(--bg); color: var(--ink);
+      min-height: 90dvh; display: grid; place-items: center;
+      padding: clamp(24px, 6vw, 64px);
+    }
+
+    .onx-wrap { width: min(1120px, 92vw); margin-inline: auto; }
+
+    /* Shared blue gradient text */
+    .blue-grad {
+      background: linear-gradient(120deg, var(--c1) 20%, var(--c3) 50%, var(--c2) 80%);
       background-size: 220% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      animation: ws-shimmer 8s ease-in-out infinite, ws-breathe 7s ease-in-out infinite;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: shimmer 8s ease-in-out infinite, breathe 7s ease-in-out infinite;
     }
-    @keyframes ws-shimmer{
-      0%{ background-position: 0% 50% }
-      50%{ background-position: 100% 50% }
-      100%{ background-position: 0% 50% }
-    }
-    @keyframes ws-breathe{
-      0%  { filter: drop-shadow(0 0 0 rgba(20,99,255,0)); transform: translateZ(0) }
-      50% { filter: drop-shadow(0 8px 24px rgba(20,99,255,.35)); transform: translateZ(0) }
-      100%{ filter: drop-shadow(0 0 0 rgba(20,99,255,0)); transform: translateZ(0) }
+    @keyframes shimmer { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    @keyframes breathe { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.2)} }
+
+    /* Subtle backdrop glow */
+    .glow {
+      position: absolute; inset: -20% -10% auto -10%; height: 60%; z-index: 0;
+      background: radial-gradient(60% 60% at 50% 50%, var(--ring), transparent 60%);
+      transform: translateY(10%);
+      pointer-events: none;
     }
 
-    /* ---------- Stage layout ---------- */
-    .onx-stage{
-      max-width: min(1100px, 92vw);
-      margin: 0 auto;
-      display:grid;
-      place-items:center;
-      text-align:center;
-      gap: 4vh;
-    }
-
-    /* ---------- Models Card ---------- */
-    .models-card{
-      width:min(860px, 96vw);
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.08);
-      padding: clamp(18px, 4vw, 28px);
+    /* --------------------- Models Card (shows → collapses) --------------------- */
+    .models {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 880px; margin: 8vh auto 0;
+      border-radius: 24px; background: rgba(240,248,255,0.9);
+      box-shadow: 0 10px 30px rgba(2, 132, 199, 0.12), inset 0 0 0 1px rgba(14, 165, 255, 0.15);
+      backdrop-filter: saturate(1.1) blur(6px);
+      padding: clamp(18px, 3vw, 28px);
       transform-origin: top center;
-      opacity:0; transform: translateY(14px) scale(.98);
-      will-change: transform, opacity;
     }
-    .models-head{
-      font-size: clamp(18px, 2.2vw, 22px);
-      font-weight:700;
-      letter-spacing:.2px;
-      margin-bottom:12px;
+    .models h3 { font: 600 14px/1.2 ui-sans-serif, system-ui; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 999px;
+      background: linear-gradient(180deg, #0b1524, #0b0f1a);
+      color: var(--chip-ink); border: 1px solid rgba(99, 179, 237, 0.25);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 6px 18px rgba(37,99,235,0.18);
+      font: 500 13px/1 ui-sans-serif, system-ui;
     }
-    .models-head.blue-text{ display:inline-block }
-    .models-grid{
-      display:grid;
-      grid-template-columns: repeat(6, minmax(0,1fr));
-      gap: clamp(10px, 2.4vw, 18px);
-      align-items:center;
-      justify-items:center;
-    }
-    @media (max-width:780px){
-      .models-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-    }
-    .chip{
-      display:flex; align-items:center; justify-content:center;
-      background: var(--chip);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 10px 12px;
-      height: 52px; width: 120px;
-      backdrop-filter: blur(2px);
-      box-shadow: 0 6px 18px rgba(0,0,0,.06);
-    }
-    .chip img.logo{ max-height: 28px; max-width: 96px; object-fit: contain; }
+    .chip img.logo { width: 18px; height: 18px; display: block; filter: saturate(0) brightness(2); opacity: .9; }
 
-    /* ---------- Interstitial sentence ---------- */
-    .built-line{
-      font-size: clamp(22px, 4vw, 40px);
-      font-weight: 700;
-      letter-spacing: .2px;
-      margin: 6vh 0 0;
-      opacity:0; transform: translateY(16px);
-      will-change: transform, opacity;
+    /* ------------------------- Built on the best. ------------------------- */
+    .built-line {
+      position: relative; z-index: 2; margin: 8vh auto 0; text-align: center;
+      font: 600 clamp(24px, 5.2vw, 48px)/1.1 "Audiowide", ui-sans-serif, system-ui;
+      letter-spacing: .01em;
     }
 
-    /* ---------- ONX stack ---------- */
-    .onx-stack{ position:relative; width:100%; display:grid; place-items:center; gap:18px; }
+    /* ------------------------- O → ONX Stage ------------------------- */
+    .stage { position: relative; z-index: 2; width: 100%; height: min(60dvh, 520px); margin-top: 6vh; }
+    .o-wrap { position: relative; width: 100%; height: 100%; display: grid; place-items: center; }
 
-    /* O + orbit field */
-    .o-field{
-      position:relative;
-      width: max(260px, 26vw);
-      height: max(260px, 26vw);
-      display:grid; place-items:center;
+    .wordmark {
+      display: flex; align-items: baseline; justify-content: center; gap: clamp(14px, 2.4vw, 26px);
+      font-family: "Audiowide", ui-sans-serif, system-ui; letter-spacing: .02em; user-select: none;
     }
-    .big-o{
-      font-family: "Audiowide", ui-sans-serif, system-ui;
-      font-weight: 400;
-      font-size: clamp(140px, 18vw, 220px);
-      line-height: 1;
-      transform: translateY(6px);
-      will-change: transform;
-      z-index: 2;
-      pointer-events:none;
-      user-select:none;
+    .wordmark .o-core {
+      font-size: clamp(72px, 14vw, 180px); line-height: .8; position: relative; z-index: 3;
     }
-    /* Keep your blue gradient on the O too */
-    .big-o.blue-text{ display:inline-block }
+    .wordmark .nx { font-size: clamp(48px, 10vw, 128px); line-height: .82; opacity: 0; transform: scale(.8); }
 
-    /* Orbiters spin; each orbiter positioned by rotate() translate(R) */
-    .orbiters{
-      position:absolute; inset:0; display:block;
-      z-index: 1; /* keep slightly behind O for clarity */
-      animation: orbit 16s linear infinite;
+    /* Orbiters ring */
+    .ring { position: absolute; inset: 0; z-index: 2; }
+    .orbiter {
+      position: absolute; width: 44px; height: 44px; border-radius: 14px; overflow: hidden;
+      display: grid; place-items: center; background: #0b0f1a; border: 1px solid rgba(99, 179, 237, 0.25);
+      box-shadow: 0 8px 20px rgba(37,99,235,0.22), inset 0 1px 0 rgba(255,255,255,0.06);
+      transform: translate(-50%, -50%);
     }
-    @keyframes orbit{
-      from{ transform: rotate(0deg); }
-      to  { transform: rotate(360deg); }
-    }
-    .orbiter{
-      position:absolute; top:50%; left:50%;
-      transform: translate(-50%,-50%);
-      will-change: transform, opacity, filter;
-    }
-    .orbiter .chip{
-      width: 84px; height: 48px; padding:8px 10px; border-radius:12px;
-      background:#fff;
-      box-shadow: 0 6px 18px rgba(0,0,0,.08);
-    }
-    .orbiter .logo{ max-height:22px; max-width:70px; }
+    .orbiter img { width: 60%; height: 60%; object-fit: contain; filter: saturate(0) brightness(2); opacity: .95; }
 
-    /* NX reveal (blue gradient kept) */
-    .nx{
-      font-family:"Audiowide", ui-sans-serif, system-ui;
-      font-size: clamp(48px, 8vw, 90px);
-      letter-spacing: 0.22em;
-      opacity:0; transform: translateY(12px) scaleY(.92);
-      will-change: transform, opacity;
-    }
-    .nx.blue-text{ display:inline-block }
+    /* Initial polar placement (JS sets custom properties) */
+    .ring.orbiting .orbiter { animation: orbit 9s linear infinite; }
+    @keyframes orbit { to { transform: rotate(360deg) translate(var(--r)) rotate(-360deg); } }
 
-    /* Tagline */
-    .tagline{
-      font-size: clamp(16px, 3.6vw, 22px);
-      letter-spacing:.12em;
-      color: var(--muted);
-      opacity:0; transform: translateY(10px);
-      will-change: transform, opacity;
-    }
-    .tagline.blue-text{
-      /* subtle, lighter gradient feel for the tagline */
-      background: linear-gradient(120deg, var(--c2) 20%, var(--c1) 50%, var(--c2) 80%);
-      background-size: 220% 100%;
-      -webkit-background-clip:text;
-      background-clip:text;
-      color: transparent;
-      animation: ws-shimmer 10s ease-in-out infinite, ws-breathe 9s ease-in-out infinite;
+    /* --------------------------- AI Unified tagline --------------------------- */
+    .tagline {
+      position: relative; z-index: 2; margin: 24px auto 0; text-align: center;
+      font: 600 clamp(16px, 2.6vw, 24px)/1.2 ui-sans-serif, system-ui; letter-spacing: .12em; text-transform: uppercase;
+      opacity: 0; transform: translateY(10px);
     }
 
-    /* Reduced motion */
-    @media (prefers-reduced-motion: reduce){
-      .orbiters{ animation: none; }
-      .blue-text{ animation: none; }
+    /* --------------------------- Motion preferences --------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+      .blue-grad { animation: none; }
+      .ring.orbiting .orbiter { animation: none; }
     }
   </style>
 
-  <div class="onx-stage">
-    <!-- 1) MODELS CARD -->
-    <div class="models-card" id="modelsCard">
-      <div class="models-head blue-text">Models</div>
-      <div class="models-grid">
-        <!-- Replace logo src paths with your own -->
-        <div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div>
-        <div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div>
-        <div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div>
-        <div class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI"></div>
-        <div class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic"></div>
-        <div class="chip"><img class="logo" src="xaiLogo.svg"    alt="xAI"></div>
+  <div class="glow" aria-hidden="true"></div>
+
+  <div class="onx-wrap">
+    <!-- 1) MODELS CARD (shows → collapses) -->
+    <div class="models" id="models-card" aria-live="polite">
+      <h3>Models</h3>
+      <div class="chips">
+        <span class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI"> GPT‑5</span>
+        <span class="chip"><img class="logo" src="deepseekLogo.svg" alt="DeepSeek"> DeepSeek</span>
+        <span class="chip"><img class="logo" src="metaLogo.svg" alt="Meta"> Llama</span>
+        <span class="chip"><img class="logo" src="googleLogo.svg" alt="Google"> Gemma</span>
+        <span class="chip"><img class="logo" src="qwenLogo.svg" alt="Qwen"> Qwen</span>
+        <span class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic"> Claude</span>
       </div>
     </div>
 
-    <!-- 2) INTERSTITIAL SENTENCE -->
-    <div class="built-line blue-text" id="builtLine">Built on the best.</div>
+    <!-- 2) Built on the best. (appears → disappears) -->
+    <div class="built-line blue-grad" id="built-line" aria-hidden="true" style="opacity:0;">Built on the best.</div>
 
-    <!-- 3) O + ORBIT + NX + TAGLINE -->
-    <div class="onx-stack">
-      <div class="o-field" id="oField" aria-live="polite">
-        <div class="big-o blue-text" id="bigO">O</div>
+    <!-- 3) O → ONX with orbiters that get sucked in -->
+    <div class="stage" id="stage">
+      <div class="o-wrap">
+        <div class="ring" id="ring">
+          <!-- Replace src paths as needed. JS will position these on a circle. -->
+          <div class="orbiter" data-angle="0"><img src="grokLogo.svg" alt="Grok"></div>
+          <div class="orbiter" data-angle="60"><img src="googleLogo.svg" alt="Google"></div>
+          <div class="orbiter" data-angle="120"><img src="metaLogo.svg" alt="Meta"></div>
+          <div class="orbiter" data-angle="180"><img src="openaiLogo.svg" alt="OpenAI"></div>
+          <div class="orbiter" data-angle="240"><img src="anthropicLogo.svg" alt="Anthropic"></div>
+          <div class="orbiter" data-angle="300"><img src="deepseekLogo.svg" alt="DeepSeek"></div>
+        </div>
 
-        <!-- Orbiters (angles set in JS; sucked into center later) -->
-        <div class="orbiters" id="orbiters">
-          <!-- Create as many as you need, JS will distribute them around the circle -->
-          <div class="orbiter"><div class="chip"><img class="logo" src="grokLogo.svg"   alt="Grok"></div></div>
-          <div class="orbiter"><div class="chip"><img class="logo" src="googleLogo.svg" alt="Google"></div></div>
-          <div class="orbiter"><div class="chip"><img class="logo" src="metaLogo.svg"   alt="Meta"></div></div>
-          <div class="orbiter"><div class="chip"><img class="logo" src="openaiLogo.svg" alt="OpenAI"></div></div>
-          <div class="orbiter"><div class="chip"><img class="logo" src="anthropicLogo.svg" alt="Anthropic"></div></div>
-          <div class="orbiter"><div class="chip"><img class="logo" src="xaiLogo.svg"    alt="xAI"></div></div>
+        <div class="wordmark" aria-label="ONX wordmark">
+          <div class="o-core blue-grad" id="o-core">O</div>
+          <div class="nx blue-grad" id="n-letter">N</div>
+          <div class="nx blue-grad" id="x-letter">X</div>
         </div>
       </div>
-
-      <div class="nx blue-text" id="nx">N&nbsp;&nbsp;X</div>
-      <div class="tagline blue-text" id="tagline">AI&nbsp;Unified</div>
     </div>
+
+    <!-- 4) Tagline under ONX -->
+    <div class="tagline blue-grad" id="tagline">AI Unified</div>
   </div>
 
-  <script>
-    (function(){
-      const root = document.querySelector('#onx-sequence');
-      const modelsCard = document.getElementById('modelsCard');
-      const builtLine  = document.getElementById('builtLine');
-      const orbitersEl = document.getElementById('orbiters');
-      const bigO       = document.getElementById('bigO');
-      const nx         = document.getElementById('nx');
-      const tagline    = document.getElementById('tagline');
+  <!-- GSAP (CDN) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+</section>
 
-      const orbiters = Array.from(orbitersEl.querySelectorAll('.orbiter'));
-      const R = parseFloat(getComputedStyle(document.getElementById('onx-sequence')).getPropertyValue('--radius')) || 120;
+<script>
+(function(){
+  const startWhenReady = () => {
+    if (!window.gsap) { console.warn("GSAP not loaded; showing final state."); finalize(); return; }
 
-      // Place orbiters around the O
-      orbiters.forEach((node, i) => {
-        const angle = (i / orbiters.length) * 360;
-        node.dataset.angle = angle.toFixed(3);
-        node.style.transform = `translate(-50%,-50%) rotate(${angle}deg) translate(${R}px) rotate(${-angle}deg)`;
+    const tl = gsap.timeline({ defaults: { ease: "back.out(1.4)", duration: 0.8 } });
+
+    const models = document.getElementById('models-card');
+    const built = document.getElementById('built-line');
+    const ring = document.getElementById('ring');
+    const orbiters = Array.from(ring.querySelectorAll('.orbiter'));
+    const oCore = document.getElementById('o-core');
+    const nL = document.getElementById('n-letter');
+    const xL = document.getElementById('x-letter');
+    const tagline = document.getElementById('tagline');
+
+    // --- Place orbiters on a circle and prep state ---
+    const ringBox = ring.getBoundingClientRect();
+    const r = Math.min(ringBox.width, ringBox.height) * 0.32; // orbit radius
+    orbiters.forEach(ob => {
+      const ang = (+ob.dataset.angle || 0) * Math.PI / 180;
+      const ox = Math.cos(ang) * r; const oy = Math.sin(ang) * r;
+      // Using CSS transform compose: rotate(angle) translate(r) rotate(-angle)
+      ob.style.setProperty('--r', r + 'px');
+      ob.style.left = '50%'; ob.style.top = '50%';
+      // initial transform at angle
+      ob.style.transform = `rotate(${ob.dataset.angle || 0}deg) translate(${r}px) rotate(-${ob.dataset.angle || 0}deg)`;
+    });
+
+    // Prep elements
+    gsap.set(built, { opacity: 0, y: 20, filter: 'blur(2px)' });
+    gsap.set([nL, xL], { opacity: 0, scale: 0.8 });
+    gsap.set(tagline, { opacity: 0, y: 10 });
+
+    // 1) Show Models card
+    tl.fromTo(models, { opacity: 0, y: 24, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.6)' })
+      .to(models, { duration: 0.8, ease: 'power1.out' }) // tiny hold via empty tween
+      // Collapse card (scaleY + height trick)
+      .to(models, { transformOrigin: 'top center', scaleY: 0.6, duration: 0.32, ease: 'power2.in' })
+      .to(models, { height: 0, opacity: 0, paddingTop: 0, paddingBottom: 0, marginTop: 0, duration: 0.48, ease: 'power2.in', onComplete(){ models.style.display='none'; }}, '<');
+
+    // 2) Built on the best. (in → out)
+    tl.to(built, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'back.out(1.8)' })
+      .to(built, { opacity: 0, y: -16, filter: 'blur(4px)', duration: 0.55, ease: 'power2.in' }, '+=0.7');
+
+    // 3) Show O and begin orbit
+    tl.call(() => ring.classList.add('orbiting'))
+      .fromTo(oCore, { opacity: 0, y: 18, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'back.out(1.8)' }, '<');
+
+    // 3b) Suck orbiters into the O (center) one-by-one
+    tl.add(() => {
+      const coreBox = oCore.getBoundingClientRect();
+      const cx = coreBox.left + coreBox.width/2;
+      const cy = coreBox.top + coreBox.height/2;
+
+      // Stop orbit animation to capture real positions
+      ring.classList.remove('orbiting');
+
+      // Stagger the pulls
+      gsap.to(orbiters, {
+        duration: 0.55,
+        ease: 'power2.in',
+        opacity: 0,
+        scale: 0.2,
+        stagger: 0.2,
+        onStart: function(){
+          // during the tween, compute dx/dy once per element
+          this.targets().forEach(el => {
+            const b = el.getBoundingClientRect();
+            const ex = b.left + b.width/2;
+            const ey = b.top + b.height/2;
+            const dx = cx - ex; const dy = cy - ey;
+            gsap.set(el, { x: "+=" + dx, y: "+=" + dy });
+          });
+        }
+      });
+    }, "+=0.2");
+
+    // 3c) O bounce → reveal NX on landing
+    tl.to(oCore, { y: -40, duration: 0.35, ease: 'power2.out' }, "+=0.6")
+      .to(oCore, {
+        y: 0, duration: 0.45, ease: 'bounce.out',
+        onComplete(){
+          gsap.to([nL, xL], { opacity: 1, scale: 1, duration: 0.48, ease: 'back.out(2)', stagger: 0.08 });
+        }
       });
 
-      // Helpers
-      const wait = (ms)=> new Promise(r=> setTimeout(r, ms));
-      const animate = (el, keyframes, options) =>
-        new Promise(res => {
-          const a = el.animate(keyframes, options);
-          a.addEventListener('finish', res, {once:true});
-        });
+    // 4) Tagline under ONX
+    tl.to(tagline, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.6)' }, "+=0.1");
 
-      // Boomerang easing (kept)
-      const BOOM = 'cubic-bezier(.2,.7,.1,1)';
+    // Fire timeline when section is in view; if already visible, start immediately
+    const root = document.getElementById('onx-hero');
+    const play = () => { if (!tl._hasPlayed) { tl._hasPlayed = true; tl.play(0); } };
 
-      async function playSequence(){
-        if(root.dataset.ran === '1') return;
-        root.dataset.ran = '1';
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) { play(); io.disconnect(); } });
+    }, { root: null, threshold: 0.35 });
 
-        // 1) MODELS CARD in
-        modelsCard.style.opacity = 1;
-        await animate(modelsCard, [
-          {opacity:0, transform:'translateY(14px) scale(.98)'},
-          {opacity:1, transform:'translateY(0)   scale(1)'}
-        ], {duration:650, easing:BOOM, fill:'forwards'});
+    io.observe(root);
+  };
 
-        // Hold briefly then collapse (boomerang-style)
-        await wait(900);
-        await animate(modelsCard, [
-          {transform:'scaleY(1)',   opacity:1},
-          {transform:'scaleY(.94)', opacity:.9, offset:.35, filter:'blur(0px)'},
-          {transform:'scaleY(0)',   opacity:0,  filter:'blur(2px)'}
-        ], {duration:520, easing:BOOM, fill:'forwards'});
+  const finalize = () => {
+    // Minimal static fallback if GSAP missing
+    document.getElementById('built-line').style.opacity = 1;
+    document.getElementById('o-core').style.opacity = 1;
+    document.getElementById('n-letter').style.opacity = 1;
+    document.getElementById('x-letter').style.opacity = 1;
+    document.getElementById('tagline').style.opacity = 1;
+  };
 
-        // 2) "Built on the best." in → out (blue gradient retained by class)
-        await wait(140);
-        await animate(builtLine, [
-          {opacity:0, transform:'translateY(16px)'},
-          {opacity:1, transform:'translateY(0)'}
-        ], {duration:520, easing:BOOM, fill:'forwards'});
-        await wait(1000);
-        await animate(builtLine, [
-          {opacity:1, transform:'translateY(0)'},
-          {opacity:0, transform:'translateY(-10px)'}
-        ], {duration:420, easing:BOOM, fill:'forwards'});
+  if (document.readyState === 'complete' || document.readyState === 'interactive') startWhenReady();
+  else document.addEventListener('DOMContentLoaded', startWhenReady);
+})();
+</script>
 
-        // 3) Orbiters spin a touch, then SUCK into the O center (staggered)
-        await wait(250);
-        const stagger = 120; // ms between each — organic cadence
-        for (let i=0; i<orbiters.length; i++){
-          const node = orbiters[i];
-          const ang = parseFloat(node.dataset.angle||'0');
-          node.animate([
-            { transform: `translate(-50%,-50%) rotate(${ang}deg) translate(${R}px) rotate(${-ang}deg) scale(1)`,
-              filter: 'blur(0px)', opacity:1 },
-            { transform: `translate(-50%,-50%) rotate(${ang}deg) translate(0px)   rotate(${-ang}deg) scale(.2)`,
-              filter: 'blur(1px)', opacity:0.02 }
-          ], { duration:680, easing:BOOM, fill:'forwards' });
-          await wait(stagger);
-        }
-
-        // 4) O boomerang bounce
-        await animate(bigO, [
-          { transform:'translateY(6px) scale(1)' },
-          { transform:'translateY(-14px) scale(1.02)', offset:.45, easing:'ease-out'},
-          { transform:'translateY(0px)  scale(.98)',   offset:.72, easing:'ease-in'},
-          { transform:'translateY(2px)  scale(1.002)', offset:.88, easing:'ease-out'},
-          { transform:'translateY(0px)  scale(1)' }
-        ], {duration:760, easing:BOOM, fill:'forwards'});
-
-        // 5) NX prints on the slap (blue gradient kept)
-        await animate(nx, [
-          {opacity:0, transform:'translateY(14px) scaleY(.86)'},
-          {opacity:1, transform:'translateY(0)    scaleY(1)'}
-        ], {duration:520, easing:BOOM, fill:'forwards'});
-
-        // 6) Tagline: AI Unified
-        await wait(140);
-        await animate(tagline, [
-          {opacity:0, transform:'translateY(10px)'},
-          {opacity:1, transform:'translateY(0)'}
-        ], {duration:520, easing:BOOM, fill:'forwards'});
-      }
-
-      // Start once scrolled into view (same behavior)
-      const io = new IntersectionObserver((entries)=>{
-        entries.forEach(e=>{
-          if(e.isIntersecting && e.intersectionRatio > 0.6){
-            playSequence();
-            io.disconnect();
-          }
-        });
-      }, {threshold:[0, .6, 1]});
-      io.observe(root);
-    })();
-  </script>
-</section>
-<!-- =============================== /ONX Sequence =============================== -->
 
 
 
