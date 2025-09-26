@@ -939,7 +939,6 @@ const SUGGESTIONS = [
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- ──────────────────────────Showcase Video Section───────────────────────────────────── -->
 <!-- ONX Card Reveal → "The Best AI" → Logos line → Suck-into O (Audiowide) → Morph to logo.svg + "Unified AI" -->
@@ -1007,10 +1006,11 @@ const SUGGESTIONS = [
       { src: 'grokLogo.svg',   alt: 'Grok'   },
       { src: 'googleLogo.svg', alt: 'Google' },
       { src: 'metaLogo.svg',   alt: 'Meta'   },
-      { src: 'OAILogo.png', alt: 'OpenAI' },
+      { src: 'OAILogo.png',    alt: 'OpenAI' },
     ];
-    // 2) Final brand mark that the "O" morphs into:
-    const FINAL_LOGO_SRC = 'onxlogo.svg'; // <- your logo.svg path
+    // 2) Final brand mark that the "O" morphs into (tinted to pure white on draw):
+    const FINAL_LOGO_SRC  = 'onxlogo.svg';
+    const FINAL_LOGO_TINT = '#ffffff'; // force white regardless of source colors
 
     // ===== ELEMENTS =====
     const host    = document.getElementById('onx-card-reveal');
@@ -1068,10 +1068,11 @@ const SUGGESTIONS = [
     }
 
     // ===== DESIGN BASE / STYLE =====
+    // Increase model menu sizes slightly; keep dark text on white card for contrast.
     const DESIGN = {
-      padX: 20, padY: 20, rowGap: 16, subGap: 6,
-      titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
-      minW: 360, maxW: 720, stageMargin: 56
+      padX: 24, padY: 24, rowGap: 18, subGap: 8,
+      titleSize: 34, subSize: 20, titleWeight: 800, subWeight: 500,
+      minW: 380, maxW: 760, stageMargin: 56
     };
     const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
 
@@ -1093,7 +1094,7 @@ const SUGGESTIONS = [
       };
     }
 
-    // ===== MODELS (unchanged) =====
+    // ===== MODELS (unchanged content) =====
     const rows = [
       { title:'ONX FAST', sub:'Fastest for instant answers' },
       { title:'ONX',      sub:'Default model' },
@@ -1255,7 +1256,7 @@ const SUGGESTIONS = [
       ctx.shadowColor='transparent';
       ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-      // Content
+      // Content (kept dark for contrast on white card)
       ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
       const contentX = x + STYLE.padX;
       let cursorY = y + STYLE.padY;
@@ -1283,7 +1284,7 @@ const SUGGESTIONS = [
 
         if (rows[i].sub){
           setFont(STYLE.subWeight, STYLE.subSize);
-          ctx.fillStyle = '#5f646c';
+          ctx.fillStyle = 'rgba(0,0,0,0.58)';
           ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
         }
         ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
@@ -1297,7 +1298,7 @@ const SUGGESTIONS = [
       return { total, x, y, w, h, r };
     }
 
-    // -------------------- Phase B: Morph card → "The Best AI" --------------------
+    // -------------------- Phase B: Card → "The Best AI" (text now WHITE + larger) --------------------
     function renderCardToBestAI(startBox, t){
       // t in [0,1]
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
@@ -1321,47 +1322,45 @@ const SUGGESTIONS = [
       roundedRect(ctx, x, y, w, h, r); ctx.fill();
       ctx.shadowColor='transparent'; ctx.restore();
 
-      // "The Best AI" text
+      // Bigger, white "The Best AI"
       const scale = boomerang(t, 1.08, 0.55);
-      const titleSize = Math.round( lerp(24, isMobile() ? 44 : 64, scale) );
+      const titleSize = Math.round( lerp(64, isMobile() ? 76 : 108, scale) );
       setFont(900, titleSize, '"Audiowide", ui-sans-serif, system-ui');
 
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.translate(CONFIG.w/2, CONFIG.h/2);
-      ctx.scale(1, 1);
       ctx.globalAlpha = easeOutCubic(clamp(t));
-      ctx.fillStyle = '#0b0b10';
+      ctx.fillStyle = '#ffffff';
       ctx.fillText('The Best AI', 0, 0);
       ctx.restore();
     }
 
-    // -------------------- Phase C: "The Best AI" → line of logos --------------------
-    // Returns computed positions for logos to reuse in next phase.
+    // -------------------- Phase C: "The Best AI" → line of logos (logos larger) --------------------
     function renderBestAIToLogos(t, logoImgs){
       // t in [0,1]
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
-      // Title fading out
+      // White title fading out
       const titleOut = clamp((t-0.35)/0.30);
       const titleIn  = 1 - titleOut;
-      const titleSize = Math.round( isMobile() ? 44 : 64 );
+      const titleSize = Math.round( isMobile() ? 76 : 108 );
       setFont(900, titleSize, '"Audiowide", ui-sans-serif, system-ui');
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = `rgba(11,11,16,${titleIn})`;
+      ctx.fillStyle = `rgba(255,255,255,${titleIn})`;
       ctx.fillText('The Best AI', CONFIG.w/2, CONFIG.h/2);
       ctx.restore();
 
-      // Logos line easing in
+      // Logos line easing in — bigger
       const inT = easeOutCubic(clamp((t-0.1)/0.7));
       const lineY = Math.round(CONFIG.h/2 + lerp(60, 0, inT));
-      const pad = isMobile()? 18 : 24;
-      const logoH = isMobile()? 26 : 34;
+      const pad = isMobile()? 22 : 32;
+      const logoH = isMobile()? 44 : 64; // bumped up
       const totalW = logoImgs.reduce((acc,img, i)=> acc + (logoH * (img.aspect||1)) + (i?pad:0), 0);
       let x = (CONFIG.w - totalW)/2;
 
-      const positions = []; // store for next phase
+      const positions = [];
       logoImgs.forEach((img, i) => {
         const w = logoH * (img.aspect||1);
         const appear = clamp((inT - i*0.06)/0.8);
@@ -1377,7 +1376,6 @@ const SUGGESTIONS = [
         if (img.image){
           ctx.drawImage(img.image, -w/2, -logoH/2, w, logoH);
         } else {
-          // fallback: pill
           ctx.fillStyle = '#e9ecf2';
           roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 10));
           ctx.fill();
@@ -1391,32 +1389,30 @@ const SUGGESTIONS = [
       return positions;
     }
 
-    // -------------------- Phase D: Logos sucked into the O (Audiowide) --------------------
+    // -------------------- Phase D: Logos sucked into the O (O is white + larger) --------------------
     function renderLogosIntoO(t, logoImgs, startPositions){
       // t in [0,1]
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
-      // O target
+      // O target (bigger, white)
       const centerX = CONFIG.w/2;
       const centerY = CONFIG.h/2 - (isMobile()? 6 : 10);
-      const baseSize = isMobile()? 120 : 180;
+      const baseSize = isMobile()? 160 : 240; // bumped up
       const size = Math.round( lerp(baseSize*0.9, baseSize*1.05, boomerang(clamp(t), 1.05, 0.55)) );
-      const text = 'O';
 
-      // Draw the O with slight shadow
       ctx.save();
       setFont(900, size, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.shadowColor = 'rgba(0,0,0,0.15)';
       ctx.shadowBlur = 18 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 10;
-      ctx.fillStyle = '#0b0b10';
-      ctx.fillText(text, centerX, centerY);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('O', centerX, centerY);
       ctx.shadowColor = 'transparent';
       ctx.restore();
 
       // Logos fly into center
       const pull = easeInOutCubic(clamp(t));
-      const suckRadius = Math.max(18, size*0.06);
+      const suckRadius = Math.max(22, size*0.06);
       logoImgs.forEach((img, i) => {
         const p = startPositions[i];
         const delay = i * 0.06; // slight cascade
@@ -1438,7 +1434,7 @@ const SUGGESTIONS = [
         ctx.restore();
       });
 
-      // small “suck” glow
+      // subtle glow
       const glowA = 0.12 * (1 - Math.abs(0.5 - pull) * 2);
       if (glowA > 0){
         ctx.save();
@@ -1451,7 +1447,7 @@ const SUGGESTIONS = [
       }
     }
 
-    // -------------------- Phase E: O → logo.svg + "Unified AI" --------------------
+    // -------------------- Phase E: O → final logo (tinted WHITE) + "Unified AI" (WHITE, larger) --------------------
     function renderOToFinalLogo(t, finalLogoImg){
       // t in [0,1]
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
@@ -1463,42 +1459,43 @@ const SUGGESTIONS = [
       const oOut = clamp(1 - t);
       const logoIn = easeOutCubic(clamp(t));
 
-      // Draw O fading out
-      const oSize = Math.round(lerp(isMobile()? 120 : 180, isMobile()? 100 : 120, 1 - oOut));
+      // Draw O fading out (white)
+      const oSize = Math.round(lerp(isMobile()? 160 : 240, isMobile()? 120 : 160, 1 - oOut));
       ctx.save();
       setFont(900, oSize, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.globalAlpha = oOut;
-      ctx.fillStyle = '#0b0b10';
+      ctx.fillStyle = '#ffffff';
       ctx.fillText('O', centerX, centerY);
       ctx.restore();
 
-      // Draw final logo coming in with a boomerang scale
+      // Final logo coming in (tinted white)
       const bounceScale = 0.9 + 0.1*boomerang(logoIn, 1.04, 0.52);
-      const targetW = isMobile()? 120 : 160;
+      const targetW = isMobile()? 160 : 220; // bigger
       const w = targetW * bounceScale;
       const h = w * (finalLogoImg.aspect || 1);
       ctx.save();
       ctx.globalAlpha = logoIn;
       if (finalLogoImg.image){
-        ctx.drawImage(finalLogoImg.image, centerX - w/2, centerY - w/2, w, w);
+        // center using true aspect
+        ctx.drawImage(finalLogoImg.image, centerX - w/2, centerY - h/2, w, h);
       } else {
         // fallback circle
-        ctx.fillStyle = '#0b0b10';
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(centerX, centerY, w/2, 0, Math.PI*2); ctx.fill();
       }
       ctx.restore();
 
-      // "Unified AI" under the mark
+      // "Unified AI" — white and larger
       const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
       if (subtitleA > 0){
-        const size = isMobile()? 20 : 26;
+        const size = isMobile()? 28 : 40; // bigger
         setFont(700, size, '"Audiowide", ui-sans-serif, system-ui');
         ctx.save();
         ctx.globalAlpha = subtitleA;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.fillStyle = '#0b0b10';
-        ctx.fillText('Unified AI', centerX, centerY + (isMobile()? 78 : 96));
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Unified AI', centerX, centerY + (isMobile()? 108 : 132));
         ctx.restore();
       }
     }
@@ -1507,25 +1504,48 @@ const SUGGESTIONS = [
     let isAnimating = false;
     let rafId = null;
 
-    // Preload images & fonts before autoplay
+    // Image loading + optional tinting for final logo
     function loadImage(src){
       return new Promise(resolve=>{
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.onload = ()=> resolve({ image: img, aspect: img.width ? img.width/img.height : 1 });
         img.onerror = ()=> resolve({ image: null, aspect: 1 });
         img.src = src;
       });
     }
 
+    function tintImageToColor(img, color='#ffffff'){
+      if (!img) return null;
+      const off = document.createElement('canvas');
+      const w = Math.max(1, img.width), h = Math.max(1, img.height);
+      off.width = w; off.height = h;
+      const octx = off.getContext('2d');
+      // Draw original
+      octx.clearRect(0,0,w,h);
+      octx.drawImage(img, 0, 0, w, h);
+      // Keep alpha, replace color with desired tint
+      octx.globalCompositeOperation = 'source-in';
+      octx.fillStyle = color;
+      octx.fillRect(0,0,w,h);
+      octx.globalCompositeOperation = 'source-over';
+      return off;
+    }
+
     async function prepareAssets(){
       // preload logos
       const logoImgs = await Promise.all(LOGOS.map(l => loadImage(l.src)));
-      // preserve aspect if provided
       logoImgs.forEach((v, i) => {
         if (!v.aspect || !isFinite(v.aspect) || v.aspect <= 0) v.aspect = 1;
       });
-      // preload final logo
-      const finalLogo = await loadImage(FINAL_LOGO_SRC);
+
+      // preload final logo and tint to white
+      const finalLogoRaw = await loadImage(FINAL_LOGO_SRC);
+      let tinted = null;
+      if (finalLogoRaw && finalLogoRaw.image){
+        tinted = tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT);
+      }
+      const finalLogo = { image: tinted || finalLogoRaw.image, aspect: finalLogoRaw.aspect };
 
       // wait for fonts (Audiowide)
       if (document.fonts && document.fonts.ready){
@@ -1541,9 +1561,8 @@ const SUGGESTIONS = [
 
       // PHASE A: card reveal (models)
       const startA = performance.now();
-      const A_total = (t)=> renderCard(t).total; // compute on first frame
-
       let cardBox = null;
+
       function stepA(now){
         const tSec = (now - startA)/1000;
         const layoutA = renderCard(tSec);
@@ -1600,7 +1619,7 @@ const SUGGESTIONS = [
     // First static frame (clean)
     clearStage(); renderCard(0);
 
-    // Autoplay when stage center visible (fix for “stops after first step”: we removed idle loop and chain phases)
+    // Autoplay when stage center visible
     let autoplayed = false;
     let prepared = null;
 
@@ -1656,7 +1675,6 @@ const SUGGESTIONS = [
 
       clearStage();
       renderCard(0);
-      // don't auto-replay on resize unless visible and not already played
       if (!autoplayed) tryAutoplay();
     }
 
@@ -1681,8 +1699,8 @@ const SUGGESTIONS = [
   </script>
 </div>
 
-
 <!--======================================================================================================================================================================-->
+
 <!-- ──────────────────────────Become Limitless Section───────────────────────────────────── -->
 
 <!-- ===============================
