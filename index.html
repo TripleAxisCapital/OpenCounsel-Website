@@ -942,12 +942,9 @@ const SUGGESTIONS = [
 
 
 
-
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- ──────────────────────────Showcase Video Section───────────────────────────────────── -->
-<!-- ONX Card Reveal → Chat Bubble — center-out card, then boomerang morph to pill with blinking caret -->
+<!-- ONX Card Reveal → "The Best AI" → Logos Row → Suction into O → Final logo + "Unified AI" -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
      data-menu-scale="1.5"
@@ -960,17 +957,22 @@ const SUGGESTIONS = [
      style="max-width:100%; margin:0 auto;">
 
   <style>
+    /* Keep your existing look + add Audiowide for the “O” and final mark */
+    @import url("https://fonts.googleapis.com/css2?family=Audiowide&display=swap");
+
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
       position:relative; width:min(900px,92vw); aspect-ratio:16/9; margin:0 auto;
       border-radius:28px; overflow:hidden;
-      /* Stage background comes from gradient utility classes below */
+      /* Stage background supplied by your gradient utility classes */
       box-shadow: none;
       will-change: transform;
       transform-origin:center top; /* mobile will scale from top-center */
     }
     #onx-stage canvas{width:100%; height:100%; display:block;}
-     #onx-controls{
+
+    /* Optional controls shell you already had; left intact for structure */
+    #onx-controls{
       display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
       font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
       touch-action: manipulation;
@@ -995,21 +997,34 @@ const SUGGESTIONS = [
   <!-- Gradient/animation lives on the stage container -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
-  <div id="onx-controls"></div> 
-  <div id="onx-play"></div> 
+  <div id="onx-controls"></div>
+  <div id="onx-play" aria-label="Play" title="Play" role="button" style="display:none"></div>
 
   <script>
     (()=>{ 'use strict';
 
-      // ===== ELEMENTS =====
+      /* ======================= CONFIGURE YOUR ASSETS HERE ======================= */
+      // 1) Logos row (left→right). Replace src paths with yours.
+      const LOGOS = [
+        { src: 'grokLogo.svg',   label: 'Grok'   },
+        { src: 'googleLogo.svg', label: 'Google' },
+        { src: 'metaLogo.svg',   label: 'Meta'   },
+        { src: 'openaiLogo.svg', label: 'OpenAI' },
+        { src: 'anthropic.svg',  label: 'Anthropic' },
+        { src: 'mistral.svg',    label: 'Mistral' }
+      ];
+      // 2) Final brand mark to morph into (SVG or PNG).
+      const FINAL_LOGO_SRC = 'logo.svg';
+      // 3) Final subtitle
+      const FINAL_SUBTITLE = 'Unified AI';
+
+      /* ============================ ELEMENTS / SETUP ============================ */
       const host    = document.getElementById('onx-card-reveal');
       const stageEl = document.getElementById('onx-stage');
       const canvas  = document.getElementById('onx-canvas');
+      const ASPECT  = 16/9;
 
-      // ===== UTILS =====
       const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
-      const ASPECT = 16/9;
-
       const isMobile = () =>
         window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
 
@@ -1030,9 +1045,10 @@ const SUGGESTIONS = [
         peakX: parseFloat(host.dataset.peakX) || 0.58,
         peakY: parseFloat(host.dataset.peakY) || 0.60
       };
+      const S = v => v / TEMPO.speed;
 
       // ===== CANVAS CONFIG (mobile perf caps) =====
-      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 }; // 16:9
+      let CONFIG = isMobile() ? { w: 1024, h: 576 } : { w: 1920, h: 1080 };
       const dprRaw = window.devicePixelRatio || 1;
       let dpr = isMobile() ? Math.min(1.15, dprRaw) : Math.max(1, dprRaw);
 
@@ -1046,18 +1062,15 @@ const SUGGESTIONS = [
       let BG_CANVAS = document.createElement('canvas');
       BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
       let BG_CTX = BG_CANVAS.getContext('2d');
-      (function cacheBG(){
-        BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); // fully transparent
-      })();
+      (function cacheBG(){ BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); })();
 
-      // Helper: clear the main canvas every frame (prevents trails)
       function clearStage(){
         ctx.setTransform(1,0,0,1,0,0);
         ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr);
         ctx.setTransform(dpr,0,0,dpr,0,0);
       }
 
-      // ===== DESIGN BASE / STYLE (recomputable) =====
+      // ===== DESIGN BASE / STYLE =====
       const DESIGN = {
         padX: 20, padY: 20, rowGap: 16, subGap: 6,
         titleSize: 28, subSize: 18, titleWeight: 800, subWeight: 500,
@@ -1083,7 +1096,7 @@ const SUGGESTIONS = [
         };
       }
 
-      // ===== MODELS (content unchanged) =====
+      // ===== MODELS =====
       const rows = [
         { title:'ONX FAST', sub:'Fastest for instant answers' },
         { title:'ONX',      sub:'Default model' },
@@ -1095,6 +1108,7 @@ const SUGGESTIONS = [
       const lerp=(a,b,t)=>a+(b-a)*t;
       const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
       const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+      const easeOutBack=(t,s=1.70158)=>{ t=clamp(t); return 1 + (s+1)*Math.pow(t-1,3) + s*Math.pow(t-1,2); };
       function boomerang(t, factor=1.10, peak=0.55){
         if (t <= 0) return 0;
         if (t >= 1) return 1;
@@ -1102,8 +1116,8 @@ const SUGGESTIONS = [
         const u = (t - peak) / (1 - peak);
         return 1 + (factor - 1) * (1 - easeOutCubic(u));
       }
-      function setFont(weight,size){
-        ctx.font = `${weight} ${size}px ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui`;
+      function setFont(weight,size,family='ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'){
+        ctx.font = `${weight} ${size}px ${family}`;
       }
       function roundedRect(ctx,x,y,w,h,r){
         const rr=Math.min(r,w/2,h/2);
@@ -1117,8 +1131,13 @@ const SUGGESTIONS = [
       }
 
       // ===== TIMINGS =====
-      const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
-      const S = v => v / TEMPO.speed;
+      const BASE = {
+        widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50,
+        morphMenuToText: 0.85,
+        textToLogos: 0.80,
+        suction: 1.40,
+        oToFinal: 0.90
+      };
 
       // ===== LAYOUT =====
       function measureFinalLayout(){
@@ -1158,7 +1177,7 @@ const SUGGESTIONS = [
       const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
       const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
-      // ===== MOBILE AUTO-FIT SCALE =====
+      // MOBILE AUTO-FIT SCALE (unchanged)
       function controlHeight(){
         const ctrl = document.getElementById('onx-controls');
         return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
@@ -1191,10 +1210,10 @@ const SUGGESTIONS = [
         stageEl.style.transformOrigin = 'center top';
       }
 
-      // --------- Phase A: Card build ----------
+      /* ============================= PHASE A: CARD ============================= */
       function renderCard(t){
-        clearStage();                       // <— crucial: clear frame
-        ctx.drawImage(BG_CANVAS, 0, 0);     // transparent buffer (no fill)
+        clearStage();
+        ctx.drawImage(BG_CANVAS, 0, 0);
 
         const widthEnd = S(BASE.widthGrow);
         const tw = clamp(t / widthEnd);
@@ -1281,30 +1300,33 @@ const SUGGESTIONS = [
         return { total, x, y, w, h, r };
       }
 
-      // --------- Phase B: Morph card → chat bubble ----------
-      function renderMorphCardToBubble(startBox, t){
-        clearStage();                    // <— clear frame
-        ctx.drawImage(BG_CANVAS, 0, 0);  // transparent buffer
+      /* ================== PHASE B: CARD → “THE BEST AI” (pill) ================= */
+      function renderMorphCardToText(startBox, t){
+        clearStage();
+        ctx.drawImage(BG_CANVAS, 0, 0);
 
         const mobile = isMobile();
 
-        const maxBubbleW = CONFIG.w - 2*STYLE.stageMargin;
-        const targetBubbleW = mobile
-          ? Math.min(maxBubbleW, Math.max(520, startBox.w * 1.35))
-          : Math.max(startBox.w * 1.8, 1100);
-        const bubbleW = Math.round(Math.min(maxBubbleW, targetBubbleW));
-        const bubbleH = Math.round(mobile ? Math.min(96, 104) : Math.min(100 * getMenuScale(), 130));
-        const bubbleR = Math.round(bubbleH / 2);
+        // Target pill around the text
+        const targetText = 'The Best AI';
+        setFont(800, mobile ? 34 : Math.max(38, 40 * getMenuScale()));
+        const tw = ctx.measureText(targetText).width;
+        const paddingX = mobile ? 22 : 28;
+        const paddingY = mobile ? 14 : 16;
+        const pillW = Math.min(CONFIG.w - 2*STYLE.stageMargin, tw + paddingX*2);
+        const pillH = mobile ? 60 : 70;
+        const pillR = pillH/2;
 
+        // Interpolate shape
         const widthF  = TEMPO.overshootXEnabled ? boomerang(t, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(t);
         const heightF = TEMPO.overshootYEnabled ? boomerang(t, TEMPO.overshootY, TEMPO.peakY) : easeInOutCubic(t);
         const radiusF = easeInOutCubic(t);
 
-        const w = startBox.w + (bubbleW - startBox.w) * widthF;
-        const h = startBox.h + (bubbleH - startBox.h) * heightF;
-        const r = startBox.r + (bubbleR - startBox.r) * radiusF;
+        const w = startBox.w + (pillW - startBox.w) * widthF;
+        const h = startBox.h + (pillH - startBox.h) * heightF;
+        const r = startBox.r + (pillR - startBox.r) * radiusF;
         const x = (CONFIG.w - w)/2;
-        const y = (CONFIG.h - h)/2 + 30 * radiusF;
+        const y = (CONFIG.h - h)/2 + 28 * radiusF;
 
         // Shape
         ctx.shadowColor = `rgba(0,0,0,${lerp(.14,.16, radiusF)})`;
@@ -1315,112 +1337,265 @@ const SUGGESTIONS = [
         ctx.shadowColor='transparent';
         ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-        // Fade out ghost rows
-        const contentFadeOut = 1 - clamp(t / 0.25);
-        if (contentFadeOut > 0){
+        // Fade out the menu content as we morph, fade-in the text
+        const menuFade = clamp(1 - t * 2); // menu disappears quickly
+        if (menuFade > 0){
           ctx.save();
-          roundedRect(ctx, x, y, w, h, r); ctx.clip();
-          const contentX = x + STYLE.padX, contentTop = y + STYLE.padY;
+          ctx.globalAlpha = 0.35 * menuFade;
           setFont(STYLE.titleWeight, STYLE.titleSize);
-          ctx.globalAlpha = 0.4 * contentFadeOut; ctx.fillStyle = '#0b0b10';
-          const ghostLines = Math.min(3, rows.length);
-          for (let i=0;i<ghostLines;i++){
-            let yRow = contentTop;
-            for (let j=0;j<i;j++) yRow += layout.rowHeights[j] + STYLE.rowGap;
-            ctx.fillText(rows[i].title, contentX, yRow + STYLE.titleSize);
+          ctx.fillStyle = '#0b0b10';
+          // draw faint ghosts where rows were (simple bars)
+          const barX = x + STYLE.padX, barY = y + STYLE.padY;
+          const barGap = STYLE.rowGap + STYLE.titleSize + Math.max(0, STYLE.subGap + STYLE.subSize);
+          for (let i=0;i<rows.length;i++){
+            ctx.fillRect(barX, barY + i*barGap, Math.max(60, w*0.5), 10);
           }
           ctx.restore();
         }
 
-        // Minimal UI bits at end (desktop only)
-        const uiAlpha = clamp((t - 0.6)/0.25);
-        if (uiAlpha > 0 && !mobile){
-          const plusCx = x + 28, plusCy = y + h/2;
-          ctx.save();
-          ctx.globalAlpha = uiAlpha;
-          ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
-          ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7);
-          ctx.stroke();
-          const micCx = x + w - 36, micCy = y + h/2;
-          ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
-          ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
-          ctx.restore();
-        }
+        // Text fade-in centered in pill
+        const textAlpha = easeInOutCubic(clamp((t - 0.15)/0.65));
+        ctx.save();
+        ctx.globalAlpha = textAlpha;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        setFont(800, mobile ? 34 : Math.max(38, 40 * getMenuScale()));
+        ctx.fillStyle = '#0b0b10';
+        ctx.fillText(targetText, CONFIG.w/2, y + h/2 + (mobile ? 1 : 2));
+        ctx.restore();
 
-        const bx = (CONFIG.w - bubbleW)/2;
-        const by = (CONFIG.h - bubbleH)/2 + 30;
-        return { w, h, x, y, r, bubble: { w: bubbleW, h: bubbleH, x: bx, y: by, r: bubbleR }, uiAlpha };
+        return { pill: { x: (CONFIG.w - pillW)/2, y: (CONFIG.h - pillH)/2 + 28, w: pillW, h: pillH, r: pillR }, text: targetText };
       }
 
-      // --------- Phase C: Idle bubble with blinking caret ----------
-      let caretLoop = null;
-      function startBubbleIdle(bubble){
-        let rafId = null;
-        const caretPeriod = 900; // ms
+      /* ================== PHASE C: “THE BEST AI” → LOGOS ROW ================== */
+      // Preload images
+      const images = [];
+      let finalLogoImg = null;
+      let assetsPromise = null;
+      function loadAssets(){
+        if (assetsPromise) return assetsPromise;
+        assetsPromise = new Promise((resolve)=>{
+          let done=0, target = LOGOS.length + 1;
+          const check=()=>{ if (++done>=target) resolve(); };
+          LOGOS.forEach((l,i)=>{
+            const img = new Image();
+            img.onload = check; img.onerror = check;
+            img.src = l.src;
+            images[i] = img;
+          });
+          finalLogoImg = new Image();
+          finalLogoImg.onload = check; finalLogoImg.onerror = check;
+          finalLogoImg.src = FINAL_LOGO_SRC;
+        });
+        return assetsPromise;
+      }
+
+      function renderTextToLogos(pill, t){
+        clearStage();
+        ctx.drawImage(BG_CANVAS, 0, 0);
+
         const mobile = isMobile();
+        const centerY = CONFIG.h/2 + 28; // align with pill
+        const textOut = clamp(1 - t*1.2); // text fades out fast
+        const logosIn = easeOutBack(clamp((t - 0.15)/0.85));
 
-        function loop(nowMS){
-          clearStage();                  // <— clear frame
-          ctx.drawImage(BG_CANVAS, 0, 0);
+        // Draw fading pill and text
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, textOut);
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, pill.x, pill.y, pill.w, pill.h, pill.r); ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-          // Bubble
-          ctx.shadowColor = 'rgba(0,0,0,0.15)';
-          ctx.shadowBlur = 20 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 14;
-          ctx.fillStyle = '#ffffff';
-          roundedRect(ctx, bubble.x, bubble.y, bubble.w, bubble.h, bubble.r); ctx.fill();
-          ctx.shadowColor='transparent';
-          ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        setFont(800, mobile ? 34 : Math.max(38, 40 * getMenuScale()));
+        ctx.fillStyle = '#0b0b10';
+        ctx.fillText('The Best AI', CONFIG.w/2, centerY);
+        ctx.restore();
 
-          // Icons (desktop only)
-          if (!mobile){
-            const plusCx = bubble.x + 28, plusCy = bubble.y + bubble.h/2;
-            ctx.save(); ctx.strokeStyle = '#0b0b0f'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(plusCx-7, plusCy); ctx.lineTo(plusCx+7, plusCy);
-            ctx.moveTo(plusCx, plusCy-7); ctx.lineTo(plusCx, plusCy+7); ctx.stroke();
-            const micCx = bubble.x + bubble.w - 36, micCy = bubble.y + bubble.h/2;
-            ctx.beginPath(); ctx.fillStyle = 'rgba(0,0,0,0.06)'; ctx.arc(micCx, micCy, 14, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.fillStyle = '#0b0b0f'; ctx.arc(micCx, micCy, 5, 0, Math.PI*2); ctx.fill();
+        // Logos row (fade/slide up)
+        const n = LOGOS.length;
+        if (n>0){
+          const chipH = mobile ? 44 : 54;
+          const chipR = Math.min(22, chipH/2);
+          const gap   = mobile ? 10 : 14;
+          const logoW = chipH - 12; // square logos inside chip
+          const totalW = n*chipH + (n-1)*gap; // chip approximated as square for width
+          let rowX = (CONFIG.w - totalW)/2;
+          const rowY = centerY - chipH/2;
+
+          for (let i=0;i<n;i++){
+            const appearT = clamp((logosIn - i*0.06) / 0.9);
+            if (appearT<=0) continue;
+
+            const alpha = appearT;
+            const dy = lerp(18, 0, easeOutCubic(appearT));
+            const chipW = chipH + (logoW - (chipH - 12)); // keep pill presence (subtle)
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.translate(rowX, rowY + dy);
+            // chip bg
+            ctx.shadowColor = 'rgba(0,0,0,0.12)';
+            ctx.shadowBlur = 16 * MOBILE_SHADOW_SCALE;
+            ctx.shadowOffsetY = 10;
+            ctx.fillStyle = '#ffffff';
+            roundedRect(ctx, 0, 0, chipH, chipH, chipR); ctx.fill();
+            ctx.shadowColor = 'transparent';
+            ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+            ctx.lineWidth = 1; ctx.stroke();
+
+            // logo image centered
+            const img = images[i];
+            if (img && img.complete){
+              const iw = logoW, ih = logoW;
+              ctx.drawImage(img, (chipH - iw)/2, (chipH - ih)/2, iw, ih);
+            }
+
             ctx.restore();
+            rowX += (chipH + gap);
           }
 
-          // Placeholder text + caret
-          const textLeft = mobile ? (bubble.x + 20) : (bubble.x + 56);
-          const textY = bubble.y + bubble.h/2 + (mobile ? 8 : 10);
-          const baseText = 'Ask the impossible';
-          setFont(600, mobile ? Math.max(16, 16 * getMenuScale()) : Math.max(18, 18 * getMenuScale()));
-          ctx.fillStyle = '#8a8f96';
-          ctx.fillText(baseText, textLeft, textY);
-
-          const showCaret = Math.floor((nowMS % (caretPeriod)) / (caretPeriod/2)) === 0;
-          if (showCaret){
-            const textWidth = ctx.measureText(baseText).width;
-            const cx = textLeft + textWidth + 6;
-            const caretH = mobile ? 20 : 24;
-            const cy = bubble.y + bubble.h/2 - caretH/2;
-            ctx.fillStyle = '#8a8f96';
-            ctx.fillRect(cx, cy, 2, caretH);
-          }
-          rafId = requestAnimationFrame(loop);
+          // Return row geometry for suction phase
+          return {
+            rowY, chipH, gap, totalW, centerY,
+            positions: new Array(n).fill(0).map((_,i)=>{
+              const x0 = (CONFIG.w - totalW)/2 + i*(chipH + gap);
+              return { x: x0 + chipH/2, y: rowY + chipH/2, r: chipH*0.5 };
+            })
+          };
         }
-        rafId = requestAnimationFrame(loop);
-        caretLoop = { stop: ()=> cancelAnimationFrame(rafId) };
+        return { positions: [], centerY };
       }
 
-      // --------- Orchestrator ----------
+      /* ====================== PHASE D: SUCTION INTO “O” ======================= */
+      function drawAudiowideO(cx, cy, size, alpha=1){
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        setFont(700, size, '"Audiowide", ui-sans-serif');
+        ctx.fillStyle = '#0b0b10';
+        ctx.fillText('O', cx, cy + size*0.02); // optical tweak
+        ctx.restore();
+      }
+
+      function startLogoSuction(positions, centerY, done){
+        const start = performance.now();
+        const centerX = CONFIG.w/2;
+        const Osize = Math.min(CONFIG.w, CONFIG.h) * (isMobile()? 0.26 : 0.22);
+        const OalphaStart = 0.0;
+
+        const n = positions.length;
+        const stagger = 110; // ms per-logo
+        const travel = S(BASE.suction) * 1000; // ms
+
+        function loop(now){
+          clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+
+          // Static “O” grows in
+          const tAll = clamp((now - start)/ (travel + n*stagger));
+          const oA = easeOutCubic(clamp((now - start)/ 600));
+          drawAudiowideO(centerX, centerY, Osize, Math.max(OalphaStart, oA));
+
+          // Draw each logo flying toward center
+          for (let i=0;i<n;i++){
+            const t0 = start + i*stagger;
+            const t  = clamp((now - t0) / travel);
+            if (t<=0) {
+              // draw at origin
+              drawChipLogo(positions[i].x, positions[i].y, positions[i].r*2, images[i], 1);
+              continue;
+            }
+            // Bezier-ish curve upward then into center
+            const p = easeInOutCubic(t);
+            const sx = positions[i].x, sy = positions[i].y;
+            const cx1 = lerp(sx, centerX, 0.3);
+            const cy1 = sy - 60 - 20 * Math.sin(i); // slight variation
+            const ex = centerX, ey = centerY;
+            // quadratic bezier
+            const qx = Math.pow(1-p,2)*sx + 2*(1-p)*p*cx1 + Math.pow(p,2)*ex;
+            const qy = Math.pow(1-p,2)*sy + 2*(1-p)*p*cy1 + Math.pow(p,2)*ey;
+
+            const scale = lerp(1, 0.05, easeInOutCubic(t));
+            const alpha = clamp(1 - t + 0.05);
+
+            drawChipLogo(qx, qy, positions[i].r*2*scale, images[i], alpha);
+          }
+
+          if (tAll < 1){ requestAnimationFrame(loop); }
+          else { done({ centerX, centerY, Osize }); }
+        }
+        requestAnimationFrame(loop);
+      }
+
+      function drawChipLogo(cx, cy, size, img, alpha=1){
+        const r = size/2;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        // chip bg
+        ctx.shadowColor = 'rgba(0,0,0,0.12)';
+        ctx.shadowBlur = 14 * MOBILE_SHADOW_SCALE;
+        ctx.shadowOffsetY = 8;
+        ctx.fillStyle = '#ffffff';
+        roundedRect(ctx, cx - r, cy - r, size, size, Math.min(22, r)); ctx.fill();
+        ctx.shadowColor='transparent';
+        ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 1; ctx.stroke();
+
+        // logo image
+        if (img && img.complete){
+          const iw = size - 12, ih = size - 12;
+          ctx.drawImage(img, cx - iw/2, cy - ih/2, iw, ih);
+        }
+        ctx.restore();
+      }
+
+      /* ================ PHASE E: “O” → FINAL LOGO + SUBTITLE ================== */
+      function renderOtoFinal(oGeom, t){
+        clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+
+        const { centerX, centerY, Osize } = oGeom;
+        // Cross-morph by fading O out while scaling final mark in
+        const oOut   = clamp(1 - t*1.2);
+        const logoIn = easeOutBack(clamp((t - 0.05)/0.95));
+
+        if (oOut > 0) drawAudiowideO(centerX, centerY, Osize, oOut);
+
+        // Final logo
+        const L = finalLogoImg;
+        if (L && L.complete){
+          const baseW = Math.min(CONFIG.w*0.28, Osize*1.1);
+          const baseH = baseW; // assume square-ish; adjust if needed
+          const w = baseW * (0.85 + 0.15*logoIn);
+          const h = baseH * (0.85 + 0.15*logoIn);
+          const alpha = logoIn;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(L, centerX - w/2, centerY - h/2, w, h);
+          ctx.restore();
+        }
+
+        // Subtitle: “Unified AI”
+        const subA = easeInOutCubic(clamp((t - 0.35)/0.55));
+        ctx.save();
+        ctx.globalAlpha = subA;
+        ctx.textAlign='center'; ctx.textBaseline='top';
+        setFont(700, isMobile()? 22 : 24);
+        ctx.fillStyle = '#0b0b10';
+        ctx.fillText(FINAL_SUBTITLE, centerX, centerY + (Osize*0.65));
+        ctx.restore();
+      }
+
+      /* =========================== ORCHESTRATION ============================== */
       let isAnimating = false;
       let waitTimer = null;
 
       function play(){
         if (isAnimating) return;
         isAnimating = true;
-        if (caretLoop){ caretLoop.stop(); caretLoop = null; }
         if (waitTimer){ clearTimeout(waitTimer); waitTimer = null; }
 
-        const btn = document.getElementById('onx-play'); if (btn) btn.disabled = true;
         const start = performance.now();
 
+        // Phase A — card
         function stepA(now){
           const t = (now - start)/1000;
           const A = renderCard(t);
@@ -1429,28 +1604,56 @@ const SUGGESTIONS = [
             const finalBox = { x:A.x, y:A.y, w:A.w, h:A.h, r:A.r };
             waitTimer = setTimeout(()=>{
               const morphStart = performance.now();
+
+              // Phase B — card→text
               function stepB(now2){
-                const t2 = (now2 - morphStart)/1000 / S(BASE.morph);
-                const B = renderMorphCardToBubble(finalBox, clamp(t2));
+                const t2 = (now2 - morphStart)/1000 / S(BASE.morphMenuToText);
+                const B = renderMorphCardToText(finalBox, clamp(t2));
                 if (t2 < 1){ requestAnimationFrame(stepB); }
                 else {
-                  startBubbleIdle({ x: B.bubble.x, y: B.bubble.y, w: B.bubble.w, h: B.bubble.h, r: B.bubble.r });
-                  isAnimating = false; if (btn) btn.disabled = false;
+                  // Ensure assets (logos + final mark) are ready before C/D/E
+                  loadAssets().then(()=>{
+                    const textMorphStart = performance.now();
+
+                    // Phase C — text→logos row
+                    let lastRowGeom = null;
+                    function stepC(now3){
+                      const t3 = (now3 - textMorphStart)/1000 / S(BASE.textToLogos);
+                      lastRowGeom = renderTextToLogos(B.pill, clamp(t3));
+                      if (t3 < 1){ requestAnimationFrame(stepC); }
+                      else {
+                        // Phase D — suction into “O”
+                        startLogoSuction(lastRowGeom.positions, lastRowGeom.centerY, (oGeom)=>{
+                          // Phase E — “O” → final logo + subtitle
+                          const oStart = performance.now();
+                          (function stepE(now4){
+                            const t4 = (now4 - oStart)/1000 / S(BASE.oToFinal);
+                            renderOtoFinal(oGeom, clamp(t4));
+                            if (t4 < 1){ requestAnimationFrame(stepE); }
+                            else {
+                              isAnimating = false;
+                            }
+                          })(performance.now());
+                        });
+                      }
+                    }
+                    requestAnimationFrame(stepC);
+                  });
                 }
               }
               requestAnimationFrame(stepB);
-            }, 1000);
+            }, 480);
           }
         }
         requestAnimationFrame(stepA);
       }
 
       // First static frame (clean)
-      clearStage();
-      renderCard(0);
+      clearStage(); renderCard(0);
 
-      // Manual controls
-      document.getElementById('onx-play').addEventListener('click', play, { passive: true });
+      // Manual control (left as a hidden div to avoid null listeners)
+      const playTarget = document.getElementById('onx-play');
+      if (playTarget) playTarget.addEventListener('click', play, { passive: true });
 
       // Autoplay when section center visible
       let autoplayed = false;
@@ -1487,23 +1690,19 @@ const SUGGESTIONS = [
           canvas.width = CONFIG.w * dpr; canvas.height = CONFIG.h * dpr;
           ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
 
-          // Rebuild transparent BG buffer
           BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
           BG_CTX = BG_CANVAS.getContext('2d');
           BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
         }
 
-        // Update style & layout
         STYLE = buildStyle();
         layout = measureFinalLayout();
 
-        clearStage();
-        renderCard(0);
+        clearStage(); renderCard(0);
         tryAutoplay();
       }
 
       window.addEventListener('resize', ()=>{
-        if (caretLoop){ caretLoop.stop(); caretLoop = null; }
         cancelAnimationFrame(rid);
         rid = requestAnimationFrame(rebuildIfNeeded);
       }, { passive: true });
@@ -1520,10 +1719,14 @@ const SUGGESTIONS = [
       }
 
       window.addEventListener('scroll', tryAutoplay, { passive: true });
+
+      // Start preloading quietly so assets are ready in time
+      loadAssets();
+      // Warm up Audiowide for the “O”
+      try { document.fonts && document.fonts.load('700 120px "Audiowide"'); } catch(e){}
     })();
   </script>
 </div>
-
 
 
 <!--======================================================================================================================================================================-->
