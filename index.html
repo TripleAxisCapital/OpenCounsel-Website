@@ -1035,8 +1035,6 @@ const SUGGESTIONS = [
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- ONX Card Reveal → "The Best AI" → Logos line (bigger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" -->
 <div id="onx-card-reveal" class="padTop"
@@ -1095,6 +1093,36 @@ const SUGGESTIONS = [
   <script>
   (()=>{ 'use strict';
 
+    /* ========================= GLOBAL SIZE CONTROLS (EDIT THESE) =========================
+       All values are multipliers (1.00 = default). Safe range ~0.6 → 1.6.
+       - SIZE.all        → Master multiplier for everything.
+       - SIZE.menu       → Card/menu group overall (models list).
+       - SIZE.menuTitle  → Row title (e.g., "ONX PRO") size.
+       - SIZE.menuSub    → Row subtitle text size.
+       - SIZE.padding    → Card inner padding & row gaps.
+       - SIZE.cardWidth  → Card max width scaler.
+       - SIZE.cardHeight → Card height scaler.
+       - SIZE.logos      → Logos row height.
+       - SIZE.bestAI     → "The Best AI" title size.
+       - SIZE.O          → Big Audiowide "O".
+       - SIZE.finalLogo  → Final ONX logo width.
+       - SIZE.unified    → "Unified AI" subtitle size.
+    ====================================================================================== */
+    const SIZE = {
+      all:        1.00,
+      menu:       1.00,
+      menuTitle:  1.00,
+      menuSub:    1.00,
+      padding:    1.00,
+      cardWidth:  1.00,
+      cardHeight: 1.00,
+      logos:      1.00,
+      bestAI:     1.00,
+      O:          1.00,
+      finalLogo:  1.00,
+      unified:    1.00
+    };
+
     // ======== ASSETS ========
     const LOGOS = [
       { src: 'grokLogo.svg',   alt: 'Grok'   },
@@ -1137,6 +1165,9 @@ const SUGGESTIONS = [
     const dprRaw = window.devicePixelRatio || 1;
     let dpr = isMobile() ? Math.min(1.25, dprRaw) : Math.max(1, dprRaw);
 
+    const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
+    const clampRange=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
+
     canvas.width  = CONFIG.w * dpr;
     canvas.height = CONFIG.h * dpr;
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
@@ -1166,17 +1197,21 @@ const SUGGESTIONS = [
     let STYLE = buildStyle();
     function buildStyle(){
       const SCALE = getMenuScale();
+      const ALL  = SIZE.all;
+      const PAD  = SIZE.padding;
+      const MENU = SIZE.menu;
+
       return {
-        padX: Math.round(DESIGN.padX * SCALE),
-        padY: Math.round(DESIGN.padY * SCALE),
-        rowGap: Math.round(DESIGN.rowGap * SCALE),
-        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE)),
-        titleSize: DESIGN.titleSize * SCALE,
-        subSize: DESIGN.subSize * SCALE,
+        padX: Math.round(DESIGN.padX * SCALE * ALL * PAD),
+        padY: Math.round(DESIGN.padY * SCALE * ALL * PAD),
+        rowGap: Math.round(DESIGN.rowGap * SCALE * ALL * PAD),
+        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE * ALL * PAD)),
+        titleSize: DESIGN.titleSize * SCALE * ALL * MENU * SIZE.menuTitle,
+        subSize: DESIGN.subSize * SCALE * ALL * MENU * SIZE.menuSub,
         titleWeight: DESIGN.titleWeight,
         subWeight: DESIGN.subWeight,
-        minW: DESIGN.minW * SCALE,
-        maxW: DESIGN.maxW * SCALE,
+        minW: DESIGN.minW * ALL,       // base min; actual width further scaled below
+        maxW: DESIGN.maxW * ALL,
         stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
       };
     }
@@ -1184,8 +1219,8 @@ const SUGGESTIONS = [
     // Dynamic logo line height: fill ~84% of stage width, with caps
     function computeLogoLineHeight(logoImgs){
       const pad = isMobile()? 24 : 36;
-      const maxH = isMobile()? 72 : 96;   // caps for aesthetic
-      const minH = isMobile()? 44 : 60;
+      const maxH = (isMobile()? 72 : 96) * SIZE.all * SIZE.logos;
+      const minH = (isMobile()? 44 : 60) * SIZE.all * SIZE.logos;
       const sumAspect = logoImgs.reduce((s, img)=> s + (img.aspect || 1), 0);
       const fitH = ((CONFIG.w * 0.84) - pad*(logoImgs.length-1)) / Math.max(1, sumAspect);
       return Math.max(minH, Math.min(maxH, fitH));
@@ -1199,7 +1234,6 @@ const SUGGESTIONS = [
     ];
 
     // ===== HELPERS =====
-    const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
     const lerp=(a,b,t)=>a+(b-a)*t;
     const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
     const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
@@ -1237,14 +1271,16 @@ const SUGGESTIONS = [
       rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
       const contentW = Math.ceil(maxTextW);
-      const cardW = Math.min(
-        clamp(contentW + STYLE.padX*2, STYLE.minW, STYLE.maxW),
-        CONFIG.w - 2*STYLE.stageMargin
+      const cardW0 = Math.min(
+        Math.max(contentW + STYLE.padX*2, STYLE.minW),
+        Math.min(STYLE.maxW, CONFIG.w - 2*STYLE.stageMargin)
       );
+      const cardW = clampRange(cardW0 * SIZE.cardWidth, STYLE.minW*0.6, CONFIG.w - 2*STYLE.stageMargin);
 
       const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
       const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
-      const cardH = Math.min(Math.ceil(contentH + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin);
+      const cardH0 = Math.ceil(contentH + STYLE.padY*2);
+      const cardH = Math.min(Math.ceil(cardH0 * SIZE.cardHeight), CONFIG.h - 2*STYLE.stageMargin);
 
       const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
       return { cardW, cardH, rowHeights, radius };
@@ -1403,7 +1439,7 @@ const SUGGESTIONS = [
       ctx.shadowColor='transparent'; ctx.restore();
 
       const scale = boomerang(t, 1.08, 0.55);
-      const titleSize = Math.round( lerp(72, isMobile() ? 88 : 120, scale) );
+      const titleSize = Math.round( lerp(72, isMobile() ? 88 : 120, scale) * SIZE.all * SIZE.bestAI );
       setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
 
       ctx.save();
@@ -1421,7 +1457,7 @@ const SUGGESTIONS = [
 
       const titleOut = clamp((t-0.35)/0.30);
       const titleIn  = 1 - titleOut;
-      const titleSize = Math.round( isMobile() ? 88 : 120 );
+      const titleSize = Math.round( (isMobile() ? 88 : 120) * SIZE.all * SIZE.bestAI );
       setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1432,7 +1468,7 @@ const SUGGESTIONS = [
       const inT = easeOutCubic(clamp((t-0.1)/0.7));
       const lineY = Math.round(CONFIG.h/2 + lerp(60, 0, inT));
       const pad = isMobile()? 24 : 36;
-      const logoH = computeLogoLineHeight(logoImgs); // auto fit width
+      const logoH = computeLogoLineHeight(logoImgs); // auto fit width (scaled via SIZE.logos)
       const totalW = logoImgs.reduce((acc,img,i)=> acc + logoH * (img.aspect||1) + (i?pad:0), 0);
       let x = (CONFIG.w - totalW)/2;
 
@@ -1471,7 +1507,7 @@ const SUGGESTIONS = [
 
       const centerX = CONFIG.w/2;
       const centerY = CONFIG.h/2 - (isMobile()? 6 : 10);
-      const baseSize = isMobile()? 180 : 260;
+      const baseSize = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
       const size = Math.round( lerp(baseSize*0.9, baseSize*1.05, boomerang(clamp(t), 1.05, 0.55)) );
 
       ctx.save();
@@ -1485,7 +1521,6 @@ const SUGGESTIONS = [
       ctx.restore();
 
       const pull = easeInOutCubic(clamp(t));
-      const suckRadius = Math.max(22, size*0.06);
       logoImgs.forEach((img, i) => {
         const p = startPositions[i];
         const delay = i * 0.06;
@@ -1506,17 +1541,6 @@ const SUGGESTIONS = [
         else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill(); }
         ctx.restore();
       });
-
-      const glowA = 0.12 * (1 - Math.abs(0.5 - pull) * 2);
-      if (glowA > 0){
-        ctx.save();
-        ctx.globalAlpha = glowA;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, suckRadius*2.2, 0, Math.PI*2);
-        ctx.fillStyle = '#aab3ff';
-        ctx.fill();
-        ctx.restore();
-      }
     }
 
     // -------------------- Phase E: O → final ONX logo (white, correct aspect) + "Unified AI" --------------------
@@ -1526,11 +1550,12 @@ const SUGGESTIONS = [
       const centerX = CONFIG.w/2;
       const centerY = CONFIG.h/2 - (isMobile()? 10 : 14);
 
+      // Fade O
+      const oSizeBaseFrom = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
+      const oSizeBaseTo   = (isMobile()? 130 : 180) * SIZE.all * SIZE.O;
       const oOut = clamp(1 - t);
       const logoIn = easeOutCubic(clamp(t));
-
-      // Fade O
-      const oSize = Math.round(lerp(isMobile()? 180 : 260, isMobile()? 130 : 180, 1 - oOut));
+      const oSize = Math.round(lerp(oSizeBaseFrom, oSizeBaseTo, 1 - oOut));
       ctx.save();
       setFont(900, oSize, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1541,10 +1566,11 @@ const SUGGESTIONS = [
 
       // Final logo – compute width relative to stage, preserve aspect
       const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420);
+      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
+                          * SIZE.all * SIZE.finalLogo;
       const w = baseTargetW * bounceScale;
       const aspect = Math.max(0.01, finalLogoImg.aspect || 1); // aspect = width/height
-      const h = w / aspect;                                   // <-- correct ratio (FIX)
+      const h = w / aspect;                                    // correct ratio
       ctx.save();
       ctx.globalAlpha = logoIn;
       if (finalLogoImg.image){
@@ -1558,7 +1584,7 @@ const SUGGESTIONS = [
       // Subtitle
       const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
       if (subtitleA > 0){
-        const size = isMobile()? 28 : 40;
+        const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
         setFont(700, size, '"Inter", ui-sans-serif, system-ui');
         ctx.save();
         ctx.globalAlpha = subtitleA;
@@ -1754,7 +1780,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
 
 
 <!-- ──────────────────────────Become Limitless Section───────────────────────────────────── -->
