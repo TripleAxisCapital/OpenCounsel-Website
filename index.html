@@ -1918,8 +1918,16 @@ const SUGGESTIONS = [
 <!--======================================================================================================================================================================-->
 
 
+
+
+
 <!-- ────────────────────────── Become Limitless (Minimal • Conversion-first) ────────────────────────── -->
-<section id="oc-Models" class="padTop section-clip relative mx-auto max-w-[1200px] oc-container">
+<section
+  id="oc-Models"
+  class="padTop section-clip relative mx-auto max-w-[1200px] oc-container"
+  role="region"
+  aria-labelledby="oc-Models-title"
+>
   <!-- Neutral canvas -->
   <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
     <div class="absolute inset-0 bg-white"></div>
@@ -1928,12 +1936,13 @@ const SUGGESTIONS = [
   <!-- Header -->
   <div class="w-full text-center">
     <h2
+      id="oc-Models-title"
       class="text-oc-ink text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight grad-text"
       style="--from:#0B1B2Bcc; --via:#0E6F5Ccc; --to:#00CFFFcc; --speed:16s; --angle:135deg;"
     >
       Become Limitless
     </h2>
-    <p class="mx-auto mt-4 max-w-[720px] text-[18px] md:text-[20px] leading-relaxed text-neutral-600">
+    <p id="oc-Models-sub" class="mx-auto mt-4 max-w-[720px] text-[18px] md:text-[20px] leading-relaxed text-neutral-600">
       Start free. Upgrade when you’re ready.
     </p>
   </div>
@@ -1941,15 +1950,20 @@ const SUGGESTIONS = [
   <!-- Plans -->
   <div class="mt-10 grid grid-cols-[repeat(auto-fit,minmax(280px,360px))] justify-center gap-5 md:gap-6 auto-rows-auto">
     <!-- PRO (Most popular) -->
-    <article class="group oc-card oc-card--pro border border-neutral-900/40 bg-neutral-950 text-white p-6 md:p-7 flex flex-col relative" data-float>
-      <span class="tag-popular">Most popular</span>
+    <article
+      class="group oc-card oc-card--pro border border-neutral-900/40 bg-neutral-950 text-white p-6 md:p-7 flex flex-col relative"
+      data-float
+      aria-describedby="pro-desc pro-features"
+      data-plan="pro"
+    >
+      <span class="tag-popular" aria-hidden="false">Most popular</span>
 
       <h3 class="text-xl font-semibold tracking-tight">ONX PRO</h3>
-      <p class="mt-3 text-sm leading-relaxed text-white/85">
+      <p id="pro-desc" class="mt-3 text-sm leading-relaxed text-white/85">
         Deeper reasoning. Larger context. Faster responses.
       </p>
 
-      <ul class="oc-list mt-5 text-sm text-white/90" role="list">
+      <ul id="pro-features" class="oc-list mt-5 text-sm text-white/90" role="list">
         <li>Cloud power when you need it</li>
         <li>Private databases for accuracy</li>
         <li>Uncensored. No artificial limits</li>
@@ -1960,6 +1974,7 @@ const SUGGESTIONS = [
           id="ctaGetONXPro"
           type="button"
           aria-label="Get ONX PRO"
+          data-cta="get-onx-pro"
           class="w-full h-11 inline-flex items-center justify-center rounded-xl bg-white text-neutral-950 text-sm font-medium tracking-tight shadow-sm ring-1 ring-white/20 hover:bg-white/90 hover:shadow-md active:bg-white/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 transition"
         >
           Get ONX PRO
@@ -1968,13 +1983,18 @@ const SUGGESTIONS = [
     </article>
 
     <!-- Free -->
-    <article class="group oc-card bg-white border border-neutral-200 p-6 md:p-7 flex flex-col" data-float>
+    <article
+      class="group oc-card bg-white border border-neutral-200 p-6 md:p-7 flex flex-col"
+      data-float
+      aria-describedby="free-desc free-features"
+      data-plan="free"
+    >
       <h3 class="text-xl font-semibold tracking-tight text-neutral-900">ONX</h3>
-      <p class="mt-3 text-sm leading-relaxed text-neutral-700">
+      <p id="free-desc" class="mt-3 text-sm leading-relaxed text-neutral-700">
         Essential AI. Local-first. Always on.
       </p>
 
-      <ul class="oc-list mt-5 text-sm text-neutral-800/90" role="list">
+      <ul id="free-features" class="oc-list mt-5 text-sm text-neutral-800/90" role="list">
         <li>Unlimited local AI</li>
         <li>Limited cloud usage</li>
         <li>Build your own knowledge base</li>
@@ -1985,6 +2005,7 @@ const SUGGESTIONS = [
           id="ctaGetONX"
           type="button"
           aria-label="Download ONX"
+          data-cta="download-onx"
           class="w-full h-11 inline-flex items-center justify-center rounded-xl bg-neutral-900 text-white text-sm font-medium tracking-tight shadow-sm ring-1 ring-black/10 hover:bg-neutral-800 hover:shadow-md active:bg-neutral-900/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40 transition"
         >
           Download ONX
@@ -1996,15 +2017,20 @@ const SUGGESTIONS = [
 
 <!-- ───────── Styles (scoped to #oc-Models) ───────── -->
 <style>
-  /* Animated gradient headline (kept, subtle) */
+  /* Gradient headline with graceful fallback */
   #oc-Models .grad-text{
-    background: linear-gradient(var(--angle,135deg), var(--from,#0B1B2B), var(--via,#0E6F5C) 50%, var(--to,#00CFFF) 100%);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    animation: ocGradient var(--speed,16s) ease-in-out infinite alternate;
+    color:#0B1B2B; /* fallback when background-clip isn't supported */
   }
-  @keyframes ocGradient{0%{filter:hue-rotate(0deg) saturate(105%)}100%{filter:hue-rotate(12deg) saturate(115%)}}
+  @supports((-webkit-background-clip:text) or (background-clip:text)){
+    #oc-Models .grad-text{
+      background:linear-gradient(var(--angle,135deg), var(--from,#0B1B2B), var(--via,#0E6F5C) 50%, var(--to,#00CFFF) 100%);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      animation:ocGradient var(--speed,16s) ease-in-out infinite alternate;
+    }
+  }
+  @keyframes ocGradient { 0%{ filter:hue-rotate(0deg) saturate(105%) } 100%{ filter:hue-rotate(12deg) saturate(115%) } }
 
-  /* Cards: minimal depth, no sheen */
+  /* Cards: subtle depth */
   #oc-Models .oc-card{
     border-radius:16px;
     box-shadow:0 8px 24px rgba(0,0,0,.05), 0 1px 0 rgba(0,0,0,.03) inset;
@@ -2022,57 +2048,60 @@ const SUGGESTIONS = [
     }
   }
 
-  /* PRO: quiet black with subtle breathing (no “shine”) */
+  /* PRO: quiet black with breathing aura */
   #oc-Models .oc-card--pro{
-    position:relative;
-    overflow:hidden;
+    position:relative; overflow:hidden;
     box-shadow:0 16px 54px rgba(0,0,0,.30), 0 1px 0 rgba(255,255,255,.03) inset;
     background-image:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0) 20%);
   }
-  /* breathing aura */
   #oc-Models .oc-card--pro::before{
-    content:"";
-    position:absolute; inset:-20%;
+    content:""; position:absolute; inset:-20%;
     background:radial-gradient(60% 60% at 70% 0%, rgba(255,255,255,.06), transparent 60%);
-    opacity:.0; transform:scale(1);
-    pointer-events:none;
+    opacity:.0; transform:scale(1); pointer-events:none;
+    animation:proBreath 6s ease-in-out infinite;
   }
-  @media (prefers-reduced-motion: no-preference){
-    #oc-Models .oc-card--pro::before{
-      animation: proBreath 6s ease-in-out infinite;
-    }
-  }
-  @keyframes proBreath{0%,100%{opacity:.02; transform:scale(1)}50%{opacity:.06; transform:scale(1.02)}}
+  @keyframes proBreath { 0%,100%{ opacity:.02; transform:scale(1) } 50%{ opacity:.06; transform:scale(1.02) } }
 
-  /* Popular badge */
+  /* "Most popular" badge */
   #oc-Models .tag-popular{
     position:absolute; top:12px; right:12px;
     display:inline-flex; align-items:center; justify-content:center;
     padding:4px 10px; border-radius:999px;
     font-size:11px; font-weight:600; letter-spacing:.01em;
     background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.18);
-    backdrop-filter:saturate(140%) blur(6px);
+    -webkit-backdrop-filter:saturate(140%) blur(6px); backdrop-filter:saturate(140%) blur(6px);
   }
 
-  /* Minimal list bullets (no icon libs) */
-  #oc-Models .oc-list{display:grid; gap:.5rem;}
+  /* Minimal list bullets */
+  #oc-Models .oc-list{ display:grid; gap:.5rem; }
   #oc-Models .oc-list li{
     display:flex; align-items:flex-start; gap:.5rem; line-height:1.5;
     position:relative; padding-left:1rem;
   }
   #oc-Models .oc-list li::before{
-    content:""; position:absolute; left:0; top:.55em;
+    content:""; position:absolute; left:0; top:.58em;
     width:6px; height:6px; border-radius:999px; background:currentColor; opacity:.65;
   }
 
-  /* Gentle idle float (Apple-like micro-motion) */
-  #oc-Models .oc-card[data-float]{transform:translateZ(0)}
-  @media (prefers-reduced-motion: no-preference){
-    #oc-Models .oc-card[data-float]{animation:ocFloat 8s ease-in-out infinite}
-    #oc-Models .oc-card[data-float]:nth-child(1){animation-delay:.6s}
-    #oc-Models .oc-card[data-float]:nth-child(2){animation-delay:1.2s}
+  /* Micro float */
+  #oc-Models .oc-card[data-float]{ transform:translateZ(0) }
+  #oc-Models .oc-card[data-float]{ animation:ocFloat 8s ease-in-out infinite }
+  #oc-Models .oc-card[data-float]:nth-child(1){ animation-delay:.6s }
+  #oc-Models .oc-card[data-float]:nth-child(2){ animation-delay:1.2s }
+  @keyframes ocFloat { 0%{ transform:translateY(0) } 50%{ transform:translateY(-6px) } 100%{ transform:translateY(0) } }
+
+  /* Focus visibility polish (in case Tailwind ring utilities vary) */
+  #oc-Models button:focus-visible{
+    outline:2px solid transparent; outline-offset:2px;
   }
-  @keyframes ocFloat{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
+
+  /* Reduced motion: disable all non-essential animations */
+  @media (prefers-reduced-motion: reduce){
+    #oc-Models .grad-text{ animation:none !important; filter:none !important; }
+    #oc-Models .oc-card[data-float]{ animation:none !important; }
+    #oc-Models .oc-card--pro::before{ animation:none !important; }
+    #oc-Models *{ transition:none !important; }
+  }
 </style>
 
 
