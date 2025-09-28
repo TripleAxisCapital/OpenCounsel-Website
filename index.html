@@ -1036,10 +1036,8 @@ const SUGGESTIONS = [
 
 
 
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
-<!-- ONX Card Reveal → "The Best AI" → Logos line (bigger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" -->
+<!-- ONX Card Reveal → "The Best AI" → Logos line (bigger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" (Apple‑polished) -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
      data-menu-scale="1.5"
@@ -1057,27 +1055,29 @@ const SUGGESTIONS = [
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 
   <style>
+    /* ---------- Structure ---------- */
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-stage{
       position:relative; width:min(1100px,96vw); aspect-ratio:16/9; margin:0 auto;
-      border-radius:32px; overflow:hidden;
-      box-shadow:none;
-      will-change:transform;
-      transform-origin:center top;
+      border-radius:32px; overflow:hidden; box-shadow:none; will-change:transform;
+      transform-origin:center top; backface-visibility:hidden; contain: paint;
     }
     #onx-stage canvas{ width:100%; height:100%; display:block; }
+
+    /* Minimal, Apple-like controls (auto-inserted) */
     #onx-controls{
       display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
       font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
-      touch-action: manipulation;
+      touch-action: manipulation; user-select:none;
     }
     #onx-controls button{
       border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
       background:#000; color:#fff; font-weight:600; letter-spacing:.2px;
       box-shadow:0 6px 18px rgba(0,0,0,.12);
-      transition:transform .15s ease, box-shadow .2s ease;
+      transition:transform .15s ease, box-shadow .2s ease, opacity .2s ease;
     }
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:active{ transform:translateY(0); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
     @media (max-width: 640px){
@@ -1087,7 +1087,7 @@ const SUGGESTIONS = [
     }
   </style>
 
-  <!-- Stage with your gradient classes -->
+  <!-- Stage (can receive background via your gradient classes) -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
   <div id="onx-controls"></div>
@@ -1119,12 +1119,15 @@ const SUGGESTIONS = [
       padding:    1.00,
       cardWidth:  1.00,
       cardHeight: 1.00,
-      logos:      2.0,
+      logos:      2.00,
       bestAI:     2.00,
       O:          1.50,
       finalLogo:  1.50,
       unified:    2.00
     };
+
+    // New: Slogan variants (randomized each play), keep classy & short
+    const SLOGANS = ["The Best AI", "Built on the Best", "Effortless Intelligence"];
 
     // ======== ASSETS (with per-logo white tinting) ========
     const LOGOS = [
@@ -1133,18 +1136,24 @@ const SUGGESTIONS = [
       { src: 'metaLogo.svg',   alt: 'Meta',   tint: '#fff' },
       { src: 'OAILogo.png',    alt: 'OpenAI', tint: '#fff' },
     ];
-    const FINAL_LOGO_SRC  = 'onxlogo.svg'; // drawn as high-DPI, tinted to white
+    const FINAL_LOGO_SRC  = 'onxlogo.svg'; // drawn high-DPI, tinted to white
     const FINAL_LOGO_TINT = '#ffffff';
 
     // ===== ELEMENTS =====
     const host    = document.getElementById('onx-card-reveal');
     const stageEl = document.getElementById('onx-stage');
     const canvas  = document.getElementById('onx-canvas');
+    const controlsEl = document.getElementById('onx-controls');
+
+    if (!canvas) return;
 
     // ===== UTILS =====
     const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
     const ASPECT = 16/9;
     const isMobile = () => window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deviceMem = (navigator && 'deviceMemory' in navigator) ? (navigator.deviceMemory||8) : 8;
+
     const vp = () => {
       const vv = window.visualViewport;
       if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
@@ -1153,36 +1162,41 @@ const SUGGESTIONS = [
 
     // ===== OPTIONS =====
     const TEMPO = {
-      speed: parseFloat(host.dataset.speed) || 1.6,
-      menuScale: parseFloat(host.dataset.menuScale) || 1.5,
-      overshootXEnabled: host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false,
-      overshootYEnabled: host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true,
-      overshootX: parseFloat(host.dataset.overshootX) || 1.5,
-      overshootY: parseFloat(host.dataset.overshootY) || 1.5,
-      peakX: parseFloat(host.dataset.peakX) || 0.58,
-      peakY: parseFloat(host.dataset.peakY) || 0.60
+      baseSpeed: parseFloat(host.dataset.speed) || 1.6,
+      get speed(){ return this.baseSpeed; },
+      set speed(v){ this.baseSpeed = Math.max(0.5, Math.min(4, v)); },
+      get menuScale(){ return parseFloat(host.dataset.menuScale) || 1.5; },
+      get overshootXEnabled(){ return host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false; },
+      get overshootYEnabled(){ return host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true; },
+      get overshootX(){ return parseFloat(host.dataset.overshootX) || 1.5; },
+      get overshootY(){ return parseFloat(host.dataset.overshootY) || 1.5; },
+      get peakX(){ return parseFloat(host.dataset.peakX) || 0.58; },
+      get peakY(){ return parseFloat(host.dataset.peakY) || 0.60; }
     };
+
+    // Respect reduced motion: jump to final or tame overshoot
+    if (prefersReducedMotion){ TEMPO.speed = 3.5; } // very fast (less motion)
 
     // ===== CANVAS (High-DPI backing store tied to visual scale) =====
     let CONFIG = isMobile() ? { w: 1152, h: 648 } : { w: 2048, h: 1152 }; // logical canvas size (16:9)
     let dpr = 1;
     let stageScale = 1;              // CSS transform scale applied to #onx-stage (mobile)
-    const OVERSAMPLE = 1.5;          // extra crispness; 1.25–2.0 is reasonable
+    // Dynamic oversample: ease memory/CPU on low-end devices
+    let OVERSAMPLE = deviceMem <= 4 ? 1.25 : 1.5;
 
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
 
     function setBackingScale(){
       const raw = window.devicePixelRatio || 1;
       const eff = Math.min(4, raw * stageScale * OVERSAMPLE);   // cap to avoid huge textures
       dpr = eff;
-      canvas.width  = CONFIG.w * dpr;
-      canvas.height = CONFIG.h * dpr;
+      canvas.width  = Math.max(1, Math.round(CONFIG.w * dpr));
+      canvas.height = Math.max(1, Math.round(CONFIG.h * dpr));
       ctx.setTransform(1,0,0,1,0,0);
       ctx.scale(dpr, dpr);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     }
 
     // Transparent BG buffer (logical size)
@@ -1250,24 +1264,29 @@ const SUGGESTIONS = [
     const lerp=(a,b,t)=>a+(b-a)*t;
     const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
     const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-    function boomerang(t, factor=1.10, peak=0.55){
+    const easeOutQuint=t=>1-Math.pow(1-clamp(t,0,1),5); // smoother tail
+
+    function boomerang(t, factor=1.08, peak=0.55){
+      // Gentle, Apple-like overshoot; bounded and C1-continuous
       if (t <= 0) return 0;
       if (t >= 1) return 1;
-      if (t < peak) return easeOutCubic(t/peak) * factor;
+      if (t < peak) return easeOutQuint(t/peak) * factor;
       const u = (t - peak) / (1 - peak);
-      return 1 + (factor - 1) * (1 - easeOutCubic(u));
+      return 1 + (factor - 1) * (1 - easeOutQuint(u));
     }
     function setFont(weight,size,family='ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'){
       ctx.font = `${weight} ${size}px ${family}`;
+      ctx.textRendering = 'optimizeLegibility';
     }
     function roundedRect(ctx,x,y,w,h,r){
       const rr=Math.min(r,w/2,h/2);
+      const x1=Math.round(x)+0.5, y1=Math.round(y)+0.5, w1=Math.round(w), h1=Math.round(h);
       ctx.beginPath();
-      ctx.moveTo(x+rr,y);
-      ctx.arcTo(x+w,y,x+w,y+h,rr);
-      ctx.arcTo(x+w,y+h,x,y+h,rr);
-      ctx.arcTo(x,y+h,x,y,rr);
-      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.moveTo(x1+rr,y1);
+      ctx.arcTo(x1+w1,y1,x1+w1,y1+h1,rr);
+      ctx.arcTo(x1+w1,y1+h1,x1,y1+h1,rr);
+      ctx.arcTo(x1,y1+h1,x1,y1,rr);
+      ctx.arcTo(x1,y1,x1+w1,y1,rr);
       ctx.closePath();
     }
 
@@ -1366,7 +1385,7 @@ const SUGGESTIONS = [
         if (local < 1){
           poppingIndex = i;
           poppingProgress = clamp(local);
-          const rowScale = boomerang(poppingProgress, 1.08, 0.55);
+          const rowScale = boomerang(poppingProgress, 1.06, 0.55);
           contentVisibleH += layout.rowHeights[i] * rowScale;
         } else {
           contentVisibleH += layout.rowHeights[i];
@@ -1375,7 +1394,7 @@ const SUGGESTIONS = [
       if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
 
       let springY = 1;
-      if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.06, 0.5);
+      if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.04, 0.5);
 
       const h = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
 
@@ -1385,8 +1404,8 @@ const SUGGESTIONS = [
 
       // Card
       ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
-      ctx.shadowBlur = lerp(6, 26, growT) * MOBILE_SHADOW_SCALE;
-      ctx.shadowOffsetY = lerp(6, 15, growT);
+      ctx.shadowBlur = lerp(6, 24, growT) * MOBILE_SHADOW_SCALE;
+      ctx.shadowOffsetY = lerp(6, 14, growT);
       ctx.fillStyle = '#ffffff';
       roundedRect(ctx, x, y, w, h, r); ctx.fill();
       ctx.shadowColor='transparent';
@@ -1403,12 +1422,12 @@ const SUGGESTIONS = [
 
         const pr = clamp(local);
         const a  = easeOutCubic(pr);
-        const s  = 1 - (1 - boomerang(pr, 1.08, 0.55)) * 0.06;
+        const s  = 1 - (1 - boomerang(pr, 1.06, 0.55)) * 0.05;
         const dy = lerp(10, 0, a);
-        const blurPx = (1 - a) * 1.5 * MOBILE_BLUR_SCALE;
+        const blurPx = (1 - a) * 1.2 * MOBILE_BLUR_SCALE;
 
         ctx.save();
-        ctx.translate(contentX, cursorY + dy);
+        ctx.translate(Math.round(contentX), Math.round(cursorY + dy));
         ctx.scale(s, s);
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
         ctx.globalAlpha = a;
@@ -1434,8 +1453,8 @@ const SUGGESTIONS = [
       return { total, x, y, w, h, r };
     }
 
-    // -------------------- Phase B: Card → "The Best AI" (white, larger) --------------------
-    function renderCardToBestAI(startBox, t){
+    // -------------------- Phase B: Card → Slogan (white, larger) --------------------
+    function renderCardToBestAI(startBox, t, slogan){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
       const out = easeInOutCubic(clamp(t));
@@ -1453,23 +1472,23 @@ const SUGGESTIONS = [
       ctx.shadowBlur = 16 * inv * MOBILE_SHADOW_SCALE;
       ctx.shadowOffsetY = 12 * inv;
       roundedRect(ctx, x, y, w, h, r); ctx.fill();
-      ctx.shadowColor='transparent'; ctx.restore();
+      ctx.shadowColor = 'transparent'; ctx.restore();
 
-      const scale = boomerang(t, 1.08, 0.55);
+      const scale = boomerang(t, 1.06, 0.55);
       const titleSize = Math.round( lerp(72, isMobile() ? 88 : 120, scale) * SIZE.all * SIZE.bestAI );
       setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
 
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.translate(CONFIG.w/2, CONFIG.h/2);
+      ctx.translate(Math.round(CONFIG.w/2), Math.round(CONFIG.h/2));
       ctx.globalAlpha = easeOutCubic(clamp(t));
       ctx.fillStyle = '#ffffff';
-      ctx.fillText('The Best AI', 0, 0);
+      ctx.fillText(slogan, 0, 0);
       ctx.restore();
     }
 
-    // -------------------- Phase C: "The Best AI" → Logos line --------------------
-    function renderBestAIToLogos(t, logoImgs){
+    // -------------------- Phase C: Slogan → Logos line --------------------
+    function renderBestAIToLogos(t, logoImgs, slogan){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
       const titleOut = clamp((t-0.35)/0.30);
@@ -1479,7 +1498,7 @@ const SUGGESTIONS = [
       ctx.save();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = `rgba(255,255,255,${titleIn})`;
-      ctx.fillText('The Best AI', CONFIG.w/2, CONFIG.h/2);
+      ctx.fillText(slogan, Math.round(CONFIG.w/2), Math.round(CONFIG.h/2));
       ctx.restore();
 
       const inT = easeOutCubic(clamp((t-0.1)/0.7));
@@ -1494,21 +1513,16 @@ const SUGGESTIONS = [
         const w = logoH * (img.aspect||1);
         const appear = clamp((inT - i*0.06)/0.8);
         const a = easeOutCubic(appear);
-        const s = 0.9 + 0.1 * boomerang(appear, 1.1, 0.55);
+        const s = 0.92 + 0.08 * boomerang(appear, 1.06, 0.55);
         const y = lineY;
 
         ctx.save();
         ctx.globalAlpha = a;
         const cx = x + w/2, cy = y;
-        ctx.translate(cx, cy);
+        ctx.translate(Math.round(cx), Math.round(cy));
         ctx.scale(s, s);
-        if (img.image){
-          ctx.drawImage(img.image, -w/2, -logoH/2, w, logoH);
-        } else {
-          ctx.fillStyle = '#e9ecf2';
-          roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12));
-          ctx.fill();
-        }
+        if (img.image){ ctx.drawImage(img.image, -w/2, -logoH/2, w, logoH); }
+        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill(); }
         ctx.restore();
 
         positions.push({ x: x + w/2, y, w, h: logoH });
@@ -1522,15 +1536,15 @@ const SUGGESTIONS = [
     function renderLogosIntoO(t, logoImgs, startPositions){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
-      const centerX = CONFIG.w/2;
-      const centerY = CONFIG.h/2 - (isMobile()? 6 : 10);
+      const centerX = Math.round(CONFIG.w/2);
+      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 6 : 10));
       const baseSize = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
-      const size = Math.round( lerp(baseSize*0.9, baseSize*1.05, boomerang(clamp(t), 1.05, 0.55)) );
+      const size = Math.round( lerp(baseSize*0.9, baseSize*1.04, boomerang(clamp(t), 1.04, 0.55)) );
 
       ctx.save();
       setFont(900, size, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowColor = 'rgba(0,0,0,0.12)';
       ctx.shadowBlur = 18 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 10;
       ctx.fillStyle = '#ffffff';
       ctx.fillText('O', centerX, centerY);
@@ -1539,7 +1553,7 @@ const SUGGESTIONS = [
 
       const pull = easeInOutCubic(clamp(t));
       logoImgs.forEach((img, i) => {
-        const p = startPositions[i];
+        const p = startPositions[i]; if (!p) return;
         const delay = i * 0.06;
         const tt = clamp((pull - delay)/ (1 - delay));
         const a  = easeOutCubic(tt);
@@ -1553,7 +1567,7 @@ const SUGGESTIONS = [
 
         ctx.save();
         ctx.globalAlpha = Math.max(0, opacity);
-        ctx.translate(curX, curY);
+        ctx.translate(Math.round(curX), Math.round(curY));
         if (img.image){ ctx.drawImage(img.image, -w/2, -h/2, w, h); }
         else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill(); }
         ctx.restore();
@@ -1564,8 +1578,8 @@ const SUGGESTIONS = [
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
-      const centerX = CONFIG.w/2;
-      const centerY = CONFIG.h/2 - (isMobile()? 10 : 14);
+      const centerX = Math.round(CONFIG.w/2);
+      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
 
       // Fade O
       const oSizeBaseFrom = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
@@ -1592,12 +1606,10 @@ const SUGGESTIONS = [
       ctx.save();
       ctx.globalAlpha = logoIn;
       if (finalLogoImg.image){
-        // Draw at full backing-store DPI (already handled by setBackingScale)
-        ctx.drawImage(finalLogoImg.image, centerX - w/2, centerY - h/2, w, h);
+        ctx.drawImage(finalLogoImg.image, Math.round(centerX - w/2), Math.round(centerY - h/2), Math.round(w), Math.round(h));
       } else {
-        // Fallback placeholder
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(centerX, centerY, w/2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
       }
       ctx.restore();
 
@@ -1610,13 +1622,15 @@ const SUGGESTIONS = [
         ctx.globalAlpha = subtitleA;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', centerX, centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)));
+        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))));
         ctx.restore();
       }
     }
 
     // =================== Orchestrator & Assets ===================
     let isAnimating = false;
+    let runId = 0; // abort token for safe replay
+    let prepared = null; // cached assets
 
     function loadImage(src){
       return new Promise(resolve=>{
@@ -1625,7 +1639,7 @@ const SUGGESTIONS = [
         img.onload = ()=>{
           const nw = img.naturalWidth || img.width || 1;
           const nh = img.naturalHeight || img.height || 1;
-          resolve({ image: img, aspect: nw / nh });
+          resolve({ image: img, aspect: Math.max(0.01, nw / nh) });
         };
         img.onerror = ()=> resolve({ image: null, aspect: 1 });
         img.src = src;
@@ -1646,8 +1660,7 @@ const SUGGESTIONS = [
       octx.drawImage(img, 0, 0, nw, nh);
       // Colorize: use alpha as mask
       octx.globalCompositeOperation = 'source-in';
-      octx.fillStyle = color;
-      octx.fillRect(0,0,nw,nh);
+      octx.fillStyle = color; octx.fillRect(0,0,nw,nh);
       octx.globalCompositeOperation = 'source-over';
       return off;
     }
@@ -1669,97 +1682,129 @@ const SUGGESTIONS = [
       // it at draw time into the canvas backing store (already high-DPI via setBackingScale).
       const finalLogoRaw = await loadImage(FINAL_LOGO_SRC);
       let tinted = null;
-      if (finalLogoRaw && finalLogoRaw.image){
-        tinted = tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT);
-      }
+      if (finalLogoRaw && finalLogoRaw.image){ tinted = tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT); }
       const finalLogo = { image: tinted || finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1 };
 
-      if (document.fonts && document.fonts.ready){
-        try { await document.fonts.ready; } catch {}
-      }
+      if (document.fonts && document.fonts.ready){ try { await document.fonts.ready; } catch {} }
       return { logoImgs, finalLogo };
     }
 
     function playSequence(assets){
-      if (isAnimating) return;
+      const myId = ++runId; // new run → cancel prior frames
+      if (isAnimating) { /* let prior frames naturally stop via token */ }
       isAnimating = true;
+
+      // Randomize slogan each play, stable per run
+      const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
 
       // PHASE A
       const startA = performance.now();
       let cardBox = null;
       function stepA(now){
+        if (myId !== runId) return; // aborted
         const tSec = (now - startA)/1000;
         const layoutA = renderCard(tSec);
         if (!cardBox) cardBox = { x: layoutA.x, y: layoutA.y, w: layoutA.w, h: layoutA.h, r: layoutA.r };
         if (tSec < layoutA.total){ requestAnimationFrame(stepA); }
-        else {
-          // B
-          const startB = performance.now();
-          function stepB(now2){
-            const t = clamp( ((now2 - startB)/1000) / S(0.85) );
-            renderCardToBestAI(cardBox, t);
-            if (t < 1) { requestAnimationFrame(stepB); }
-            else {
-              // C
-              const startC = performance.now();
-              let lastPositions = null;
-              function stepC(now3){
-                const tC = clamp( ((now3 - startC)/1000) / S(1.4) );
-                lastPositions = renderBestAIToLogos(tC, assets.logoImgs);
-                if (tC < 1){ requestAnimationFrame(stepC); }
-                else {
-                  // D
-                  const startD = performance.now();
-                  function stepD(now4){
-                    const tD = clamp( ((now4 - startD)/1000) / S(1.6) );
-                    renderLogosIntoO(tD, assets.logoImgs, lastPositions);
-                    if (tD < 1){ requestAnimationFrame(stepD); }
-                    else {
-                      // E
-                      const startE = performance.now();
-                      function stepE(now5){
-                        const tE = clamp( ((now5 - startE)/1000) / S(1.2) );
-                        renderOToFinalLogo(tE, assets.finalLogo);
-                        if (tE < 1){ requestAnimationFrame(stepE); }
-                        else { isAnimating = false; }
-                      }
-                      requestAnimationFrame(stepE);
-                    }
-                  }
-                  requestAnimationFrame(stepD);
-                }
-              }
-              requestAnimationFrame(stepC);
-            }
-          }
-          requestAnimationFrame(stepB);
-        }
+        else { stepB(performance.now()); }
       }
+
+      function stepB(now2){
+        if (myId !== runId) return;
+        const t = clamp( ((now2 - (now2)) / 1000) ); // initialize timeline
+        const startB = performance.now();
+        (function loopB(ts){
+          if (myId !== runId) return;
+          const t = clamp( ((ts - startB)/1000) / S(0.85) );
+          renderCardToBestAI(cardBox, t, slogan);
+          if (t < 1) requestAnimationFrame(loopB); else stepC(performance.now());
+        })(startB);
+      }
+
+      function stepC(now3){
+        if (myId !== runId) return;
+        const startC = performance.now();
+        let lastPositions = null;
+        (function loopC(ts){
+          if (myId !== runId) return;
+          const tC = clamp( ((ts - startC)/1000) / S(1.35) );
+          lastPositions = renderBestAIToLogos(tC, assets.logoImgs, slogan);
+          if (tC < 1) requestAnimationFrame(loopC); else stepD(performance.now(), lastPositions);
+        })(startC);
+      }
+
+      function stepD(now4, lastPositions){
+        if (myId !== runId) return;
+        const startD = performance.now();
+        (function loopD(ts){
+          if (myId !== runId) return;
+          const tD = clamp( ((ts - startD)/1000) / S(1.55) );
+          renderLogosIntoO(tD, assets.logoImgs, lastPositions);
+          if (tD < 1) requestAnimationFrame(loopD); else stepE(performance.now());
+        })(startD);
+      }
+
+      function stepE(now5){
+        if (myId !== runId) return;
+        const startE = performance.now();
+        (function loopE(ts){
+          if (myId !== runId) return;
+          const tE = clamp( ((ts - startE)/1000) / S(1.15) );
+          renderOToFinalLogo(tE, assets.finalLogo);
+          if (tE < 1) requestAnimationFrame(loopE); else { isAnimating = false; }
+        })(startE);
+      }
+
       requestAnimationFrame(stepA);
+    }
+
+    // ---------- Controls (minimal): Replay button ----------
+    function ensureControls(){
+      if (!controlsEl) return;
+      controlsEl.innerHTML = '';
+      const replay = document.createElement('button');
+      replay.type = 'button'; replay.textContent = 'Replay';
+      replay.addEventListener('click', async ()=>{
+        replay.disabled = true;
+        try {
+          if (!prepared) prepared = await prepareAssets();
+          playSequence(prepared);
+        } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
+      }, { passive: true });
+      controlsEl.appendChild(replay);
     }
 
     // First-time DPI setup + static first frame
     setBackingScale();
     clearStage(); renderCard(0);
 
-    // Autoplay when visible
-    let autoplayed = false, prepared = null;
-    function centerIsVisible(el){
-      const rect = el.getBoundingClientRect();
+    // Autoplay when visible (unless reduced motion → quick final render)
+    let autoplayed = false;
+    async function tryAutoplay(){
+      if (autoplayed || isAnimating) return;
+      const rect = stageEl.getBoundingClientRect();
       const vpH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       const vpCenterY = vpH / 2;
-      return (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
-    }
-    async function tryAutoplay(){
-      if (autoplayed || isAnimating || !centerIsVisible(stageEl)) return;
+      const visible = (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
+      if (!visible) return;
       autoplayed = true;
       if (!prepared) prepared = await prepareAssets();
-      playSequence(prepared);
+      if (prefersReducedMotion){
+        // Render final frame quickly
+        renderOToFinalLogo(1, prepared.finalLogo);
+        isAnimating = false;
+      } else {
+        playSequence(prepared);
+      }
     }
-    const io = new IntersectionObserver((entries)=>{
-      for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
-    }, { root: null, threshold: 0.15 });
-    io.observe(stageEl);
+
+    // Observers
+    try {
+      const io = new IntersectionObserver((entries)=>{
+        for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
+      }, { root: null, threshold: 0.15 });
+      io.observe(stageEl);
+    } catch {}
 
     // Manual trigger (hidden)
     const playBtn = document.getElementById('onx-play');
@@ -1779,12 +1824,10 @@ const SUGGESTIONS = [
 
       if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h){
         CONFIG = newCONFIG;
-
         // Resize logical canvases and re-apply backing DPI
         BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
         BG_CTX = BG_CANVAS.getContext('2d');
         BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
-
         setBackingScale();
       }
 
@@ -1794,32 +1837,25 @@ const SUGGESTIONS = [
       clearStage();
       renderCard(0);
       if (!autoplayed) tryAutoplay();
+      ensureControls();
     }
 
-    window.addEventListener('resize', ()=>{
-      cancelAnimationFrame(rid);
-      rid = requestAnimationFrame(rebuildIfNeeded);
-    }, { passive: true });
+    window.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
 
     if (window.visualViewport){
-      window.visualViewport.addEventListener('resize', ()=>{
-        cancelAnimationFrame(rid);
-        rid = requestAnimationFrame(rebuildIfNeeded);
-      }, { passive: true });
-      window.visualViewport.addEventListener('scroll', ()=>{
-        cancelAnimationFrame(rid);
-        rid = requestAnimationFrame(applyMobileScale);
-      }, { passive: true });
+      window.visualViewport.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
+      window.visualViewport.addEventListener('scroll', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(applyMobileScale); }, { passive: true });
     }
 
     window.addEventListener('scroll', tryAutoplay, { passive: true });
+
+    // Build controls once DOM is ready
+    ensureControls();
+
   })();
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
-
-
 
 
 <!-- ──────────────────────────Become Limitless Section───────────────────────────────────── -->
