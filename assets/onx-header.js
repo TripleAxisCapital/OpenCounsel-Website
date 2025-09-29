@@ -167,7 +167,7 @@ class ONXHeader extends HTMLElement {
           transition: background .2s ease, background-size .2s ease;
         }
 
-        /* ── Logo behavior — black at top, gradient when pill header is active ── */
+        /* ── NEW: Logo behavior — black at top, gradient when pill header is active ── */
         :host(:not(.is-float)) .logo-anim{
           background:#000000 !important;
           animation:none !important;
@@ -346,13 +346,12 @@ class ONXHeader extends HTMLElement {
           display:none; align-items:center; gap:.5rem;
           font-size:.9rem; font-weight:700; color:#0A0D10;
         }
-
         .btn{
           display:inline-flex; align-items:center; gap:.5rem;
           color:#fff; font-size:.9rem; font-weight:700;
           border-radius: 16px; padding:.55rem 1rem;
           box-shadow: 0 18px 30px rgba(0,0,0,.18);
-          transition: transform .2s ease, box-shadow .2s ease, background .24s ease, color .24s ease; /* ← smoother change */
+          transition: transform .2s ease, box-shadow .2s ease, background .28s ease;
           box-sizing: border-box;
         }
         .btn:hover{ transform: translateY(-1px); box-shadow: 0 26px 40px rgba(0,0,0,.26); }
@@ -597,8 +596,9 @@ class ONXHeader extends HTMLElement {
         :host([theme="onxpro-light"]) .mobile-actions .btn,
         :host([theme="pro-light"]) .desktop-actions .btn,
         :host([theme="pro-light"]) .mobile-actions .btn{
-          background:#0A0D10 !importan
-
+          background:#0A0D10 !important;
+          color:#ffffff !important;
+          animation:none !important;
         }
 
         :host([invert]) .hamburger,
@@ -625,18 +625,22 @@ class ONXHeader extends HTMLElement {
           animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
         }
 
-        /* ───────── NEW: Get Started button = black at top → gradient when pill ─────────
-           Applies to the default theme only (does not override ONXPro / Light variants). */
-        :host(:not(.is-float)):not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"]):not([invert]):not([theme="ONXProLight"]):not([theme="onxpro-light"]):not([theme="pro-light"])
-          .desktop-actions .btn.g-grad,
-        :host(:not(.is-float)):not([theme="ONXPro"]):not([theme="onxpro"]):not([theme="pro"]):not([invert]):not([theme="ONXProLight"]):not([theme="onxpro-light"]):not([theme="pro-light"])
-          .mobile-actions .btn.g-grad{
-          background:#0A0D10 !important;
+        /* ───────────────── NEW: Get Started button behavior ────────────────
+           Start black at page top; switch to gradient animation in pill state.
+           Applies to BOTH desktop .desktop-actions and mobile .mobile-actions.
+           (Keeps theme overrides intact.)
+        ------------------------------------------------------------------- */
+        :host(:not(.is-float)) .desktop-actions .btn.g-grad.grad-anim,
+        :host(:not(.is-float)) .mobile-actions .btn.g-grad.grad-anim{
+          background:#0A0D10 !important;   /* solid black at top */
           color:#ffffff !important;
-          animation:none !important;
-          background-size: initial !important;
+          animation:none !important;        /* stop gradient motion */
         }
-        /* When .is-float toggles, the default .g-grad/.grad-anim rules resume automatically. */
+        /* When header floats → restore gradient animation automatically */
+        :host(.is-float) .desktop-actions .btn.g-grad.grad-anim,
+        :host(.is-float) .mobile-actions .btn.g-grad.grad-anim{
+          /* no overrides → original gradient animation shows */
+        }
 
         /* ───────────────── FINAL MOBILE OVERRIDE — NO PILL OUTLINE ───────────────── */
         @media (max-width: 767.98px){
@@ -827,7 +831,7 @@ class ONXHeader extends HTMLElement {
 
   /* ===== Clone slotted nav/actions into mobile sheet ===== */
   _cloneSlotted(name){
-    const slot = this._root.querySelector(`slot[name="\${name}"]`);
+    const slot = this._root.querySelector(`slot[name="${name}"]`);
     if (!slot) return;
     slot.id = name === 'nav' ? "onx-slot-nav" : "onx-slot-actions";
     slot.addEventListener('slotchange', () => this._cloneNow(name));
@@ -844,7 +848,7 @@ class ONXHeader extends HTMLElement {
       assigned.forEach(node => {
         if (!(node instanceof HTMLAnchorElement)) return;
         const text = (node.textContent || '').trim();
-        const isOnxPro = /onx\\s*pro/i.test(text);
+        const isOnxPro = /onx\s*pro/i.test(text);
 
         // Mobile clone
         const a = document.createElement('a');
@@ -867,7 +871,7 @@ class ONXHeader extends HTMLElement {
         if (centerExtra) {
           const d = node.cloneNode(true);
           if (!d.classList.contains('nav-link')) d.classList.add('nav-link');
-          if (/onx\\s*pro/i.test((d.textContent || ''))) {
+          if (/onx\s*pro/i.test((d.textContent || ''))) {
             d.classList.remove('nav-link--pro','nav-link--black');
           }
           centerExtra.appendChild(d);
@@ -908,9 +912,7 @@ class ONXHeader extends HTMLElement {
     const wasOpen = this.classList.contains('mobile-open');
     if (open === wasOpen) return;
 
-    this.classList.toggle('mobile-open, open'); // no-op add second marker (backward compat)
     this.classList.toggle('mobile-open', open);
-
     this._btns?.forEach(b => b.setAttribute('aria-expanded', String(open)));
 
     // Lock background scroll
@@ -948,9 +950,6 @@ class ONXHeader extends HTMLElement {
     if (!this._outerMobileLarge) this._outerMobileLarge = 8;
     if (!this._outerMobileSmall) this._outerMobileSmall = 16;
   }
-
-
-
 
   /* ===== Show nav links only when pill header is active (desktop) ===== */
   _syncCenterVisibility(visible){
