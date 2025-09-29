@@ -1136,29 +1136,14 @@ const SUGGESTIONS = [
   NEW: FLOATER COLOR
     data-float-color="rgba(255,255,255,0.55)"  (semi-transparent white default)
 
-  AVOID CENTER (final logo + title safe-zone)
-    data-avoid-center="true"
+  NEW (ORGANIC AVOIDANCE CONTROLS)
+    data-avoid-center="true"            (on/off; default true)
     data-avoid-radius="1.0"             (multiplier on computed safe radius)
     data-avoid-strength="220"           (repulsion accel scale)
-    data-avoid-hyst="16"                (px buffer)
-
-  ORGANIC MOTION / PHYSICS (new)
-    data-accel-jitter="140"             (px/s^2 random wander acceleration)
-    data-friction="0.08"                (per-second velocity damping)
-    data-wander-freq="0.12"             (wander frequency)
-    data-wander-power="0.6"             (wander influence)
-    data-swirl-strength="0.28"          (tangential “orbit” near safe zone)
-
-  SUBTLE ROTATION / SPIN (new)
-    data-rotate-enable="true"
-    data-rotate-max="8"                 (max degrees from center)
-    data-rotate-follow="0.55"           (0..1 align to travel direction)
-    data-rotate-damp="2.8"              (larger = snappier easing back)
-    data-rotate-noise="0.35"            (random micro-torque)
-
-  DEPTH / PARALLAX (new)
-    data-depth-min="0.90"               (size/speed multiplier range)
-    data-depth-max="1.12"
+    data-avoid-hyst="16"                (px buffer so floaters don’t “hug” the boundary)
+    data-wander-freq="0.12"             (base wander frequency in Hz-ish)
+    data-wander-power="0.6"             (how much the heading drifts)
+    data-swirl-strength="0.28"          (tangential “orbit” strength near the center zone)
 -->
 <div id="onx-card-reveal" class="padTop oc-container section-clip"
      data-speed="1.6"
@@ -1179,7 +1164,7 @@ const SUGGESTIONS = [
      data-float-scale-mobile="1.2"
      data-float-scale-desktop="2.0"
 
-     data-trigger-frac="0.8"
+     data-trigger-frac="0.75"
 
      data-stage-h-mobile="25svh"
      data-stage-h-desktop="50vh"
@@ -1194,16 +1179,6 @@ const SUGGESTIONS = [
      data-wander-freq="0.12"
      data-wander-power="0.6"
      data-swirl-strength="0.28"
-
-     data-accel-jitter="140"
-     data-friction="0.08"
-     data-rotate-enable="true"
-     data-rotate-max="8"
-     data-rotate-follow="0.55"
-     data-rotate-damp="2.8"
-     data-rotate-noise="0.35"
-     data-depth-min="0.90"
-     data-depth-max="1.12"
 
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:40vh; --stage-aspect:auto;"
@@ -1244,8 +1219,8 @@ const SUGGESTIONS = [
 
     /* Minimal controls — disabled */
     #onx-controls{
-      display: none !important;
-      margin-top: 0 !important;
+      display: none !important;   /* hide the bar */
+      margin-top: 0 !important;   /* remove spacing */
     }
     #onx-controls button{ display: none !important; }
 
@@ -1331,28 +1306,15 @@ const SUGGESTIONS = [
     const STAGE_H_M     = host.dataset.stageHMobile;
     const STAGE_H_D     = host.dataset.stageHDesktop;
 
-    // ---------- NEW: ORGANIC AVOIDANCE & PHYSICS ----------
+    // ---------- NEW: ORGANIC AVOIDANCE CONTROLS ----------
     const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
     const AVOID_CENTER     = host.dataset.avoidCenter === undefined ? true : toBool(host.dataset.avoidCenter);
     const AVOID_RADIUS_MULT= _num(host.dataset.avoidRadius) ?? 1.0;
-    const AVOID_STRENGTH   = _num(host.dataset.avoidStrength) ?? 220;
-    const AVOID_HYST       = _num(host.dataset.avoidHyst) ?? 16;
+    const AVOID_STRENGTH   = _num(host.dataset.avoidStrength) ?? 220;  // accel scale
+    const AVOID_HYST       = _num(host.dataset.avoidHyst) ?? 16;       // px buffer
     const WANDER_FREQ      = _num(host.dataset.wanderFreq) ?? (window.matchMedia('(max-width: 640px)').matches ? 0.18 : 0.12);
-    const WANDER_POWER     = _num(host.dataset.wanderPower) ?? 0.6;
-    const SWIRL_STRENGTH   = _num(host.dataset.swirlStrength) ?? 0.28;
-    const ACCEL_JITTER     = _num(host.dataset.accelJitter) ?? 140;     // px/s^2
-    const FRICTION         = _num(host.dataset.friction) ?? 0.08;       // per second
-
-    // ---------- NEW: ROTATION / SPIN ----------
-    const ROTATE_ENABLE    = host.dataset.rotateEnable === undefined ? true : toBool(host.dataset.rotateEnable);
-    const ROTATE_MAX_RAD   = ((_num(host.dataset.rotateMax) ?? 8) * Math.PI) / 180; // deg → rad
-    const ROTATE_FOLLOW    = Math.max(0, Math.min(1, _num(host.dataset.rotateFollow) ?? 0.55));
-    const ROTATE_DAMP      = _num(host.dataset.rotateDamp) ?? 2.8;      // s^-1
-    const ROTATE_NOISE     = _num(host.dataset.rotateNoise) ?? 0.35;    // torque scale
-
-    // ---------- NEW: DEPTH / PARALLAX ----------
-    const DEPTH_MIN        = _num(host.dataset.depthMin) ?? 0.90;
-    const DEPTH_MAX        = _num(host.dataset.depthMax) ?? 1.12;
+    const WANDER_POWER     = _num(host.dataset.wanderPower) ?? 0.6;    // heading drift amount
+    const SWIRL_STRENGTH   = _num(host.dataset.swirlStrength) ?? 0.28; // tangential deflection near center
 
     // ----- SIZE overrides via data-size-* -----
     (function applySizeOverridesFromData(){
@@ -1905,6 +1867,7 @@ const SUGGESTIONS = [
       const h = w / aspect;
       const textSize = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
       const textOffset = (isMobile()? 36 : 44);
+      // Safe circle radius that encloses logo + title stack; add hysteresis
       const halfLogoH = h * 0.5;
       const verticalReach = halfLogoH + textOffset + textSize * 0.85;
       const r = Math.sqrt( (w*0.5)*(w*0.5) + verticalReach*verticalReach ) + (AVOID_HYST||0);
@@ -1934,8 +1897,9 @@ const SUGGESTIONS = [
         : (FLOAT_SPEED_D ?? FLOAT_SPEED ?? 40);
     }
 
-    function randSeed(){ return Math.random()*1000 + 1; }
-    function randRange(a,b){ return a + Math.random()*(b-a); }
+    function randSeed(){
+      return Math.random()*1000 + 1;
+    }
 
     function makeFloaters(logoImgs, perLogo=1){
       const out = [];
@@ -1945,30 +1909,26 @@ const SUGGESTIONS = [
 
       logoImgs.forEach(img=>{
         for (let k=0;k<perLogo;k++){
-          const depth = randRange(DEPTH_MIN, DEPTH_MAX);
           const aspect = Math.max(0.1, img.aspect || 1);
-          const w0 = targetH * aspect * depth;
-          const h0 = targetH * depth;
+          const w = targetH * aspect;
+          const h = targetH;
 
-          // Initial position: avoid center zone
+          // Initial position: retry a few times to avoid center zone
           let x, y, tries = 0;
           do {
-            x = Math.random()*(CONFIG.w - w0) + w0/2;
-            y = Math.random()*(CONFIG.h - h0) + h0/2;
+            x = Math.random()*(CONFIG.w - w) + w/2;
+            y = Math.random()*(CONFIG.h - h) + h/2;
             tries++;
-          } while (AVOID_CENTER && zone && tries < 24 &&
-                   Math.hypot(x - zone.centerX, y - zone.centerY) < (zone.radius + Math.max(w0,h0)));
+          } while (AVOID_CENTER && zone && tries < 20 &&
+                   Math.hypot(x - zone.centerX, y - zone.centerY) < (zone.radius + Math.max(w,h)));
 
-          const speedBase = baseS * (0.85 + Math.random()*0.7) * depth; // per floater speed target
+          const speed = baseS * (0.85 + Math.random()*0.7); // px/s
           const theta = Math.random()*Math.PI*2;
 
           out.push({
-            img, depth,
-            w: w0, h: h0,
-            x, y,
-            vx: Math.cos(theta)*speedBase,
-            vy: Math.sin(theta)*speedBase,
-            speedBase,
+            img, w, h, x, y,
+            vx: Math.cos(theta)*speed,
+            vy: Math.sin(theta)*speed,
             alpha: 0,
             // Wander seeds
             t: 0,
@@ -1976,11 +1936,7 @@ const SUGGESTIONS = [
             fB: WANDER_FREQ * (0.6 + Math.random()*0.8),
             seedA: randSeed(),
             seedB: randSeed(),
-            swirlDir: Math.random()<0.5 ? -1 : 1,
-            // Rotation
-            rot: randRange(-ROTATE_MAX_RAD*0.25, ROTATE_MAX_RAD*0.25),
-            omega: 0,               // rad/s
-            prevDir: theta
+            swirlDir: Math.random()<0.5 ? -1 : 1
           });
         }
       });
@@ -1990,51 +1946,53 @@ const SUGGESTIONS = [
     function updateFloaters(dt){
       const margin = 4;
       const zone = FLOAT_ZONE;
+      const desired = baseFloaterSpeed();
 
       for (const f of floaters){
         f.alpha = Math.min(1, f.alpha + dt*1.5);
         f.t += dt;
 
-        // --- Physics: accumulate accelerations
-        let ax = 0, ay = 0;
+        // --- Organic wander: smoothly perturb heading with low-freq drift
+        let ang = Math.atan2(f.vy, f.vx);
+        const drift =
+          (Math.sin((f.seedA + f.t) * f.fA * 2*Math.PI) * 0.7 +
+           Math.cos((f.seedB + f.t) * f.fB * 2*Math.PI) * 0.3) * WANDER_POWER;
+        ang += drift * dt; // small, smooth turn
+        let spd = Math.hypot(f.vx, f.vy) || desired;
+        f.vx = Math.cos(ang)*spd;
+        f.vy = Math.sin(ang)*spd;
 
-        // Wander acceleration (low-frequency noise)
-        const w1 = Math.sin((f.seedA + f.t) * f.fA * 2*Math.PI);
-        const w2 = Math.cos((f.seedB + f.t) * f.fB * 2*Math.PI);
-        ax += (w1 * 0.6 + w2 * 0.4) * ACCEL_JITTER * WANDER_POWER;
-        ay += (w2 * 0.6 - w1 * 0.4) * ACCEL_JITTER * WANDER_POWER;
-
-        // Center avoidance: radial repulsion + tangential swirl
+        // --- Center avoidance: soft deflection → hard repulsion near boundary
         if (AVOID_CENTER && zone){
           const dx = f.x - zone.centerX;
           const dy = f.y - zone.centerY;
           const dist = Math.hypot(dx, dy) + 1e-6;
           const safeR = zone.radius + Math.max(f.w, f.h)*0.55;
 
-          if (dist < safeR){
+          if (dist < safeR){ // strong push out + tangential swirl
             const push = (safeR - dist) / safeR; // 0..1
             const nx = dx / dist, ny = dy / dist;
-            // Radial repulsion (strong)
-            ax += nx * (AVOID_STRENGTH * push);
-            ay += ny * (AVOID_STRENGTH * push);
-            // Tangential swirl for graceful slide-around
+            // Radial repulsion (acceleration)
+            f.vx += nx * (AVOID_STRENGTH * push) * dt;
+            f.vy += ny * (AVOID_STRENGTH * push) * dt;
+            // Tangential swirl for organic slide-around
             const tx = -ny, ty = nx;
             const swirl = SWIRL_STRENGTH * (1 - dist/safeR);
-            ax += tx * swirl * f.speedBase * f.swirlDir;
-            ay += ty * swirl * f.speedBase * f.swirlDir;
-            // Micro position nudge outward
-            f.x += nx * 4 * push;
-            f.y += ny * 4 * push;
-          } else if (dist < safeR * 1.25){
+            f.vx += tx * swirl * desired * dt * f.swirlDir;
+            f.vy += ty * swirl * desired * dt * f.swirlDir;
+            // Nudge position outward a hair so nothing "sticks"
+            f.x += nx * 6 * push;
+            f.y += ny * 6 * push;
+          } else if (dist < safeR * 1.25){ // gentle orbiting deflection
             const nx = dx/dist, ny = dy/dist;
             const tx = -ny, ty = nx;
             const soft = SWIRL_STRENGTH*0.5 * (1 - (dist - safeR)/(safeR*0.25));
-            ax += tx * soft * f.speedBase * f.swirlDir;
-            ay += ty * soft * f.speedBase * f.swirlDir;
+            f.vx += tx * soft * desired * dt * f.swirlDir;
+            f.vy += ty * soft * desired * dt * f.swirlDir;
           }
         }
 
-        // Soft wall steering (before hard bounce)
+        // --- Soft wall steer to reduce jitter before bounce
         const halfW = f.w/2, halfH = f.h/2;
         const nearLeft   = (f.x - halfW) - margin;
         const nearRight  = (CONFIG.w - margin) - (f.x + halfW);
@@ -2042,67 +2000,35 @@ const SUGGESTIONS = [
         const nearBottom = (CONFIG.h - margin) - (f.y + halfH);
         const softRange = 28;
 
-        if (nearLeft < softRange)  ax += (softRange - nearLeft)  * (f.speedBase/60);
-        if (nearRight < softRange) ax -= (softRange - nearRight) * (f.speedBase/60);
-        if (nearTop < softRange)   ay += (softRange - nearTop)   * (f.speedBase/60);
-        if (nearBottom < softRange)ay -= (softRange - nearBottom)* (f.speedBase/60);
-
-        // Integrate velocity with friction
-        f.vx += ax * dt;
-        f.vy += ay * dt;
-
-        const damp = Math.max(0, 1 - FRICTION * dt);
-        f.vx *= damp; f.vy *= damp;
-
-        // Speed band clamp (ease toward target)
-        let spd = Math.hypot(f.vx, f.vy) || 1e-6;
-        const minS = f.speedBase*0.70, maxS = f.speedBase*1.35;
-        if (spd < minS){ const s=minS/spd; f.vx*=s; f.vy*=s; spd=minS; }
-        else if (spd > maxS){ const s=maxS/spd; f.vx*=s; f.vy*=s; spd=maxS; }
+        if (nearLeft < softRange)  f.vx += (softRange - nearLeft) * (desired/200) * dt;
+        if (nearRight < softRange) f.vx -= (softRange - nearRight) * (desired/200) * dt;
+        if (nearTop < softRange)   f.vy += (softRange - nearTop) * (desired/200) * dt;
+        if (nearBottom < softRange)f.vy -= (softRange - nearBottom) * (desired/200) * dt;
 
         // Integrate position
         f.x += f.vx * dt;
         f.y += f.vy * dt;
 
-        // Hard wall bounce (as final guard)
+        // Hard wall bounce as a final guard
         if (f.x - halfW < margin){ f.x = margin + halfW; f.vx = Math.abs(f.vx); }
         if (f.x + halfW > CONFIG.w - margin){ f.x = CONFIG.w - margin - halfW; f.vx = -Math.abs(f.vx); }
         if (f.y - halfH < margin){ f.y = margin + halfH; f.vy = Math.abs(f.vy); }
         if (f.y + halfH > CONFIG.h - margin){ f.y = CONFIG.h - margin - halfH; f.vy = -Math.abs(f.vy); }
 
-        // --- Rotation (subtle, Apple-clean)
-        if (ROTATE_ENABLE){
-          const dir = Math.atan2(f.vy, f.vx);
-          // target rotation is small fraction of travel direction
-          let target = dir * ROTATE_FOLLOW;
-          // bring toward [−max, +max]
-          target = Math.max(-ROTATE_MAX_RAD, Math.min(ROTATE_MAX_RAD, target));
-          // exponential smoothing toward target
-          const k = Math.exp(-ROTATE_DAMP * dt);
-          f.rot = f.rot * k + target * (1 - k);
-          // micro torque noise
-          const tn = (Math.sin((f.seedA*0.7 + f.t)*2*Math.PI*0.33) * 0.5 +
-                      Math.cos((f.seedB*0.9 + f.t)*2*Math.PI*0.21) * 0.5) * ROTATE_NOISE;
-          f.rot += tn * dt * 0.5;
-          // clamp
-          if (f.rot > ROTATE_MAX_RAD) f.rot = ROTATE_MAX_RAD;
-          if (f.rot < -ROTATE_MAX_RAD) f.rot = -ROTATE_MAX_RAD;
-          f.prevDir = dir;
-        }
+        // Keep speeds in a nice band
+        spd = Math.hypot(f.vx, f.vy);
+        const minS = desired*0.70, maxS = desired*1.35;
+        if (spd < minS){ const s=minS / (spd||1); f.vx*=s; f.vy*=s; }
+        else if (spd > maxS){ const s=maxS/spd; f.vx*=s; f.vy*=s; }
       }
     }
 
     function drawFloaters(){
       for (const f of floaters){
-        // Micro breathing (depth-aware, very subtle)
-        const breathe = 1 + 0.02 * Math.sin((f.seedA*0.37 + f.t) * 2*Math.PI*0.25) * (f.depth*0.5 + 0.5);
-        const w = f.w * breathe, h = f.h * breathe;
-
+        const w = f.w, h = f.h;
         ctx.save();
         ctx.globalAlpha = f.alpha;
         ctx.translate(Math.round(f.x), Math.round(f.y));
-        if (ROTATE_ENABLE && Math.abs(f.rot) > 1e-4) ctx.rotate(f.rot);
-
         if (f.img && f.img.raw){
           const tinted = tintToTarget(f.img.raw, FLOAT_COLOR, w, h);
           ctx.drawImage(tinted, -w/2, -h/2, w, h);
@@ -2364,8 +2290,7 @@ const SUGGESTIONS = [
         const targetH = getFloaterTargetH();
         for (const f of floaters){
           const aspect = Math.max(0.1, f.img.aspect || 1);
-          const baseH = targetH * f.depth;
-          f.w = baseH * aspect; f.h = baseH;
+          f.w = targetH * aspect; f.h = targetH;
           f.x = Math.min(Math.max(f.w/2, f.x), CONFIG.w - f.w/2);
           f.y = Math.min(Math.max(f.h/2, f.y), CONFIG.h - f.h/2);
         }
@@ -2393,6 +2318,7 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
+
 
 <!-- ────────────────────────── Become Limitless (Minimal • Conversion-first) ────────────────────────── -->
 <section id="oc-Models" class="padTop section-clip relative mx-auto max-w-[1200px] oc-container">
