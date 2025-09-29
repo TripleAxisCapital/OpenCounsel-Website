@@ -1145,7 +1145,7 @@ const SUGGESTIONS = [
      data-float-scale-desktop="2.0"
 
  
-     data-stage-h-mobile="25vh"
+     data-stage-h-mobile="25svh"
      data-stage-h-desktop="50vh"
      data-float-speed-mobile="55"
      data-float-speed-desktop="100"
@@ -1541,38 +1541,49 @@ const SUGGESTIONS = [
       return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
     }
     function applyMobileScale(){
-      if (!isMobile()){
-        stageEl.style.transform = '';
-        stageEl.style.transformOrigin = 'center top';
-        const prev = stageScale; stageScale = 1;
-        setBackingScale(Math.abs(prev-1)>0.01);
-        return;
-      }
-      const { vw, vh, top, bottom } = vp();
-      const safeSide = 16;
-      const safeTop  = 16 + top;
-      const safeBot  = 16 + bottom;
-      const ctrlH    = controlHeight();
-      const hostMargins = 24 + 28;
+  // Mobile: disable live auto-fit (prevents squish on URL-bar scroll)
+  if (isMobile()){
+    stageEl.style.transform = '';
+    stageEl.style.transformOrigin = 'center top';
+    const prev = stageScale; stageScale = 1;
+    setBackingScale(Math.abs(prev-1)>0.01);
+    return;
+  }
 
-      const rect = stageEl.getBoundingClientRect();
-      const baseW = Math.max(1, rect.width);
-      const baseH = Math.max(1, rect.height);
+  // Desktop: keep 1:1 as before
+  stageEl.style.transform = '';
+  stageEl.style.transformOrigin = 'center top';
+  const prev = stageScale; stageScale = 1;
+  setBackingScale(Math.abs(prev-1)>0.01);
+  return;
 
-      const availW = Math.max(240, vw - 2*safeSide);
-      const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+  // (Old mobile auto-fit logic remains below but is never reached)
+  const { vw, vh, top, bottom } = vp();
+  const safeSide = 16;
+  const safeTop  = 16 + top;
+  const safeBot  = 16 + bottom;
+  const ctrlH    = controlHeight();
+  const hostMargins = 24 + 28;
 
-      const scaleW = availW / baseW;
-      const scaleH = availH / baseH;
-      const nextScale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only
+  const rect = stageEl.getBoundingClientRect();
+  const baseW = Math.max(1, rect.width);
+  const baseH = Math.max(1, rect.height);
 
-      if (Math.abs(nextScale - stageScale) > 0.02){
-        stageEl.style.transform = `scale(${nextScale})`;
-        stageEl.style.transformOrigin = 'center top';
-        stageScale = nextScale;
-        setBackingScale(true);
-      }
-    }
+  const availW = Math.max(240, vw - 2*safeSide);
+  const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+
+  const scaleW = availW / baseW;
+  const scaleH = availH / baseH;
+  const nextScale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only
+
+  if (Math.abs(nextScale - stageScale) > 0.02){
+    stageEl.style.transform = `scale(${nextScale})`;
+    stageEl.style.transformOrigin = 'center top';
+    stageScale = nextScale;
+    setBackingScale(true);
+  }
+}
+
 
     // -------------------- Phase A: Card (models) --------------------
     function renderCard(t){
