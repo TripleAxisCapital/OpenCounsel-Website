@@ -2240,842 +2240,482 @@ Edit the CTA href, colors, and copy in the tokens below.
 
 
 
+<!-- ================================================================
+  ONX Card Reveal — Apple‑Polished v2
+  Goals: razor‑sharp rendering (no blur), no overlapping, responsive, 
+         reduced‑motion respect, clean controls, and bulletproof timing.
+================================================================ -->
+<section id="onx-card-reveal" class="padTop"
+  data-speed="1.6"
+  data-menu-scale="1.5"
+  data-overshoot-x-enabled="false"
+  data-overshoot-y-enabled="true"
+  data-overshoot-x="1.5"
+  data-overshoot-y="1.5"
+  data-peak-x="0.58"
+  data-peak-y="0.60"
+  aria-label="ONX card reveal animation"
+  style="max-width:100%;margin:0 auto;">
 
-
-
-<!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
-<!-- ONX Card Reveal → "The Best AI" → Logos line (bigger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" (Apple‑polished) -->
-<div id="onx-card-reveal" class="padTop"
-     data-speed="1.6"
-     data-menu-scale="1.5"
-     data-overshoot-x-enabled="false"
-     data-overshoot-y-enabled="true"
-     data-overshoot-x="1.5"
-     data-overshoot-y="1.5"
-     data-peak-x="0.58"
-     data-peak-y="0.60"
-     role="img" aria-label="ONX brand animation"
->
-
-  <!-- Fonts (preconnect + Inter & Audiowide) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Audiowide&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@300..900&display=swap" rel="stylesheet">
 
   <style>
-    /* ---------- Structure / resets ---------- */
-    #onx-card-reveal { max-width: 100%; margin: 0 auto; overflow: visible; }
-    #onx-card-reveal * { box-sizing: border-box; }
-    /* Keep text crisp on macOS/Safari */
-    #onx-card-reveal, #onx-card-reveal * {
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
-    }
+    /* ----------- Base / Reset ----------- */
+    #onx-card-reveal *{ box-sizing:border-box; }
+    #onx-card-reveal{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
 
-    /* Stage */
+    /* ----------- Stage ----------- */
     #onx-stage{
-      position: relative; width: min(1100px, 96vw); aspect-ratio: 18/7; margin: 0 auto;
-      border-radius: 32px; overflow: hidden; box-shadow: none; will-change: transform;
-      transform-origin: center top; backface-visibility: hidden; contain: paint;
-      /* Prevent accidental selection during animation */
-      user-select: none; -webkit-user-select: none; touch-action: manipulation;
+      position:relative; width:min(1100px,96vw); aspect-ratio:16/9; margin:0 auto;
+      border-radius:32px; overflow:hidden; box-shadow:none; will-change:transform;
+      transform-origin:center top; backface-visibility:hidden; contain:paint;
+      background: transparent; /* gradient may be applied via classes */
     }
-    #onx-stage canvas{ width: 100%; height: 100%; display: block; }
+    #onx-stage canvas{ width:100%; height:100%; display:block; outline:none; }
 
-    /* Minimal, Apple-like controls */
-    #onx-controls{
-      display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
-      font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
-      touch-action: manipulation; user-select:none;
-    }
-    #onx-controls button{
-      border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
-      background:#000; color:#fff; font-weight:600; letter-spacing:.2px;
-      box-shadow:0 6px 18px rgba(0,0,0,.12);
-      transition:transform .15s ease, box-shadow .2s ease, opacity .2s ease;
-    }
+    /* ----------- Minimal Controls ----------- */
+    #onx-controls{ display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
+      font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui; touch-action:manipulation; user-select:none; }
+    #onx-controls button{ border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
+      background:#0b0b0c; color:#fff; font-weight:650; letter-spacing:.2px; line-height:1;
+      box-shadow:0 6px 18px rgba(0,0,0,.12); transition:transform .15s ease, box-shadow .2s ease, opacity .2s ease; }
     #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
     #onx-controls button:active{ transform:translateY(0); }
     #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    @media (max-width: 640px){
+    @media (max-width:640px){
       #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
       #onx-controls{ margin-top:10px; }
       #onx-controls button{ padding:9px 14px; font-size:14px; }
     }
+
+    /* Respect reduced motion in CSS as well */
+    @media (prefers-reduced-motion:reduce){
+      #onx-controls button{ transition:none; }
+    }
   </style>
 
-  <!-- Stage (can receive background via your gradient classes) -->
-  <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
+  <!-- Stage (accepts gradient via your classes like g-grad grad-animi) -->
+  <div id="onx-stage" class="g-grad grad-animi">
+    <canvas id="onx-canvas" aria-label="ONX reveal canvas" tabindex="0"></canvas>
+  </div>
 
   <div id="onx-controls" aria-label="Animation controls"></div>
   <div id="onx-play" aria-hidden="true" style="display:none"></div>
 
   <script>
   (()=>{ 'use strict';
-
-    /* ========================= GLOBAL SIZE CONTROLS (EDIT THESE) =========================
-       All values are multipliers (1.00 = default). Safe range ~0.6 → 1.6.
-       - SIZE.all        → Master multiplier for everything.
-       - SIZE.menu       → Card/menu group overall (models list).
-       - SIZE.menuTitle  → Row title (e.g., "ONX PRO") size.
-       - SIZE.menuSub    → Row subtitle text size.
-       - SIZE.padding    → Card inner padding & row gaps.
-       - SIZE.cardWidth  → Card max width scaler.
-       - SIZE.cardHeight → Card height scaler.
-       - SIZE.logos      → Logos row height.
-       - SIZE.bestAI     → "The Best AI" title size.
-       - SIZE.O          → Big Audiowide "O".
-       - SIZE.finalLogo  → Final ONX logo width.
-       - SIZE.unified    → "Unified AI" subtitle size.
-    ====================================================================================== */
-    const SIZE = {
-      all:        1.00,
-      menu:       1.00,
-      menuTitle:  1.00,
-      menuSub:    1.00,
-      padding:    1.00,
-      cardWidth:  1.00,
-      cardHeight: 1.00,
-      logos:      2.00,
-      bestAI:     2.00,
-      O:          1.50,
-      finalLogo:  1.50,
-      unified:    2.00
+    // ======================== Size / Tuning Knobs ========================
+    const SIZE = { // 1.00 = default
+      all:1.00, menu:1.00, menuTitle:1.00, menuSub:1.00, padding:1.00,
+      cardWidth:1.00, cardHeight:1.00, logos:2.00, bestAI:2.00, O:1.50, finalLogo:1.50, unified:2.00
     };
 
-    // New: Slogan variants (randomized each play), keep classy & short
-    const SLOGANS = ["The Best AI", "Built on the Best", "Effortless Intelligence"];
+    const SLOGANS = ["The Best AI","Built on the Best","Effortless Intelligence"];
 
-    // ======== ASSETS (with per-logo white tinting) ========
+    // ===== Logos (tinted to white for consistency) =====
     const LOGOS = [
-      { src: 'grokLogo.svg',   alt: 'Grok',   tint: '#fff' },
-      { src: 'googleLogo.svg', alt: 'Google', tint: '#fff' },
-      { src: 'metaLogo.svg',   alt: 'Meta',   tint: '#fff' },
-      { src: 'OAILogo.png',    alt: 'OpenAI', tint: '#fff' },
+      { src:'grokLogo.svg',   alt:'Grok',   tint:'#fff' },
+      { src:'googleLogo.svg', alt:'Google', tint:'#fff' },
+      { src:'metaLogo.svg',   alt:'Meta',   tint:'#fff' },
+      { src:'OAILogo.png',    alt:'OpenAI', tint:'#fff' },
     ];
-    const FINAL_LOGO_SRC  = 'onxlogo.svg'; // drawn high-DPI, tinted to white
-    const FINAL_LOGO_TINT = '#ffffff';
+    const FINAL_LOGO_SRC='onxlogo.svg';
+    const FINAL_LOGO_TINT='#ffffff';
 
-    // ===== ELEMENTS =====
-    const host    = document.getElementById('onx-card-reveal');
-    const stageEl = document.getElementById('onx-stage');
-    const canvas  = document.getElementById('onx-canvas');
-    const controlsEl = document.getElementById('onx-controls');
+    // ===== Elements =====
+    const host=document.getElementById('onx-card-reveal');
+    const stageEl=document.getElementById('onx-stage');
+    const canvas=document.getElementById('onx-canvas');
+    const controlsEl=document.getElementById('onx-controls');
+    if(!canvas) return;
 
-    if (!canvas) return;
+    // ===== Utils =====
+    const toBool=v=>['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+    const ASPECT=16/9;
+    const isMobile=()=> matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
+    const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const prefersReducedData   = matchMedia('(prefers-reduced-data: reduce)').matches || false;
+    const deviceMem = ('deviceMemory' in navigator) ? (navigator.deviceMemory||8) : 8;
 
-    // ===== UTILS =====
-    const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
-    const ASPECT = 16/9;
-    const isMobile = () => window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const deviceMem = (navigator && 'deviceMemory' in navigator) ? (navigator.deviceMemory||8) : 8;
+    const vp=()=>{ const vv=window.visualViewport; if(vv) return { vw:Math.max(320,vv.width), vh:Math.max(320,vv.height), top:vv.offsetTop||0, bottom:(window.innerHeight - vv.height - (vv.offsetTop||0)) };
+      return { vw:Math.max(320,innerWidth||360), vh:Math.max(320,innerHeight||640), top:0, bottom:0 }; };
 
-    const vp = () => {
-      const vv = window.visualViewport;
-      if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
-      return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
-    };
-
-    // ===== OPTIONS =====
-    const TEMPO = {
-      baseSpeed: parseFloat(host.dataset.speed) || 1.6,
+    // ===== Options from data-* =====
+    const TEMPO={
+      baseSpeed: parseFloat(host.dataset.speed)||1.6,
       get speed(){ return this.baseSpeed; },
-      set speed(v){ this.baseSpeed = Math.max(0.5, Math.min(4, v)); },
-      get menuScale(){ return parseFloat(host.dataset.menuScale) || 1.5; },
-      get overshootXEnabled(){ return host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false; },
-      get overshootYEnabled(){ return host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true; },
-      get overshootX(){ return parseFloat(host.dataset.overshootX) || 1.5; },
-      get overshootY(){ return parseFloat(host.dataset.overshootY) || 1.5; },
-      get peakX(){ return parseFloat(host.dataset.peakX) || 0.58; },
-      get peakY(){ return parseFloat(host.dataset.peakY) || 0.60; }
+      set speed(v){ this.baseSpeed=Math.max(0.5,Math.min(4,v)); },
+      get menuScale(){ return parseFloat(host.dataset.menuScale)||1.5; },
+      get overshootXEnabled(){ return host.dataset.overshootXEnabled!==undefined ? toBool(host.dataset.overshootXEnabled) : false; },
+      get overshootYEnabled(){ return host.dataset.overshootYEnabled!==undefined ? toBool(host.dataset.overshootYEnabled) : true; },
+      get overshootX(){ return parseFloat(host.dataset.overshootX)||1.5; },
+      get overshootY(){ return parseFloat(host.dataset.overshootY)||1.5; },
+      get peakX(){ return parseFloat(host.dataset.peakX)||0.58; },
+      get peakY(){ return parseFloat(host.dataset.peakY)||0.60; }
     };
+    if(prefersReducedMotion){ TEMPO.speed=3.5; } // faster → less motion
 
-    // Respect reduced motion: jump to final or tame overshoot
-    if (prefersReducedMotion){ TEMPO.speed = 3.5; } // very fast (less motion)
+    // ===== Canvas / DPI =====
+    let CONFIG = isMobile()? { w:1152, h:648 } : { w:2048, h:1152 }; // logical size (16:9)
+    let dpr=1, stageScale=1; // CSS transform scale for mobile
+    const BASE_OVERSAMPLE = deviceMem<=4 || prefersReducedData ? 1.15 : 1.5;
+    let OVERSAMPLE = BASE_OVERSAMPLE;
 
-    // ===== CANVAS (High-DPI backing store tied to visual scale) =====
-    let CONFIG = isMobile() ? { w: 1152, h: 648 } : { w: 2048, h: 1152 }; // logical canvas size (16:9)
-    let dpr = 1;
-    let stageScale = 1;              // CSS transform scale applied to #onx-stage (mobile)
-    // Dynamic oversample: ease memory/CPU on low-end devices
-    let OVERSAMPLE = deviceMem <= 4 ? 1.25 : 1.5;
-
-    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
-    if (!ctx) return;
-    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    const ctx = canvas.getContext('2d', { alpha:true, desynchronized:true });
+    if(!ctx) return; ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
 
     function setBackingScale(){
       const raw = window.devicePixelRatio || 1;
-      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);   // cap to avoid huge textures
+      // Limit effective DPR to avoid massive textures. Keep it crisp but sane.
+      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);
       dpr = eff;
-      canvas.width  = Math.max(1, Math.round(CONFIG.w * dpr));
-      canvas.height = Math.max(1, Math.round(CONFIG.h * dpr));
+      const W = Math.max(1, Math.round(CONFIG.w * dpr));
+      const H = Math.max(1, Math.round(CONFIG.h * dpr));
+      if(canvas.width!==W || canvas.height!==H){ canvas.width=W; canvas.height=H; }
       ctx.setTransform(1,0,0,1,0,0);
-      ctx.scale(dpr, dpr);
-      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+      ctx.scale(dpr,dpr);
+      ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
     }
 
-    // Transparent BG buffer (logical size)
-    let BG_CANVAS = document.createElement('canvas');
-    BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
-    let BG_CTX = BG_CANVAS.getContext('2d');
-    BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
+    // Separate background buffer (kept transparent by default)
+    let BG_CANVAS=document.createElement('canvas'); BG_CANVAS.width=CONFIG.w; BG_CANVAS.height=CONFIG.h;
+    let BG_CTX=BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
 
     function clearStage(){
       ctx.setTransform(1,0,0,1,0,0);
-      ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr);
+      ctx.clearRect(0,0,CONFIG.w*dpr, CONFIG.h*dpr);
       ctx.setTransform(dpr,0,0,dpr,0,0);
     }
 
-    // ===== STYLE / SIZING =====
-    const DESIGN = {
-      padX: 26, padY: 26, rowGap: 18, subGap: 8,
-      titleSize: 36, subSize: 20, titleWeight: 800, subWeight: 500,
-      minW: 420, maxW: 820, stageMargin: 56
-    };
-    const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
-
-    let STYLE = buildStyle();
-    function buildStyle(){
-      const SCALE = getMenuScale();
-      const ALL  = SIZE.all;
-      const PAD  = SIZE.padding;
-      const MENU = SIZE.menu;
-
-      return {
-        padX: Math.round(DESIGN.padX * SCALE * ALL * PAD),
-        padY: Math.round(DESIGN.padY * SCALE * ALL * PAD),
-        rowGap: Math.round(DESIGN.rowGap * SCALE * ALL * PAD),
-        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE * ALL * PAD)),
-        titleSize: DESIGN.titleSize * SCALE * ALL * MENU * SIZE.menuTitle,
-        subSize: DESIGN.subSize * SCALE * ALL * MENU * SIZE.menuSub,
-        titleWeight: DESIGN.titleWeight,
-        subWeight: DESIGN.subWeight,
-        minW: DESIGN.minW * ALL,
-        maxW: DESIGN.maxW * ALL,
-        stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
-      };
-    }
-
-    // Dynamic logo line height
-    function computeLogoLineHeight(logoImgs){
-      const pad = isMobile()? 24 : 36;
-      const maxH = (isMobile()? 72 : 96) * SIZE.all * SIZE.logos;
-      const minH = (isMobile()? 44 : 60) * SIZE.all * SIZE.logos;
-      const sumAspect = logoImgs.reduce((s, img)=> s + (img.aspect || 1), 0);
-      const fitH = ((CONFIG.w * 0.84) - pad*(logoImgs.length-1)) / Math.max(1, sumAspect);
-      return Math.max(minH, Math.min(maxH, fitH));
-    }
-
-    // ===== CONTENT =====
-    const rows = [
+    // ===== Typography / Layout =====
+    const DESIGN={ padX:26, padY:26, rowGap:18, subGap:8, titleSize:36, subSize:20, titleWeight:800, subWeight:500, minW:420, maxW:820, stageMargin:56 };
+    const rows=[
       { title:'ONX FAST', sub:'Fastest for instant answers' },
       { title:'ONX',      sub:'Default model' },
       { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
     ];
 
-    // ===== HELPERS =====
-    const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
-    const clampRange=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
-    const lerp=(a,b,t)=>a+(b-a)*t;
-    const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
-    const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-    const easeOutQuint=t=>1-Math.pow(1-clamp(t,0,1),5); // smoother tail
+    const getMenuScale=()=> isMobile()? Math.min(TEMPO.menuScale,1.25) : TEMPO.menuScale;
+
+    let STYLE = buildStyle();
+    function buildStyle(){
+      const SCALE=getMenuScale(); const ALL=SIZE.all; const PAD=SIZE.padding; const MENU=SIZE.menu;
+      return {
+        padX:Math.round(DESIGN.padX*SCALE*ALL*PAD), padY:Math.round(DESIGN.padY*SCALE*ALL*PAD),
+        rowGap:Math.round(DESIGN.rowGap*SCALE*ALL*PAD), subGap:Math.max(2,Math.round(DESIGN.subGap*SCALE*ALL*PAD)),
+        titleSize:DESIGN.titleSize*SCALE*ALL*MENU*SIZE.menuTitle, subSize:DESIGN.subSize*SCALE*ALL*MENU*SIZE.menuSub,
+        titleWeight:DESIGN.titleWeight, subWeight:DESIGN.subWeight,
+        minW:DESIGN.minW*ALL, maxW:DESIGN.maxW*ALL,
+        stageMargin: isMobile()? Math.max(20, Math.round(DESIGN.stageMargin*0.8)) : DESIGN.stageMargin
+      };
+    }
+
+    // Logo line height so nothing overlaps and stays crisp
+    function computeLogoLineHeight(logoImgs){
+      const pad = isMobile()?24:36; const maxH=(isMobile()?72:96)*SIZE.all*SIZE.logos; const minH=(isMobile()?44:60)*SIZE.all*SIZE.logos;
+      const sumAspect = logoImgs.reduce((s,img)=> s + (img.aspect||1), 0);
+      const fitH = ((CONFIG.w*0.84) - pad*(logoImgs.length-1)) / Math.max(1,sumAspect);
+      return Math.max(minH, Math.min(maxH, fitH));
+    }
+
+    // ===== Easing / helpers =====
+    const clamp=(v,lo=0,hi=1)=> Math.min(hi,Math.max(lo,v));
+    const clampRange=(v,lo,hi)=> Math.min(hi,Math.max(lo,v));
+    const lerp=(a,b,t)=> a+(b-a)*t;
+    const easeOutCubic=t=> 1-Math.pow(1-clamp(t,0,1),3);
+    const easeInOutCubic=t=> t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    const easeOutQuint=t=> 1-Math.pow(1-clamp(t,0,1),5);
 
     function boomerang(t, factor=1.08, peak=0.55){
-      // Gentle, Apple-like overshoot; bounded and C1-continuous
-      if (t <= 0) return 0;
-      if (t >= 1) return 1;
-      if (t < peak) return easeOutQuint(t/peak) * factor;
-      const u = (t - peak) / (1 - peak);
-      return 1 + (factor - 1) * (1 - easeOutQuint(u));
+      if(t<=0) return 0; if(t>=1) return 1; if(t<peak) return easeOutQuint(t/peak)*factor;
+      const u=(t-peak)/(1-peak); return 1 + (factor-1) * (1 - easeOutQuint(u));
     }
-    function setFont(weight,size,family='ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'){
-      ctx.font = `${weight} ${size}px ${family}`;
+    function setFont(weight,size,fam='ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'){
+      // integer px sizes to avoid subpixel blurring on canvas text
+      const px = Math.round(size);
+      ctx.font = `${weight} ${px}px ${fam}`;
       ctx.textRendering = 'optimizeLegibility';
     }
     function roundedRect(ctx,x,y,w,h,r){
-      const rr=Math.min(r,w/2,h/2);
-      const x1=Math.round(x)+0.5, y1=Math.round(y)+0.5, w1=Math.round(w), h1=Math.round(h);
-      ctx.beginPath();
-      ctx.moveTo(x1+rr,y1);
+      const rr=Math.min(r,w/2,h/2); const x1=Math.round(x)+0.5, y1=Math.round(y)+0.5, w1=Math.round(w), h1=Math.round(h);
+      ctx.beginPath(); ctx.moveTo(x1+rr,y1);
       ctx.arcTo(x1+w1,y1,x1+w1,y1+h1,rr);
       ctx.arcTo(x1+w1,y1+h1,x1,y1+h1,rr);
       ctx.arcTo(x1,y1+h1,x1,y1,rr);
-      ctx.arcTo(x1,y1,x1+w1,y1,rr);
-      ctx.closePath();
+      ctx.arcTo(x1,y1,x1+w1,y1,rr); ctx.closePath();
     }
 
-    // ===== TIMINGS =====
-    const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
-    const S = v => v / TEMPO.speed;
+    // ===== Timings =====
+    const BASE={ widthGrow:0.65, rowPop:0.42, rowPause:0.30, holdA:0.34, holdB:0.50, morph:0.95 };
+    const S=v=> v / TEMPO.speed;
 
-    // ===== LAYOUT =====
+    // ===== Measure once per layout =====
     function measureFinalLayout(){
-      let maxTextW = 0;
-      setFont(800, STYLE.titleSize);
-      rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
-      setFont(500, STYLE.subSize);
-      rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
+      let maxTextW=0;
+      setFont(800, STYLE.titleSize); rows.forEach(r=>{ maxTextW=Math.max(maxTextW, ctx.measureText(r.title).width); });
+      setFont(500, STYLE.subSize);  rows.forEach(r=>{ if(r.sub) maxTextW=Math.max(maxTextW, ctx.measureText(r.sub).width); });
 
-      const contentW = Math.ceil(maxTextW);
-      const cardW0 = Math.min(
-        Math.max(contentW + STYLE.padX*2, STYLE.minW),
-        Math.min(STYLE.maxW, CONFIG.w - 2*STYLE.stageMargin)
-      );
-      const cardW = clampRange(cardW0 * SIZE.cardWidth, STYLE.minW*0.6, CONFIG.w - 2*STYLE.stageMargin);
+      const contentW=Math.ceil(maxTextW);
+      const cardW0 = Math.min( Math.max(contentW+STYLE.padX*2, STYLE.minW), Math.min(STYLE.maxW, CONFIG.w-2*STYLE.stageMargin) );
+      const cardW  = clampRange(cardW0 * SIZE.cardWidth, STYLE.minW*0.6, CONFIG.w - 2*STYLE.stageMargin);
 
-      const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
+      const rowHeights = rows.map(r=> STYLE.titleSize + (r.sub? (STYLE.subGap+STYLE.subSize):0));
       const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
       const cardH0 = Math.ceil(contentH + STYLE.padY*2);
-      const cardH = Math.min(Math.ceil(cardH0 * SIZE.cardHeight), CONFIG.h - 2*STYLE.stageMargin);
+      const cardH  = Math.min(Math.ceil(cardH0 * SIZE.cardHeight), CONFIG.h - 2*STYLE.stageMargin);
 
-      const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
+      const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW,cardH)*0.08)));
       return { cardW, cardH, rowHeights, radius };
     }
     let layout = measureFinalLayout();
 
     // Seed shape
-    const seed = { w: 120, h: 80, r: 20 };
+    const seed={ w:120, h:80, r:20 };
 
     // Row schedule
-    const ROW_POP_DUR = S(BASE.rowPop);
-    const ROW_PAUSE   = S(BASE.rowPause);
-    const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
+    const ROW_POP_DUR=S(BASE.rowPop), ROW_PAUSE=S(BASE.rowPause);
+    const rowStartTimes = rows.map((_,i)=> i*(ROW_POP_DUR+ROW_PAUSE));
 
     // Mobile tuning
-    const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
-    const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
+    const MOBILE_SHADOW_SCALE = isMobile()? 0.7 : 1.0;
+    const MOBILE_BLUR_SCALE   = isMobile()? 0.6 : 1.0;
 
-    // ===== MOBILE AUTO-FIT SCALE (ties into high-DPI backing) =====
-    function controlHeight(){
-      const ctrl = document.getElementById('onx-controls');
-      return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
-    }
+    // ===== Mobile auto-fit & DPR =====
+    function controlHeight(){ const c=document.getElementById('onx-controls'); return c? Math.max(0, c.offsetHeight||44) : 44; }
     function applyMobileScale(){
-      if (!isMobile()){
-        stageEl.style.transform = '';
-        stageEl.style.transformOrigin = 'center top';
-        stageScale = 1;
-        setBackingScale();
-        return;
-      }
-      const { vw, vh, top, bottom } = vp();
-      const safeSide = 16;
-      const safeTop  = 16 + top;
-      const safeBot  = 16 + bottom;
-      const ctrlH    = controlHeight();
-      const hostMargins = 24 + 28;
-
-      const baseW = Math.min(1100, 0.96 * vw);
-      const baseH = baseW / ASPECT;
-
-      const availW = Math.max(240, vw - 2*safeSide);
-      const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
-
-      const scaleW = availW / baseW;
-      const scaleH = availH / baseH;
-      const desired = 2.0;
-      const scale = Math.max(0.6, Math.min(desired, scaleW, scaleH));
-
-      stageEl.style.transform = `scale(${scale})`;
-      stageEl.style.transformOrigin = 'center top';
-      stageScale = scale;
-      setBackingScale(); // <-- bump backing DPI to match visual scale (prevents blur)
+      if(!isMobile()){ stageEl.style.transform=''; stageEl.style.transformOrigin='center top'; stageScale=1; setBackingScale(); return; }
+      const { vw,vh,top,bottom } = vp(); const safeSide=16, safeTop=16+top, safeBot=16+bottom; const ctrlH=controlHeight(); const hostMargins=24+28;
+      const baseW=Math.min(1100, 0.96*vw); const baseH=baseW/ASPECT;
+      const availW=Math.max(240, vw - 2*safeSide); const availH=Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+      const scaleW = availW / baseW; const scaleH = availH / baseH; const desired=2.0; const scale=Math.max(0.6, Math.min(desired, scaleW, scaleH));
+      stageEl.style.transform=`scale(${scale})`; stageEl.style.transformOrigin='center top'; stageScale=scale; setBackingScale();
     }
 
     // -------------------- Phase A: Card (models) --------------------
     function renderCard(t){
-      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+      clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+      const widthEnd=S(BASE.widthGrow); const tw=clamp(t/widthEnd);
+      const widthScale = TEMPO.overshootXEnabled? boomerang(tw,TEMPO.overshootX,TEMPO.peakX) : easeInOutCubic(tw);
+      const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled? TEMPO.overshootX : 1));
 
-      const widthEnd = S(BASE.widthGrow);
-      const tw = clamp(t / widthEnd);
-      const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
-      const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
-
-      let contentVisibleH = 0, visibleRows = 0, poppingIndex = -1, poppingProgress = 0;
-      for (let i=0; i<rows.length; i++){
-        const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
-        if (local <= 0) break;
-        visibleRows++;
-        if (local < 1){
-          poppingIndex = i;
-          poppingProgress = clamp(local);
-          const rowScale = boomerang(poppingProgress, 1.06, 0.55);
-          contentVisibleH += layout.rowHeights[i] * rowScale;
-        } else {
-          contentVisibleH += layout.rowHeights[i];
-        }
+      let contentVisibleH=0, visibleRows=0, poppingIndex=-1, poppingProgress=0;
+      for(let i=0;i<rows.length;i++){
+        const local=(t - rowStartTimes[i]) / ROW_POP_DUR; if(local<=0) break; visibleRows++;
+        if(local<1){ poppingIndex=i; poppingProgress=clamp(local); const rowScale=boomerang(poppingProgress,1.06,0.55); contentVisibleH += layout.rowHeights[i]*rowScale; }
+        else { contentVisibleH += layout.rowHeights[i]; }
       }
-      if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
+      if(visibleRows>1) contentVisibleH += STYLE.rowGap*(visibleRows-1);
 
-      let springY = 1;
-      if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.04, 0.5);
-
-      const h = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
+      let springY=1; if(poppingIndex>=0) springY=boomerang(poppingProgress,1.04,0.5);
+      const h = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH*springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
 
       const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w));
       const r = lerp(seed.r, layout.radius, easeOutCubic(growT));
-      const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
+      const x=(CONFIG.w - w)/2, y=(CONFIG.h - h)/2;
 
       // Card
-      ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
-      ctx.shadowBlur = lerp(6, 24, growT) * MOBILE_SHADOW_SCALE;
-      ctx.shadowOffsetY = lerp(6, 14, growT);
-      ctx.fillStyle = '#ffffff';
-      roundedRect(ctx, x, y, w, h, r); ctx.fill();
-      ctx.shadowColor='transparent';
-      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+      ctx.shadowColor=`rgba(0,0,0,${lerp(.10,.17,growT)})`;
+      ctx.shadowBlur=lerp(6,24,growT)*MOBILE_SHADOW_SCALE; ctx.shadowOffsetY=lerp(6,14,growT);
+      ctx.fillStyle='#ffffff'; roundedRect(ctx,x,y,w,h,r); ctx.fill(); ctx.shadowColor='transparent';
+      ctx.lineWidth=1; ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.stroke();
 
-      // Content
-      ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
-      const contentX = x + STYLE.padX;
-      let cursorY = y + STYLE.padY;
-
-      for (let i=0; i<rows.length; i++){
-        const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
-        if (local <= 0) break;
-
-        const pr = clamp(local);
-        const a  = easeOutCubic(pr);
-        const s  = 1 - (1 - boomerang(pr, 1.06, 0.55)) * 0.05;
-        const dy = lerp(10, 0, a);
-        const blurPx = (1 - a) * 1.2 * MOBILE_BLUR_SCALE;
-
-        ctx.save();
-        ctx.translate(Math.round(contentX), Math.round(cursorY + dy));
-        ctx.scale(s, s);
-        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-        ctx.globalAlpha = a;
-        if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
-
-        setFont(STYLE.titleWeight, STYLE.titleSize);
-        ctx.fillStyle = '#0b0b10';
-        ctx.fillText(rows[i].title, 0, STYLE.titleSize);
-
-        if (rows[i].sub){
-          setFont(STYLE.subWeight, STYLE.subSize);
-          ctx.fillStyle = 'rgba(0,0,0,0.58)';
-          ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
-        }
-        ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
-
+      // Content (clip)
+      ctx.save(); roundedRect(ctx,x,y,w,h,r); ctx.clip();
+      const contentX = x + STYLE.padX; let cursorY = y + STYLE.padY;
+      for(let i=0;i<rows.length;i++){
+        const local=(t - rowStartTimes[i]) / ROW_POP_DUR; if(local<=0) break; const pr=clamp(local);
+        const a=easeOutCubic(pr); const s=1 - (1 - boomerang(pr,1.06,0.55))*0.05; const dy=lerp(10,0,a); const blurPx=(1-a)*1.2*MOBILE_BLUR_SCALE;
+        ctx.save(); ctx.translate(Math.round(contentX), Math.round(cursorY+dy)); ctx.scale(s,s); ctx.textAlign='left'; ctx.textBaseline='alphabetic'; ctx.globalAlpha=a; if(blurPx>0.05) ctx.filter=`blur(${blurPx}px)`;
+        setFont(STYLE.titleWeight, STYLE.titleSize, '"Inter", ui-sans-serif, system-ui'); ctx.fillStyle='#0b0b10'; ctx.fillText(rows[i].title, 0, STYLE.titleSize);
+        if(rows[i].sub){ setFont(STYLE.subWeight, STYLE.subSize, '"Inter", ui-sans-serif, system-ui'); ctx.fillStyle='rgba(0,0,0,0.58)'; ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize); }
+        ctx.filter='none'; ctx.globalAlpha=1; ctx.restore();
         cursorY += layout.rowHeights[i] + STYLE.rowGap;
       }
       ctx.restore();
 
-      const lastEnd = rowStartTimes[rows.length - 1] + ROW_POP_DUR;
+      const lastEnd = rowStartTimes[rows.length-1] + ROW_POP_DUR;
       const total = lastEnd + S(BASE.holdA) + S(BASE.holdB);
-      return { total, x, y, w, h, r };
+      return { total,x,y,w,h,r };
     }
 
-    // -------------------- Phase B: Card → Slogan (white, larger) --------------------
-    function renderCardToBestAI(startBox, t, slogan){
-      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+    // -------------------- Phase B: Card → Slogan --------------------
+    function renderCardToBestAI(startBox,t,slogan){
+      clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+      const out=easeInOutCubic(clamp(t)); const inv=1-out;
+      const w=lerp(startBox.w, startBox.w*0.9, out);
+      const h=lerp(startBox.h, Math.max(100, startBox.h*0.6), out);
+      const r=lerp(startBox.r, Math.min(startBox.r, h/2), out);
+      const x=(CONFIG.w-w)/2, y=(CONFIG.h-h)/2;
 
-      const out = easeInOutCubic(clamp(t));
-      const inv = 1 - out;
+      // Fading card
+      ctx.save(); ctx.globalAlpha=Math.max(0, inv*0.9); ctx.fillStyle='#ffffff';
+      ctx.shadowColor=`rgba(0,0,0,${0.08*inv})`; ctx.shadowBlur=16*inv*MOBILE_SHADOW_SCALE; ctx.shadowOffsetY=12*inv;
+      roundedRect(ctx,x,y,w,h,r); ctx.fill(); ctx.shadowColor='transparent'; ctx.restore();
 
-      const w = lerp(startBox.w, startBox.w*0.9, out);
-      const h = lerp(startBox.h, Math.max(100, startBox.h*0.6), out);
-      const r = lerp(startBox.r, Math.min(startBox.r, h/2), out);
-      const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
-
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, inv * 0.9);
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = `rgba(0,0,0,${0.08*inv})`;
-      ctx.shadowBlur = 16 * inv * MOBILE_SHADOW_SCALE;
-      ctx.shadowOffsetY = 12 * inv;
-      roundedRect(ctx, x, y, w, h, r); ctx.fill();
-      ctx.shadowColor = 'transparent'; ctx.restore();
-
-      const scale = boomerang(t, 1.06, 0.55);
-      const titleSize = Math.round( lerp(72, isMobile() ? 88 : 120, scale) * SIZE.all * SIZE.bestAI );
-      setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
-
-      ctx.save();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.translate(Math.round(CONFIG.w/2), Math.round(CONFIG.h/2));
-      ctx.globalAlpha = easeOutCubic(clamp(t));
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(slogan, 0, 0);
-      ctx.restore();
+      // Slogan
+      const scale=boomerang(t,1.06,0.55);
+      const titleSize=Math.round( lerp(72, isMobile()?88:120, scale)*SIZE.all*SIZE.bestAI );
+      setFont(900,titleSize,'"Inter", ui-sans-serif, system-ui');
+      ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.translate(Math.round(CONFIG.w/2), Math.round(CONFIG.h/2)); ctx.globalAlpha=easeOutCubic(clamp(t)); ctx.fillStyle='#ffffff'; ctx.fillText(slogan,0,0); ctx.restore();
     }
 
     // -------------------- Phase C: Slogan → Logos line --------------------
-    function renderBestAIToLogos(t, logoImgs, slogan){
-      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+    function renderBestAIToLogos(t,logoImgs,slogan){
+      clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+      const titleOut=clamp((t-0.35)/0.30); const titleIn=1-titleOut;
+      const titleSize=Math.round((isMobile()?88:120)*SIZE.all*SIZE.bestAI); setFont(900,titleSize,'"Inter", ui-sans-serif, system-ui');
+      ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle=`rgba(255,255,255,${titleIn})`; ctx.fillText(slogan, Math.round(CONFIG.w/2), Math.round(CONFIG.h/2)); ctx.restore();
 
-      const titleOut = clamp((t-0.35)/0.30);
-      const titleIn  = 1 - titleOut;
-      const titleSize = Math.round( (isMobile() ? 88 : 120) * SIZE.all * SIZE.bestAI );
-      setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
-      ctx.save();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = `rgba(255,255,255,${titleIn})`;
-      ctx.fillText(slogan, Math.round(CONFIG.w/2), Math.round(CONFIG.h/2));
-      ctx.restore();
+      const inT=easeOutCubic(clamp((t-0.1)/0.7));
+      const lineY=Math.round(CONFIG.h/2 + lerp(60,0,inT));
+      const pad=isMobile()?24:36; const logoH=computeLogoLineHeight(logoImgs);
+      const totalW=logoImgs.reduce((acc,img,i)=> acc + logoH*(img.aspect||1) + (i?pad:0), 0);
+      let x=(CONFIG.w-totalW)/2;
 
-      const inT = easeOutCubic(clamp((t-0.1)/0.7));
-      const lineY = Math.round(CONFIG.h/2 + lerp(60, 0, inT));
-      const pad = isMobile()? 24 : 36;
-      const logoH = computeLogoLineHeight(logoImgs);
-      const totalW = logoImgs.reduce((acc,img,i)=> acc + logoH * (img.aspect||1) + (i?pad:0), 0);
-      let x = (CONFIG.w - totalW)/2;
-
-      const positions = [];
-      logoImgs.forEach((img, i) => {
-        const w = logoH * (img.aspect||1);
-        const appear = clamp((inT - i*0.06)/0.8);
-        const a = easeOutCubic(appear);
-        const s = 0.92 + 0.08 * boomerang(appear, 1.06, 0.55);
-        const y = lineY;
-
-        ctx.save();
-        ctx.globalAlpha = a;
-        const cx = x + w/2, cy = y;
-        ctx.translate(Math.round(cx), Math.round(cy));
-        ctx.scale(s, s);
-        if (img.image){ ctx.drawImage(img.image, -w/2, -logoH/2, w, logoH); }
-        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill(); }
-        ctx.restore();
-
-        positions.push({ x: x + w/2, y, w, h: logoH });
-        x += w + pad;
-      });
-
+      const positions=[];
+      logoImgs.forEach((img,i)=>{
+        const w=logoH*(img.aspect||1); const appear=clamp((inT - i*0.06)/0.8); const a=easeOutCubic(appear); const s=0.92 + 0.08*boomerang(appear,1.06,0.55);
+        const y=lineY; ctx.save(); ctx.globalAlpha=a; const cx=x+w/2, cy=y; ctx.translate(Math.round(cx), Math.round(cy)); ctx.scale(s,s);
+        if(img.image){ ctx.drawImage(img.image, -w/2, -logoH/2, w, logoH); } else { ctx.fillStyle='#e9ecf2'; roundedRect(ctx,-w/2,-logoH/2,w,logoH, Math.min(logoH/2,12)); ctx.fill(); }
+        ctx.restore(); positions.push({ x:x+w/2, y, w, h:logoH }); x += w + pad; });
       return positions;
     }
 
-    // -------------------- Phase D: Logos → O (bigger, white) --------------------
-    function renderLogosIntoO(t, logoImgs, startPositions){
-      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+    // -------------------- Phase D: Logos → Big O --------------------
+    function renderLogosIntoO(t,logoImgs,startPositions){
+      clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+      const centerX=Math.round(CONFIG.w/2), centerY=Math.round(CONFIG.h/2 - (isMobile()?6:10));
+      const baseSize=(isMobile()?180:260)*SIZE.all*SIZE.O; const size=Math.round( lerp(baseSize*0.9, baseSize*1.04, boomerang(clamp(t),1.04,0.55)) );
+      ctx.save(); setFont(900,size,'"Audiowide", ui-sans-serif, system-ui'); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.shadowColor='rgba(0,0,0,0.12)'; ctx.shadowBlur=18*MOBILE_SHADOW_SCALE; ctx.shadowOffsetY=10; ctx.fillStyle='#ffffff'; ctx.fillText('O', centerX, centerY); ctx.shadowColor='transparent'; ctx.restore();
 
-      const centerX = Math.round(CONFIG.w/2);
-      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 6 : 10));
-      const baseSize = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
-      const size = Math.round( lerp(baseSize*0.9, baseSize*1.04, boomerang(clamp(t), 1.04, 0.55)) );
-
-      ctx.save();
-      setFont(900, size, '"Audiowide", ui-sans-serif, system-ui');
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.12)';
-      ctx.shadowBlur = 18 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 10;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('O', centerX, centerY);
-      ctx.shadowColor = 'transparent';
-      ctx.restore();
-
-      const pull = easeInOutCubic(clamp(t));
-      logoImgs.forEach((img, i) => {
-        const p = startPositions[i]; if (!p) return;
-        const delay = i * 0.06;
-        const tt = clamp((pull - delay)/ (1 - delay));
-        const a  = easeOutCubic(tt);
-
-        const curX = lerp(p.x, centerX, a);
-        const curY = lerp(p.y, centerY, a);
-        const scale = 1 - 0.85*a;
-        const opacity = 1 - a;
-
-        const w = (p.w) * scale, h = (p.h) * scale;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, opacity);
-        ctx.translate(Math.round(curX), Math.round(curY));
-        if (img.image){ ctx.drawImage(img.image, -w/2, -h/2, w, h); }
-        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill(); }
-        ctx.restore();
+      const pull=easeInOutCubic(clamp(t));
+      logoImgs.forEach((img,i)=>{
+        const p=startPositions[i]; if(!p) return; const delay=i*0.06; const tt=clamp((pull - delay)/(1 - delay)); const a=easeOutCubic(tt);
+        const curX=lerp(p.x, centerX, a); const curY=lerp(p.y, centerY, a); const scale=1 - 0.85*a; const opacity=1 - a; const w=(p.w)*scale, h=(p.h)*scale;
+        ctx.save(); ctx.globalAlpha=Math.max(0,opacity); ctx.translate(Math.round(curX), Math.round(curY)); if(img.image){ ctx.drawImage(img.image, -w/2, -h/2, w, h); } else { ctx.fillStyle='#e9ecf2'; roundedRect(ctx,-w/2,-h/2,w,h, Math.min(h/2,12)); ctx.fill(); } ctx.restore();
       });
     }
 
-    // -------------------- Phase E: O → final ONX logo (white, correct aspect) + "Unified AI" --------------------
+    // -------------------- Phase E: O → ONX logo + subtitle --------------------
     function renderOToFinalLogo(t, finalLogoImg){
-      clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-
-      const centerX = Math.round(CONFIG.w/2);
-      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
+      clearStage(); ctx.drawImage(BG_CANVAS,0,0);
+      const centerX=Math.round(CONFIG.w/2), centerY=Math.round(CONFIG.h/2 - (isMobile()?10:14));
 
       // Fade O
-      const oSizeBaseFrom = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
-      const oSizeBaseTo   = (isMobile()? 130 : 180) * SIZE.all * SIZE.O;
-      const oOut = clamp(1 - t);
-      const logoIn = easeOutCubic(clamp(t));
-      const oSize = Math.round(lerp(oSizeBaseFrom, oSizeBaseTo, 1 - oOut));
-      ctx.save();
-      setFont(900, oSize, '"Audiowide", ui-sans-serif, system-ui');
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.globalAlpha = oOut;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('O', centerX, centerY);
-      ctx.restore();
+      const oSizeFrom=(isMobile()?180:260)*SIZE.all*SIZE.O; const oSizeTo=(isMobile()?130:180)*SIZE.all*SIZE.O; const oOut=clamp(1 - t); const logoIn=easeOutCubic(clamp(t));
+      const oSize=Math.round(lerp(oSizeFrom, oSizeTo, 1 - oOut)); ctx.save(); setFont(900,oSize,'"Audiowide", ui-sans-serif, system-ui'); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.globalAlpha=oOut; ctx.fillStyle='#ffffff'; ctx.fillText('O', centerX, centerY); ctx.restore();
 
-      // Final logo – compute width relative to stage, preserve aspect
-      const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
-                          * SIZE.all * SIZE.finalLogo;
-      const w = baseTargetW * bounceScale;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1); // width / height
-      const h = w / aspect;                                    // correct ratio
-
-      ctx.save();
-      ctx.globalAlpha = logoIn;
-      if (finalLogoImg.image){
-        ctx.drawImage(finalLogoImg.image, Math.round(centerX - w/2), Math.round(centerY - h/2), Math.round(w), Math.round(h));
-      } else {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
-      }
-      ctx.restore();
+      // Final logo (keep aspect)
+      const bounce=0.92 + 0.08*boomerang(logoIn,1.04,0.52);
+      const baseTargetW=Math.min(CONFIG.w*(isMobile()?0.36:0.34), isMobile()?280:420) * SIZE.all * SIZE.finalLogo; const w=baseTargetW*bounce; const aspect=Math.max(0.01, finalLogoImg.aspect||1); const h=w/aspect;
+      ctx.save(); ctx.globalAlpha=logoIn; if(finalLogoImg.image){ ctx.drawImage(finalLogoImg.image, Math.round(centerX - w/2), Math.round(centerY - h/2), Math.round(w), Math.round(h)); } else { ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill(); } ctx.restore();
 
       // Subtitle
-      const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
-      if (subtitleA > 0){
-        const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-        setFont(700, size, '"Inter", ui-sans-serif, system-ui');
-        ctx.save();
-        ctx.globalAlpha = subtitleA;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))));
-        ctx.restore();
-      }
+      const subtitleA=easeOutCubic(clamp((t-0.25)/0.6)); if(subtitleA>0){ const size=(isMobile()?28:40)*SIZE.all*SIZE.unified; setFont(700,size,'"Inter", ui-sans-serif, system-ui'); ctx.save(); ctx.globalAlpha=subtitleA; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#ffffff'; ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2+36) : (h/2+44)))); ctx.restore(); }
     }
 
     // =================== Orchestrator & Assets ===================
-    let isAnimating = false;
-    let runId = 0; // abort token for safe replay
-    let prepared = null; // cached assets
+    let isAnimating=false, runId=0, prepared=null;
 
     function loadImage(src){
-      return new Promise(resolve=>{
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = ()=>{
-          const nw = img.naturalWidth || img.width || 1;
-          const nh = img.naturalHeight || img.height || 1;
-          resolve({ image: img, aspect: Math.max(0.01, nw / nh) });
-        };
-        img.onerror = ()=> resolve({ image: null, aspect: 1 });
-        img.src = src;
-      });
+      return new Promise(resolve=>{ const img=new Image(); img.crossOrigin='anonymous'; img.decoding='async'; img.loading='eager';
+        img.onload=()=>{ const nw=img.naturalWidth||img.width||1, nh=img.naturalHeight||img.height||1; resolve({ image:img, aspect:Math.max(0.01, nw/nh) }); };
+        img.onerror=()=> resolve({ image:null, aspect:1 }); img.src=src; });
     }
 
-    function tintImageToColor(img, color='#ffffff'){
-      if (!img) return null;
-      const nw = img.naturalWidth || img.width || 1;
-      const nh = img.naturalHeight || img.height || 1;
-      const off = document.createElement('canvas');
-      off.width = nw; off.height = nh;
-      const octx = off.getContext('2d');
-      octx.imageSmoothingEnabled = true;
-      octx.imageSmoothingQuality = 'high';
-      octx.clearRect(0,0,nw,nh);
-      // Draw original at native pixel size (lets SVG rasterize sharply)
-      octx.drawImage(img, 0, 0, nw, nh);
-      // Colorize: use alpha as mask
-      octx.globalCompositeOperation = 'source-in';
-      octx.fillStyle = color; octx.fillRect(0,0,nw,nh);
-      octx.globalCompositeOperation = 'source-over';
-      return off;
+    function tintImageToColor(img,color='#ffffff'){
+      if(!img) return null; const nw=img.naturalWidth||img.width||1, nh=img.naturalHeight||img.height||1; const off=document.createElement('canvas'); off.width=nw; off.height=nh;
+      const octx=off.getContext('2d'); octx.imageSmoothingEnabled=true; octx.imageSmoothingQuality='high'; octx.clearRect(0,0,nw,nh); octx.drawImage(img,0,0,nw,nh);
+      octx.globalCompositeOperation='source-in'; octx.fillStyle=color; octx.fillRect(0,0,nw,nh); octx.globalCompositeOperation='source-over'; return off;
     }
 
     async function prepareAssets(){
-      // Load & optionally tint each logo to white
-      const rawLogoImgs = await Promise.all(LOGOS.map(l => loadImage(l.src)));
-      const logoImgs = rawLogoImgs.map((r, i) => {
-        const want = LOGOS[i].tint;
-        if (r.image && want){
-          const tinted = tintImageToColor(r.image, want);
-          return { image: tinted, aspect: r.aspect || 1 };
-        }
-        return r;
-      });
-      logoImgs.forEach(v => { if (!isFinite(v.aspect) || v.aspect <= 0) v.aspect = 1; });
+      // Ensure fonts are ready for correct metrics
+      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; await Promise.all([
+        document.fonts.load('700 40px Inter'), document.fonts.load('900 120px Inter'), document.fonts.load('900 200px Audiowide')
+      ]); }catch{}
 
-      // Final ONX logo → load, tint to white, keep aspect. If SVG, the browser rasterizes
-      // it at draw time into the canvas backing store (already high-DPI via setBackingScale).
-      const finalLogoRaw = await loadImage(FINAL_LOGO_SRC);
-      let tinted = null;
-      if (finalLogoRaw && finalLogoRaw.image){ tinted = tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT); }
-      const finalLogo = { image: tinted || finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1 };
+      // Logos → tint to white
+      const rawLogoImgs = await Promise.all(LOGOS.map(l=>loadImage(l.src)));
+      const logoImgs = rawLogoImgs.map((r,i)=>{ const want=LOGOS[i].tint; if(r.image && want){ const tinted=tintImageToColor(r.image, want); return { image:tinted, aspect:r.aspect||1 }; } return r; });
+      logoImgs.forEach(v=>{ if(!isFinite(v.aspect)||v.aspect<=0) v.aspect=1; });
 
-      if (document.fonts && document.fonts.ready){ try { await document.fonts.ready; } catch {} }
+      // Final ONX logo → tint white
+      const finalLogoRaw = await loadImage(FINAL_LOGO_SRC); let tinted=null; if(finalLogoRaw && finalLogoRaw.image){ tinted=tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT); }
+      const finalLogo = { image:tinted || finalLogoRaw.image, aspect:finalLogoRaw.aspect||1 };
       return { logoImgs, finalLogo };
     }
 
     function playSequence(assets){
-      const myId = ++runId; // new run → cancel prior frames
-      if (isAnimating) { /* let prior frames naturally stop via token */ }
-      isAnimating = true;
+      const myId=++runId; isAnimating=true; const slogan=SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
 
-      // Randomize slogan each play, stable per run
-      const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
+      // Phase A
+      const startA=performance.now(); let cardBox=null;
+      function stepA(now){ if(myId!==runId) return; const tSec=(now-startA)/1000; const layoutA=renderCard(tSec); if(!cardBox) cardBox={ x:layoutA.x,y:layoutA.y,w:layoutA.w,h:layoutA.h,r:layoutA.r };
+        if(tSec<layoutA.total) requestAnimationFrame(stepA); else stepB(); }
 
-      // PHASE A
-      const startA = performance.now();
-      let cardBox = null;
-      function stepA(now){
-        if (myId !== runId) return; // aborted
-        const tSec = (now - startA)/1000;
-        const layoutA = renderCard(tSec);
-        if (!cardBox) cardBox = { x: layoutA.x, y: layoutA.y, w: layoutA.w, h: layoutA.h, r: layoutA.r };
-        if (tSec < layoutA.total){ requestAnimationFrame(stepA); }
-        else { stepB(performance.now()); }
-      }
+      // Phase B
+      function stepB(){ if(myId!==runId) return; const startB=performance.now(); (function loopB(ts){ if(myId!==runId) return; const t=clamp(((ts-startB)/1000)/S(0.85)); renderCardToBestAI(cardBox,t,slogan); if(t<1) requestAnimationFrame(loopB); else stepC(); })(startB); }
 
-      function stepB(){
-        if (myId !== runId) return;
-        const startB = performance.now();
-        (function loopB(ts){
-          if (myId !== runId) return;
-          const t = clamp( ((ts - startB)/1000) / S(0.85) );
-          renderCardToBestAI(cardBox, t, slogan);
-          if (t < 1) requestAnimationFrame(loopB); else stepC(performance.now());
-        })(startB);
-      }
+      // Phase C
+      function stepC(){ if(myId!==runId) return; const startC=performance.now(); let lastPositions=null; (function loopC(ts){ if(myId!==runId) return; const tC=clamp(((ts-startC)/1000)/S(1.35)); lastPositions=renderBestAIToLogos(tC, assets.logoImgs, slogan); if(tC<1) requestAnimationFrame(loopC); else stepD(lastPositions); })(startC); }
 
-      function stepC(){
-        if (myId !== runId) return;
-        const startC = performance.now();
-        let lastPositions = null;
-        (function loopC(ts){
-          if (myId !== runId) return;
-          const tC = clamp( ((ts - startC)/1000) / S(1.35) );
-          lastPositions = renderBestAIToLogos(tC, assets.logoImgs, slogan);
-          if (tC < 1) requestAnimationFrame(loopC); else stepD(performance.now(), lastPositions);
-        })(startC);
-      }
+      // Phase D
+      function stepD(lastPositions){ if(myId!==runId) return; const startD=performance.now(); (function loopD(ts){ if(myId!==runId) return; const tD=clamp(((ts-startD)/1000)/S(1.55)); renderLogosIntoO(tD, assets.logoImgs, lastPositions); if(tD<1) requestAnimationFrame(loopD); else stepE(); })(startD); }
 
-      function stepD(_now, lastPositions){
-        if (myId !== runId) return;
-        const startD = performance.now();
-        (function loopD(ts){
-          if (myId !== runId) return;
-          const tD = clamp( ((ts - startD)/1000) / S(1.55) );
-          renderLogosIntoO(tD, assets.logoImgs, lastPositions);
-          if (tD < 1) requestAnimationFrame(loopD); else stepE(performance.now());
-        })(startD);
-      }
-
-      function stepE(){
-        if (myId !== runId) return;
-        const startE = performance.now();
-        (function loopE(ts){
-          if (myId !== runId) return;
-          const tE = clamp( ((ts - startE)/1000) / S(1.15) );
-          renderOToFinalLogo(tE, assets.finalLogo);
-          if (tE < 1) requestAnimationFrame(loopE); else { isAnimating = false; }
-        })(startE);
-      }
+      // Phase E
+      function stepE(){ if(myId!==runId) return; const startE=performance.now(); (function loopE(ts){ if(myId!==runId) return; const tE=clamp(((ts-startE)/1000)/S(1.15)); renderOToFinalLogo(tE, assets.finalLogo); if(tE<1) requestAnimationFrame(loopE); else { isAnimating=false; } })(startE); }
 
       requestAnimationFrame(stepA);
     }
 
-    // ---------- Controls (minimal): Replay button ----------
-    function ensureControls(){
-      if (!controlsEl) return;
-      controlsEl.innerHTML = '';
-      const replay = document.createElement('button');
-      replay.type = 'button'; replay.textContent = 'Replay';
-      replay.addEventListener('click', async ()=>{
-        replay.disabled = true;
-        try {
-          if (!prepared) prepared = await prepareAssets();
-          playSequence(prepared);
-        } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
-      }, { passive: true });
+    // ---------- Controls ----------
+    function ensureControls(){ if(!controlsEl) return; controlsEl.innerHTML='';
+      const replay=document.createElement('button'); replay.type='button'; replay.textContent='Replay'; replay.setAttribute('aria-label','Replay ONX reveal');
+      replay.addEventListener('click', async ()=>{ replay.disabled=true; try{ if(!prepared) prepared=await prepareAssets(); playSequence(prepared); } finally { setTimeout(()=>{ replay.disabled=false; },400); } }, { passive:true });
       controlsEl.appendChild(replay);
     }
 
-    // First-time DPI setup + static first frame
-    setBackingScale();
-    clearStage(); renderCard(0);
+    // Keyboard accessibility: Space/Enter triggers replay when canvas focused
+    canvas.addEventListener('keydown', async (e)=>{ if(e.code==='Space' || e.code==='Enter'){ e.preventDefault(); if(!prepared) prepared=await prepareAssets(); playSequence(prepared); } });
 
-    // Autoplay when visible (unless reduced motion → quick final render)
-    let autoplayed = false;
-    async function tryAutoplay(){
-      if (autoplayed || isAnimating) return;
-      const rect = stageEl.getBoundingClientRect();
-      const vpH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      const vpCenterY = vpH / 2;
-      const visible = (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
-      if (!visible) return;
-      autoplayed = true;
-      if (!prepared) prepared = await prepareAssets();
-      if (prefersReducedMotion){
-        // Render final frame quickly
-        renderOToFinalLogo(1, prepared.finalLogo);
-        isAnimating = false;
-      } else {
-        playSequence(prepared);
-      }
-    }
+    // First-time setup
+    setBackingScale(); clearStage(); renderCard(0);
 
-    // Observers
-    try {
-      const io = new IntersectionObserver((entries)=>{
-        for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
-      }, { root: null, threshold: 0.15 });
-      io.observe(stageEl);
-    } catch {}
+    // Autoplay when visible (reduced motion → jump to final)
+    let autoplayed=false;
+    async function tryAutoplay(){ if(autoplayed || isAnimating) return; const rect=stageEl.getBoundingClientRect(); const vpH=window.visualViewport? window.visualViewport.height : window.innerHeight; const vpCenterY=vpH/2; const visible=(vpCenterY>=rect.top && vpCenterY<=rect.bottom); if(!visible) return; autoplayed=true; if(!prepared) prepared=await prepareAssets(); if(prefersReducedMotion){ renderOToFinalLogo(1, prepared.finalLogo); isAnimating=false; } else { playSequence(prepared); } }
+
+    // IntersectionObserver (guarded)
+    try{ const io=new IntersectionObserver((entries)=>{ for(const e of entries){ if(e.isIntersecting) tryAutoplay(); } }, { root:null, threshold:0.15 }); io.observe(stageEl); }catch{}
 
     // Manual trigger (hidden)
-    const playBtn = document.getElementById('onx-play');
-    if (playBtn){ playBtn.addEventListener('click', async ()=>{
-      if (!prepared) prepared = await prepareAssets();
-      playSequence(prepared);
-    }, { passive: true }); }
+    const playBtn=document.getElementById('onx-play'); if(playBtn){ playBtn.addEventListener('click', async ()=>{ if(!prepared) prepared=await prepareAssets(); playSequence(prepared); }, { passive:true }); }
 
-    // Mobile fit + rebuild on resize
+    // Handle resizes / DPR changes safely
     applyMobileScale();
-    let rid = null;
-    function rebuildIfNeeded(){
-      applyMobileScale(); // also refreshes backing DPI
+    let rid=null; function rebuild(){ applyMobileScale(); const NOW_MOBILE=isMobile(); const newCONFIG = NOW_MOBILE? { w:1152,h:648 } : { w:2048,h:1152 };
+      if(newCONFIG.w!==CONFIG.w || newCONFIG.h!==CONFIG.h){ CONFIG=newCONFIG; BG_CANVAS.width=CONFIG.w; BG_CANVAS.height=CONFIG.h; BG_CTX=BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); setBackingScale(); }
+      STYLE=buildStyle(); layout=measureFinalLayout(); clearStage(); renderCard(0); if(!autoplayed) tryAutoplay(); ensureControls(); }
 
-      const NOW_MOBILE = isMobile();
-      const newCONFIG = NOW_MOBILE ? { w:1152, h:648 } : { w:2048, h:1152 };
+    window.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid=requestAnimationFrame(rebuild); }, { passive:true });
+    if(window.visualViewport){ visualViewport.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid=requestAnimationFrame(rebuild); }, { passive:true }); visualViewport.addEventListener('scroll', ()=>{ cancelAnimationFrame(rid); rid=requestAnimationFrame(applyMobileScale); }, { passive:true }); }
 
-      if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h){
-        CONFIG = newCONFIG;
-        // Resize logical canvases and re-apply backing DPI
-        BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
-        BG_CTX = BG_CANVAS.getContext('2d');
-        BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
-        setBackingScale();
-      }
+    // Rebuild if DPR changes (e.g., zoom)
+    let dprMQ = matchMedia(`(resolution: ${window.devicePixelRatio||1}dppx)`);
+    try{ dprMQ.addEventListener('change', ()=>{ setBackingScale(); rebuild(); }, { passive:true }); }catch{}
 
-      STYLE = buildStyle();
-      layout = measureFinalLayout();
+    // Pause rendering when not visible to save cycles
+    document.addEventListener('visibilitychange', ()=>{ if(document.hidden && isAnimating){ /* allow rAF loops to end naturally */ } else if(!autoplayed){ tryAutoplay(); } });
 
-      clearStage();
-      renderCard(0);
-      if (!autoplayed) tryAutoplay();
-      ensureControls();
-    }
-
-    window.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
-
-    if (window.visualViewport){
-      window.visualViewport.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
-      window.visualViewport.addEventListener('scroll', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(applyMobileScale); }, { passive: true });
-    }
-
-    window.addEventListener('scroll', tryAutoplay, { passive: true });
-
-    // Build controls once DOM is ready
     ensureControls();
-
   })();
   </script>
-</div>
-<!--======================================================================================================================================================================-->
-
-
+</section>
 
 
 
