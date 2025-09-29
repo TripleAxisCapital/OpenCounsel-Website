@@ -950,6 +950,8 @@ class ONXHeader extends HTMLElement {
   }
 
 
+
+
   /* ===== Show nav links only when pill header is active (desktop) ===== */
   _syncCenterVisibility(visible){
     if (!this._center) return;
