@@ -169,13 +169,13 @@ class ONXHeader extends HTMLElement {
 
         /* ── NEW: Logo behavior — black at top, gradient when pill header is active ── */
         :host(:not(.is-float)) .logo-anim{
-          background:#000000 !important;
-          animation:none !important;
+          background:#000000;
+          animation:none;
         }
         :host(.is-float) .logo-anim{
-          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to)) !important;
+          background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
           background-size: 300% 300% !important;
-          animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
+          animation: gradientShift var(--speed,16s) ease-in-out infinite;
         }
 
         .oc-header{
