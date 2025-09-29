@@ -1098,6 +1098,8 @@ const SUGGESTIONS = [
 
 
 
+
+
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- HOW TO SIZE (pick one):
   A) Exact width with aspect:
@@ -1118,7 +1120,6 @@ const SUGGESTIONS = [
      data-peak-x="0.58"
      data-peak-y="0.60"
 
-     <!-- Optional, example size overrides (multipliers ~0.6–1.6). Remove or tweak as you like. -->
      data-size-best-ai="2.2"
      data-size-logos="1.5"
      data-size-final-logo="1.5"
@@ -1206,9 +1207,9 @@ const SUGGESTIONS = [
       cardWidth:  1.00,
       cardHeight: 1.00,
       logos:      1.50,
-      bestAI:     1.00,
+      bestAI:     1.50,
       O:          1.50,
-      finalLogo:  1.50,
+      finalLogo:  2.50,
       unified:    1.00
     };
 
@@ -1235,7 +1236,7 @@ const SUGGESTIONS = [
     (function applySizeOverridesFromData(){
       const MAP = ["all","menu","menuTitle","menuSub","padding","cardWidth","cardHeight","logos","bestAI","O","finalLogo","unified"];
       for (const k of MAP){
-        const dsKey = "size" + k.charAt(0).toUpperCase() + k.slice(1);
+        const dsKey = "size" + k.charAt(0).toUpperCase() + k.slice(1); // e.g. data-size-final-logo -> dataset.sizeFinalLogo
         if (host.dataset[dsKey] !== undefined){
           const v = parseFloat(host.dataset[dsKey]);
           if (Number.isFinite(v)) SIZE[k] = v;
@@ -1668,7 +1669,7 @@ const SUGGESTIONS = [
         const drawW = w * s, drawH = logoH * s;
         if (img.raw){
           const tinted = tintToTarget(img.raw, img.tint, drawW, drawH);
-          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH);
+          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH); // pre-scaled bitmap, draw in pre-scale coords
         } else {
           ctx.fillStyle = '#e9ecf2';
           roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill();
@@ -1773,32 +1774,16 @@ const SUGGESTIONS = [
       }
       ctx.restore();
 
-      /* --- Polished “Unified AI” reveal (Apple-like): fade + rise + de-blur + micro-scale) --- */
-      const subtitleStart = 0.22;               // starts a bit after logo appears
-      const subtitleDur   = 0.62;               // smooth, unhurried
-      const pRaw          = (t - subtitleStart) / subtitleDur;
-      const p             = clamp(pRaw);
-      const a             = easeOutCubic(p);    // opacity ease
-      if (a > 0){
-        const baseOffset = isMobile()? (h/2 + 36) : (h/2 + 44);
-        const rise       = lerp(14, 0, a);      // float up into place
-        const blurPx     = (1 - a) * (isMobile()? 1.2 : 2.0);
-        const size       = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-
-        // subtle overshoot scale (both axes) for a premium feel
-        const micro      = 0.985 + 0.015 * boomerang(a, 1.02, 0.55);
-
+      // Subtitle
+      const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
+      if (subtitleA > 0){
+        const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
         setFont(700, size, '"Inter", ui-sans-serif, system-ui');
         ctx.save();
-        ctx.globalAlpha = a;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.translate(Math.round(centerX), Math.round(centerY + baseOffset + rise));
-        if (blurPx > 0.01) ctx.filter = `blur(${blurPx}px)`;
-        ctx.scale(micro, micro);
+        ctx.globalAlpha = subtitleA;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', 0, 0);
-        ctx.filter = 'none';
+        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))));
         ctx.restore();
       }
     }
@@ -1996,6 +1981,7 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
+
 
 
 
