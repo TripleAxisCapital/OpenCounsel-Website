@@ -1116,34 +1116,9 @@ const SUGGESTIONS = [
      <div id="onx-card-reveal" style="--stage-w:min(1280px,96vw); --stage-aspect:18/9;">
   Current config: height is 35% of viewport (with dvh precision on mobile).
 
-  OPTIONAL FLOATING SIZE CONTROLS (put on this wrapper):
-    data-float-scale="2"                (default scale; used when platform-specific not set)
-    data-float-scale-mobile="1.6"       (mobile-only scale)
-    data-float-scale-desktop="1.2"      (desktop-only scale)
-    data-float-size="96"                (absolute px height override for both; wins over scale)
-    data-float-size-mobile="72"         (absolute px height for mobile; wins over scale)
-    data-float-size-desktop="110"       (absolute px height for desktop; wins over scale)
-
   NEW: STAGE HEIGHT PER PLATFORM (overrides --stage-h when provided)
     data-stage-h-mobile="40dvh"         (examples: 40dvh, 35vh, 520px)
     data-stage-h-desktop="40vh"
-
-  NEW: FLOATER SPEED (base px/sec before jitter; higher = faster)
-    data-float-speed="36"               (applies to both if platform-specific not set)
-    data-float-speed-mobile="28"        (mobile override; default 28)
-    data-float-speed-desktop="40"       (desktop override; default 40)
-
-  NEW: FLOATER COLOR
-    data-float-color="rgba(255,255,255,0.55)"  (semi-transparent white default)
-
-  NEW (ORGANIC AVOIDANCE CONTROLS)
-    data-avoid-center="true"            (on/off; default true)
-    data-avoid-radius="1.0"             (multiplier on computed safe radius)
-    data-avoid-strength="220"           (repulsion accel scale)
-    data-avoid-hyst="16"                (px buffer so floaters don’t “hug” the boundary)
-    data-wander-freq="0.12"             (base wander frequency in Hz-ish)
-    data-wander-power="0.6"             (how much the heading drifts)
-    data-swirl-strength="0.28"          (tangential “orbit” strength near the center zone)
 -->
 <div id="onx-card-reveal" class="padTop oc-container section-clip"
      data-speed="1.6"
@@ -1161,24 +1136,10 @@ const SUGGESTIONS = [
      data-size-menu-title="1.0"
      data-size-menu-sub="1.0"
 
-     data-float-scale-mobile="1.2"
-     data-float-scale-desktop="2.0"
-
      data-trigger-frac="0.75"
 
      data-stage-h-mobile="25svh"
      data-stage-h-desktop="50vh"
-     data-float-speed-mobile="75"
-     data-float-speed-desktop="125"
-     data-float-color="rgba(255,255,255,0.45)"
-
-     data-avoid-center="true"
-     data-avoid-radius="1.0"
-     data-avoid-strength="220"
-     data-avoid-hyst="16"
-     data-wander-freq="0.12"
-     data-wander-power="0.6"
-     data-swirl-strength="0.28"
 
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:40vh; --stage-aspect:auto;"
@@ -1284,37 +1245,10 @@ const SUGGESTIONS = [
     const controlsEl = document.getElementById('onx-controls');
     if (!canvas) return;
 
-    // ---------- FLOATING SIZE KNOBS ----------
-    const _num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
-
-    const FLOAT_SCALE   = _num(host.dataset.floatScale) ?? 2;
-    const FLOAT_SCALE_M = _num(host.dataset.floatScaleMobile);
-    const FLOAT_SCALE_D = _num(host.dataset.floatScaleDesktop);
-
-    const FLOAT_SIZE    = _num(host.dataset.floatSize);
-    const FLOAT_SIZE_M  = _num(host.dataset.floatSizeMobile);
-    const FLOAT_SIZE_D  = _num(host.dataset.floatSizeDesktop);
-
-    // ---------- NEW: FLOATING SPEED + COLOR ----------
-    const FLOAT_SPEED    = _num(host.dataset.floatSpeed);
-    const FLOAT_SPEED_M  = _num(host.dataset.floatSpeedMobile);
-    const FLOAT_SPEED_D  = _num(host.dataset.floatSpeedDesktop);
-    const FLOAT_COLOR    = host.dataset.floatColor || 'rgba(255,255,255,0.55)';
-
     // ---------- NEW: PER-PLATFORM STAGE HEIGHT ----------
     const STAGE_H       = host.dataset.stageH;
     const STAGE_H_M     = host.dataset.stageHMobile;
     const STAGE_H_D     = host.dataset.stageHDesktop;
-
-    // ---------- NEW: ORGANIC AVOIDANCE CONTROLS ----------
-    const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
-    const AVOID_CENTER     = host.dataset.avoidCenter === undefined ? true : toBool(host.dataset.avoidCenter);
-    const AVOID_RADIUS_MULT= _num(host.dataset.avoidRadius) ?? 1.0;
-    const AVOID_STRENGTH   = _num(host.dataset.avoidStrength) ?? 220;  // accel scale
-    const AVOID_HYST       = _num(host.dataset.avoidHyst) ?? 16;       // px buffer
-    const WANDER_FREQ      = _num(host.dataset.wanderFreq) ?? (window.matchMedia('(max-width: 640px)').matches ? 0.18 : 0.12);
-    const WANDER_POWER     = _num(host.dataset.wanderPower) ?? 0.6;    // heading drift amount
-    const SWIRL_STRENGTH   = _num(host.dataset.swirlStrength) ?? 0.28; // tangential deflection near center
 
     // ----- SIZE overrides via data-size-* -----
     (function applySizeOverridesFromData(){
@@ -1353,8 +1287,8 @@ const SUGGESTIONS = [
       get speed(){ return this.baseSpeed; },
       set speed(v){ this.baseSpeed = Math.max(0.5, Math.min(4, v)); },
       get menuScale(){ return parseFloat(host.dataset.menuScale) || 1.5; },
-      get overshootXEnabled(){ return host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false; },
-      get overshootYEnabled(){ return host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true; },
+      get overshootXEnabled(){ return host.dataset.overshootXEnabled !== undefined ? ['1','true','on','yes'].includes(String(host.dataset.overshootXEnabled).toLowerCase().trim()) : false; },
+      get overshootYEnabled(){ return host.dataset.overshootYEnabled !== undefined ? ['1','true','on','yes'].includes(String(host.dataset.overshootYEnabled).toLowerCase().trim()) : true; },
       get overshootX(){ return parseFloat(host.dataset.overshootX) || 1.5; },
       get overshootY(){ return parseFloat(host.dataset.overshootY) || 1.5; },
       get peakX(){ return parseFloat(host.dataset.peakX) || 0.58; },
@@ -1423,7 +1357,7 @@ const SUGGESTIONS = [
       ctx.setTransform(dpr,0,0,dpr,0,0);
     }
 
-    // ---------- NEW: apply per-platform stage height ----------
+    // ---------- Apply per-platform stage height ----------
     function applyStageHeight(){
       const hVal = isMobile()
         ? (STAGE_H_M || STAGE_H || css(stageEl, '--stage-h', ''))
@@ -1856,249 +1790,6 @@ const SUGGESTIONS = [
       }
     }
 
-    // ---------- Helper to compute final overlay metrics (for avoid zone) ----------
-    function computeFinalOverlayMetrics(finalLogoImg){
-      const centerX = Math.round(CONFIG.w/2);
-      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
-                          * SIZE.all * SIZE.finalLogo;
-      const w = baseTargetW;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
-      const h = w / aspect;
-      const textSize = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-      const textOffset = (isMobile()? 36 : 44);
-      // Safe circle radius that encloses logo + title stack; add hysteresis
-      const halfLogoH = h * 0.5;
-      const verticalReach = halfLogoH + textOffset + textSize * 0.85;
-      const r = Math.sqrt( (w*0.5)*(w*0.5) + verticalReach*verticalReach ) + (AVOID_HYST||0);
-      return { centerX, centerY, w, h, textSize, textOffset, radius: r * (AVOID_RADIUS_MULT||1) };
-    }
-
-    // -------------------- Floating logos sizing helper --------------------
-    function getFloaterTargetH(){
-      const baseH = Math.max(28, Math.min(isMobile()? CONFIG.h*0.12 : CONFIG.h*0.10, 120)) * SIZE.all;
-      const abs = isMobile() ? (FLOAT_SIZE_M ?? FLOAT_SIZE) : (FLOAT_SIZE_D ?? FLOAT_SIZE);
-      if (Number.isFinite(abs)) return abs;
-      const scale = isMobile() ? (FLOAT_SCALE_M ?? FLOAT_SCALE) : (FLOAT_SCALE_D ?? FLOAT_SCALE);
-      return baseH * (Number.isFinite(scale) ? scale : 2);
-    }
-
-    // -------------------- Floating logos layer (behind final overlay) --------------------
-    let floaters = [];
-    let floatRAF = null;
-    let floatLastTS = 0;
-    let floatingActive = false;
-    let floatAssets = null;
-    let FLOAT_ZONE = null; // {centerX,centerY,radius}
-
-    function baseFloaterSpeed(){
-      return isMobile()
-        ? (FLOAT_SPEED_M ?? FLOAT_SPEED ?? 28)
-        : (FLOAT_SPEED_D ?? FLOAT_SPEED ?? 40);
-    }
-
-    function randSeed(){
-      return Math.random()*1000 + 1;
-    }
-
-    function makeFloaters(logoImgs, perLogo=1){
-      const out = [];
-      const targetH = getFloaterTargetH();
-      const baseS = baseFloaterSpeed();
-      const zone = FLOAT_ZONE;
-
-      logoImgs.forEach(img=>{
-        for (let k=0;k<perLogo;k++){
-          const aspect = Math.max(0.1, img.aspect || 1);
-          const w = targetH * aspect;
-          const h = targetH;
-
-          // Initial position: retry a few times to avoid center zone
-          let x, y, tries = 0;
-          do {
-            x = Math.random()*(CONFIG.w - w) + w/2;
-            y = Math.random()*(CONFIG.h - h) + h/2;
-            tries++;
-          } while (AVOID_CENTER && zone && tries < 20 &&
-                   Math.hypot(x - zone.centerX, y - zone.centerY) < (zone.radius + Math.max(w,h)));
-
-          const speed = baseS * (0.85 + Math.random()*0.7); // px/s
-          const theta = Math.random()*Math.PI*2;
-
-          out.push({
-            img, w, h, x, y,
-            vx: Math.cos(theta)*speed,
-            vy: Math.sin(theta)*speed,
-            alpha: 0,
-            // Wander seeds
-            t: 0,
-            fA: WANDER_FREQ * (0.6 + Math.random()*0.8),
-            fB: WANDER_FREQ * (0.6 + Math.random()*0.8),
-            seedA: randSeed(),
-            seedB: randSeed(),
-            swirlDir: Math.random()<0.5 ? -1 : 1
-          });
-        }
-      });
-      return out;
-    }
-
-    function updateFloaters(dt){
-      const margin = 4;
-      const zone = FLOAT_ZONE;
-      const desired = baseFloaterSpeed();
-
-      for (const f of floaters){
-        f.alpha = Math.min(1, f.alpha + dt*1.5);
-        f.t += dt;
-
-        // --- Organic wander: smoothly perturb heading with low-freq drift
-        let ang = Math.atan2(f.vy, f.vx);
-        const drift =
-          (Math.sin((f.seedA + f.t) * f.fA * 2*Math.PI) * 0.7 +
-           Math.cos((f.seedB + f.t) * f.fB * 2*Math.PI) * 0.3) * WANDER_POWER;
-        ang += drift * dt; // small, smooth turn
-        let spd = Math.hypot(f.vx, f.vy) || desired;
-        f.vx = Math.cos(ang)*spd;
-        f.vy = Math.sin(ang)*spd;
-
-        // --- Center avoidance: soft deflection → hard repulsion near boundary
-        if (AVOID_CENTER && zone){
-          const dx = f.x - zone.centerX;
-          const dy = f.y - zone.centerY;
-          const dist = Math.hypot(dx, dy) + 1e-6;
-          const safeR = zone.radius + Math.max(f.w, f.h)*0.55;
-
-          if (dist < safeR){ // strong push out + tangential swirl
-            const push = (safeR - dist) / safeR; // 0..1
-            const nx = dx / dist, ny = dy / dist;
-            // Radial repulsion (acceleration)
-            f.vx += nx * (AVOID_STRENGTH * push) * dt;
-            f.vy += ny * (AVOID_STRENGTH * push) * dt;
-            // Tangential swirl for organic slide-around
-            const tx = -ny, ty = nx;
-            const swirl = SWIRL_STRENGTH * (1 - dist/safeR);
-            f.vx += tx * swirl * desired * dt * f.swirlDir;
-            f.vy += ty * swirl * desired * dt * f.swirlDir;
-            // Nudge position outward a hair so nothing "sticks"
-            f.x += nx * 6 * push;
-            f.y += ny * 6 * push;
-          } else if (dist < safeR * 1.25){ // gentle orbiting deflection
-            const nx = dx/dist, ny = dy/dist;
-            const tx = -ny, ty = nx;
-            const soft = SWIRL_STRENGTH*0.5 * (1 - (dist - safeR)/(safeR*0.25));
-            f.vx += tx * soft * desired * dt * f.swirlDir;
-            f.vy += ty * soft * desired * dt * f.swirlDir;
-          }
-        }
-
-        // --- Soft wall steer to reduce jitter before bounce
-        const halfW = f.w/2, halfH = f.h/2;
-        const nearLeft   = (f.x - halfW) - margin;
-        const nearRight  = (CONFIG.w - margin) - (f.x + halfW);
-        const nearTop    = (f.y - halfH) - margin;
-        const nearBottom = (CONFIG.h - margin) - (f.y + halfH);
-        const softRange = 28;
-
-        if (nearLeft < softRange)  f.vx += (softRange - nearLeft) * (desired/200) * dt;
-        if (nearRight < softRange) f.vx -= (softRange - nearRight) * (desired/200) * dt;
-        if (nearTop < softRange)   f.vy += (softRange - nearTop) * (desired/200) * dt;
-        if (nearBottom < softRange)f.vy -= (softRange - nearBottom) * (desired/200) * dt;
-
-        // Integrate position
-        f.x += f.vx * dt;
-        f.y += f.vy * dt;
-
-        // Hard wall bounce as a final guard
-        if (f.x - halfW < margin){ f.x = margin + halfW; f.vx = Math.abs(f.vx); }
-        if (f.x + halfW > CONFIG.w - margin){ f.x = CONFIG.w - margin - halfW; f.vx = -Math.abs(f.vx); }
-        if (f.y - halfH < margin){ f.y = margin + halfH; f.vy = Math.abs(f.vy); }
-        if (f.y + halfH > CONFIG.h - margin){ f.y = CONFIG.h - margin - halfH; f.vy = -Math.abs(f.vy); }
-
-        // Keep speeds in a nice band
-        spd = Math.hypot(f.vx, f.vy);
-        const minS = desired*0.70, maxS = desired*1.35;
-        if (spd < minS){ const s=minS / (spd||1); f.vx*=s; f.vy*=s; }
-        else if (spd > maxS){ const s=maxS/spd; f.vx*=s; f.vy*=s; }
-      }
-    }
-
-    function drawFloaters(){
-      for (const f of floaters){
-        const w = f.w, h = f.h;
-        ctx.save();
-        ctx.globalAlpha = f.alpha;
-        ctx.translate(Math.round(f.x), Math.round(f.y));
-        if (f.img && f.img.raw){
-          const tinted = tintToTarget(f.img.raw, FLOAT_COLOR, w, h);
-          ctx.drawImage(tinted, -w/2, -h/2, w, h);
-        } else {
-          ctx.fillStyle = FLOAT_COLOR;
-          roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill();
-        }
-        ctx.restore();
-      }
-    }
-
-    function drawFinalOverlayStatic(finalLogoImg){
-      const centerX = Math.round(CONFIG.w/2);
-      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420) * SIZE.all * SIZE.finalLogo;
-      const w = baseTargetW;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
-      const h = w / aspect;
-
-      ctx.save();
-      if (finalLogoImg.raw){
-        const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
-        ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
-                              Math.round(w), Math.round(h));
-      } else {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
-      }
-      ctx.restore();
-
-      const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-      setFont(700, size, '"Inter", ui-sans-serif, system-ui');
-      ctx.save();
-      ctx.globalAlpha = 1;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Unified AI', centerX, Math.round(centerY + (h/2) + (isMobile()? 36 : 44)));
-      ctx.restore();
-    }
-
-    function startFloatingLayer(assets){
-      stopFloatingLayer();
-      floatingActive = true;
-      floatAssets = assets;
-
-      // Compute the protected center zone based on current layout & final logo
-      FLOAT_ZONE = computeFinalOverlayMetrics(assets.finalLogo);
-
-      floaters = makeFloaters(assets.logoImgs, 1);
-      floatLastTS = performance.now();
-
-      const loop = (ts)=>{
-        if (!floatingActive) return;
-        const dt = Math.min(0.05, (ts - floatLastTS)/1000 || 0.016);
-        floatLastTS = ts;
-
-        clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-        updateFloaters(dt);
-        drawFloaters();
-        // Final overlay always on top
-        drawFinalOverlayStatic(assets.finalLogo);
-        floatRAF = requestAnimationFrame(loop);
-      };
-      floatRAF = requestAnimationFrame(loop);
-    }
-    function stopFloatingLayer(){
-      floatingActive = false;
-      if (floatRAF){ cancelAnimationFrame(floatRAF); floatRAF = null; }
-    }
-
     // =================== Orchestrator & Assets ===================
     let isAnimating = false;
     let runId = 0;
@@ -2140,7 +1831,6 @@ const SUGGESTIONS = [
     function playSequence(assets){
       const myId = ++runId;
       isAnimating = true;
-      stopFloatingLayer();
       const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
 
       const startA = performance.now();
@@ -2197,7 +1887,6 @@ const SUGGESTIONS = [
           renderOToFinalLogo(tE, assets.finalLogo);
           if (tE < 1) requestAnimationFrame(loopE); else {
             isAnimating = false;
-            startFloatingLayer(assets);
           }
         })(startE);
       }
@@ -2214,7 +1903,6 @@ const SUGGESTIONS = [
       replay.addEventListener('click', async ()=>{
         replay.disabled = true;
         try {
-          stopFloatingLayer();
           if (!prepared) prepared = await prepareAssets();
           playSequence(prepared);
         } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
@@ -2251,7 +1939,6 @@ const SUGGESTIONS = [
       if (!prepared) prepared = await prepareAssets();
       if (prefersReducedMotion){
         renderOToFinalLogo(1, prepared.finalLogo);
-        startFloatingLayer(prepared);
         isAnimating = false;
       } else {
         playSequence(prepared);
@@ -2267,7 +1954,6 @@ const SUGGESTIONS = [
 
     const playBtn = document.getElementById('onx-play');
     if (playBtn){ playBtn.addEventListener('click', async ()=>{
-      stopFloatingLayer();
       if (!prepared) prepared = await prepareAssets();
       playSequence(prepared);
     }, { passive: true }); }
@@ -2283,24 +1969,10 @@ const SUGGESTIONS = [
       STYLE = buildStyle();
       layout = measureFinalLayout();
 
-      if (floatingActive && floatAssets){
-        // Recompute protected zone on resize
-        FLOAT_ZONE = computeFinalOverlayMetrics(floatAssets.finalLogo);
-
-        const targetH = getFloaterTargetH();
-        for (const f of floaters){
-          const aspect = Math.max(0.1, f.img.aspect || 1);
-          f.w = targetH * aspect; f.h = targetH;
-          f.x = Math.min(Math.max(f.w/2, f.x), CONFIG.w - f.w/2);
-          f.y = Math.min(Math.max(f.h/2, f.y), CONFIG.h - f.h/2);
-        }
-      }
-
       clearStage();
-      if (!floatingActive){
-        renderCard(0);
-        if (!autoplayed) tryAutoplay();
-      }
+      if (!autoplayed) tryAutoplay();
+      else if (!isAnimating) renderOToFinalLogo(1, prepared?.finalLogo || { raw:null, aspect:1, tint:'#fff' });
+
       ensureControls();
     }
 
@@ -2318,7 +1990,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
 
 <!-- ────────────────────────── Become Limitless (Minimal • Conversion-first) ────────────────────────── -->
 <section id="oc-Models" class="padTop section-clip relative mx-auto max-w-[1200px] oc-container">
