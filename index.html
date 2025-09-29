@@ -1105,415 +1105,375 @@ const SUGGESTIONS = [
 
 
 
-<!-- ===============================  ONX — Explainer Rail (Apple-style)  =============================== -->
-<section id="onx-explain" aria-label="What ONX does, quickly">
+<!-- =====================================================================
+  ONX Apple‑Style Animation Section — "How ONX Works in 12s"
+  Drop this anywhere after your chat-hero section. No dependencies.
+
+  What it does (fast, Apple‑style):
+  • Beat 1 — Unify: Model chips glide into a Neural Ring (ONX Neural Network)
+  • Beat 2 — Route: Smart router animates speed/quality/cost bars
+  • Beat 3 — Automate: App tasks fly into ONX Agent checklist
+  • Beat 4 — Private + Power: Lock + Cloud toggle, then counters tick up
+
+  Notes:
+  • Fully self‑contained styles + script scoped to #onx-motion
+  • Honors prefers-reduced-motion, accessible narration included
+  • Tweak tokens in :root of #onx-motion for colors, radii, timings
+  • Safe to include multiple times (IDs/classes are namespaced)
+====================================================================== -->
+<section id="onx-motion" aria-label="How ONX works in 12 seconds">
   <style>
-    /* ───────────── Design Tokens ───────────── */
-    #onx-explain{
-      --bg:#fff;          --ink:#0B0B0C;   --muted:#667085;   --line:#E9EEF5;
-      --hiA:#3f6768;      --hiB:#57c7d9;   --hiC:#7fd8e6;     --glass:rgba(255,255,255,.6);
-      --radius:28px;      --shadowA:0 1px 0 rgba(0,0,0,.04);
-      --shadowB:0 18px 40px rgba(0,0,0,.06);
-      --timing:.9s cubic-bezier(.22,.61,.36,1);
-      --pulse:6s ease-in-out infinite;
-      --step:0;           /* JS updates 1..5 for step visuals */
+    /* ------------------ Design tokens (scoped) ------------------ */
+    #onx-motion{
+      --bg: #ffffff;
+      --ink: #0B0B0C;
+      --muted:#6D7683;
+      --line:#E6E8EC;
+      --plate:#F7F8FB;
+
+      --accent:#2F6BFF;         /* system/Apple-like blue */
+      --accent-2:#6EB4FF;       /* lighter edge */
+      --success:#12B886;        /* checklist green */
+
+      --radius-xl: 28px;        /* big cards */
+      --radius-lg: 20px;        /* sub cards */
+      --shadow-a: 0 1px 0 rgba(0,0,0,.04);
+      --shadow-b: 0 18px 40px rgba(0,0,0,.06);
+
+      --step-gap: 28px;         /* vertical gap between beats */
+      --pad-x: clamp(16px, 4vw, 28px);
+      --pad-y: clamp(16px, 4vw, 28px);
+
+      --timeline: 14.5s;        /* total narrative duration once in view */
+      --t0: .2s;                /* initial start offset */
     }
+
     @media (prefers-color-scheme: dark){
-      #onx-explain{ --bg:#0B0B0C; --ink:#F4F6FA; --muted:#B8BFCA; --line:#1d2128; --glass:rgba(12,16,22,.6); }
-    }
-
-    /* ───────────── Layout ───────────── */
-    #onx-explain{
-      position:relative; isolation:isolate; background:var(--bg); color:var(--ink);
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-      padding: clamp(48px, 6vw, 80px) 0;
-      overflow:hidden;
-    }
-    #onx-explain .wrap{ width:min(1120px, calc(100vw - 32px)); margin:0 auto; }
-
-    /* Headline */
-    #onx-explain .hdr{
-      text-align:center; margin:0 0 clamp(26px,2.6vw,36px);
-    }
-    #onx-explain .kicker{
-      display:inline-block; font-size:12px; letter-spacing:.18em; text-transform:uppercase;
-      color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:8px 12px;
-      backdrop-filter:saturate(1.1) blur(10px); background:var(--glass);
-    }
-    #onx-explain h2{
-      margin:12px 0 0; font-weight:700; letter-spacing:-.02em;
-      font-size: clamp(24px, 4.4vw, 42px); line-height:1.08;
-    }
-    #onx-explain .sub{
-      margin:10px auto 0; max-width:760px; color:var(--muted); font-size:clamp(14px,1.8vw,18px);
-    }
-
-    /* ───────────── Stage (sticky) ───────────── */
-    #onx-explain .stage{
-      position:relative; height: clamp(580px, 70vh, 720px);
-      border:1px solid var(--line); border-radius:32px; background:
-        radial-gradient(1200px 600px at 50% 0%, rgba(87,199,217,.10), transparent 55%),
-        radial-gradient(900px 500px  at 50% 100%, rgba(63,103,104,.08), transparent 60%),
-        var(--bg);
-      box-shadow: var(--shadowA), var(--shadowB);
-      overflow:hidden;
-    }
-
-    /* Breathing gradient orb behind core */
-    #onx-explain .glow{
-      position:absolute; inset:-20% -10% -10% -10%; pointer-events:none; z-index:0;
-      background:
-        radial-gradient(400px 400px at 50% 40%, rgba(127,216,230,.35), transparent 65%),
-        radial-gradient(520px 420px at 50% 60%, rgba(63,103,104,.22), transparent 70%);
-      filter: blur(8px) saturate(1.06);
-      animation: glow-breathe var(--pulse);
-    }
-    @keyframes glow-breathe{
-      0%,100%{ transform:scale(1); opacity:.95 }
-      50%    { transform:scale(1.04); opacity:1 }
-    }
-
-    /* Core + orbits */
-    #onx-explain .core{
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-      width:min(72vmin, 520px); aspect-ratio:1/1; z-index:1;
-    }
-    #onx-explain .core .orb{
-      position:absolute; inset:0; border-radius:50%;
-      background: radial-gradient(60% 60% at 50% 40%, #fff, rgba(255,255,255,.8) 40%, rgba(255,255,255,.0) 60%),
-                  conic-gradient(from 0deg, var(--hiA), var(--hiB), var(--hiC), var(--hiB), var(--hiA));
-      filter: blur(0.2px) saturate(1.05);
-      box-shadow: inset 0 0 24px rgba(255,255,255,.7), 0 30px 60px rgba(0,0,0,.10);
-      animation: orb-spin 18s linear infinite;
-    }
-    @keyframes orb-spin{ to{ transform: rotate(360deg) } }
-
-    /* Thin rings (Apple vibe) */
-    #onx-explain .ring, #onx-explain .ring:before, #onx-explain .ring:after{
-      content:""; position:absolute; inset:8%; border-radius:50%; border:1px solid rgba(0,0,0,.06);
-    }
-    @media (prefers-color-scheme: dark){
-      #onx-explain .ring, #onx-explain .ring:before, #onx-explain .ring:after{ border-color:rgba(255,255,255,.07); }
-    }
-    #onx-explain .ring:before{ inset:18% }
-    #onx-explain .ring:after { inset:28% }
-
-    /* Channel dots (models merging) */
-    #onx-explain .dot{
-      --size:18px; position:absolute; width:var(--size); height:var(--size); border-radius:999px;
-      background: linear-gradient(120deg, var(--hiA), var(--hiB));
-      box-shadow: 0 4px 12px rgba(0,0,0,.10);
-      transform: translate(-50%, -50%) scale(0.9); opacity:0;
-      transition: transform var(--timing), opacity var(--timing), filter .6s ease;
-      filter:saturate(1);
-    }
-    /* Positions for 3 model dots that move to core on step 1 */
-    #onx-explain .dot.a{ left:18%; top:28% }
-    #onx-explain .dot.b{ left:80%; top:42% }
-    #onx-explain .dot.c{ left:28%; top:78% }
-
-    /* Agent cards around the core */
-    #onx-explain .card{
-      position:absolute; width:min(36vmin, 280px); padding:14px 14px 12px; border-radius:20px;
-      border:1px solid var(--line); background:var(--glass); backdrop-filter:saturate(1.2) blur(14px);
-      box-shadow: var(--shadowA), 0 18px 36px rgba(0,0,0,.06);
-      transform:translate(-50%,-50%) translateY(12px); opacity:0; transition:all var(--timing);
-    }
-    #onx-explain .card h4{ margin:0 0 6px; font-weight:650; letter-spacing:-.01em; font-size:16px }
-    #onx-explain .card p{ margin:0; color:var(--muted); font-size:13px; line-height:1.35 }
-
-    /* Positions */
-    #onx-explain .card.research{ left:20%; top:30% }
-    #onx-explain .card.outreach{ left:80%; top:65% }
-    #onx-explain .card.builder { left:22%; top:76% }
-
-    /* Shield (privacy) */
-    #onx-explain .shield{
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9);
-      width:min(42vmin, 320px); aspect-ratio:1/1; opacity:0; transition: all var(--timing);
-      filter: drop-shadow(0 20px 40px rgba(0,0,0,.10));
-    }
-
-    /* Flow pipeline (plan→create→review→ship) */
-    #onx-explain .flow{
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(86%, 880px);
-      display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-items:center; opacity:0;
-      transition:opacity var(--timing), transform var(--timing);
-    }
-    #onx-explain .step{
-      border:1px solid var(--line); border-radius:18px; padding:14px 12px; background:var(--glass);
-      position:relative; overflow:hidden; min-height:62px;
-    }
-    #onx-explain .step b{ display:block; font-size:14px; letter-spacing:.02em; margin-bottom:4px }
-    #onx-explain .step small{ color:var(--muted); font-size:12px }
-    #onx-explain .meter{ position:absolute; left:0; bottom:0; height:3px; width:0%;
-      background:linear-gradient(90deg, var(--hiA), var(--hiB)); transition: width .9s ease }
-    #onx-explain .arrow{
-      text-align:center; color:var(--muted);
-      font-size:16px; letter-spacing:.2em; user-select:none;
-    }
-
-    /* KPI counters */
-    #onx-explain .kpis{
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:grid;
-      grid-template-columns:repeat(3, minmax(180px,1fr)); gap:16px; width:min(86%, 880px); opacity:0;
-      transition:opacity var(--timing), transform var(--timing);
-    }
-    #onx-explain .kpi{
-      border:1px solid var(--line); border-radius:20px; padding:16px 14px; background:var(--glass);
-      text-align:center; box-shadow: var(--shadowA);
-    }
-    #onx-explain .kpi .num{
-      font-weight:800; letter-spacing:-.02em; font-size: clamp(28px, 4.2vw, 40px);
-      background:linear-gradient(120deg, var(--hiA), var(--hiB));
-      -webkit-background-clip:text; background-clip:text; color:transparent;
-    }
-    #onx-explain .kpi .lbl{ color:var(--muted); font-size:13px }
-
-    /* ───────────── Lower HUD ───────────── */
-    #onx-explain .hud{
-      display:flex; align-items:center; justify-content:center; gap:14px; margin: clamp(20px,3vw,28px) 0 0;
-    }
-    #onx-explain .dotnav{
-      display:flex; gap:8px; align-items:center; justify-content:center;
-      border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:var(--glass);
-      backdrop-filter:saturate(1.1) blur(10px);
-    }
-    #onx-explain .dotnav button{
-      width:8px; height:8px; border-radius:999px; border:0; background:#B9C7D4; opacity:.55; cursor:pointer;
-      transition:transform .2s ease, opacity .2s ease, background-color .2s ease;
-    }
-    #onx-explain .dotnav button[aria-current="true"]{ transform:scale(1.4); opacity:1; background:var(--hiB) }
-    #onx-explain .replay{
-      border:1px solid var(--line); border-radius:999px; padding:8px 12px; background:var(--glass); cursor:pointer;
-      font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
-    }
-
-    /* ───────────── Step Transitions (driven by [data-step]) ───────────── */
-    /* Step 1: Unify Models → dots fly into core */
-    #onx-explain[data-step="1"] .dot{ opacity:1; }
-    #onx-explain[data-step="1"] .dot.a{ transform:translate(-50%,-50%) scale(1); }
-    #onx-explain[data-step="1"] .dot.b{ transform:translate(-50%,-50%) scale(1); }
-    #onx-explain[data-step="1"] .dot.c{ transform:translate(-50%,-50%) scale(1); }
-    /* On settle, all dots glide to center */
-    #onx-explain[data-step="1"].settle .dot{
-      left:50% !important; top:50% !important; filter:saturate(1.2);
-      transform:translate(-50%,-50%) scale(.6); opacity:0.9;
-    }
-
-    /* Step 2: Agents appear */
-    #onx-explain[data-step="2"] .card{ opacity:1; transform:translate(-50%,-50%) translateY(0) }
-    #onx-explain[data-step="2"] .card.research{ transition-delay:.08s }
-    #onx-explain[data-step="2"] .card.outreach{ transition-delay:.16s }
-    #onx-explain[data-step="2"] .card.builder { transition-delay:.24s }
-
-    /* Step 3: Privacy shield overlays */
-    #onx-explain[data-step="3"] .shield{ opacity:1; transform:translate(-50%,-50%) scale(1) }
-
-    /* Step 4: Flow pipeline animates meters */
-    #onx-explain[data-step="4"] .flow{ opacity:1; transform:translate(-50%,-50%) translateY(0) }
-    #onx-explain[data-step="4"] .flow .meter.m1{ width:100% }
-    #onx-explain[data-step="4"] .flow .meter.m2{ width:100%; transition-delay:.22s }
-    #onx-explain[data-step="4"] .flow .meter.m3{ width:100%; transition-delay:.44s }
-    #onx-explain[data-step="4"] .flow .meter.m4{ width:100%; transition-delay:.66s }
-
-    /* Step 5: KPIs tick up */
-    #onx-explain[data-step="5"] .kpis{ opacity:1; transform:translate(-50%,-50%) translateY(0) }
-
-    /* Reduced motion: show everything static */
-    @media (prefers-reduced-motion: reduce){
-      #onx-explain .orb, #onx-explain .glow{ animation:none !important }
-      #onx-explain .dot, #onx-explain .card, #onx-explain .shield, #onx-explain .flow, #onx-explain .kpis{
-        transition:none !important; opacity:1 !important; transform:none !important;
+      #onx-motion{
+        --bg:#0B0B0C; --ink:#F2F5FA; --muted:#9EA7B3; --line:#23272E; --plate:#11151B;
+        --shadow-a: 0 1px 0 rgba(0,0,0,.5);
+        --shadow-b: 0 18px 40px rgba(0,0,0,.55);
       }
-      #onx-explain .meter{ width:100% !important }
+    }
+
+    /* ------------------ Layout ------------------ */
+    #onx-motion{ position:relative; background:var(--bg); color:var(--ink); overflow:hidden; }
+    #onx-motion .wrap{ max-width:1160px; margin:0 auto; padding: calc(var(--pad-y)*1.6) var(--pad-x) clamp(40px,12vh,120px); }
+
+    /* Subtle section divider to blend from previous block */
+    #onx-motion::before{
+      content:""; position:absolute; inset:auto 0 100%; height:48px; pointer-events:none;
+      background:linear-gradient(to bottom, rgba(0,0,0,0.04), rgba(0,0,0,0));
+      mix-blend-mode:multiply; opacity:.08;
+    }
+
+    /* Title */
+    #onx-motion .title{
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, Roboto, "Helvetica Neue", Arial;
+      font-weight:700; letter-spacing:-0.02em; line-height:1.05; margin:0 0 28px 0;
+      font-size:clamp(28px,4.4vw,48px);
+    }
+    #onx-motion .subtitle{ margin:8px 0 26px; color:var(--muted); font-size:clamp(14px,1.6vw,16px); }
+
+    /* Stage (glass plate) */
+    #onx-motion .stage{
+      position:relative; border:1px solid var(--line); border-radius:var(--radius-xl);
+      background:linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.45));
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-a), var(--shadow-b); overflow:hidden;
+      padding: clamp(18px, 3vw, 28px);
+      isolation:isolate;
+    }
+    @media (prefers-color-scheme: dark){
+      #onx-motion .stage{ background:linear-gradient(180deg, rgba(13,15,20,.55), rgba(13,15,20,.35)); }
+    }
+
+    /* Subtle animated background grid */
+    #onx-motion .grid{
+      position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.55;
+      background:
+        linear-gradient(to right, rgba(0,0,0,.05) 1px, transparent 1px) 0 0 / 64px 64px,
+        linear-gradient(to bottom, rgba(0,0,0,.04) 1px, transparent 1px) 0 0 / 64px 64px;
+      transform:translateZ(0);
+      animation:gridShift 22s linear infinite; will-change:background-position;
+    }
+    @keyframes gridShift{ from{ background-position:0 0, 0 0 } to{ background-position:256px 0, 0 256px } }
+
+    /* Beats container */
+    #onx-motion .beats{ position:relative; z-index:1; display:grid; gap:var(--step-gap); }
+
+    /* Each beat as a card */
+    #onx-motion .beat{
+      position:relative; display:grid; grid-template-columns: 1.1fr .9fr; gap:18px; align-items:center;
+      border:1px solid var(--line); background:var(--plate); border-radius:var(--radius-lg);
+      padding: clamp(14px,2.5vw,22px);
+      overflow:hidden; transform:translateY(14px) scale(.995); opacity:0; filter:saturate(.9);
+      transition: transform .8s cubic-bezier(.2,.7,.2,1), opacity .8s ease, filter .6s ease;
+    }
+    #onx-motion .beat:nth-child(odd){ grid-template-columns:.9fr 1.1fr; }
+    #onx-motion .beat .copy{ padding:6px 10px; }
+    #onx-motion .beat h3{ margin:0 0 8px; font-size:clamp(18px,2.4vw,24px); letter-spacing:-.01em; }
+    #onx-motion .beat p{ margin:0; color:var(--muted); font-size:clamp(14px,1.6vw,16px); }
+
+    /* Animate in when section enters view */
+    #onx-motion.is-inview .beat{ opacity:1; transform:translateY(0) scale(1); filter:saturate(1); }
+    #onx-motion.is-inview .beat{ transition-delay: var(--d, 0s); }
+
+    /* ----- Beat 1: Unify (chips into Neural Ring) ----- */
+    #onx-motion .neural{
+      position:relative; aspect-ratio: 1.9 / 1; min-height:200px; display:grid; place-items:center;
+      perspective: 900px;
+    }
+    /* Swirling neural ring */
+    #onx-motion .ring{
+      position:relative; width:min(90%, 520px); aspect-ratio:1/1; border-radius:999px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(47,107,255,.18), rgba(47,107,255,0) 58%),
+        conic-gradient(from 0deg, rgba(47,107,255,.0), rgba(47,107,255,.75), rgba(110,180,255,.0));
+      -webkit-mask: radial-gradient(circle, transparent 58%, black 59% 64%, transparent 65%);
+              mask: radial-gradient(circle, transparent 58%, black 59% 64%, transparent 65%);
+      filter: drop-shadow(0 6px 22px rgba(47,107,255,.25));
+      animation: ringSpin 10s linear infinite;
+    }
+    @keyframes ringSpin{ to{ transform:rotate(360deg) } }
+
+    /* Floating model chips */
+    #onx-motion .chips{ position:absolute; inset:0; display:block; pointer-events:none; }
+    #onx-motion .chip{
+      position:absolute; padding:8px 12px; border:1px solid var(--line); background:#fff; color:#0B0B0C;
+      border-radius:999px; font-size:12px; font-weight:600; letter-spacing:.02em;
+      box-shadow:0 6px 16px rgba(0,0,0,.08);
+      transform: translate3d(var(--x,0), var(--y,0), 0) scale(.96) rotate(var(--r,0deg)); opacity:0;
+    }
+    @media (prefers-color-scheme: dark){
+      #onx-motion .chip{ background:#0F1217; color:#EAF2FF; }
+    }
+    /* Chips glide in then converge to ring */
+    #onx-motion.is-inview .chip{ animation: chipIn var(--timeline) ease-in var(--delay,0s) forwards; }
+    @keyframes chipIn{
+      0%   { opacity:0; transform:translate3d(var(--x), var(--y), 0) scale(.96) rotate(var(--r)); }
+      7%   { opacity:1; }
+      24%  { transform:translate3d(calc(var(--x)*.6), calc(var(--y)*.6), 0) scale(1) rotate(0deg); }
+      30%  { transform:translate3d(0,0,0) scale(1) rotate(0deg); }
+      35%  { transform:translate3d(0,0,0) scale(1); opacity:1; }
+      36%,100% { transform:translate3d(0,0,0) scale(1); opacity:0; }
+    }
+    /* ONX Neural Network caption in center */
+    #onx-motion .ring-label{
+      position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+      font-size:12px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--ink);
+      opacity:.85;
+    }
+
+    /* ----- Beat 2: Router (bars) ----- */
+    #onx-motion .router{ position:relative; min-height:140px; display:grid; align-content:center; gap:10px; }
+    #onx-motion .bar{ height:14px; border-radius:999px; background:linear-gradient(90deg, #e7ebf4, #dfe4ee); border:1px solid var(--line); overflow:hidden; }
+    #onx-motion .bar .fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: inset 0 0 0 1px rgba(255,255,255,.5); }
+    #onx-motion.is-inview .bar:nth-child(1) .fill{ animation: loadA 1.4s .35s cubic-bezier(.2,.7,.2,1) forwards; }
+    #onx-motion.is-inview .bar:nth-child(2) .fill{ animation: loadB 1.4s .65s cubic-bezier(.2,.7,.2,1) forwards; }
+    #onx-motion.is-inview .bar:nth-child(3) .fill{ animation: loadC 1.4s .95s cubic-bezier(.2,.7,.2,1) forwards; }
+    @keyframes loadA{ to{ width:86% } } /* Speed */
+    @keyframes loadB{ to{ width:92% } } /* Quality */
+    @keyframes loadC{ to{ width:38% } } /* Cost */
+    #onx-motion .router-note{ font-size:12px; color:var(--muted); }
+
+    /* ----- Beat 3: Automate (task pills to agent) ----- */
+    #onx-motion .auto{ position:relative; min-height:160px; }
+    #onx-motion .agent{
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
+      width:min(44%,380px); background:#fff; border:1px solid var(--line); border-radius:18px; padding:14px 14px 14px 16px;
+      box-shadow:0 8px 32px rgba(0,0,0,.08);
+    }
+    @media (prefers-color-scheme: dark){ #onx-motion .agent{ background:#0F1217; } }
+    #onx-motion .agent h4{ margin:0 0 8px; font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+    #onx-motion .check{ display:flex; align-items:center; gap:8px; margin:8px 0; font-size:14px; }
+    #onx-motion .check .dot{ width:18px; height:18px; border-radius:999px; border:1px solid var(--line); display:grid; place-items:center; }
+    #onx-motion .check svg{ width:12px; height:12px; stroke:var(--success); stroke-width:3; fill:none; }
+    /* Flying tasks */
+    #onx-motion .task{ position:absolute; left:0; top:50%; translate:0 -50%; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:#fff; font-size:12px; font-weight:600; box-shadow:0 6px 16px rgba(0,0,0,.08); opacity:0; }
+    @media (prefers-color-scheme: dark){ #onx-motion .task{ background:#0F1217; color:#EAF2FF; } }
+    #onx-motion.is-inview .task.t1{ animation: fly1 1.2s .2s cubic-bezier(.2,.7,.2,1) forwards; }
+    #onx-motion.is-inview .task.t2{ animation: fly1 1.2s .35s cubic-bezier(.2,.7,.2,1) forwards; }
+    #onx-motion.is-inview .task.t3{ animation: fly1 1.2s .5s cubic-bezier(.2,.7,.2,1) forwards; }
+    #onx-motion.is-inview .task.t4{ animation: fly1 1.2s .65s cubic-bezier(.2,.7,.2,1) forwards; }
+    @keyframes fly1{ from{ opacity:0; transform:translateX(-6%) scale(.98); } 60%{ opacity:1; } to{ opacity:1; transform:translateX(52%) scale(1) } }
+
+    /* ----- Beat 4: Private + Power + Counters ----- */
+    #onx-motion .privacy{ position:relative; min-height:170px; display:grid; align-items:center; }
+    #onx-motion .lock{
+      width:44px; height:54px; border:2px solid var(--ink); border-radius:10px; position:relative; margin:0 0 8px; opacity:.9;
+    }
+    #onx-motion .lock::before{ content:""; position:absolute; width:30px; height:22px; left:50%; top:-18px; transform:translateX(-50%); border:2px solid var(--ink); border-bottom:none; border-radius:16px 16px 0 0; }
+    /* Cloud toggle */
+    #onx-motion .toggle{ display:flex; align-items:center; gap:10px; }
+    #onx-motion .switch{ width:56px; height:30px; border-radius:999px; background:#dfe5f1; border:1px solid var(--line); position:relative; box-shadow: inset 0 2px 4px rgba(0,0,0,.06); }
+    #onx-motion .knob{ position:absolute; top:3px; left:3px; width:24px; height:24px; border-radius:999px; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.12); transition:transform .4s cubic-bezier(.2,.7,.2,1); }
+    #onx-motion.is-inview .switch{ animation: cloudPulse 1.6s .6s ease-out forwards; }
+    #onx-motion.is-inview .switch.on .knob{ transform:translateX(26px); }
+    @keyframes cloudPulse{ 50%{ filter:brightness(1.06) } }
+
+    /* Counters */
+    #onx-motion .stats{ display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; }
+    #onx-motion .stat{
+      flex:1 1 160px; min-width:160px; border:1px solid var(--line); border-radius:14px; background:#fff; padding:12px 14px; box-shadow:0 8px 22px rgba(0,0,0,.06);
+    }
+    @media (prefers-color-scheme: dark){ #onx-motion .stat{ background:#0F1217; } }
+    #onx-motion .stat .n{ font-weight:800; font-size:clamp(20px,3.4vw,28px); letter-spacing:-.01em; }
+    #onx-motion .stat .k{ color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.12em; }
+
+    /* ---- Beat-specific staging + delays for silky narrative ---- */
+    #onx-motion .beat:nth-child(1){ --d: calc(var(--t0) + .0s); }
+    #onx-motion .beat:nth-child(2){ --d: calc(var(--t0) + .35s); }
+    #onx-motion .beat:nth-child(3){ --d: calc(var(--t0) + .7s); }
+    #onx-motion .beat:nth-child(4){ --d: calc(var(--t0) + 1.05s); }
+
+    /* Reduced motion: show static, skip flourish */
+    @media (prefers-reduced-motion: reduce){
+      #onx-motion .grid{ animation:none }
+      #onx-motion .ring{ animation:none }
+      #onx-motion .chip{ animation:none; opacity:1; transform:none; }
+      #onx-motion .bar .fill{ width:80% !important; animation:none !important; }
+      #onx-motion .task{ animation:none; opacity:1; transform:none; }
+      #onx-motion .switch{ animation:none }
     }
   </style>
 
   <div class="wrap">
-    <header class="hdr">
-      <span class="kicker">ONX • The AI Workspace</span>
-      <h2>What ONX does—in 20 seconds.</h2>
-      <p class="sub">Unifies the best models, lets agents do the work, keeps your data private, and ships work faster—so you grow, daily.</p>
-    </header>
+    <h2 class="title">How ONX Works — in seconds</h2>
+    <p class="subtitle">Unify the best models. Route for speed and quality. Automate work. Keep data private.</p>
 
-    <div class="stage">
-      <div class="glow" aria-hidden="true"></div>
+    <div class="stage" role="img" aria-label="Animated explanation: models unify into ONX neural network, router optimizes, tasks automate, privacy lock and cloud toggle, then performance counters increase.">
+      <div class="grid" aria-hidden="true"></div>
 
-      <!-- Core visual -->
-      <div class="core" aria-hidden="true">
-        <div class="orb"></div>
-        <div class="ring"></div>
-
-        <!-- Step 1 dots (models → router) -->
-        <span class="dot a"></span>
-        <span class="dot b"></span>
-        <span class="dot c"></span>
-
-        <!-- Step 2 agent cards -->
-        <article class="card research">
-          <h4>Deep Research</h4>
-          <p>Multi-source search, synthesize, cite—auto-routed across models.</p>
-        </article>
-        <article class="card outreach">
-          <h4>Outreach & Ops</h4>
-          <p>Personalized emails, follow-ups, and CRM updates you can trust.</p>
-        </article>
-        <article class="card builder">
-          <h4>Build & Ship</h4>
-          <p>Code, docs, and design flows—reviewed, versioned, production-ready.</p>
+      <div class="beats">
+        <!-- Beat 1: Unify -->
+        <article class="beat">
+          <div class="neural">
+            <div class="ring" aria-hidden="true"></div>
+            <div class="ring-label">ONX Neural Network</div>
+            <div class="chips" aria-hidden="true">
+              <!-- Position seeds; each chip animates toward the ring center -->
+              <span class="chip" style="--x:-42%; --y:-28%; --r:-8deg; --delay:.05s">GPT‑4o</span>
+              <span class="chip" style="--x: 44%; --y:-32%; --r: 6deg;  --delay:.12s">Llama‑3</span>
+              <span class="chip" style="--x:-46%; --y: 18%; --r:-6deg; --delay:.18s">Gemma</span>
+              <span class="chip" style="--x: 40%; --y: 26%; --r: 10deg; --delay:.24s">Grok</span>
+              <span class="chip" style="--x: -8%; --y: 40%; --r:-4deg; --delay:.30s">Qwen</span>
+            </div>
+          </div>
+          <div class="copy">
+            <h3>Unify the best models</h3>
+            <p>ONX blends multiple LLMs into one brain. No switching tabs—everything routes through a single, elegant interface.</p>
+          </div>
         </article>
 
-        <!-- Step 3 privacy shield (inline SVG) -->
-        <svg class="shield" viewBox="0 0 200 200" aria-label="Private by design">
-          <defs>
-            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%"  stop-color="#3f6768"/>
-              <stop offset="100%" stop-color="#57c7d9"/>
-            </linearGradient>
-          </defs>
-          <path d="M100 10c22 18 46 18 70 26 0 72-26 120-70 154C56 156 30 108 30 36c24-8 48-8 70-26Z"
-                fill="url(#g1)" opacity=".20" stroke="rgba(0,0,0,.08)" stroke-width="1"/>
-          <path d="M100 38c-20 12-36 13-48 16 0 50 18 86 48 112 30-26 48-62 48-112-12-3-28-4-48-16Z"
-                fill="#fff" opacity=".85"/>
-          <path d="M85 100l12 12 28-28" fill="none" stroke="#53c3d6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <!-- Beat 2: Route -->
+        <article class="beat">
+          <div class="copy">
+            <h3>Route for speed, quality & cost</h3>
+            <p>Requests auto‑route to the ideal model. You get faster replies, higher quality, and lower spend—automatically.</p>
+          </div>
+          <div class="router" aria-hidden="true">
+            <div class="bar"><div class="fill" title="Speed"></div></div>
+            <div class="bar"><div class="fill" title="Quality"></div></div>
+            <div class="bar"><div class="fill" title="Cost (lower is better)"></div></div>
+            <div class="router-note">Smart routing balances speed, quality, and cost per task.</div>
+          </div>
+        </article>
 
-        <!-- Step 4 pipeline -->
-        <div class="flow" aria-label="Plan to Ship pipeline">
-          <div class="step"><b>Plan</b><small>Clarify the win</small><span class="meter m1"></span></div>
-          <div class="arrow">→</div>
-          <div class="step"><b>Create</b><small>Drafts & builds</small><span class="meter m2"></span></div>
-          <div class="arrow">→</div>
-          <div class="step"><b>Review</b><small>AI+human checks</small><span class="meter m3"></span></div>
-          <div class="arrow">→</div>
-          <div class="step"><b>Ship</b><small>Publish & track</small><span class="meter m4"></span></div>
-        </div>
+        <!-- Beat 3: Automate -->
+        <article class="beat">
+          <div class="auto">
+            <div class="task t1">Summarize 12 tabs</div>
+            <div class="task t2">Draft investor memo</div>
+            <div class="task t3">Generate outreach</div>
+            <div class="task t4">Refactor code</div>
+            <div class="agent">
+              <h4>ONX Agent</h4>
+              <div class="check"><span class="dot"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"/></svg></span>Research compiled</div>
+              <div class="check"><span class="dot"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"/></svg></span>Draft written</div>
+              <div class="check"><span class="dot"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"/></svg></span>Emails generated</div>
+              <div class="check"><span class="dot"><svg viewBox="0 0 24 24"><path d="M5 13l4 4 10-10"/></svg></span>Code updated</div>
+            </div>
+          </div>
+          <div class="copy">
+            <h3>Automate the busywork</h3>
+            <p>From research to writing to code, ONX agents execute steps for you. Review, tweak, ship.</p>
+          </div>
+        </article>
 
-        <!-- Step 5 KPIs -->
-        <div class="kpis" aria-label="Measured impact">
-          <div class="kpi">
-            <div class="num" data-target="38">0%</div>
-            <div class="lbl">Faster cycle times</div>
+        <!-- Beat 4: Private + Power + Counters -->
+        <article class="beat">
+          <div class="copy">
+            <h3>Private by default. Power on demand.</h3>
+            <p>Local‑first privacy with optional cloud compute when you want more horsepower.
+            </p>
+            <div class="toggle" aria-hidden="true">
+              <div class="switch" id="onx-cloud-switch"><div class="knob"></div></div>
+              <span class="router-note">Cloud Boost</span>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="n" data-count="65" data-suffix="%">0%</div><div class="k">Time Saved</div></div>
+              <div class="stat"><div class="n" data-count="38" data-suffix="%">0%</div><div class="k">Cost Reduced</div></div>
+              <div class="stat"><div class="n" data-count="2.4" data-suffix="×">0×</div><div class="k">Output Rate</div></div>
+            </div>
           </div>
-          <div class="kpi">
-            <div class="num" data-target="30">0%</div>
-            <div class="lbl">Higher conversion</div>
+          <div class="privacy" aria-hidden="true">
+            <div class="lock"></div>
           </div>
-          <div class="kpi">
-            <div class="num" data-target="42">0%</div>
-            <div class="lbl">Ops cost saved</div>
-          </div>
-        </div>
+        </article>
       </div>
-    </div>
-
-    <!-- HUD -->
-    <div class="hud" aria-hidden="false" aria-label="Explainer controls">
-      <div class="dotnav" role="tablist" aria-label="Steps">
-        <button aria-label="Unify Models"   data-go="1" aria-current="true"></button>
-        <button aria-label="Agents at Work" data-go="2"></button>
-        <button aria-label="Private by Design" data-go="3"></button>
-        <button aria-label="Workflows" data-go="4"></button>
-        <button aria-label="Results"   data-go="5"></button>
-      </div>
-      <button class="replay" type="button">Replay</button>
     </div>
   </div>
 
   <script>
-    (function onxExplainer(){
-      const root   = document.currentScript.closest('#onx-explain');
+    (function onxMotion(){
+      const root = document.currentScript.closest('#onx-motion');
       if(!root) return;
-      const navBtns= Array.from(root.querySelectorAll('.dotnav button'));
-      const replay = root.querySelector('.replay');
-      const kpiEls = Array.from(root.querySelectorAll('.kpi .num'));
 
-      const DUR   = 4200;    // per-step ms
-      const GAP   = 300;     // pause between steps
-      let step = 1, timer = null, seen = false, playing = false;
-
-      function setStep(n, {settle=false}={}){
-        step = Math.max(1, Math.min(5, n));
-        root.dataset.step = String(step);
-        root.classList.toggle('settle', !!settle);
-        navBtns.forEach((b,i)=> b.setAttribute('aria-current', (i+1===step) ? 'true' : 'false'));
-
-        if (step === 5) tickKPIs();
-      }
-
-      // Simple KPI counter
-      function tickKPIs(){
-        kpiEls.forEach(el=>{
-          const target = parseInt(el.dataset.target||'0',10);
-          const start  = 0;
-          const t0     = performance.now();
-          const D      = 1600;
-          function loop(t){
-            const p = Math.min(1, (t-t0)/D);
-            const ease = p<.5 ? 2*p*p : -1+(4-2*p)*p; // easeInOutQuad
-            const val = Math.round(start + (target - start) * ease);
-            el.textContent = val + '%';
-            if (p<1) requestAnimationFrame(loop);
+      // IntersectionObserver to kick off the whole narrative once
+      const io = new IntersectionObserver((entries)=>{
+        for(const e of entries){
+          if(e.isIntersecting){
+            root.classList.add('is-inview');
+            startCounters();
+            toggleCloud();
+            io.disconnect();
+            break;
           }
-          requestAnimationFrame(loop);
-        });
-      }
-
-      function play(){
-        if (playing) return;
-        playing = true;
-        clearTimeout(timer);
-
-        let n = 1;
-        setStep(n);
-        function next(){
-          // settle micro-state for step 1 (dots glide to core)
-          if (n === 1) root.classList.add('settle');
-          setTimeout(()=>{
-            root.classList.remove('settle');
-            n = (n % 5) + 1;
-            setStep(n);
-            timer = setTimeout(next, DUR + GAP);
-          }, (n===1 ? 1400 : 0) + DUR);
         }
-        timer = setTimeout(next, DUR + GAP);
-      }
-
-      function stop(){ clearTimeout(timer); playing = false; }
-
-      // Scroll trigger (play once when ~35% visible)
-      const io = new IntersectionObserver(entries=>{
-        entries.forEach(e=>{
-          if (e.isIntersecting && !seen){
-            seen = true; play();
-          }
-        });
-      }, {threshold: .35});
+      }, { threshold:.3 });
       io.observe(root);
 
-      // Manual nav
-      navBtns.forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          stop();
-          setStep(parseInt(btn.dataset.go,10), {settle:true});
-        }, {passive:true});
-      });
-      replay.addEventListener('click', ()=>{ stop(); setStep(1); play(); });
+      function startCounters(){
+        const els = root.querySelectorAll('.stat .n');
+        els.forEach(el=>{
+          const target = parseFloat(el.getAttribute('data-count')||'0');
+          const suffix = el.getAttribute('data-suffix')||'';
+          const isInt = Number.isInteger(target);
+          const dur = 1400; // ms
+          const t0 = performance.now();
+          function tick(now){
+            const p = Math.min(1, (now - t0)/dur);
+            const ease = 1 - Math.pow(1 - p, 3);
+            const val = target * ease;
+            el.textContent = (isInt ? Math.round(val) : (Math.round(val*10)/10)) + suffix;
+            if(p<1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
+        });
+      }
 
-      // Accessibility: allow left/right arrow step when focused
-      root.addEventListener('keydown', (e)=>{
-        if (e.key === 'ArrowRight'){ stop(); setStep(step+1); }
-        if (e.key === 'ArrowLeft'){ stop(); setStep(step-1); }
-      });
-
-      // In case user never scrolls, allow manual start by hover
-      root.addEventListener('pointerenter', ()=>{ if(!seen){ seen = true; play(); } }, {passive:true});
+      function toggleCloud(){
+        const sw = root.querySelector('#onx-cloud-switch');
+        if(!sw) return;
+        // little one-shot toggle to show the option
+        setTimeout(()=>{ sw.classList.add('on'); }, 900);
+        setTimeout(()=>{ sw.classList.remove('on'); }, 2100);
+        setTimeout(()=>{ sw.classList.add('on'); }, 3000);
+      }
     })();
   </script>
 </section>
-<!-- ===============================  /ONX — Explainer Rail  =============================== -->
 
 
 
