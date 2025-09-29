@@ -162,7 +162,7 @@ class ONXHeader extends HTMLElement {
         .logo-anim{
           display:inline-block; width: var(--logo-size); height: var(--logo-size);
           background: linear-gradient(var(--angle,135deg), var(--grad-from), var(--grad-via), var(--grad-to));
-          background-size: 300% 300%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
+          background-size: 100% 100%; animation: gradientShift var(--speed,16s) ease-in-out infinite;
           -webkit-mask: url('/logo.svg') no-repeat center / contain; mask: url('/logo.svg') no-repeat center / contain;
           transition: background .2s ease, background-size .2s ease;
         }
