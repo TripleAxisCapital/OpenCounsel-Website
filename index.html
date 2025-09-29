@@ -1780,466 +1780,454 @@ Edit the CTA href, colors, and copy in the tokens below.
 
 
 
-<!-- ============================= ONX — Fusion Animation Section ============================= -->
-<section id="onx-fusion" aria-label="ONX fusion animation" data-autoplay="true">
+<!-- ===================================================================== -->
+<!-- ===================== ONX CINEMA — 3-Beat Explainer ================== -->
+<!-- ===================================================================== -->
+<section id="onx-cinema" aria-label="ONX explainer">
   <style>
-    /* -------------------- Design Tokens (scoped) -------------------- */
-    #onx-fusion{
+    /* ---------------- Tokens (scoped) ---------------- */
+    #onx-cinema{
       --bg:#ffffff;
       --ink:#0B0B0C;
-      --muted:#7A8391;
+      --muted:#6B7380;
       --line:#E8EBF0;
 
-      --accentA:#3f6768;   /* matches your hero c1 */
-      --accentB:#57c7d9;   /* matches your hero c2 */
-      --glass:rgba(255,255,255,.6);
+      --c1:#0B0B0C;           /* primary ink */
+      --c2:#3f6768;           /* accent 1 (teal) */
+      --c3:#57c7d9;           /* accent 2 (aqua) */
 
-      --radius:22px;
-      --cardShadow:0 10px 30px rgba(0,0,0,.08), 0 2px 10px rgba(0,0,0,.06);
-      --shine:linear-gradient(120deg, rgba(255,255,255,.6), rgba(255,255,255,.0) 40%, rgba(255,255,255,.5) 60%, rgba(255,255,255,0) 100%);
+      --plate:rgba(255,255,255,.72); /* blur plate */
+      --backdrop:blur(16px) saturate(1.05);
 
-      --stageH:96vh; /* height of the animation stage */
-      --ease:smooth; /* modern keyword works like ease-in-out */
+      --radius:24px;          /* card radius */
+      --shadow:0 10px 30px rgba(0,0,0,.06);
+
+      --w:max(320px, min(1120px, 92vw));
+      --h: clamp(420px, 72vh, 720px);
+
+      --beat: 4200ms;         /* stage duration */
+      --cross: 560ms;         /* crossfade / swap */
+      --e: cubic-bezier(.22,.61,.36,1);
+
+      --badgeH: 36px;
+      --dot: 9px;
+
+      color:var(--ink);
+      background:var(--bg);
+      position:relative;
+      display:grid;
+      place-items:center;
+      padding: clamp(28px, 6vh, 60px) 0;
+      overflow:hidden;
+      isolation:isolate;
     }
-    @media (prefers-color-scheme: dark){
-      #onx-fusion{
-        --bg:#0B0B0C; --ink:#F3F6FB; --muted:#A6B0BE; --line:#1B2027;
-        --glass:rgba(12,14,18,.55);
-        --cardShadow:0 10px 30px rgba(0,0,0,.35), 0 2px 10px rgba(0,0,0,.25);
+
+    /* Canvas */
+    #onx-cinema .frame{
+      width:var(--w);
+      height:var(--h);
+      border:1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      background:
+        radial-gradient(1200px 1200px at 10% -10%, rgba(87,199,217,.06), transparent 40%),
+        radial-gradient(1300px 900px at 110% 10%, rgba(63,103,104,.05), transparent 50%),
+        #fff;
+      position:relative;
+      overflow:hidden;
+    }
+
+    /* Top caption strip (subtle, Apple-ish) */
+    #onx-cinema .tray{
+      position:absolute; inset:12px 12px auto 12px;
+      height:56px; display:flex; align-items:center; gap:10px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.66);
+      -webkit-backdrop-filter:var(--backdrop);
+      backdrop-filter:var(--backdrop);
+      z-index:3;
+    }
+    #onx-cinema .brand-dot{
+      width:10px; height:10px; border-radius:50%;
+      background:linear-gradient(120deg,var(--c2),var(--c3));
+      box-shadow:0 0 0 1px rgba(0,0,0,.08) inset;
+    }
+    #onx-cinema .tray h3{
+      font:600 14px/1.2 ui-sans-serif,-apple-system,system-ui,"SF Pro Text",Inter,Roboto,Arial;
+      letter-spacing:.02em; margin:0; color:var(--ink);
+    }
+
+    /* Visual stage + copy */
+    #onx-cinema .stage{
+      position:absolute; inset:0; display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: clamp(18px, 3vw, 34px);
+      padding: clamp(18px, 3.4vw, 38px);
+    }
+    @media (max-width:900px){
+      #onx-cinema .stage{
+        grid-template-columns: 1fr; grid-auto-rows:minmax(0,auto);
+        align-content:center;
       }
     }
 
-    /* -------------------- Layout -------------------- */
-    #onx-fusion{
-      position:relative;
-      background:var(--bg);
-      color:var(--ink);
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-                   "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji",
-                   "Segoe UI Emoji";
-      -webkit-font-smoothing:antialiased;
-      text-rendering:optimizeLegibility;
+    /* Visual well */
+    #onx-cinema .visual{
+      position:relative; border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(250,252,255,.65),rgba(255,255,255,.35));
+      overflow:hidden; min-height:260px;
+    }
+
+    /* Copy plate */
+    #onx-cinema .copy{
+      position:relative; display:flex; flex-direction:column; justify-content:center;
+      border:1px solid var(--line); border-radius:var(--radius);
+      background:var(--plate); -webkit-backdrop-filter:var(--backdrop); backdrop-filter:var(--backdrop);
+      padding: clamp(16px, 3.4vw, 28px);
       overflow:hidden;
-      isolation:isolate;
-      border-top:1px solid var(--line);
+    }
+    #onx-cinema .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      height:var(--badgeH); padding:0 14px; border:1px solid var(--line);
+      border-radius:999px; background:#fff; font:600 12px/1 ui-sans-serif,-apple-system,Inter,Roboto,Arial;
+      letter-spacing:.06em; text-transform:uppercase; color:#1a1d21; width:max-content;
+    }
+    #onx-cinema .copy h2{
+      margin:12px 0 8px;
+      font-weight:750;
+      font-size: clamp(28px, 4.6vw, 44px);
+      letter-spacing:-.02em; line-height:1.08;
+      font-family: ui-sans-serif,-apple-system,system-ui,"SF Pro Display",Inter,Roboto,Arial;
+    }
+    #onx-cinema .copy p{
+      margin:0;
+      color:var(--muted);
+      font: 450 clamp(14px,1.8vw,17px)/1.45 ui-sans-serif,-apple-system,system-ui,"SF Pro Text",Inter,Roboto,Arial;
     }
 
-    /* top/bottom atmosphere fades (Apple blend) */
-    #onx-fusion::before, #onx-fusion::after{
-      content:""; position:absolute; left:0; right:0; pointer-events:none; z-index:0;
+    /* CTA row */
+    #onx-cinema .ctarow{ display:flex; align-items:center; gap:10px; margin-top:18px; }
+    #onx-cinema .cta{
+      display:inline-flex; align-items:center; gap:10px; padding:12px 16px;
+      border-radius:12px; border:1px solid #0b0b0c; background:#0b0b0c; color:#fff;
+      font:600 14px/1 ui-sans-serif,-apple-system,system-ui,"SF Pro Text",Inter,Roboto,Arial;
+      text-decoration:none; box-shadow:0 8px 18px rgba(0,0,0,.08);
+      transform:translateZ(0);
+      transition:transform .14s var(--e), background-color .14s var(--e), box-shadow .14s var(--e);
     }
-    #onx-fusion::before{ top:0; height:14vh; background:linear-gradient(to bottom,var(--bg),transparent); }
-    #onx-fusion::after{ bottom:0; height:12vh; background:linear-gradient(to top,var(--bg),transparent); }
+    #onx-cinema .cta:hover{ transform:translateY(-1px); background:#121212; }
+    #onx-cinema .cta:active{ transform:translateY(0); }
+    #onx-cinema .meta{ color:var(--muted); font:500 12px/1.4 ui-sans-serif,-apple-system,system-ui,"SF Pro Text",Inter; }
 
-    .onx-wrap{
-      max-width:1220px; margin:0 auto; padding:56px 20px 28px;
+    /* Segmented control */
+    #onx-cinema .seg{
+      position:absolute; inset:auto 16px 16px 16px;
+      display:flex; gap:8px; justify-content:center; z-index:3; pointer-events:auto;
     }
-
-    .onx-head{
-      display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
-      margin-bottom:22px;
+    #onx-cinema .seg button{
+      min-width: 0; flex:1 1 0;
+      height:38px; padding:0 12px; border-radius:999px; border:1px solid var(--line);
+      background:rgba(255,255,255,.8); -webkit-backdrop-filter:var(--backdrop); backdrop-filter:var(--backdrop);
+      font:600 12px/1 ui-sans-serif,-apple-system,Inter; letter-spacing:.04em; text-transform:uppercase;
+      color:#1a1d21; cursor:pointer;
+      transition:background .18s var(--e), color .18s var(--e), border-color .18s var(--e);
     }
-    .eyebrow{
-      font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--muted);
-    }
-    .title{
-      margin:4px 0 0; line-height:1.08; letter-spacing:-.02em;
-      font-weight:700; font-size:clamp(26px,4.2vw,44px);
-    }
-    .subtitle{
-      margin:10px 0 0; font-size:clamp(14px,1.6vw,18px); color:var(--muted);
-    }
-
-    /* -------------------- Stage -------------------- */
-    .stage{
-      position:relative; height:var(--stageH); min-height:560px; border:1px solid var(--line);
-      border-radius:28px; overflow:hidden; background:
-        radial-gradient(1200px 600px at 80% 10%, rgba(87,199,217,.18), transparent 55%),
-        radial-gradient(1000px 500px at 15% 85%, rgba(63,103,104,.22), transparent 60%),
-        linear-gradient(to bottom, rgba(255,255,255,.14), rgba(255,255,255,0));
-      box-shadow:0 20px 60px rgba(0,0,0,.06) inset;
+    #onx-cinema .seg button[aria-selected="true"]{
+      background:linear-gradient(120deg,var(--c2),var(--c3)); color:#fff; border-color:transparent;
     }
 
-    /* light grid dots (super subtle) */
-    .grid{
-      position:absolute; inset:0; background:
-        radial-gradient(1px 1px at 0 0, rgba(0,0,0,.04) 1px, transparent 1px);
-      background-size:24px 24px; opacity:.35; mix-blend-mode:multiply; pointer-events:none;
+    /* ---------------- Visuals (SVG + CSS motion) ---------------- */
+
+    /* shared */
+    #onx-cinema .vwrap{ position:absolute; inset:0; display:grid; place-items:center; }
+    #onx-cinema .layer{ position:absolute; inset:0; opacity:0; transform:scale(.98);
+      transition: opacity var(--cross) var(--e), transform var(--cross) var(--e);
     }
-    @media (prefers-color-scheme: dark){
-      .grid{ background:radial-gradient(1px 1px at 0 0, rgba(255,255,255,.08) 1px, transparent 1px); opacity:.25; mix-blend-mode:screen; }
+    #onx-cinema .layer.active{ opacity:1; transform:scale(1); }
+
+    /* Stage 1 — Real-time Knowledge (orbiting sources on a ring) */
+    #onx-cinema .ring{
+      --R: 34%;
+      position:absolute; left:50%; top:50%; width:calc(var(--R)*2); height:calc(var(--R)*2);
+      transform:translate(-50%,-50%);
+      border-radius:50%; border:1px dashed #DDE3EA;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+    }
+    #onx-cinema .dot{
+      position:absolute; width:var(--dot); height:var(--dot); border-radius:50%;
+      background:linear-gradient(120deg,var(--c2),var(--c3));
+      top:50%; left:50%; margin:-4.5px 0 0 -4.5px;
+      transform-origin: calc(var(--R)) calc(var(--R));
+      filter: drop-shadow(0 2px 6px rgba(87,199,217,.35));
+      animation: orbits 8s linear infinite;
+    }
+    #onx-cinema .dot:nth-child(2){ animation-duration:10s; animation-delay:-.6s; opacity:.9; }
+    #onx-cinema .dot:nth-child(3){ animation-duration:12s; animation-delay:-1.4s; opacity:.8; }
+    @keyframes orbits { to { transform: rotate(360deg); } }
+
+    #onx-cinema .ticker{
+      position:absolute; bottom:12%; left:50%; transform:translateX(-50%);
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:center; max-width:90%;
+    }
+    #onx-cinema .chip{
+      border:1px solid var(--line); border-radius:999px; background:#fff; padding:8px 12px;
+      font:600 12px/1 ui-sans-serif,-apple-system,Inter; letter-spacing:.04em; color:#1a1d21;
+      box-shadow:0 2px 8px rgba(0,0,0,.06);
+      transform:translateZ(0);
+      animation: chip-in .6s var(--e) both;
+    }
+    @keyframes chip-in{ from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)} }
+
+    /* Stage 2 — Unified Intelligence (chips converge) */
+    #onx-cinema .chips{ position:absolute; inset:0; display:grid; place-items:center; }
+    #onx-cinema .chipcard{
+      position:absolute; width:220px; max-width:50vw; aspect-ratio: 16/9;
+      border:1px solid var(--line); border-radius:16px; background:#fff; box-shadow: var(--shadow);
+      display:grid; place-items:center; font:700 15px/1 ui-sans-serif,-apple-system,Inter;
+      letter-spacing:.02em;
+      transform:translate(var(--tx,0), var(--ty,0)) scale(1);
+      transition: transform .8s var(--e), opacity .8s var(--e);
+    }
+    #onx-cinema .chipcard small{ color:var(--muted); font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+    /* positions (start) */
+    #onx-cinema .chip-A{ --tx:-220px; --ty:-80px; }
+    #onx-cinema .chip-B{ --tx: 230px; --ty:-30px; }
+    #onx-cinema .chip-C{ --tx: 0px;   --ty: 160px; }
+    /* when active, they converge to center */
+    #onx-cinema .layer.active .chipcard{ --tx:0px; --ty:0px; }
+
+    /* center badge after merge */
+    #onx-cinema .fusion{
+      position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+      opacity:0; transform:scale(.96);
+      transition:opacity .7s var(--e) .2s, transform .7s var(--e) .2s;
+    }
+    #onx-cinema .layer.active .fusion{ opacity:1; transform:scale(1); }
+    #onx-cinema .fusion .monogram{
+      display:grid; place-items:center; width:92px; height:92px; border-radius:999px;
+      background:linear-gradient(120deg,var(--c2),var(--c3));
+      color:#fff; font:700 18px/1 ui-sans-serif,-apple-system,Inter;
+      box-shadow:0 16px 40px rgba(87,199,217,.35), inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+    #onx-cinema .fusion .monogram span{
+      font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system,"SF Pro Display",Inter,Roboto,Arial;
+      letter-spacing:.02em;
     }
 
-    /* center core */
-    .core{
-      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-      width:min(19vw,220px); height:min(19vw,220px);
-      border-radius:999px; backdrop-filter:saturate(1.4) blur(10px);
-      background:linear-gradient(180deg, var(--glass), rgba(255,255,255,.35));
-      border:1px solid rgba(255,255,255,.55);
-      box-shadow:var(--cardShadow);
-      display:grid; place-items:center; z-index:2;
+    /* Stage 3 — Agentic Workflows (graph draws → check) */
+    #onx-cinema .graph{
+      position:absolute; inset:14% 10% 18% 10%;
     }
-    .core::after{ /* shimmering ring */
-      content:"";
-      position:absolute; inset:-1px; border-radius:inherit;
-      background: conic-gradient(from 0deg, var(--accentA), var(--accentB), var(--accentA));
-      -webkit-mask: radial-gradient(circle at 50% 50%, black 62%, transparent 63%);
-              mask: radial-gradient(circle at 50% 50%, black 62%, transparent 63%);
-      filter: blur(0.4px) saturate(1.05);
-      opacity:.85; animation:spin 13s linear infinite;
+    #onx-cinema .path{
+      stroke:#1a1d21; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round;
+      stroke-dasharray: 560; stroke-dashoffset: 560;
+      filter: drop-shadow(0 1px 0 rgba(0,0,0,.04));
+      transition: stroke-dashoffset 2.2s var(--e) .15s;
     }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    #onx-cinema .node{
+      r:7; fill:#fff; stroke:#DDE3EA; stroke-width:1.2; filter: drop-shadow(0 2px 6px rgba(0,0,0,.06));
+      transform-origin:center;
+      transform: scale(.8); opacity:0; transition: transform .4s var(--e) .3s, opacity .4s var(--e) .3s;
+    }
+    #onx-cinema .check{
+      stroke:#fff; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round;
+      stroke-dasharray: 60; stroke-dashoffset: 60; filter: drop-shadow(0 8px 24px rgba(40,180,140,.35));
+      transition: stroke-dashoffset .9s var(--e) .3s;
+    }
+    #onx-cinema .seal{
+      transform-origin:center; transform: scale(.9); opacity:0;
+      transition: transform .5s var(--e) .2s, opacity .5s var(--e) .2s;
+    }
+    #onx-cinema .seal circle{
+      fill: linear-gradient(120deg,var(--c2),var(--c3));
+      fill: url('#onx-grad'); /* fallback to gradient id if supported */
+    }
+    /* activate drawing */
+    #onx-cinema .layer.active .path{ stroke-dashoffset: 0; }
+    #onx-cinema .layer.active .node{ transform:scale(1); opacity:1; }
+    #onx-cinema .layer.active .seal{ transform:scale(1); opacity:1; }
+    #onx-cinema .layer.active .check{ stroke-dashoffset: 0; }
 
-    .core-label{
-      display:flex; flex-direction:column; align-items:center; gap:6px;
-      text-align:center;
+    /* ---------------- Crossfade copy per stage ---------------- */
+    #onx-cinema .copy .pane{ position:absolute; inset:0; padding: clamp(16px, 3.4vw, 28px); opacity:0; transform:translateY(8px);
+      transition: opacity var(--cross) var(--e), transform var(--cross) var(--e);
     }
-    .core-badge{
-      font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Display";
-      font-weight:400; letter-spacing:.02em;
-      font-size:clamp(18px,2.6vw,28px);
-    }
-    .core-chip{
-      font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted);
-      padding:8px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.5);
-      backdrop-filter:saturate(1.2) blur(4px);
-    }
-    @media (prefers-color-scheme: dark){
-      .core-chip{ background:rgba(15,18,23,.45); }
-    }
+    #onx-cinema .copy .pane.active{ opacity:1; transform:translateY(0); }
 
-    /* progress dots */
-    .progress{
-      position:absolute; left:50%; bottom:20px; transform:translateX(-50%);
-      display:flex; gap:10px; z-index:3;
-    }
-    .dot{
-      width:9px; height:9px; border-radius:999px; background:#cfd5de; opacity:.65; transition:all .25s var(--ease);
-      border:1px solid var(--line);
-    }
-    .dot.is-active{ width:28px; background:linear-gradient(90deg, var(--accentA), var(--accentB)); opacity:1; }
-
-    /* CTA */
-    .cta{
-      position:absolute; left:50%; top:64%; transform:translate(-50%,-50%) scale(.96);
-      display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; z-index:3;
-      opacity:0; pointer-events:none;
-    }
-    .cta h3{ margin:0; font-size:clamp(22px,3.6vw,34px); letter-spacing:-.015em; }
-    .cta p{ margin:0; font-size:clamp(13px,1.5vw,16px); color:var(--muted); }
-    .cta .btn{
-      display:inline-flex; align-items:center; gap:10px; cursor:pointer; user-select:none;
-      background:#0B0B0C; color:#fff; border:1px solid #0B0B0C; border-radius:999px;
-      padding:12px 18px; font-weight:600; letter-spacing:.01em; transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
-      box-shadow:0 8px 20px rgba(0,0,0,.15);
-    }
-    .cta .btn:hover{ transform:translateY(-1px); background:#121315; }
-    .cta .btn:active{ transform:translateY(0); }
-    @media (prefers-color-scheme: dark){
-      .cta .btn{ background:#F3F6FB; color:#0B0B0C; border-color:#F3F6FB; }
-      .cta .btn:hover{ background:#fff; }
-    }
-
-    /* -------------------- Scenes -------------------- */
-    .scene{
-      position:absolute; inset:0; display:grid; place-items:center; z-index:1;
-      opacity:0; transform:translateY(12px) scale(.995);
-    }
-    .scene.is-visible{ opacity:1; transform:translateY(0) scale(1); transition:opacity .5s var(--ease), transform .5s var(--ease); }
-
-    /* Scene A — Real-time Knowledge ticker */
-    .ticker{
-      position:relative; width:min(88%,1100px); border:1px solid var(--line); border-radius:var(--radius);
-      background:rgba(255,255,255,.65); backdrop-filter:saturate(1.1) blur(6px); box-shadow:var(--cardShadow);
-      overflow:hidden; padding:12px 0;
-    }
-    @media (prefers-color-scheme: dark){ .ticker{ background:rgba(15,18,23,.55); } }
-    .track{
-      display:flex; gap:26px; white-space:nowrap; will-change:transform; padding:8px 12px;
-      animation:marquee 16s linear infinite;
-    }
-    .chip{
-      display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px;
-      border:1px solid var(--line); background:rgba(255,255,255,.8); font-weight:600; font-size:14px;
-    }
-    .chip svg{ width:18px; height:18px; }
-    .chip .muted{ color:var(--muted); font-weight:500; }
-    @media (prefers-color-scheme: dark){ .chip{ background:rgba(20,23,30,.6); } }
-    @keyframes marquee {
-      from { transform:translateX(0); }
-      to   { transform:translateX(-50%); }
-    }
-
-    /* Scene B — Unified Intelligence (nodes merge) */
-    .ring{
-      position:relative; width:min(66vw,760px); height:min(66vw,760px);
-      border-radius:999px; border:1px dashed rgba(0,0,0,.08);
-    }
-    @media (prefers-color-scheme: dark){ .ring{ border-color:rgba(255,255,255,.08); } }
-    .model{
-      position:absolute; width:110px; height:110px; border-radius:16px; border:1px solid var(--line);
-      background:rgba(255,255,255,.7); box-shadow:var(--cardShadow); display:grid; place-items:center; text-align:center;
-      font-weight:700; letter-spacing:.01em;
-    }
-    @media (prefers-color-scheme: dark){ .model{ background:rgba(18,22,28,.6); } }
-    .model small{ display:block; font-weight:600; color:var(--muted); font-size:12px; letter-spacing:.14em; text-transform:uppercase; margin-top:4px; }
-    .m1{ left:8%; top:48%; transform:translate(-50%,-50%); }
-    .m2{ left:50%; top:6%; transform:translate(-50%,-50%); }
-    .m3{ left:92%; top:52%; transform:translate(-50%,-50%); }
-
-    /* Scene C — Agentic Workflows (cards slide) */
-    .lane{
-      position:relative; width:min(90%,1100px); height:320px;
-    }
-    .card{
-      position:absolute; width:min(46%,520px); min-width:300px; border:1px solid var(--line); border-radius:20px;
-      background:rgba(255,255,255,.75); box-shadow:var(--cardShadow); padding:18px 18px 18px 20px;
-      transform:translateX(-120%) rotate(-2deg);
-    }
-    @media (prefers-color-scheme: dark){ .card{ background:rgba(20,24,30,.55); } }
-    .card h4{ margin:0 0 6px; font-size:18px; }
-    .card p{ margin:0; color:var(--muted); font-size:14px; }
-    .card .row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-    .card .icon{ width:22px; height:22px; border-radius:8px; background:linear-gradient(135deg, var(--accentA), var(--accentB)); }
-    .c2{ top:50%; left:auto; right:0; transform:translateX(120%) rotate(2deg); }
-    .c3{ top:75%; transform:translateX(-140%) rotate(-1deg); }
-
-    /* Reduced motion: show final state */
+    /* Reduced motion: freeze complex animations, keep fades */
     @media (prefers-reduced-motion: reduce){
-      .track{ animation:none; }
+      #onx-cinema .dot, #onx-cinema .chip, #onx-cinema .chipcard,
+      #onx-cinema .fusion, #onx-cinema .path, #onx-cinema .node,
+      #onx-cinema .check, #onx-cinema .seal{ animation:none !important; transition:none !important; }
     }
   </style>
 
-  <div class="onx-wrap">
-    <header class="onx-head">
-      <div>
-        <div class="eyebrow">What ONX Delivers</div>
-        <h2 class="title">The fusion of the world’s smartest AI — engineered for precision, built without limits.</h2>
-        <p class="subtitle">Real-time knowledge. Unified intelligence. Agentic workflows. Start free today and unlock your limitless potential.</p>
-      </div>
-    </header>
+  <div class="frame" data-autoplay="true" data-cycle="true" data-beat="4200">
+    <div class="tray" aria-hidden="true">
+      <span class="brand-dot"></span>
+      <h3>ONX • The AI Workspace. Without Limits.</h3>
+    </div>
 
-    <!-- Animation Stage -->
     <div class="stage">
-      <div class="grid"></div>
+      <!-- Visuals -->
+      <div class="visual" aria-hidden="true">
+        <div class="vwrap">
+          <!-- Stage 1: Knowledge -->
+          <div class="layer layer-1 active">
+            <div class="ring"></div>
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
 
-      <!-- Center Core -->
-      <div class="core" aria-hidden="true">
-        <div class="core-label">
-          <div class="core-badge">ONX</div>
-          <div class="core-chip">Unified Intelligence</div>
-        </div>
-      </div>
+            <div class="ticker">
+              <span class="chip">Real-time data</span>
+              <span class="chip">Live web</span>
+              <span class="chip">Files & notes</span>
+              <span class="chip">Email & docs</span>
+              <span class="chip">News & markets</span>
+            </div>
+          </div>
 
-      <!-- Scene A: Real-time Knowledge -->
-      <div class="scene scene-a" aria-live="polite">
-        <div class="ticker" role="group" aria-label="Real-time knowledge sources">
-          <div class="track">
-            <!-- duplicate items so marquee loops cleanly -->
-            <div class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4zM4 9h16M9 9v11"/></svg>
-              Docs <span class="muted">PDFs & Notes</span>
+          <!-- Stage 2: Unified Intelligence -->
+          <div class="layer layer-2">
+            <div class="chips">
+              <div class="chipcard chip-A"><div><small>Model A</small><br/>Reasoning</div></div>
+              <div class="chipcard chip-B"><div><small>Model B</small><br/>Coding</div></div>
+              <div class="chipcard chip-C"><div><small>Model C</small><br/>Vision</div></div>
             </div>
-            <div class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18M12 3v18"/></svg>
-              Web <span class="muted">Live Search</span>
+            <div class="fusion">
+              <div class="monogram"><span>ONX</span></div>
             </div>
-            <div class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
-              Email <span class="muted">Gmail/IMAP</span>
-            </div>
-            <div class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V4M5 9l7-5 7 5"/></svg>
-              Code <span class="muted">Repos</span>
-            </div>
-            <div class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12Z"/></svg>
-              Markets <span class="muted">Stocks & Crypto</span>
-            </div>
-            <div class="chip">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
-              News <span class="muted">Real-time</span>
-            </div>
+          </div>
 
-            <!-- repeat for seamless scroll -->
-            <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4zM4 9h16M9 9v11"/></svg> Docs <span class="muted">PDFs & Notes</span></div>
-            <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12h18M12 3v18"/></svg> Web <span class="muted">Live Search</span></div>
-            <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h7"/></svg> Email <span class="muted">Gmail/IMAP</span></div>
-            <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20V4M5 9l7-5 7 5"/></svg> Code <span class="muted">Repos</span></div>
-            <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12Z"/></svg> Markets <span class="muted">Stocks & Crypto</span></div>
-            <div class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 12h10M4 17h7"/></svg> News <span class="muted">Real-time</span></div>
+          <!-- Stage 3: Agentic Workflows -->
+          <div class="layer layer-3">
+            <svg class="graph" viewBox="0 0 800 420" role="img" aria-label="Agentic workflow graph">
+              <defs>
+                <linearGradient id="onx-grad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#57c7d9"/><stop offset="100%" stop-color="#3f6768"/>
+                </linearGradient>
+              </defs>
+              <path class="path" d="M60 340 C180 280, 230 210, 300 210
+                                    S 460 300, 520 220
+                                    S 650 140, 740 160" />
+              <!-- nodes -->
+              <circle class="node" cx="60"  cy="340"></circle>
+              <circle class="node" cx="300" cy="210"></circle>
+              <circle class="node" cx="520" cy="220"></circle>
+              <circle class="node" cx="740" cy="160"></circle>
+
+              <!-- success seal -->
+              <g class="seal" transform="translate(740,160)">
+                <circle r="22" fill="url(#onx-grad)"></circle>
+                <path class="check" d="M-10 1 l8 8 l14 -16" />
+              </g>
+            </svg>
           </div>
         </div>
-      </div>
 
-      <!-- Scene B: Unified Intelligence -->
-      <div class="scene scene-b" aria-hidden="true">
-        <div class="ring">
-          <div class="model m1"><div>GPT-class<small>Reasoning</small></div></div>
-          <div class="model m2"><div>Qwen/Gemma<small>Speed</small></div></div>
-          <div class="model m3"><div>LLaMA-family<small>Local</small></div></div>
+        <!-- Segmented control -->
+        <div class="seg" role="tablist" aria-label="Explainer steps">
+          <button type="button" role="tab" aria-selected="true" data-go="0">Knowledge</button>
+          <button type="button" role="tab" aria-selected="false" data-go="1">Intelligence</button>
+          <button type="button" role="tab" aria-selected="false" data-go="2">Agents</button>
         </div>
       </div>
 
-      <!-- Scene C: Agentic Workflows -->
-      <div class="scene scene-c" aria-hidden="true">
-        <div class="lane">
-          <article class="card c1">
-            <div class="row"><span class="icon"></span><h4>Research Agent</h4></div>
-            <p>Scans web + docs in real-time, extracts facts, and drafts briefings you can trust.</p>
-          </article>
-          <article class="card c2">
-            <div class="row"><span class="icon"></span><h4>Writer Agent</h4></div>
-            <p>Turns insights into on-brand copy, from emails to landing pages—fast.</p>
-          </article>
-          <article class="card c3">
-            <div class="row"><span class="icon"></span><h4>Operator Agent</h4></div>
-            <p>Orchestrates tasks and tools, updates sheets, and ships workflows end-to-end.</p>
-          </article>
+      <!-- Copy panes -->
+      <div class="copy">
+        <div class="pane pane-1 active" data-stage="0">
+          <span class="badge">Real-time Knowledge</span>
+          <h2>Know the moment it matters.</h2>
+          <p>ONX taps live web, news, files, and systems to keep answers current—no stale context, no copy-paste.</p>
+          <div class="ctarow">
+            <a class="cta" href="#start">Start free</a>
+            <span class="meta">Streams sources • Cites context • Updates as the world changes</span>
+          </div>
         </div>
-      </div>
 
-      <!-- CTA -->
-      <div class="cta" role="group" aria-label="Start with ONX">
-        <h3>Your unfair advantage starts now.</h3>
-        <p>Fuse knowledge, models, and agents—inside one brain.</p>
-        <button class="btn" onclick="window.location.href='#get-started'">
-          Start free
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
-        </button>
-      </div>
+        <div class="pane pane-2" data-stage="1">
+          <span class="badge">Unified Intelligence</span>
+          <h2>One brain. All the models.</h2>
+          <p>ONX routes tasks across best-in-class AI—reasoning, code, vision—then fuses it into a single, precise response.</p>
+          <div class="ctarow">
+            <a class="cta" href="#start">Try it now</a>
+            <span class="meta">Auto-routing • Cost/latency aware • Consistent voice</span>
+          </div>
+        </div>
 
-      <!-- Progress -->
-      <div class="progress" aria-hidden="true">
-        <span class="dot is-active"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
+        <div class="pane pane-3" data-stage="2">
+          <span class="badge">Agentic Workflows</span>
+          <h2>Plans. Executes. Reports back.</h2>
+          <p>From research to outreach to dashboards—ONX runs multi-step flows, handles tools, and closes the loop for you.</p>
+          <div class="ctarow">
+            <a class="cta" href="#start">Spin up an agent</a>
+            <span class="meta">Tool calls • Checkpoints • Verifiable results</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    (function(){
-      const root   = document.currentScript.closest('#onx-fusion');
-      if(!root) return;
-
-      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const autoplay = root.dataset.autoplay !== "false";
-
-      const scenes = [
-        root.querySelector('.scene-a'),
-        root.querySelector('.scene-b'),
-        root.querySelector('.scene-c')
+    (() => {
+      const root   = document.querySelector('#onx-cinema .frame');
+      const layers = [
+        document.querySelector('#onx-cinema .layer-1'),
+        document.querySelector('#onx-cinema .layer-2'),
+        document.querySelector('#onx-cinema .layer-3'),
       ];
-      const dots   = root.querySelectorAll('.dot');
-      const core   = root.querySelector('.core');
-      const cta    = root.querySelector('.cta');
-      const models = root.querySelectorAll('.model');
-      const cards  = root.querySelectorAll('.card');
+      const panes = [
+        document.querySelector('#onx-cinema .pane-1'),
+        document.querySelector('#onx-cinema .pane-2'),
+        document.querySelector('#onx-cinema .pane-3'),
+      ];
+      const tabs  = Array.from(document.querySelectorAll('#onx-cinema .seg button'));
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-      function setStep(i){
-        dots.forEach((d,idx)=> d.classList.toggle('is-active', idx===i));
+      let i = 0, timer = null, beat = +(root?.dataset.beat || 4200);
+
+      function setStage(n){
+        i = (n + layers.length) % layers.length;
+        layers.forEach((el, idx) => el.classList.toggle('active', idx === i));
+        panes.forEach((el, idx) => el.classList.toggle('active', idx === i));
+        tabs.forEach((b, idx) => b.setAttribute('aria-selected', String(idx === i)));
       }
 
-      // Instant final state when reduced motion
-      if (prefersReduced){
-        scenes.forEach(s => s.classList.add('is-visible'));
-        setStep(3);
-        cta.style.opacity = 1; cta.style.transform = 'translate(-50%,-50%) scale(1)';
-        cards.forEach((el, i)=>{
-          el.style.transform = `translateX(0) rotate(${i%2?2:-1}deg)`;
-        });
-        return;
+      function next(){ setStage(i+1); }
+      function play(){
+        if (reduce || root?.dataset.cycle === "false") return;
+        stop();
+        timer = setInterval(next, beat);
       }
+      function stop(){ if (timer){ clearInterval(timer); timer = null; } }
 
-      let played = false;
-      const start = async ()=>{
-        if (played) return; played = true;
+      tabs.forEach(b => {
+        b.addEventListener('click', () => { setStage(+b.dataset.go || 0); play(); });
+      });
 
-        // Step A: Real-time knowledge (show ticker)
-        scenes[0].classList.add('is-visible');
-        setStep(0);
-
-        // subtle core pulse
-        core.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.03)'},{transform:'translate(-50%,-50%) scale(1)'}],
-                     {duration:1400, iterations:2, easing:'ease-in-out'});
-
-        await new Promise(r=>setTimeout(r, 1800));
-
-        // Step B: Unified Intelligence (models merge)
-        scenes[1].classList.add('is-visible');
-        setStep(1);
-
-        const coreRect = core.getBoundingClientRect();
-        const stageRect = root.querySelector('.stage').getBoundingClientRect();
-        const cx = coreRect.left + coreRect.width/2 - stageRect.left;
-        const cy = coreRect.top + coreRect.height/2 - stageRect.top;
-
-        models.forEach((m, idx)=>{
-          const mr = m.getBoundingClientRect();
-          const mx = mr.left + mr.width/2 - stageRect.left;
-          const my = mr.top  + mr.height/2 - stageRect.top;
-          const dx = cx - mx, dy = cy - my;
-
-          m.animate([
-            { transform:`translate(${0}px, ${0}px) scale(1)`, offset:0 },
-            { transform:`translate(${dx*0.72}px, ${dy*0.72}px) scale(.92)`, offset:.7 },
-            { transform:`translate(${dx}px, ${dy}px) scale(.6)`, offset:1 }
-          ], { duration:1200 + idx*120, easing:'cubic-bezier(.22,.61,.36,1)', fill:'forwards' });
+      // Start only when in view
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e => {
+          if (e.isIntersecting){ play(); }
+          else { stop(); }
         });
+      }, {threshold:.5});
+      if (root) io.observe(root);
 
-        // core flare
-        core.animate([
-          { boxShadow:'var(--cardShadow)' },
-          { boxShadow:'0 0 0 rgba(0,0,0,0)', offset:.45 },
-          { boxShadow:'var(--cardShadow)' }
-        ], { duration:1200, easing:'ease-in-out' });
+      // keyboard support (left/right)
+      root?.addEventListener('keydown', (e)=>{
+        if (e.key === 'ArrowRight'){ e.preventDefault(); setStage(i+1); play(); }
+        if (e.key === 'ArrowLeft'){  e.preventDefault(); setStage(i-1); play(); }
+      });
 
-        await new Promise(r=>setTimeout(r, 1500));
-
-        // Step C: Agentic workflows (cards slide across)
-        scenes[2].classList.add('is-visible');
-        setStep(2);
-
-        cards.forEach((el, i)=>{
-          const from = el.classList.contains('c2') ? 1 : -1;
-          el.animate([
-            { transform:`translateX(${from*120}%) rotate(${from*2}deg)`, opacity:0 },
-            { transform:`translateX(${from*4}%)  rotate(${from*.6}deg)`, opacity:1, offset:.7 },
-            { transform:'translateX(0) rotate(0deg)', opacity:1 }
-          ], { duration:900 + i*200, easing:'cubic-bezier(.22,.61,.36,1)', fill:'forwards' });
-        });
-
-        await new Promise(r=>setTimeout(r, 1100));
-
-        // Step D: CTA reveal
-        setStep(3);
-        cta.animate([
-          { opacity:0, transform:'translate(-50%,-50%) scale(.96)' },
-          { opacity:1, transform:'translate(-50%,-50%) scale(1)' }
-        ], { duration:520, easing:'var(--ease)', fill:'forwards' });
-      };
-
-      // Autoplay when in view
-      if (autoplay){
-        const io = new IntersectionObserver((entries)=>{
-          entries.forEach(e=>{
-            if (e.isIntersecting && e.intersectionRatio >= .3){
-              start(); io.disconnect();
-            }
-          });
-        }, { threshold:[0,.3,.6,1] });
-        io.observe(root);
-      }
-
-      // Optional: allow manual start by clicking the stage (useful for testing)
-      root.querySelector('.stage')?.addEventListener('click', start, { passive:true });
+      // init
+      setStage(0);
     })();
   </script>
 </section>
-<!-- ============================================================================================ -->
+<!-- ========================== /ONX CINEMA ============================== -->
 
 
 
