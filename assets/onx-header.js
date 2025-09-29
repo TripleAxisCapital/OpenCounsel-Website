@@ -679,7 +679,7 @@ class ONXHeader extends HTMLElement {
             <div class="desktop-actions">
               <slot name="actions"></slot>
               <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
-                <span>Get Started</span>
+                <span>Get Started for Free</span>
               </a>
             </div>
 
@@ -716,7 +716,7 @@ class ONXHeader extends HTMLElement {
           <div class="mobile-actions">
             <div class="mobile-extra-actions"></div>
             <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
-             <span>Get Started</span>
+             <span>Get Started for Free</span>
             </a>
           </div>
         </div>
