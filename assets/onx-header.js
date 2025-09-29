@@ -680,7 +680,7 @@ class ONXHeader extends HTMLElement {
               <slot name="actions"></slot>
               <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
                 <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-                <span>Download</span>
+                <span>Get Started</span>
               </a>
             </div>
 
@@ -718,7 +718,7 @@ class ONXHeader extends HTMLElement {
             <div class="mobile-extra-actions"></div>
             <a class="btn g-grad grad-anim" href="/download.html" aria-label="Download">
               <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-              <span>Download</span>
+              <span>Get Started</span>
             </a>
           </div>
         </div>
