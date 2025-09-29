@@ -1099,7 +1099,6 @@ const SUGGESTIONS = [
 
 
 
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- HOW TO SIZE (pick one):
   A) Exact width with aspect:
@@ -1290,7 +1289,7 @@ const SUGGESTIONS = [
     function tintToTarget(img, color, wCSS, hCSS){
       const w = Math.max(1, Math.round(wCSS * dpr));
       const h = Math.max(1, Math.round(hCSS * dpr));
-      const key = (img.src || img) + '|' + color + '|' + w + 'x' + h + '|dpr' + dpr;
+      const key = (img?.src || img) + '|' + color + '|' + w + 'x' + h + '|dpr' + dpr;
       let off = TINT_CACHE.get(key);
       if (!off){
         off = document.createElement('canvas');
@@ -1299,7 +1298,7 @@ const SUGGESTIONS = [
         octx.imageSmoothingEnabled = true;
         octx.imageSmoothingQuality = 'high';
         octx.clearRect(0,0,w,h);
-        octx.drawImage(img, 0, 0, w, h);
+        if (img) octx.drawImage(img, 0, 0, w, h);
         octx.globalCompositeOperation = 'source-in';
         octx.fillStyle = color || '#fff';
         octx.fillRect(0,0,w,h);
@@ -1734,6 +1733,7 @@ const SUGGESTIONS = [
     }
 
     // -------------------- Phase E: O → final logo + "Unified AI" --------------------
+    // NOTE: Enhanced "Unified AI" reveal with subtle rise + blur decay (Apple-like)
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1774,16 +1774,20 @@ const SUGGESTIONS = [
       }
       ctx.restore();
 
-      // Subtitle
-      const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
+      // Subtitle ("Unified AI") — fade, gentle rise, blur → crisp
+      const inT = clamp((t-0.18)/0.68);
+      const subtitleA = easeOutCubic(inT);
       if (subtitleA > 0){
         const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-        setFont(700, size, '"Inter", ui-sans-serif, system-ui');
+        const dy = lerp(18, 0, subtitleA);
+        const blur = (1 - subtitleA) * 3.2 * MOBILE_BLUR_SCALE;
+        setFont(700, size, '"Inter", ui-sans-serif');
         ctx.save();
         ctx.globalAlpha = subtitleA;
+        if (blur > 0.05) ctx.filter = `blur(${blur}px)`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))));
+        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)) + dy));
         ctx.restore();
       }
     }
@@ -1823,9 +1827,125 @@ const SUGGESTIONS = [
       return { logoImgs, finalLogo };
     }
 
+    // -------------------- NEW: Phase F — Floating/Bouncing Logos (indefinite) --------------------
+    let floatingActive = false;
+    let floatState = null;
+
+    const FLOAT_CFG = {
+      margin: () => Math.max(12, Math.round(CONFIG.w * 0.02)),                 // inner padding
+      heightBase: () => Math.max(36, Math.min(CONFIG.h * 0.14, 160)) * SIZE.all, // base logo height
+      speedBase: () => Math.max(60, Math.min(CONFIG.w, CONFIG.h) * 0.18),        // px/sec typical
+      speedJitter: 0.35, // +/- %
+      alpha: 0.92,       // slight translucency for blend
+      shadow: 0.12       // drop shadow amount
+    };
+
+    function buildFloaters(assets){
+      const M = FLOAT_CFG.margin();
+      const H = FLOAT_CFG.heightBase();
+      const speed0 = FLOAT_CFG.speedBase();
+
+      const floaterList = assets.logoImgs.map((img, i) => {
+        const sizeJ = 0.85 + Math.random()*0.30;            // size jitter 0.85–1.15
+        const h = H * sizeJ;
+        const w = h * (img.aspect || 1);
+        const x = M + w/2 + Math.random() * (CONFIG.w - 2*M - w);
+        const y = M + h/2 + Math.random() * (CONFIG.h - 2*M - h);
+
+        // Random direction, normalized, speed with jitter
+        let angle = Math.random() * Math.PI * 2;
+        const spJ = 1 + (Math.random()*2 - 1) * FLOAT_CFG.speedJitter;
+        const speed = speed0 * spJ;
+        const vx = Math.cos(angle) * speed;
+        const vy = Math.sin(angle) * speed;
+
+        return { img, x, y, w, h, vx, vy, a: FLOAT_CFG.alpha };
+      });
+
+      return floaterList;
+    }
+
+    function drawFloater(f){
+      ctx.save();
+      ctx.translate(Math.round(f.x), Math.round(f.y));
+      ctx.globalAlpha = f.a;
+      // soft shadow
+      ctx.shadowColor = `rgba(0,0,0,${FLOAT_CFG.shadow})`;
+      ctx.shadowBlur = 12 * (isMobile()? 0.7 : 1);
+      ctx.shadowOffsetY = 6;
+
+      if (f.img.raw){
+        const tinted = tintToTarget(f.img.raw, f.img.tint, f.w, f.h);
+        ctx.drawImage(tinted, Math.round(-f.w/2), Math.round(-f.h/2), Math.round(f.w), Math.round(f.h));
+      } else {
+        ctx.fillStyle = '#e8ebf2';
+        roundedRect(ctx, Math.round(-f.w/2), Math.round(-f.h/2), Math.round(f.w), Math.round(f.h), Math.min(f.h/2, 12));
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function updateFloater(f, dt){
+      const M = FLOAT_CFG.margin();
+      f.x += f.vx * dt;
+      f.y += f.vy * dt;
+
+      // Bounce X
+      if (f.x - f.w/2 < M){ f.x = M + f.w/2; f.vx = Math.abs(f.vx); }
+      if (f.x + f.w/2 > CONFIG.w - M){ f.x = CONFIG.w - M - f.w/2; f.vx = -Math.abs(f.vx); }
+
+      // Bounce Y
+      if (f.y - f.h/2 < M){ f.y = M + f.h/2; f.vy = Math.abs(f.vy); }
+      if (f.y + f.h/2 > CONFIG.h - M){ f.y = CONFIG.h - M - f.h/2; f.vy = -Math.abs(f.vy); }
+    }
+
+    function renderFinalStatic(finalLogo){
+      // Reuse Phase E renderer at t=1 to paint background + final logo + "Unified AI"
+      renderOToFinalLogo(1, finalLogo);
+    }
+
+    function startFloating(assets){
+      floatingActive = true;
+      const myId = runId;                // tie to current run to allow cancel on replay
+      floatState = { lastTS: performance.now(), sprites: buildFloaters(assets), assets };
+
+      (function loop(ts){
+        if (myId !== runId) return;      // canceled by new run
+        if (!floatingActive) return;
+
+        const dt = Math.min(0.033, Math.max(0.001, (ts - floatState.lastTS)/1000));
+        floatState.lastTS = ts;
+
+        // Draw base final scene
+        renderFinalStatic(floatState.assets.finalLogo);
+
+        // Update & draw sprites
+        const list = floatState.sprites;
+        for (let i=0; i<list.length; i++){
+          updateFloater(list[i], dt);
+          drawFloater(list[i]);
+        }
+
+        requestAnimationFrame(loop);
+      })(performance.now());
+    }
+
+    function stopFloating(){
+      floatingActive = false;
+      floatState = null;
+    }
+
+    function rebuildFloatersIfActive(){
+      if (!floatingActive || !floatState) return;
+      // Rebuild with new CONFIG sizes but keep animation going
+      floatState.sprites = buildFloaters(floatState.assets);
+    }
+
+    // -------------------- Orchestrated Phases A→E; then F (floating) --------------------
     function playSequence(assets){
       const myId = ++runId;
       isAnimating = true;
+      stopFloating(); // ensure floating from a previous run stops
       const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
 
       // PHASE A
@@ -1881,7 +2001,12 @@ const SUGGESTIONS = [
           if (myId !== runId) return;
           const tE = clamp( ((ts - startE)/1000) / S(1.15) );
           renderOToFinalLogo(tE, assets.finalLogo);
-          if (tE < 1) requestAnimationFrame(loopE); else { isAnimating = false; }
+          if (tE < 1) requestAnimationFrame(loopE);
+          else {
+            isAnimating = false;
+            // >>> NEW: Start indefinite floating/bouncing logos over the final scene
+            startFloating(assets);
+          }
         })(startE);
       }
 
@@ -1897,6 +2022,7 @@ const SUGGESTIONS = [
       replay.addEventListener('click', async ()=>{
         replay.disabled = true;
         try {
+          stopFloating();
           if (!prepared) prepared = await prepareAssets();
           playSequence(prepared);
         } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
@@ -1929,6 +2055,7 @@ const SUGGESTIONS = [
       if (prefersReducedMotion){
         renderOToFinalLogo(1, prepared.finalLogo);
         isAnimating = false;
+        // Respect reduced motion: do not start bouncing in this mode
       } else {
         playSequence(prepared);
       }
@@ -1963,7 +2090,13 @@ const SUGGESTIONS = [
       layout = measureFinalLayout();
 
       clearStage();
-      renderCard(0);
+      // If floating final scene is active, keep that look; otherwise render initial card preview
+      if (floatingActive && prepared){
+        renderFinalStatic(prepared.finalLogo);
+        rebuildFloatersIfActive();
+      } else {
+        renderCard(0);
+      }
       if (!autoplayed) tryAutoplay();
       ensureControls();
     }
@@ -1981,7 +2114,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
 
 
 
