@@ -1100,23 +1100,15 @@ const SUGGESTIONS = [
 
 
 
-
-
-
-
-
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- HOW TO SIZE (pick one):
   A) Exact width with aspect:
      <div id="onx-card-reveal" style="--stage-w:1200px; --stage-aspect:16/9;">
   B) Exact width AND exact height (ignores aspect):
      <div id="onx-card-reveal" style="--stage-w:1200px; --stage-h:520px; --stage-aspect:auto;">
-  C) Responsive max + viewport cap (Apple-clean default):
+  C) Responsive max + viewport cap:
      <div id="onx-card-reveal" style="--stage-w:min(1280px,96vw); --stage-aspect:18/9;">
-  Optional polish:
-     --stage-radius:32px; --stage-shadow:0 18px 60px rgba(0,0,0,.12); --stage-margin:56; 
+  Current config: height is 35% of viewport (with dvh precision on mobile).
 -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
@@ -1127,12 +1119,17 @@ const SUGGESTIONS = [
      data-overshoot-y="1.5"
      data-peak-x="0.58"
      data-peak-y="0.60"
+
+     <!-- Optional, example size overrides (multipliers ~0.6–1.6). Remove or tweak as you like. -->
      data-size-best-ai="2.2"
+     data-size-logos="1.5"
+     data-size-final-logo="1.5"
+     data-size-menu-title="1.0"
+     data-size-menu-sub="1.0"
+
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:35vh; --stage-h:35dvh; --stage-aspect:auto;">
-
-
-  <!-- Fonts (preconnect + Inter & Audiowide) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=Audiowide&display=swap" rel="stylesheet">
@@ -1141,19 +1138,18 @@ const SUGGESTIONS = [
     /* ---------- Structure / resets ---------- */
     #onx-card-reveal { max-width: 100%; margin: 0 auto; overflow: clip; }
     #onx-card-reveal * { box-sizing: border-box; }
-    /* Keep text crisp on macOS/Safari */
     #onx-card-reveal, #onx-card-reveal * {
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
     }
 
-    /* Stage — now fully controlled by CSS variables */
+    /* Stage — controlled by CSS variables */
     #onx-stage{
       position: relative;
       width: var(--stage-w, min(1100px, 96vw));
       aspect-ratio: var(--stage-aspect, 16/9);   /* set to 'auto' if using explicit --stage-h */
-      height: var(--stage-h, auto);              /* set px value to force exact height */
+      height: var(--stage-h, auto);              /* e.g., 35vh or 35dvh */
       max-width: 100%;
       margin: 0 auto;
       border-radius: var(--stage-radius, 32px);
@@ -1167,7 +1163,7 @@ const SUGGESTIONS = [
     }
     #onx-stage canvas{ width: 100%; height: 100%; display: block; }
 
-    /* Minimal, Apple-like controls */
+    /* Minimal controls */
     #onx-controls{
       display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
       font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
@@ -1190,7 +1186,7 @@ const SUGGESTIONS = [
     }
   </style>
 
-  <!-- Stage (receives your gradient via classes) -->
+  <!-- Stage -->
   <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
   <div id="onx-controls" aria-label="Animation controls"></div>
@@ -1199,9 +1195,10 @@ const SUGGESTIONS = [
   <script>
   (()=>{ 'use strict';
 
-    /* ========================= GLOBAL SIZE CONTROLS (EDIT THESE) =========================
-       All values are multipliers (1.00 = default). Safe range ~0.6 → 1.6.
-    ====================================================================================== */
+    /* ========================= GLOBAL SIZE CONTROLS =========================
+       Tweak here or via data-size-* attributes on #onx-card-reveal.
+       Multipliers safe range ~0.6 → 1.6 (1.00 = default).
+    ======================================================================== */
     const SIZE = {
       all:        1.00,
       menu:       1.00,
@@ -1213,23 +1210,20 @@ const SUGGESTIONS = [
       logos:      1.50,
       bestAI:     1.00,
       O:          1.50,
-      finalLogo:  1.5,
-      unified:    1.0
+      finalLogo:  1.50,
+      unified:    1.00
     };
-
-
-
 
     const SLOGANS = ["The Best AI", "Built on the Best"];
 
-    // ======== ASSETS (with per-logo white tinting) ========
+    // ======== ASSETS ========
     const LOGOS = [
       { src: 'grokLogo.svg',   alt: 'Grok',   tint: '#fff' },
       { src: 'googleLogo.svg', alt: 'Google', tint: '#fff' },
       { src: 'metaLogo.svg',   alt: 'Meta',   tint: '#fff' },
       { src: 'OAILogo.png',    alt: 'OpenAI', tint: '#fff' },
     ];
-    const FINAL_LOGO_SRC  = 'onxlogo.svg'; // drawn high-DPI, tinted to white
+    const FINAL_LOGO_SRC  = 'onxlogo.svg';
     const FINAL_LOGO_TINT = '#ffffff';
 
     // ===== ELEMENTS =====
@@ -1238,6 +1232,18 @@ const SUGGESTIONS = [
     const canvas  = document.getElementById('onx-canvas');
     const controlsEl = document.getElementById('onx-controls');
     if (!canvas) return;
+
+    // ----- OPTIONAL: override SIZE via data-size-* attributes -----
+    (function applySizeOverridesFromData(){
+      const MAP = ["all","menu","menuTitle","menuSub","padding","cardWidth","cardHeight","logos","bestAI","O","finalLogo","unified"];
+      for (const k of MAP){
+        const dsKey = "size" + k.charAt(0).toUpperCase() + k.slice(1); // e.g. data-size-final-logo -> dataset.sizeFinalLogo
+        if (host.dataset[dsKey] !== undefined){
+          const v = parseFloat(host.dataset[dsKey]);
+          if (Number.isFinite(v)) SIZE[k] = v;
+        }
+      }
+    })();
 
     // ===== UTILS =====
     const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
@@ -1253,7 +1259,6 @@ const SUGGESTIONS = [
       const n = parseFloat(v);
       return Number.isFinite(n) ? n : fallbackNum;
     };
-
     const vp = () => {
       const vv = window.visualViewport;
       if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
@@ -1273,14 +1278,37 @@ const SUGGESTIONS = [
       get peakX(){ return parseFloat(host.dataset.peakX) || 0.58; },
       get peakY(){ return parseFloat(host.dataset.peakY) || 0.60; }
     };
-
     if (prefersReducedMotion){ TEMPO.speed = 3.5; } // very fast (less motion)
 
-    // ===== CANVAS / BACKING STORE (match stage aspect to avoid stretch/bleed) =====
-    let CONFIG = { w: 2048, h: 1152 }; // will be overwritten by setConfigFromStage()
+    // ===== CANVAS / BACKING STORE (match stage aspect) =====
+    let CONFIG = { w: 2048, h: 1152 }; // overwritten by setConfigFromStage()
     let dpr = 1;
-    let stageScale = 1;              // CSS transform scale applied to #onx-stage (mobile)
+    let stageScale = 1;
     let OVERSAMPLE = deviceMem <= 4 ? 1.25 : 1.5;
+
+    // High-DPI tint/raster cache for razor-sharp logos
+    const TINT_CACHE = new Map();
+    function tintToTarget(img, color, wCSS, hCSS){
+      const w = Math.max(1, Math.round(wCSS * dpr));
+      const h = Math.max(1, Math.round(hCSS * dpr));
+      const key = (img.src || img) + '|' + color + '|' + w + 'x' + h + '|dpr' + dpr;
+      let off = TINT_CACHE.get(key);
+      if (!off){
+        off = document.createElement('canvas');
+        off.width = w; off.height = h;
+        const octx = off.getContext('2d', { alpha: true });
+        octx.imageSmoothingEnabled = true;
+        octx.imageSmoothingQuality = 'high';
+        octx.clearRect(0,0,w,h);
+        octx.drawImage(img, 0, 0, w, h);
+        octx.globalCompositeOperation = 'source-in';
+        octx.fillStyle = color || '#fff';
+        octx.fillRect(0,0,w,h);
+        octx.globalCompositeOperation = 'source-over';
+        TINT_CACHE.set(key, off);
+      }
+      return off;
+    }
 
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
     if (!ctx) return;
@@ -1288,8 +1316,9 @@ const SUGGESTIONS = [
 
     function setBackingScale(){
       const raw = window.devicePixelRatio || 1;
-      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);   // cap to avoid huge textures
+      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);
       dpr = eff;
+      TINT_CACHE.clear(); // DPR/backing changed → invalidate cached bitmaps
       canvas.width  = Math.max(1, Math.round(CONFIG.w * dpr));
       canvas.height = Math.max(1, Math.round(CONFIG.h * dpr));
       ctx.setTransform(1,0,0,1,0,0);
@@ -1297,7 +1326,7 @@ const SUGGESTIONS = [
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     }
 
-    // Transparent BG buffer (logical size)
+    // Offscreen BG buffer
     let BG_CANVAS = document.createElement('canvas');
     let BG_CTX = BG_CANVAS.getContext('2d');
 
@@ -1315,16 +1344,12 @@ const SUGGESTIONS = [
 
     // Compute CONFIG to match the visible stage aspect precisely
     function setConfigFromStage(){
-      // Determine stage dimensions from layout (accounts for --stage-w/--stage-h/--stage-aspect)
       const rect = stageEl.getBoundingClientRect();
-      let wCSS = Math.max(1, rect.width);
-      let hCSS = Math.max(1, rect.height);
-
-      // Logical base width (detail) picks; keep crisp while balanced
+      const wCSS = Math.max(1, rect.width);
+      const hCSS = Math.max(1, rect.height);
       const targetLogicalW = isMobile() ? 1152 : 2048;
       const aspect = wCSS / hCSS;
       const logicalH = Math.round(targetLogicalW / Math.max(0.1, aspect));
-
       CONFIG = { w: Math.round(targetLogicalW), h: logicalH };
       syncBuffers();
     }
@@ -1346,7 +1371,6 @@ const SUGGESTIONS = [
       const PAD  = SIZE.padding;
       const MENU = SIZE.menu;
 
-      // Read stage margin from CSS var to keep spacing consistent with your advert layout
       STAGE_MARGIN = cssPx(host, '--stage-margin', DESIGN.stageMarginFallback);
 
       return {
@@ -1363,7 +1387,6 @@ const SUGGESTIONS = [
       };
     }
 
-    // Dynamic logo line height
     function computeLogoLineHeight(logoImgs){
       const pad = isMobile()? 24 : 36;
       const maxH = (isMobile()? 72 : 96) * SIZE.all * SIZE.logos;
@@ -1452,7 +1475,7 @@ const SUGGESTIONS = [
     const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
     const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
-    // ===== MOBILE AUTO-FIT SCALE (downscale only; never upscale to avoid blur) =====
+    // ===== MOBILE AUTO-FIT SCALE (downscale only) =====
     function controlHeight(){
       const ctrl = document.getElementById('onx-controls');
       return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
@@ -1481,12 +1504,12 @@ const SUGGESTIONS = [
 
       const scaleW = availW / baseW;
       const scaleH = availH / baseH;
-      const scale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only (no blur/bleed)
+      const scale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only (avoid blur)
 
       stageEl.style.transform = `scale(${scale})`;
       stageEl.style.transformOrigin = 'center top';
       stageScale = scale;
-      setBackingScale(); // match backing DPI to visual scale (prevents blur)
+      setBackingScale();
     }
 
     // -------------------- Phase A: Card (models) --------------------
@@ -1642,8 +1665,17 @@ const SUGGESTIONS = [
         const cx = x + w/2, cy = y;
         ctx.translate(Math.round(cx), Math.round(cy));
         ctx.scale(s, s);
-        if (img.image){ ctx.drawImage(img.image, -w/2, -logoH/2, w, logoH); }
-        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill(); }
+
+        // High-DPI, tinted at final draw size to avoid blur
+        const drawW = w * s, drawH = logoH * s;
+        if (img.raw){
+          const tinted = tintToTarget(img.raw, img.tint, drawW, drawH);
+          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH); // pre-scaled bitmap, draw in pre-scale coords
+        } else {
+          ctx.fillStyle = '#e9ecf2';
+          roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill();
+        }
+
         ctx.restore();
 
         positions.push({ x: x + w/2, y, w, h: logoH });
@@ -1666,7 +1698,7 @@ const SUGGESTIONS = [
       setFont(900, size, '"Audiowide", ui-sans-serif, system-ui');
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.shadowColor = 'rgba(0,0,0,0.12)';
-      ctx.shadowBlur = 18 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 10;
+      ctx.shadowBlur = 18 * (isMobile()? 0.7 : 1.0); ctx.shadowOffsetY = 10;
       ctx.fillStyle = '#ffffff';
       ctx.fillText('O', centerX, centerY);
       ctx.shadowColor = 'transparent';
@@ -1689,8 +1721,15 @@ const SUGGESTIONS = [
         ctx.save();
         ctx.globalAlpha = Math.max(0, opacity);
         ctx.translate(Math.round(curX), Math.round(curY));
-        if (img.image){ ctx.drawImage(img.image, -w/2, -h/2, w, h); }
-        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill(); }
+
+        if (img.raw){
+          const tinted = tintToTarget(img.raw, img.tint, w, h);
+          ctx.drawImage(tinted, -w/2, -h/2, w, h);
+        } else {
+          ctx.fillStyle = '#e9ecf2';
+          roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill();
+        }
+
         ctx.restore();
       });
     }
@@ -1716,7 +1755,7 @@ const SUGGESTIONS = [
       ctx.fillText('O', centerX, centerY);
       ctx.restore();
 
-      // Final logo
+      // Final logo (high-DPI tinted at exact size)
       const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
       const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
                           * SIZE.all * SIZE.finalLogo;
@@ -1726,8 +1765,10 @@ const SUGGESTIONS = [
 
       ctx.save();
       ctx.globalAlpha = logoIn;
-      if (finalLogoImg.image){
-        ctx.drawImage(finalLogoImg.image, Math.round(centerX - w/2), Math.round(centerY - h/2), Math.round(w), Math.round(h));
+      if (finalLogoImg.raw){
+        const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
+        ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
+                             Math.round(w), Math.round(h));
       } else {
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
@@ -1750,8 +1791,8 @@ const SUGGESTIONS = [
 
     // =================== Orchestrator & Assets ===================
     let isAnimating = false;
-    let runId = 0; // abort token for safe replay
-    let prepared = null; // cached assets
+    let runId = 0;
+    let prepared = null;
 
     function loadImage(src){
       return new Promise(resolve=>{
@@ -1767,39 +1808,17 @@ const SUGGESTIONS = [
       });
     }
 
-    function tintImageToColor(img, color='#ffffff'){
-      if (!img) return null;
-      const nw = img.naturalWidth || img.width || 1;
-      const nh = img.naturalHeight || img.height || 1;
-      const off = document.createElement('canvas');
-      off.width = nw; off.height = nh;
-      const octx = off.getContext('2d');
-      octx.imageSmoothingEnabled = true;
-      octx.imageSmoothingQuality = 'high';
-      octx.clearRect(0,0,nw,nh);
-      octx.drawImage(img, 0, 0, nw, nh);
-      octx.globalCompositeOperation = 'source-in';
-      octx.fillStyle = color; octx.fillRect(0,0,nw,nh);
-      octx.globalCompositeOperation = 'source-over';
-      return off;
-    }
-
     async function prepareAssets(){
       const rawLogoImgs = await Promise.all(LOGOS.map(l => loadImage(l.src)));
-      const logoImgs = rawLogoImgs.map((r, i) => {
-        const want = LOGOS[i].tint;
-        if (r.image && want){
-          const tinted = tintImageToColor(r.image, want);
-          return { image: tinted, aspect: r.aspect || 1 };
-        }
-        return r;
-      });
+      const logoImgs = rawLogoImgs.map((r, i) => ({
+        raw: r.image,
+        aspect: r.aspect || 1,
+        tint: LOGOS[i].tint || '#fff'
+      }));
       logoImgs.forEach(v => { if (!isFinite(v.aspect) || v.aspect <= 0) v.aspect = 1; });
 
       const finalLogoRaw = await loadImage(FINAL_LOGO_SRC);
-      let tinted = null;
-      if (finalLogoRaw && finalLogoRaw.image){ tinted = tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT); }
-      const finalLogo = { image: tinted || finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1 };
+      const finalLogo = { raw: finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1, tint: FINAL_LOGO_TINT };
 
       if (document.fonts && document.fonts.ready){ try { await document.fonts.ready; } catch {} }
       return { logoImgs, finalLogo };
@@ -1870,7 +1889,7 @@ const SUGGESTIONS = [
       requestAnimationFrame(stepA);
     }
 
-    // ---------- Controls (minimal): Replay button ----------
+    // ---------- Controls ----------
     function ensureControls(){
       if (!controlsEl) return;
       controlsEl.innerHTML = '';
@@ -1886,18 +1905,18 @@ const SUGGESTIONS = [
       controlsEl.appendChild(replay);
     }
 
-    // ---------- Init: compute config from actual stage size for perfect fit ----------
+    // ---------- Init ----------
     function initialBuild(){
-      setConfigFromStage();          // match aspect to visible card
-      setBackingScale();             // set high-DPI backing store
+      setConfigFromStage();
+      setBackingScale();
       STYLE = buildStyle();
       layout = measureFinalLayout();
-      clearStage(); renderCard(0);   // crisp first frame
+      clearStage(); renderCard(0);
       ensureControls();
     }
     initialBuild();
 
-    // Autoplay when visible (unless reduced motion → quick final render)
+    // Autoplay when visible
     let autoplayed = false;
     async function tryAutoplay(){
       if (autoplayed || isAnimating) return;
@@ -1931,14 +1950,13 @@ const SUGGESTIONS = [
       playSequence(prepared);
     }, { passive: true }); }
 
-    // Mobile fit + rebuild on resize (keeps everything aligned & bleed-free)
+    // Mobile fit + rebuild on resize
     applyMobileScale();
     let rid = null;
     function rebuildIfNeeded(){
-      applyMobileScale(); // refreshes backing DPI & scales down on mobile if needed
-
+      applyMobileScale();
       const before = `${CONFIG.w}x${CONFIG.h}`;
-      setConfigFromStage(); // recompute aspect-aligned CONFIG from CSS size
+      setConfigFromStage();
       const after = `${CONFIG.w}x${CONFIG.h}`;
       if (before !== after){ setBackingScale(); }
 
@@ -1964,7 +1982,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
 
 
 
