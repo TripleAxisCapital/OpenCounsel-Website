@@ -1479,314 +1479,301 @@ const SUGGESTIONS = [
 
 
 
-<!-- ========================= ONX APPLE‑STYLE EXPLAINER (DROP‑IN) =========================
-     • Purpose: ultra‑polished, minimal “Apple” animation that explains ONX in ~15s
-     • How to use: paste this whole <section> anywhere (ideally right AFTER #chat-hero)
-     • No deps. Accessible. Honors prefers‑reduced‑motion + dark mode. Zero globals.
-     ================================================================================ -->
-<section id="onx-explain" aria-label="How ONX works — fast intro" data-autoplay="true">
+<!-- =================== ONX CINEMA (Apple‑style explainer) ===================
+Drop this whole <section> anywhere after your chat-hero. No external deps.
+It auto-plays once when scrolled into view, tells ONX in ~10s, then rests on CTA.
+
+Edit the CTA href, colors, and copy in the tokens below.
+========================================================================= -->
+<section id="onx-cinema" aria-label="ONX in 10 seconds">
   <style>
-    /* ------------------------- Design Tokens (scoped) ------------------------- */
-    #onx-explain{ 
-      --bg:#ffffff; --ink:#0B0B0C; --muted:#6f7683; --line:#E6E8EC;
-      --inkInv:#F5F7FB; --lineInv:#23262D;
-      --radius:28px; --padX:24px; --padY:22px; --gap:18px; --maxW:1100px;
-      --cardW: min(100%, 980px); --stageH: clamp(540px, 72svh, 760px);
-      --shadowA:0 1px 0 rgba(0,0,0,.04); --shadowB:0 16px 40px rgba(0,0,0,.06);
-      --ease:cubic-bezier(.22,.61,.36,1); --fade:380ms; --pop:560ms; --draw:1100ms;
-      --accent1:#1A84FF; --accent2:#57c7d9; --accent3:#3f6768; --good:#11a36a;
-      --plate:rgba(255,255,255,.7); --plateBlur:14px; --halo:rgba(26,132,255,.12);
-      --chip:#0B0B0C; --chipInk:#fff; --chipLine:#0b0b0c;
+    /* -------------------- Design tokens (scoped) -------------------- */
+    #onx-cinema{
+      --bg:#ffffff;             /* surface */
+      --ink:#0B0B0C;            /* primary text */
+      --muted:#6E7785;          /* secondary text */
+      --line:#E8EBF0;           /* subtle borders */
+      --accent:#0B0B0C;         /* CTA base (black) */
+      --accentHover:#121212;    /* CTA hover */
+      --brandA:#3f6768;         /* brand accent 1 (matches your hero) */
+      --brandB:#57c7d9;         /* brand accent 2 */
+
+      --radius:28px;            /* rounded corners */
+      --shadowA:0 1px 0 rgba(0,0,0,.04);
+      --shadowB:0 18px 40px rgba(0,0,0,.06);
+
+      --headline: clamp(24px, 3.4vw, 42px);
+      --kicker:   clamp(12px, 1.55vw, 14px);
+      --body:     clamp(14px, 1.85vw, 16px);
+
+      --stageH: min(64vh, 720px); /* visual height */
+      --stageMinH: 420px;         /* ensure presence on small screens */
+
+      background:var(--bg);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    @media (min-width:960px){ #onx-explain{ --padX:28px; --padY:26px; --gap:20px; } }
 
-    /* --------------------------- Section Layout ------------------------------ */
-    #onx-explain{ position:relative; background:var(--bg); color:var(--ink); isolation:isolate; }
-    #onx-explain .wrap{ max-width:var(--maxW); margin:0 auto; padding: clamp(36px,6vw,72px) var(--padX); }
-
-    /* Subtle top/bottom fades so it melts into neighbors (Apple-y) */
-    #onx-explain::before, #onx-explain::after{ content:""; position:absolute; left:0; right:0; pointer-events:none; }
-    #onx-explain::before{ top:-1px; height:14vh; background:linear-gradient(to bottom, var(--bg) 0%, rgba(255,255,255,0) 100%); }
-    #onx-explain::after{ bottom:-1px; height:14vh; background:linear-gradient(to top, var(--bg) 0%, rgba(255,255,255,0) 100%); }
-
-    /* --------------------------- Stage Shell -------------------------------- */
-    #onx-explain .stage{ position:relative; width:var(--cardW); height:var(--stageH); margin:0 auto; border:1px solid var(--line); border-radius:var(--radius); background:rgba(255,255,255,.82); backdrop-filter:saturate(1.05) blur(8px); box-shadow:var(--shadowA), var(--shadowB); overflow:hidden; }
-    @supports (backdrop-filter: blur(1px)){ #onx-explain .stage{ background:rgba(255,255,255,.55); backdrop-filter:saturate(1.1) blur(12px); } }
-
-    /* Title row */
-    #onx-explain header.h{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 18px; border-bottom:1px solid var(--line); }
-    #onx-explain .h .brand{ display:flex; align-items:center; gap:12px; font-weight:700; letter-spacing:-.015em; font-size:clamp(18px,2.2vw,22px); }
-    #onx-explain .h .brand .dot{ width:12px; height:12px; border-radius:999px; background:radial-gradient(35% 35% at 35% 35%, #fff 0 40%, rgba(255,255,255,.0) 41%), linear-gradient(135deg, var(--accent1), var(--accent2)); box-shadow:0 0 0 6px var(--halo); }
-    #onx-explain .h .controls{ display:flex; align-items:center; gap:8px; }
-    #onx-explain .btn{ -webkit-tap-highlight-color:transparent; appearance:none; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:999px; padding:8px 12px; font-size:13px; font-weight:600; letter-spacing:.01em; cursor:pointer; transition:transform .12s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease; }
-    #onx-explain .btn:hover{ transform:translateY(-1px); box-shadow:0 6px 16px rgba(0,0,0,.08); }
-
-    /* Progress pills */
-    #onx-explain .pips{ display:flex; align-items:center; gap:8px; }
-    #onx-explain .pip{ width:42px; height:6px; border-radius:999px; background:#e9edf3; overflow:hidden; position:relative; }
-    #onx-explain .pip>i{ content:""; position:absolute; inset:0; width:0%; background:linear-gradient(90deg, var(--accent1), var(--accent2)); transition:width var(--draw) linear; }
-    #onx-explain .pip.is-fill>i{ width:100%; }
-
-    /* ----------------------------- Beats ------------------------------------- */
-    #onx-explain .beats{ position:absolute; inset:0; display:grid; }
-    #onx-explain .beat{ position:absolute; inset:0; display:grid; grid-template-rows:1fr auto; opacity:0; transform:translateY(18px) scale(.985); transition:opacity var(--fade) var(--ease), transform var(--fade) var(--ease); }
-    #onx-explain .beat.is-active{ opacity:1; transform:translateY(0) scale(1); }
-    #onx-explain .vis{ display:grid; place-items:center; position:relative; }
-    #onx-explain .cap{ padding:0 clamp(18px,4vw,32px) clamp(16px,3.4vw,28px); text-align:center; font-size:clamp(16px,1.7vw,18px); color:#263040; }
-    #onx-explain .cap b{ font-weight:700; }
-
-    /* ---------- BEAT 1: UNIFY (orbit -> merge pulse) ---------- */
-    #onx-explain .orb{ position:relative; width:min(88vmin,780px); aspect-ratio:1/1; }
-    #onx-explain .core{ position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); width:160px; height:160px; border-radius:50%; background:radial-gradient(40% 40% at 35% 35%, #fff 0 55%, rgba(255,255,255,.0) 56%), linear-gradient(145deg, #f7fbff, #dfeeff); border:1px solid var(--line); box-shadow:0 12px 34px rgba(26,132,255,.18), 0 2px 0 rgba(255,255,255,.9) inset; display:grid; place-items:center; font-weight:700; letter-spacing:.08em; }
-    #onx-explain .core span{ font-family: "Audiowide", ui-sans-serif, -apple-system, "SF Pro Text", Inter, system-ui; font-size:22px; }
-
-    #onx-explain .ring{ position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(26,132,255,.18); }
-    #onx-explain .sat{ position:absolute; top:50%; left:50%; width:92px; height:44px; transform-origin: -220px 0; translate: -50% -50%; display:grid; place-items:center; border-radius:999px; border:1px solid var(--chipLine); background:var(--chip); color:var(--chipInk); font:600 12px/1 Inter, system-ui; letter-spacing:.02em; box-shadow:0 6px 18px rgba(0,0,0,.16); }
-    #onx-explain .sat i{ font-style:normal; padding:6px 10px; }
-    #onx-explain .sat[data-m="gpt"]   { transform:rotate(0deg);   animation:orbit 9s linear infinite; }
-    #onx-explain .sat[data-m="qwen"]  { transform:rotate(90deg);  animation:orbit 11s linear infinite reverse; }
-    #onx-explain .sat[data-m="gemma"] { transform:rotate(180deg); animation:orbit 10s linear infinite; }
-    #onx-explain .sat[data-m="grok"]  { transform:rotate(270deg); animation:orbit 12s linear infinite reverse; }
-    @keyframes orbit{ to{ rotate:360deg; } }
-    #onx-explain .core::after{ content:""; position:absolute; inset:-8px; border-radius:50%; border:2px solid rgba(26,132,255,.0); box-shadow:0 0 0 0 rgba(26,132,255,.0); }
-    /* merge pulse when beat activates */
-    #onx-explain .beat.is-active .core::after{ animation:merge 900ms var(--ease) 320ms both; }
-    @keyframes merge{ 0%{border-color:rgba(26,132,255,.0); box-shadow:0 0 0 0 rgba(26,132,255,.0);} 30%{border-color:rgba(26,132,255,.35);} 60%{box-shadow:0 0 0 18px rgba(26,132,255,.12);} 100%{border-color:rgba(26,132,255,.0); box-shadow:0 0 0 0 rgba(26,132,255,.0);} }
-
-    /* ---------- BEAT 2: ROUTE (drawn pipes) ---------- */
-    #onx-explain .route{ width:min(90vmin,860px); }
-    #onx-explain .route svg{ width:100%; height:auto; display:block; }
-    #onx-explain .pipe{ stroke:#99a3b3; stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1000; stroke-dashoffset:1000; }
-    #onx-explain .beat.is-active .pipe{ animation:dash var(--draw) ease forwards; }
-    @keyframes dash{ to{ stroke-dashoffset:0; } }
-    #onx-explain .chip{ font:600 12px/1 Inter, system-ui; fill:#0B0B0C; }
-
-    /* ---------- BEAT 3: AUTOMATE (stacked cards ticking) ---------- */
-    #onx-explain .stack{ width:min(88vmin,780px); display:grid; gap:14px; }
-    #onx-explain .task{ border:1px solid var(--line); background:#fff; border-radius:18px; padding:14px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 6px 20px rgba(0,0,0,.06); transform:translateY(12px); opacity:0; }
-    #onx-explain .task i{ width:22px; height:22px; border-radius:999px; border:1px solid #cfe8dc; display:grid; place-items:center; }
-    #onx-explain .task i svg{ width:14px; height:14px; stroke:var(--good); }
-    #onx-explain .beat.is-active .task{ animation:rise .65s var(--ease) forwards; }
-    #onx-explain .beat.is-active .task:nth-child(2){ animation-delay:.10s; }
-    #onx-explain .beat.is-active .task:nth-child(3){ animation-delay:.20s; }
-    #onx-explain .beat.is-active .task:nth-child(4){ animation-delay:.30s; }
-    @keyframes rise{ to{ transform:translateY(0); opacity:1; } }
-
-    /* ---------- BEAT 4: OWN IT (privacy + speed) ---------- */
-    #onx-explain .own{ width:min(88vmin,780px); display:grid; place-items:center; gap:18px; }
-    #onx-explain .own .row{ display:flex; gap:22px; align-items:center; flex-wrap:wrap; justify-content:center; }
-    #onx-explain .badge{ border:1px solid var(--line); border-radius:999px; padding:10px 14px; font:600 12px/1 Inter, system-ui; background:#fff; box-shadow:0 8px 24px rgba(0,0,0,.06); }
-    #onx-explain .lock{ width:88px; height:88px; border-radius:22px; background:#0F1217; border:1px solid #1f2430; display:grid; place-items:center; color:#fff; position:relative; overflow:hidden; }
-    #onx-explain .speed{ width:220px; height:120px; position:relative; }
-    #onx-explain .needle{ transform-origin: 10px 90px; transform:rotate(-60deg); transition: transform 900ms var(--ease) 240ms; }
-    #onx-explain .beat.is-active .needle{ transform:rotate(48deg); }
-
-    /* Caption tweaks per beat */
-    #onx-explain .cap small{ display:block; opacity:.75; margin-top:4px; font-size:.92em; }
-
-    /* --------------------------- Dark Mode ----------------------------------- */
     @media (prefers-color-scheme: dark){
-      #onx-explain{ --bg:#0B0B0C; --ink:#F3F6FB; --muted:#B8BFCA; --line:#20252e; --plate:rgba(15,18,23,.55); --plateBlur:10px; }
-      #onx-explain .stage{ background:rgba(16,20,26,.6); }
-      #onx-explain .btn{ background:#0F1217; color:#E8EDF6; border-color:#222a36; }
-      #onx-explain .pip{ background:#1a2030; }
-      #onx-explain .cap{ color:#d9e1f0; }
-      #onx-explain .task{ background:#10151c; }
-      #onx-explain .badge{ background:#10151c; }
-      #onx-explain .chip{ fill:#f5f8ff; }
-      #onx-explain .sat{ background:#10151c; color:#f5f8ff; border-color:#2a3140; }
+      #onx-cinema{ --bg:#0B0B0C; --ink:#F3F6FB; --muted:#B8BFCA; --line:#1C2027; --accent:#F3F6FB; --accentHover:#FFFFFF; }
     }
 
-    /* ---------------------- Reduced Motion Friendly -------------------------- */
+    /* ------------------------- Layout ------------------------- */
+    #onx-cinema .wrap{ max-width:1180px; margin:0 auto; padding:64px 20px 72px; box-sizing:border-box; }
+    #onx-cinema .top{ display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    #onx-cinema .title{ font-size: clamp(22px, 3vw, 32px); font-weight:700; letter-spacing:-0.01em; }
+    #onx-cinema .sub{ color:var(--muted); font-size:var(--body); }
+
+    #onx-cinema .stage{
+      position:relative; border:1px solid var(--line); border-radius:var(--radius);
+      min-height:var(--stageMinH); height:var(--stageH);
+      box-shadow:var(--shadowA), var(--shadowB); overflow:hidden; isolation:isolate;
+      background: radial-gradient(1200px 800px at 80% -20%, rgba(87,199,217,.06), transparent 60%),
+                  radial-gradient(1000px 700px at -20% 120%, rgba(63,103,104,.05), transparent 60%),
+                  var(--bg);
+    }
+
+    /* faint top hairline to mimic Apple plates */
+    #onx-cinema .stage::before{ content:""; position:absolute; inset:0; pointer-events:none; background:
+       linear-gradient(to bottom, rgba(255,255,255,.8), rgba(255,255,255,0)); mix-blend-mode:overlay; opacity:.4; height:1px; }
+
+    /* scene stacking */
+    #onx-cinema .scene{ position:absolute; inset:0; display:grid; grid-template-rows:1fr auto; align-items:end; padding:24px; opacity:0; transform:translateY(10px) scale(.995); transition:opacity .5s ease, transform .6s cubic-bezier(.22,.61,.36,1); }
+    #onx-cinema .scene.is-in{ opacity:1; transform:translateY(0) scale(1); }
+    #onx-cinema .copy{ z-index:3; }
+    #onx-cinema .kicker{ font-size:var(--kicker); text-transform:uppercase; letter-spacing:.18em; color:var(--muted); margin-bottom:10px; }
+    #onx-cinema .headline{ font-size:var(--headline); font-weight:700; letter-spacing:-0.015em; line-height:1.1; }
+    #onx-cinema .support{ margin-top:10px; color:var(--muted); font-size:var(--body); max-width:68ch; }
+
+    /* progress dots */
+    #onx-cinema .progress{ display:flex; justify-content:center; gap:8px; margin-top:18px; }
+    #onx-cinema .dot{ width:10px; height:10px; border-radius:999px; border:1px solid var(--line); background:transparent; cursor:pointer; transition:transform .2s ease, background-color .2s ease, border-color .2s ease; }
+    #onx-cinema .dot:hover{ transform:scale(1.1); }
+    #onx-cinema .dot.is-active{ background:var(--ink); border-color:transparent; }
+
+    /* ------------------------- Scene 1 — Real-time Knowledge ------------------------- */
+    #onx-cinema .grid{ position:absolute; inset:0; background:
+      linear-gradient(to right, rgba(0,0,0,.05) 1px, transparent 1px) 0 0/40px 40px,
+      linear-gradient(to bottom, rgba(0,0,0,.05) 1px, transparent 1px) 0 0/40px 40px; opacity:.15; }
+    @media (prefers-color-scheme: dark){ #onx-cinema .grid{ opacity:.28; } }
+
+    #onx-cinema .scan{ position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(87,199,217,.18), transparent); transform:translateX(-100%); }
+    #onx-cinema .scene-1.is-in .scan{ animation:scanX 3.2s ease-in-out forwards; }
+    @keyframes scanX{ to{ transform:translateX(100%);} }
+
+    #onx-cinema .chips{ position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
+    #onx-cinema .chip{ position:absolute; padding:8px 12px; border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.85); color:var(--ink); font-size:12px; box-shadow:0 4px 18px rgba(0,0,0,.08); transform:translateY(20px); opacity:0; will-change:transform,opacity; }
+    @media (prefers-color-scheme: dark){ #onx-cinema .chip{ background:rgba(15,18,23,.85); color:var(--ink);} }
+    #onx-cinema .scene-1.is-in .chip{ animation:chipUp .9s cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards; }
+    @keyframes chipUp{ to{ transform:translateY(-12px); opacity:1; } }
+
+    /* ------------------------- Scene 2 — Unified Intelligence ------------------------- */
+    #onx-cinema .unified{ position:absolute; inset:0; display:grid; place-items:center; }
+    #onx-cinema .core{ position:relative; width:min(52vmin, 360px); aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 50% 55%, rgba(87,199,217,.22), transparent 44%), radial-gradient(circle at 50% 50%, rgba(63,103,104,.15), transparent 60%); box-shadow:0 10px 40px rgba(87,199,217,.25), inset 0 0 0 1px var(--line); }
+
+    #onx-cinema .ring{ position:absolute; inset:-20%; border-radius:50%; border:1px dashed rgba(0,0,0,.12); }
+    @media (prefers-color-scheme: dark){ #onx-cinema .ring{ border-color:rgba(255,255,255,.14);} }
+    #onx-cinema .orbit{ position:absolute; inset:-20%; animation:spin 10s linear infinite; transform-origin:50% 50%; }
+    @keyframes spin{ to{ transform:rotate(360deg);} }
+
+    #onx-cinema .model{ position:absolute; left:50%; top:0; transform:translate(-50%,-50%); padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:12px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
+    @media (prefers-color-scheme: dark){ #onx-cinema .model{ background:#0F1217; color:var(--ink); } }
+
+    /* merge to core */
+    #onx-cinema .scene-2.is-in .model{ animation:merge 1.6s cubic-bezier(.22,.61,.36,1) 1.4s forwards; }
+    @keyframes merge{ to{ top:50%; transform:translate(-50%,-50%) scale(.92); opacity:.0; } }
+
+    /* pulse when unified */
+    #onx-cinema .scene-2.is-in .core::after{ content:""; position:absolute; inset:-8%; border-radius:50%; background:radial-gradient(circle, rgba(87,199,217,.16), transparent 60%); opacity:0; animation:corePulse .9s ease 3s forwards; }
+    @keyframes corePulse{ to{ opacity:1; } }
+
+    /* ------------------------- Scene 3 — Agentic Workflows ------------------------- */
+    #onx-cinema .flow{ position:absolute; inset:0; display:grid; place-items:center; }
+    #onx-cinema .lane{ position:relative; width:min(860px, 86%); display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; align-items:center; }
+    #onx-cinema .card{ position:relative; padding:16px 14px; min-height:76px; border:1px solid var(--line); border-radius:18px; background:#fff; box-shadow:0 6px 24px rgba(0,0,0,.06); opacity:0; transform:translateY(10px); }
+    @media (prefers-color-scheme: dark){ #onx-cinema .card{ background:#0F1217; color:var(--ink);} }
+    #onx-cinema .scene-3.is-in .card{ animation:cardIn .6s cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards; }
+    @keyframes cardIn{ to{ opacity:1; transform:translateY(0);} }
+
+    #onx-cinema .pipe{ position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:2px; background:linear-gradient(to right, rgba(111,117,126,.25), rgba(111,117,126,.25)); overflow:hidden; }
+    #onx-cinema .scene-3.is-in .pipe::after{ content:""; position:absolute; left:-20%; top:0; bottom:0; width:20%; background:linear-gradient(90deg, transparent, rgba(87,199,217,.85), transparent); animation:dash 1.2s ease-in-out .25s forwards; }
+    @keyframes dash{ to{ left:100%; } }
+
+    #onx-cinema .check{ position:absolute; right:12px; bottom:10px; width:18px; height:18px; border-radius:999px; border:1px solid var(--line); display:grid; place-items:center; opacity:.0; transform:scale(.85); }
+    #onx-cinema .scene-3.is-in .check{ animation:tick .35s ease 1.2s forwards; }
+    @keyframes tick{ to{ opacity:1; transform:scale(1);} }
+    #onx-cinema .check svg{ display:block; width:12px; height:12px; stroke:var(--ink); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+
+    /* ------------------------- Scene 4 — CTA ------------------------- */
+    #onx-cinema .cta-wrap{ display:grid; place-items:center; text-align:center; gap:14px; padding-bottom:14px; }
+    #onx-cinema .cta{ display:inline-grid; place-items:center; padding:14px 22px; border-radius:999px; border:1px solid var(--ink); background:var(--accent); color:#fff; font-weight:600; text-decoration:none; transition:transform .15s ease, background-color .2s ease, box-shadow .2s ease; box-shadow:0 10px 24px rgba(0,0,0,.10), 0 18px 40px rgba(0,0,0,.08); }
+    #onx-cinema .cta:hover{ background:var(--accentHover); transform:translateY(-1px); }
+    #onx-cinema .cta:active{ transform:translateY(0); }
+
+    /* ------------------------- Reduced motion ------------------------- */
     @media (prefers-reduced-motion: reduce){
-      #onx-explain .beat{ transition:none !important; transform:none !important; opacity:1 !important; }
-      #onx-explain .pipe{ animation:none !important; stroke-dashoffset:0 !important; }
-      #onx-explain .task{ animation:none !important; transform:none !important; opacity:1 !important; }
-      #onx-explain .needle{ transition:none !important; transform:rotate(20deg) !important; }
+      #onx-cinema .scene{ transition:none; }
+      #onx-cinema .scene *{ animation:none !important; }
     }
   </style>
 
   <div class="wrap">
-    <div class="stage" role="group" aria-roledescription="animated explainer">
-      <header class="h">
-        <div class="brand"><span class="dot" aria-hidden="true"></span> ONX — The Unfair Advantage</div>
-        <div class="controls">
-          <div class="pips" aria-hidden="true"><span class="pip"><i></i></span><span class="pip"><i></i></span><span class="pip"><i></i></span><span class="pip"><i></i></span></div>
-          <button class="btn" data-act="replay" aria-label="Replay animation">Replay</button>
+    <div class="top">
+      <div class="title">ONX, explained at a glance</div>
+      <div class="sub">The fusion of the world’s smartest AI—precision, real‑time knowledge, unified intelligence, and agentic workflows.</div>
+    </div>
+
+    <!-- ============================== STAGE ============================== -->
+    <div class="stage" role="img" aria-label="Animation shows: Real-time Knowledge, Unified Intelligence, Agentic Workflows, then Start Free CTA.">
+
+      <!-- Scene 1: Real-time Knowledge -->
+      <div class="scene scene-1 is-in" data-idx="0">
+        <div class="grid" aria-hidden="true"></div>
+        <div class="scan" aria-hidden="true"></div>
+        <div class="chips" aria-hidden="true">
+          <span class="chip" style="left:16%; top:36%; --delay:.10s">Breaking data</span>
+          <span class="chip" style="left:44%; top:28%; --delay:.22s">Live markets</span>
+          <span class="chip" style="left:74%; top:40%; --delay:.34s">Fresh research</span>
+          <span class="chip" style="left:30%; top:58%; --delay:.46s">New releases</span>
+          <span class="chip" style="left:64%; top:66%; --delay:.58s">On‑chain signals</span>
         </div>
-      </header>
-
-      <div class="beats" aria-live="polite">
-        <!-- BEAT 1: UNIFY -->
-        <section class="beat" data-beat="1" aria-label="Unify the best models into one brain">
-          <div class="vis">
-            <div class="orb" aria-hidden="true">
-              <div class="ring"></div>
-              <div class="core"><span>ONX</span></div>
-              <div class="sat" data-m="gpt"><i>GPT</i></div>
-              <div class="sat" data-m="qwen"><i>QWEN</i></div>
-              <div class="sat" data-m="gemma"><i>GEMMA</i></div>
-              <div class="sat" data-m="grok"><i>GROK</i></div>
-            </div>
-          </div>
-          <p class="cap"><b>Unify</b> the best models into one brain — ONX routes for <b>quality, speed, and cost</b>.</p>
-        </section>
-
-        <!-- BEAT 2: ROUTE -->
-        <section class="beat" data-beat="2" aria-label="Route every task to its best specialist">
-          <div class="vis">
-            <div class="route" aria-hidden="true">
-              <svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg" role="img">
-                <defs>
-                  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#1A84FF" flood-opacity=".14"/>
-                  </filter>
-                </defs>
-                <!-- source chips -->
-                <rect x="32" y="48" rx="14" ry="14" width="160" height="44" fill="#0B0B0C"/>
-                <text x="112" y="76" text-anchor="middle" class="chip" fill="#fff">Chat</text>
-                <rect x="32" y="128" rx="14" ry="14" width="160" height="44" fill="#0B0B0C"/>
-                <text x="112" y="156" text-anchor="middle" class="chip" fill="#fff">Code</text>
-                <rect x="32" y="208" rx="14" ry="14" width="160" height="44" fill="#0B0B0C"/>
-                <text x="112" y="236" text-anchor="middle" class="chip" fill="#fff">Research</text>
-                <rect x="32" y="288" rx="14" ry="14" width="160" height="44" fill="#0B0B0C"/>
-                <text x="112" y="316" text-anchor="middle" class="chip" fill="#fff">Design</text>
-
-                <!-- pipes to ONX router -->
-                <path class="pipe" d="M192 70 C 260 70, 300 70, 380 120"/>
-                <path class="pipe" d="M192 150 C 280 150, 300 180, 380 180"/>
-                <path class="pipe" d="M192 230 C 260 230, 300 230, 380 220"/>
-                <path class="pipe" d="M192 310 C 260 310, 320 300, 380 260"/>
-
-                <!-- ONX router node -->
-                <g filter="url(#glow)">
-                  <circle cx="480" cy="180" r="58" fill="url(#g1)" stroke="#cfe0ff"/>
-                  <text x="480" y="186" text-anchor="middle" class="chip">ONX</text>
-                </g>
-                <defs>
-                  <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#f7fbff"/><stop offset="100%" stop-color="#dfeeff"/>
-                  </linearGradient>
-                </defs>
-
-                <!-- pipes out to outcomes -->
-                <path class="pipe" d="M538 180 C 620 180, 700 120, 780 120"/>
-                <path class="pipe" d="M538 180 C 620 180, 700 180, 780 180"/>
-                <path class="pipe" d="M538 180 C 620 180, 700 240, 780 240"/>
-
-                <rect x="780" y="98" rx="14" ry="14" width="148" height="44" fill="#0B0B0C"/>
-                <text x="854" y="126" text-anchor="middle" class="chip" fill="#fff">Faster</text>
-                <rect x="780" y="158" rx="14" ry="14" width="148" height="44" fill="#0B0B0C"/>
-                <text x="854" y="186" text-anchor="middle" class="chip" fill="#fff">Smarter</text>
-                <rect x="780" y="218" rx="14" ry="14" width="148" height="44" fill="#0B0B0C"/>
-                <text x="854" y="246" text-anchor="middle" class="chip" fill="#fff">Cheaper</text>
-              </svg>
-            </div>
-          </div>
-          <p class="cap"><b>Route</b> every task to its best specialist — then combine results for a <b>better final</b>.</p>
-        </section>
-
-        <!-- BEAT 3: AUTOMATE -->
-        <section class="beat" data-beat="3" aria-label="Automate the work, keep control">
-          <div class="vis">
-            <div class="stack" aria-hidden="true">
-              <div class="task"><i><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></i> Launch pages & outreach sequences</div>
-              <div class="task"><i><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></i> Research, summarize, decide — in one flow</div>
-              <div class="task"><i><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></i> Ship product updates twice as fast</div>
-              <div class="task"><i><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg></i> Replace 10 tools with one ONX workflow</div>
-            </div>
-          </div>
-          <p class="cap"><b>Automate</b> the grind with agentic workflows — you approve, ONX executes. <small>Inbox, docs, code, design — all orchestrated.</small></p>
-        </section>
-
-        <!-- BEAT 4: OWN IT -->
-        <section class="beat" data-beat="4" aria-label="Own your privacy and speed">
-          <div class="vis">
-            <div class="own" aria-hidden="true">
-              <div class="row">
-                <div class="lock" title="Privacy">
-                  <svg viewBox="0 0 64 64" width="48" height="48" aria-hidden="true">
-                    <rect x="14" y="28" width="36" height="24" rx="6" fill="#1b2130" stroke="#2a3140"/>
-                    <path d="M22 28v-6a10 10 0 0 1 20 0v6" fill="none" stroke="#9fb2d0" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="32" cy="40" r="4" fill="#1A84FF"/>
-                  </svg>
-                </div>
-                <div class="speed" title="Speed">
-                  <svg viewBox="0 0 220 120" width="220" height="120">
-                    <path d="M20 100 A90 90 0 0 1 200 100" fill="none" stroke="#dbe6ff" stroke-width="14" stroke-linecap="round"/>
-                    <path d="M20 100 A90 90 0 0 1 200 100" fill="none" stroke="#1A84FF" stroke-width="14" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300" class="gauge"/>
-                    <g class="needle" transform="translate(0,0)">
-                      <rect x="8" y="88" width="6" height="52" rx="3" fill="#0B0B0C"/>
-                      <circle cx="11" cy="90" r="8" fill="#1A84FF"/>
-                    </g>
-                  </svg>
-                </div>
-              </div>
-              <div class="row">
-                <span class="badge">Local‑first</span>
-                <span class="badge">Cloud power</span>
-                <span class="badge">Yours — not theirs</span>
-              </div>
-            </div>
-          </div>
-          <p class="cap"><b>Own it</b>: privacy by default, enterprise‑ready. <small>Local‑first. Cloud when you want it.</small></p>
-        </section>
+        <div class="copy">
+          <div class="kicker">Real‑time Knowledge</div>
+          <div class="headline">Answers that update as the world changes.</div>
+          <div class="support">ONX ingests the latest information so decisions stay precise—no stale outputs.</div>
+        </div>
       </div>
+
+      <!-- Scene 2: Unified Intelligence -->
+      <div class="scene scene-2" data-idx="1">
+        <div class="unified" aria-hidden="true">
+          <div class="core"></div>
+          <div class="ring"></div>
+          <div class="orbit">
+            <span class="model" style="top:0%">GPT</span>
+            <span class="model" style="top:18%">Claude</span>
+            <span class="model" style="top:36%">Qwen</span>
+            <span class="model" style="top:54%">Llama</span>
+          </div>
+        </div>
+        <div class="copy">
+          <div class="kicker">Unified Intelligence</div>
+          <div class="headline">The best models, routed as one brain.</div>
+          <div class="support">ONX orchestrates multiple AIs and picks the right one for speed, cost, and quality—automatically.</div>
+        </div>
+      </div>
+
+      <!-- Scene 3: Agentic Workflows -->
+      <div class="scene scene-3" data-idx="2">
+        <div class="flow" aria-hidden="true">
+          <div class="lane">
+            <div class="pipe"></div>
+            <div class="card" style="--delay:.1s">
+              <div class="kicker" style="margin:0 0 6px 0">Research</div>
+              <div class="support">Scan sources, summarize, compare.</div>
+              <div class="check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </div>
+            <div class="card" style="--delay:.25s">
+              <div class="kicker" style="margin:0 0 6px 0">Draft</div>
+              <div class="support">Write, edit, and refine—on brand.</div>
+              <div class="check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </div>
+            <div class="card" style="--delay:.4s">
+              <div class="kicker" style="margin:0 0 6px 0">Outreach</div>
+              <div class="support">Personalize messages and schedule.</div>
+              <div class="check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </div>
+            <div class="card" style="--delay:.55s">
+              <div class="kicker" style="margin:0 0 6px 0">Close</div>
+              <div class="support">Track responses and follow‑ups.</div>
+              <div class="check"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <div class="copy">
+          <div class="kicker">Agentic Workflows</div>
+          <div class="headline">Plan, execute, and iterate—hands‑free.</div>
+          <div class="support">Agents chain tasks, call tools, and report back so you move from idea to outcome faster.</div>
+        </div>
+      </div>
+
+      <!-- Scene 4: CTA -->
+      <div class="scene scene-4" data-idx="3">
+        <div class="copy cta-wrap">
+          <div class="kicker">Built without limits</div>
+          <div class="headline">Start free today. Unlock your unfair advantage.</div>
+          <a class="cta" href="#start" aria-label="Start free with ONX">Start free</a>
+          <div class="support">ONX blurs the line toward true AGI with real‑time knowledge, unified intelligence, and agentic workflows.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- progress -->
+    <div class="progress" aria-hidden="true">
+      <button class="dot is-active" data-go="0" aria-label="Go to Real-time Knowledge"></button>
+      <button class="dot" data-go="1" aria-label="Go to Unified Intelligence"></button>
+      <button class="dot" data-go="2" aria-label="Go to Agentic Workflows"></button>
+      <button class="dot" data-go="3" aria-label="Go to Start Free"></button>
     </div>
   </div>
 
   <script>
-  (function(){
-    const root = document.currentScript.closest('#onx-explain');
-    if(!root) return;
-    const beats = Array.from(root.querySelectorAll('.beat'));
-    const pips = Array.from(root.querySelectorAll('.pip'));
-    const replayBtn = root.querySelector('[data-act="replay"]');
-    const gauge = root.querySelector('.gauge');
+    (() => {
+      const root = document.getElementById('onx-cinema');
+      if (!root) return;
+      const scenes = Array.from(root.querySelectorAll('.scene'));
+      const dots   = Array.from(root.querySelectorAll('.dot'));
 
-    // Config
-    const D = { per: 3400, gap: 220, startDelay: 200, draw: 1100 };
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const DURS = [2600, 2600, 2600, 2600]; // per scene (ms)
+      const LOOP = root.hasAttribute('data-loop');
+      let idx = 0, playing = false, timer = null, seenOnce = false;
 
-    let idx = 0, timer = null, started = false, inView = false;
-
-    function setActive(i){
-      beats.forEach((b,k)=>b.classList.toggle('is-active', k===i));
-      pips.forEach((p,k)=>p.classList.toggle('is-fill', k<=i));
-      if(gauge){ // animate speed gauge on final beat
-        if(i===3){ gauge.style.transition = `stroke-dashoffset 900ms var(--ease) 240ms`; gauge.style.strokeDashoffset = 0; }
-        else { gauge.style.transition = 'none'; gauge.style.strokeDashoffset = 300; }
+      function show(i){
+        scenes.forEach((s, k) => s.classList.toggle('is-in', k === i));
+        dots.forEach((d, k) => d.classList.toggle('is-active', k === i));
+        idx = i;
       }
-    }
 
-    function step(){
-      setActive(idx);
-      idx = (idx + 1) % beats.length;
-      timer = setTimeout(step, D.per + D.gap);
-    }
+      function next(){ show((idx + 1) % scenes.length); }
 
-    function start(){ if(started||reduce||!root.dataset.autoplay) return; started = true; clearTimeout(timer); setTimeout(step, D.startDelay); }
-    function stop(){ clearTimeout(timer); timer=null; started=false; }
-    function replay(){ stop(); idx=0; setActive(0); if(!reduce) start(); }
+      function playOnce(){
+        if (playing) return; playing = true; let step = 0;
+        function cycle(){
+          show(step);
+          const wait = DURS[step] || 2400;
+          timer = setTimeout(() => {
+            step++;
+            if (step < scenes.length){ cycle(); }
+            else { playing = false; seenOnce = true; if (LOOP) { step = 0; playOnce(); } }
+          }, wait);
+        }
+        cycle();
+      }
 
-    // Start only when in view (approx 35%)
-    const io = new IntersectionObserver((e)=>{
-      inView = e[0]?.isIntersecting; if(inView) start(); else stop();
-    }, { threshold: .35 });
-    io.observe(root.querySelector('.stage'));
+      // Manual nav
+      dots.forEach(d => d.addEventListener('click', () => {
+        clearTimeout(timer); playing = false; show(+d.dataset.go || 0);
+      }, {passive:true}));
 
-    // Initial static state
-    setActive(0);
+      // Auto start on view
+      const io = new IntersectionObserver((e) => {
+        const v = e[0]; if (!v || seenOnce) return;
+        if (v.isIntersecting && v.intersectionRatio > 0.28){ playOnce(); io.disconnect(); }
+      }, { threshold:[0, .15, .28, .5, 1] });
+      io.observe(root);
 
-    // Controls
-    replayBtn?.addEventListener('click', replay);
+      // Respect reduced motion — show CTA immediately
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){ show(3); seenOnce = true; }
 
-    // Safety: pause on visibility change
-    document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stop(); else if(inView) start(); });
-  })();
+      // Safety: clear timer if removed from DOM
+      const mo = new MutationObserver(() => { if (!document.body.contains(root)) { clearTimeout(timer); mo.disconnect(); } });
+      mo.observe(document.body, { childList:true, subtree:true });
+    })();
   </script>
 </section>
-<!-- ========================= /ONX EXPLAINER ========================= -->
+<!-- =================== /ONX CINEMA =================== -->
 
 
 
