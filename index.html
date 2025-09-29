@@ -1125,6 +1125,14 @@ const SUGGESTIONS = [
      data-size-menu-title="1.0"
      data-size-menu-sub="1.0"
 
+     <!-- Optional bouncing logo controls -->
+     data-bounce-logos=""                <!-- Comma-separated paths; empty = reuse LOGOS -->
+     data-bounce-copies="1"              <!-- Duplicate each logo N times -->
+     data-bounce-size="1.0"              <!-- Size multiplier for bouncing logos -->
+     data-bounce-speed="1.0"             <!-- Speed multiplier for bouncing logos -->
+     data-bounce-avoid-center="true"     <!-- Keep logos off the final logo/title area -->
+     data-bounce-clear=""                <!-- Optional custom clear radius (px) -->
+
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:35vh; --stage-h:35dvh; --stage-aspect:auto;">
   <!-- Fonts -->
@@ -1214,7 +1222,7 @@ const SUGGESTIONS = [
 
     const SLOGANS = ["The Best AI", "Built on the Best"];
 
-    // ======== ASSETS ========
+    // ======== ASSETS (line logos used pre-end) ========
     const LOGOS = [
       { src: 'grokLogo.svg',   alt: 'Grok',   tint: '#fff' },
       { src: 'googleLogo.svg', alt: 'Google', tint: '#fff' },
@@ -1289,7 +1297,7 @@ const SUGGESTIONS = [
     function tintToTarget(img, color, wCSS, hCSS){
       const w = Math.max(1, Math.round(wCSS * dpr));
       const h = Math.max(1, Math.round(hCSS * dpr));
-      const key = (img?.src || img) + '|' + color + '|' + w + 'x' + h + '|dpr' + dpr;
+      const key = (img.src || img) + '|' + color + '|' + w + 'x' + h + '|dpr' + dpr;
       let off = TINT_CACHE.get(key);
       if (!off){
         off = document.createElement('canvas');
@@ -1298,7 +1306,7 @@ const SUGGESTIONS = [
         octx.imageSmoothingEnabled = true;
         octx.imageSmoothingQuality = 'high';
         octx.clearRect(0,0,w,h);
-        if (img) octx.drawImage(img, 0, 0, w, h);
+        octx.drawImage(img, 0, 0, w, h);
         octx.globalCompositeOperation = 'source-in';
         octx.fillStyle = color || '#fff';
         octx.fillRect(0,0,w,h);
@@ -1430,6 +1438,31 @@ const SUGGESTIONS = [
       ctx.arcTo(x1,y1+h1,x1,y1,rr);
       ctx.arcTo(x1,y1,x1+w1,y1,rr);
       ctx.closePath();
+    }
+    function drawTextWithTracking(str, x, y, opts){
+      const { align='center', baseline='top', tracking=0, fillStyle='#fff', weight=700, size=40, fontFamily='"Inter", ui-sans-serif, system-ui', blur=0, alpha=1 } = opts||{};
+      setFont(weight, size, fontFamily);
+      ctx.save();
+      ctx.textAlign = align;
+      ctx.textBaseline = baseline;
+      ctx.fillStyle = fillStyle;
+      ctx.globalAlpha = alpha;
+      if (blur > 0.01) ctx.filter = `blur(${blur}px)`;
+
+      // Compute starting cursor X based on alignment
+      let width = 0;
+      for (let i=0;i<str.length;i++){ width += ctx.measureText(str[i]).width + (i?tracking:0); }
+      let startX = x;
+      if (align === 'center') startX = x - width/2;
+      else if (align === 'right' || align === 'end') startX = x - width;
+
+      let cursor = startX;
+      for (let i=0;i<str.length;i++){
+        const ch = str[i];
+        ctx.fillText(ch, cursor, y);
+        cursor += ctx.measureText(ch).width + tracking;
+      }
+      ctx.restore();
     }
 
     // ===== TIMINGS =====
@@ -1664,11 +1697,10 @@ const SUGGESTIONS = [
         ctx.translate(Math.round(cx), Math.round(cy));
         ctx.scale(s, s);
 
-        // High-DPI, tinted at final draw size to avoid blur
         const drawW = w * s, drawH = logoH * s;
         if (img.raw){
           const tinted = tintToTarget(img.raw, img.tint, drawW, drawH);
-          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH); // pre-scaled bitmap, draw in pre-scale coords
+          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH);
         } else {
           ctx.fillStyle = '#e9ecf2';
           roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill();
@@ -1732,8 +1764,7 @@ const SUGGESTIONS = [
       });
     }
 
-    // -------------------- Phase E: O → final logo + "Unified AI" --------------------
-    // NOTE: Enhanced "Unified AI" reveal with subtle rise + blur decay (Apple-like)
+    // -------------------- Phase E: O → final logo + "Unified AI" (enhanced fade) --------------------
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1754,7 +1785,7 @@ const SUGGESTIONS = [
       ctx.fillText('O', centerX, centerY);
       ctx.restore();
 
-      // Final logo (high-DPI tinted at exact size)
+      // Final logo (high-DPI tinted at exact size, with gentle arriving bounce)
       const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
       const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
                           * SIZE.all * SIZE.finalLogo;
@@ -1767,29 +1798,69 @@ const SUGGESTIONS = [
       if (finalLogoImg.raw){
         const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
         ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
-                             Math.round(w), Math.round(h));
+                              Math.round(w), Math.round(h));
       } else {
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
       }
       ctx.restore();
 
-      // Subtitle ("Unified AI") — fade, gentle rise, blur → crisp
-      const inT = clamp((t-0.18)/0.68);
-      const subtitleA = easeOutCubic(inT);
-      if (subtitleA > 0){
+      // Apple-style subtitle: blur→sharp + lift + tracking tighten
+      const subT = easeOutQuint(clamp((t-0.20)/0.65));
+      if (subT > 0){
         const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-        const dy = lerp(18, 0, subtitleA);
-        const blur = (1 - subtitleA) * 3.2 * MOBILE_BLUR_SCALE;
-        setFont(700, size, '"Inter", ui-sans-serif');
-        ctx.save();
-        ctx.globalAlpha = subtitleA;
-        if (blur > 0.05) ctx.filter = `blur(${blur}px)`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)) + dy));
-        ctx.restore();
+        const yLift = lerp(12, 0, subT);
+        const tracking = lerp(-1.2, 0, subT); // tighten → normal
+        const blurPx = (1 - subT) * 2.2;     // soften → sharp
+        const alpha  = subT;
+        drawTextWithTracking('Unified AI',
+          centerX,
+          Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)) - yLift),
+          {
+            align:'center', baseline:'top', tracking,
+            fillStyle:'#ffffff', weight:800, size,
+            fontFamily:'"Inter", ui-sans-serif, system-ui',
+            blur: blurPx, alpha
+          }
+        );
       }
+    }
+
+    // ---------- Static final overlay for the infinite loop ----------
+    function drawFinalOverlayStatic(finalLogoImg){
+      const centerX = Math.round(CONFIG.w/2);
+      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
+      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
+                          * SIZE.all * SIZE.finalLogo;
+      const w = baseTargetW;
+      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
+      const h = w / aspect;
+
+      // Final logo
+      ctx.save();
+      ctx.globalAlpha = 1;
+      if (finalLogoImg.raw){
+        const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
+        ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
+                              Math.round(w), Math.round(h));
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+
+      // Subtitle (fully sharp)
+      const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
+      drawTextWithTracking('Unified AI',
+        centerX,
+        Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))),
+        {
+          align:'center', baseline:'top', tracking:0,
+          fillStyle:'#ffffff', weight:800, size,
+          fontFamily:'"Inter", ui-sans-serif, system-ui',
+          blur: 0, alpha: 1
+        }
+      );
     }
 
     // =================== Orchestrator & Assets ===================
@@ -1827,125 +1898,9 @@ const SUGGESTIONS = [
       return { logoImgs, finalLogo };
     }
 
-    // -------------------- NEW: Phase F — Floating/Bouncing Logos (indefinite) --------------------
-    let floatingActive = false;
-    let floatState = null;
-
-    const FLOAT_CFG = {
-      margin: () => Math.max(12, Math.round(CONFIG.w * 0.02)),                 // inner padding
-      heightBase: () => Math.max(36, Math.min(CONFIG.h * 0.14, 160)) * SIZE.all, // base logo height
-      speedBase: () => Math.max(60, Math.min(CONFIG.w, CONFIG.h) * 0.18),        // px/sec typical
-      speedJitter: 0.35, // +/- %
-      alpha: 0.92,       // slight translucency for blend
-      shadow: 0.12       // drop shadow amount
-    };
-
-    function buildFloaters(assets){
-      const M = FLOAT_CFG.margin();
-      const H = FLOAT_CFG.heightBase();
-      const speed0 = FLOAT_CFG.speedBase();
-
-      const floaterList = assets.logoImgs.map((img, i) => {
-        const sizeJ = 0.85 + Math.random()*0.30;            // size jitter 0.85–1.15
-        const h = H * sizeJ;
-        const w = h * (img.aspect || 1);
-        const x = M + w/2 + Math.random() * (CONFIG.w - 2*M - w);
-        const y = M + h/2 + Math.random() * (CONFIG.h - 2*M - h);
-
-        // Random direction, normalized, speed with jitter
-        let angle = Math.random() * Math.PI * 2;
-        const spJ = 1 + (Math.random()*2 - 1) * FLOAT_CFG.speedJitter;
-        const speed = speed0 * spJ;
-        const vx = Math.cos(angle) * speed;
-        const vy = Math.sin(angle) * speed;
-
-        return { img, x, y, w, h, vx, vy, a: FLOAT_CFG.alpha };
-      });
-
-      return floaterList;
-    }
-
-    function drawFloater(f){
-      ctx.save();
-      ctx.translate(Math.round(f.x), Math.round(f.y));
-      ctx.globalAlpha = f.a;
-      // soft shadow
-      ctx.shadowColor = `rgba(0,0,0,${FLOAT_CFG.shadow})`;
-      ctx.shadowBlur = 12 * (isMobile()? 0.7 : 1);
-      ctx.shadowOffsetY = 6;
-
-      if (f.img.raw){
-        const tinted = tintToTarget(f.img.raw, f.img.tint, f.w, f.h);
-        ctx.drawImage(tinted, Math.round(-f.w/2), Math.round(-f.h/2), Math.round(f.w), Math.round(f.h));
-      } else {
-        ctx.fillStyle = '#e8ebf2';
-        roundedRect(ctx, Math.round(-f.w/2), Math.round(-f.h/2), Math.round(f.w), Math.round(f.h), Math.min(f.h/2, 12));
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-
-    function updateFloater(f, dt){
-      const M = FLOAT_CFG.margin();
-      f.x += f.vx * dt;
-      f.y += f.vy * dt;
-
-      // Bounce X
-      if (f.x - f.w/2 < M){ f.x = M + f.w/2; f.vx = Math.abs(f.vx); }
-      if (f.x + f.w/2 > CONFIG.w - M){ f.x = CONFIG.w - M - f.w/2; f.vx = -Math.abs(f.vx); }
-
-      // Bounce Y
-      if (f.y - f.h/2 < M){ f.y = M + f.h/2; f.vy = Math.abs(f.vy); }
-      if (f.y + f.h/2 > CONFIG.h - M){ f.y = CONFIG.h - M - f.h/2; f.vy = -Math.abs(f.vy); }
-    }
-
-    function renderFinalStatic(finalLogo){
-      // Reuse Phase E renderer at t=1 to paint background + final logo + "Unified AI"
-      renderOToFinalLogo(1, finalLogo);
-    }
-
-    function startFloating(assets){
-      floatingActive = true;
-      const myId = runId;                // tie to current run to allow cancel on replay
-      floatState = { lastTS: performance.now(), sprites: buildFloaters(assets), assets };
-
-      (function loop(ts){
-        if (myId !== runId) return;      // canceled by new run
-        if (!floatingActive) return;
-
-        const dt = Math.min(0.033, Math.max(0.001, (ts - floatState.lastTS)/1000));
-        floatState.lastTS = ts;
-
-        // Draw base final scene
-        renderFinalStatic(floatState.assets.finalLogo);
-
-        // Update & draw sprites
-        const list = floatState.sprites;
-        for (let i=0; i<list.length; i++){
-          updateFloater(list[i], dt);
-          drawFloater(list[i]);
-        }
-
-        requestAnimationFrame(loop);
-      })(performance.now());
-    }
-
-    function stopFloating(){
-      floatingActive = false;
-      floatState = null;
-    }
-
-    function rebuildFloatersIfActive(){
-      if (!floatingActive || !floatState) return;
-      // Rebuild with new CONFIG sizes but keep animation going
-      floatState.sprites = buildFloaters(floatState.assets);
-    }
-
-    // -------------------- Orchestrated Phases A→E; then F (floating) --------------------
     function playSequence(assets){
       const myId = ++runId;
       isAnimating = true;
-      stopFloating(); // ensure floating from a previous run stops
       const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
 
       // PHASE A
@@ -2004,8 +1959,8 @@ const SUGGESTIONS = [
           if (tE < 1) requestAnimationFrame(loopE);
           else {
             isAnimating = false;
-            // >>> NEW: Start indefinite floating/bouncing logos over the final scene
-            startFloating(assets);
+            // Start infinite bouncing scene once end-state is reached
+            startBouncingScene(myId, assets);
           }
         })(startE);
       }
@@ -2022,12 +1977,150 @@ const SUGGESTIONS = [
       replay.addEventListener('click', async ()=>{
         replay.disabled = true;
         try {
-          stopFloating();
           if (!prepared) prepared = await prepareAssets();
           playSequence(prepared);
         } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
       }, { passive: true });
       controlsEl.appendChild(replay);
+    }
+
+    // ---------- BOUNCING LOGOS (endless) ----------
+    let bouncers = [];
+    let bouncing = false;
+
+    function pickBounceSources(defaults){
+      // 1) window.ONX_BOUNCE_LOGOS = ['a.svg','b.svg'] (if supplied)
+      if (Array.isArray(window.ONX_BOUNCE_LOGOS) && window.ONX_BOUNCE_LOGOS.length){
+        return window.ONX_BOUNCE_LOGOS.slice();
+      }
+      // 2) data-bounce-logos on host (comma-separated)
+      if (host.dataset.bounceLogos){
+        const parts = host.dataset.bounceLogos.split(',').map(s=>s.trim()).filter(Boolean);
+        if (parts.length) return parts;
+      }
+      // 3) fallback to the same set used earlier
+      return defaults.map(d => d.src).filter(Boolean);
+    }
+
+    async function prepareBounceImages(defaultLogoImgs){
+      const sources = pickBounceSources(LOGOS);
+      const imgs = await Promise.all(sources.map(src => loadImage(src)));
+      // Build objects with white tint by default
+      return imgs.map((it, i)=> ({
+        raw: it.image, aspect: it.aspect || 1, tint: '#ffffff', src: sources[i]
+      })).filter(obj => !!obj.raw);
+    }
+
+    function startBouncingScene(idAtStart, assets){
+      if (bouncing) bouncing = false; // stop any previous loop
+      const myId = idAtStart;
+
+      // Read tuning
+      const sizeMul   = parseFloat(host.dataset.bounceSize || '1') || 1;
+      const speedMul  = parseFloat(host.dataset.bounceSpeed || '1') || 1;
+      const copies    = Math.max(1, parseInt(host.dataset.bounceCopies || '1', 10) || 1);
+      const avoid     = host.dataset.bounceAvoidCenter !== undefined ? toBool(host.dataset.bounceAvoidCenter) : true;
+      const clearRad  = parseFloat(host.dataset.bounceClear || '') || (isMobile()? 120 : 160);
+
+      (async ()=>{
+        const bounceImgs = await prepareBounceImages(LOGOS);
+        // If user provided nothing load fallback originals used before
+        const finalSet = bounceImgs.length ? bounceImgs : assets.logoImgs.map(l=>({ raw:l.raw, aspect:l.aspect, tint:'#ffffff' }));
+
+        // Build entities
+        bouncers = [];
+        const baseH = (isMobile()? 44 : 56) * SIZE.all * SIZE.logos * sizeMul;
+        const SPEED = (isMobile()? 90 : 120) * speedMul; // px/sec
+
+        const centerX = CONFIG.w/2;
+        const centerY = CONFIG.h/2;
+        const clear = { x:centerX, y:centerY, r: clearRad };
+
+        function rand(min,max){ return min + Math.random()*(max-min); }
+        function spawnFor(img){
+          const h = baseH;
+          const w = Math.max(16, h * (img.aspect || 1));
+          // position away from center if avoid=true
+          let x, y, tries=0;
+          do{
+            x = rand(w/2, CONFIG.w - w/2);
+            y = rand(h/2, CONFIG.h - h/2);
+            tries++;
+            if (!avoid) break;
+          } while (tries < 50 && Math.hypot(x - clear.x, y - clear.y) < clear.r + Math.max(w,h));
+          const angle = rand(0, Math.PI*2);
+          const vx = Math.cos(angle) * SPEED;
+          const vy = Math.sin(angle) * SPEED;
+          const spin = rand(-0.4, 0.4); // gentle rotation
+          return { img, x, y, w, h, vx, vy, angle: 0, spin };
+        }
+
+        for (let i=0;i<finalSet.length;i++){
+          for (let c=0;c<copies;c++){ bouncers.push(spawnFor(finalSet[i])); }
+        }
+
+        // Animate
+        bouncing = true;
+        let last = performance.now();
+
+        (function loop(nowTs){
+          if (!bouncing || myId !== runId) return; // stop if replayed
+          const now = performance.now();
+          const dt = Math.min(0.050, Math.max(0.0, (now - last)/1000)); // clamp dt
+          last = now;
+
+          clearStage(); // keep stage transparent over CSS gradient
+
+          // Update + draw bouncers (underlay), then draw final overlay
+          for (const b of bouncers){
+            // Integrate
+            b.x += b.vx * dt;
+            b.y += b.vy * dt;
+            b.angle += b.spin * dt;
+
+            // Walls
+            if (b.x - b.w/2 < 0){ b.x = b.w/2; b.vx *= -1; }
+            if (b.x + b.w/2 > CONFIG.w){ b.x = CONFIG.w - b.w/2; b.vx *= -1; }
+            if (b.y - b.h/2 < 0){ b.y = b.h/2; b.vy *= -1; }
+            if (b.y + b.h/2 > CONFIG.h){ b.y = CONFIG.h - b.h/2; b.vy *= -1; }
+
+            // Optional center exclusion as a "virtual obstacle"
+            if (avoid){
+              const dx = b.x - clear.x, dy = b.y - clear.y;
+              const dist = Math.hypot(dx, dy);
+              const minD = clear.r + Math.max(b.w,b.h)*0.45;
+              if (dist < minD){
+                // Reflect velocity away from center and push out
+                const nx = dx / (dist || 1), ny = dy / (dist || 1);
+                const vdotn = b.vx*nx + b.vy*ny;
+                b.vx = (b.vx - 2*vdotn*nx);
+                b.vy = (b.vy - 2*vdotn*ny);
+                const push = (minD - dist) + 1;
+                b.x += nx * push;
+                b.y += ny * push;
+              }
+            }
+
+            // Draw
+            ctx.save();
+            ctx.translate(Math.round(b.x), Math.round(b.y));
+            ctx.rotate(b.angle * 0.15); // subtle
+            if (b.img && b.img.raw){
+              const tinted = tintToTarget(b.img.raw, b.img.tint || '#fff', b.w, b.h);
+              ctx.drawImage(tinted, -b.w/2, -b.h/2, b.w, b.h);
+            } else {
+              ctx.fillStyle = 'rgba(255,255,255,0.8)';
+              roundedRect(ctx, -b.w/2, -b.h/2, b.w, b.h, Math.min(12, b.h/2)); ctx.fill();
+            }
+            ctx.restore();
+          }
+
+          // Overlay: final logo + subtitle always crisp on top
+          drawFinalOverlayStatic(assets.finalLogo);
+
+          requestAnimationFrame(loop);
+        })(performance.now());
+      })();
     }
 
     // ---------- Init ----------
@@ -2054,8 +2147,9 @@ const SUGGESTIONS = [
       if (!prepared) prepared = await prepareAssets();
       if (prefersReducedMotion){
         renderOToFinalLogo(1, prepared.finalLogo);
+        // Even with reduced motion, show the calm bouncing scene
+        startBouncingScene(runId, prepared);
         isAnimating = false;
-        // Respect reduced motion: do not start bouncing in this mode
       } else {
         playSequence(prepared);
       }
@@ -2077,8 +2171,6 @@ const SUGGESTIONS = [
     }, { passive: true }); }
 
     // Mobile fit + rebuild on resize
-    applyMobileScale();
-    let rid = null;
     function rebuildIfNeeded(){
       applyMobileScale();
       const before = `${CONFIG.w}x${CONFIG.h}`;
@@ -2090,17 +2182,23 @@ const SUGGESTIONS = [
       layout = measureFinalLayout();
 
       clearStage();
-      // If floating final scene is active, keep that look; otherwise render initial card preview
-      if (floatingActive && prepared){
-        renderFinalStatic(prepared.finalLogo);
-        rebuildFloatersIfActive();
-      } else {
-        renderCard(0);
+      renderCard(0);
+      // If we were bouncing, restart to adapt bounds
+      if (bouncing){
+        // force-stop current and restart a new scene in final state
+        runId++; // cancel loops bound to old id
+        if (prepared){
+          const myId = runId;
+          bouncing = false;
+          startBouncingScene(myId, prepared);
+        }
       }
       if (!autoplayed) tryAutoplay();
       ensureControls();
     }
 
+    applyMobileScale();
+    let rid = null;
     window.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
 
     if (window.visualViewport){
