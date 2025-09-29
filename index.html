@@ -1106,13 +1106,6 @@ const SUGGESTIONS = [
   C) Responsive max + viewport cap:
      <div id="onx-card-reveal" style="--stage-w:min(1280px,96vw); --stage-aspect:18/9;">
   Current config: height is 35% of viewport (with dvh precision on mobile).
-  Ambient controls (optional, via data-*):
-     data-ambient-enabled="true|false"
-     data-ambient-density="1.0"        (multiplier of logo count; e.g., 1.5 = 50% more)
-     data-ambient-speed="1.0"          (0.5–2.0)
-     data-ambient-size="1.0"           (0.6–1.8, relative)
-     data-ambient-opacity="0.16"       (0.06–0.35)
-     data-logos-list="pathA.svg, pathB.png" (optional extra logos to include)
 -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
@@ -1130,12 +1123,13 @@ const SUGGESTIONS = [
      data-size-menu-title="1.0"
      data-size-menu-sub="1.0"
 
-     data-ambient-enabled="true"
-     data-ambient-density="1.25"
-     data-ambient-speed="1.0"
-     data-ambient-size="1.0"
-     data-ambient-opacity="0.16"
-     data-logos-list=""
+     <!-- NEW: floating logo controls -->
+     data-float-enabled="true"           <!-- turn off by setting to false -->
+     data-float-count="12"               <!-- how many logos bounce around -->
+     data-float-speed="1.0"              <!-- global speed multiplier: 0.5–2.5 -->
+     data-float-size="0.085"             <!-- logo height as fraction of stage min(w,h) -->
+     data-float-shadow="true"            <!-- enable soft drop shadows on floaters -->
+     data-float-opacity="0.85"           <!-- baseline alpha for floaters -->
 
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:35vh; --stage-h:35dvh; --stage-aspect:auto;">
@@ -1165,12 +1159,12 @@ const SUGGESTIONS = [
       border-radius: var(--stage-radius, 32px);
       overflow: hidden;
       box-shadow: var(--stage-shadow, none);
-      will-change: transform;
+      will-change: contents;
       transform-origin: center top;
       backface-visibility: hidden;
-      contain: paint;
+      contain: strict; /* tighter for mobile perf */
       user-select: none; -webkit-user-select: none; touch-action: manipulation;
-      image-rendering: auto;
+      background: transparent; /* canvas is alpha; gradient comes from wrapping class */
     }
     #onx-stage canvas{ width: 100%; height: 100%; display: block; }
 
@@ -1197,10 +1191,8 @@ const SUGGESTIONS = [
     }
   </style>
 
-  <!-- Stage -->
-  <div id="onx-stage" class="g-grad grad-animi"><!-- background gradient via your CSS classes -->
-    <canvas id="onx-canvas"></canvas>
-  </div>
+  <!-- Stage (keep your gradient classes) -->
+  <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
 
   <div id="onx-controls" aria-label="Animation controls"></div>
   <div id="onx-play" aria-hidden="true" style="display:none"></div>
@@ -1230,7 +1222,8 @@ const SUGGESTIONS = [
     const SLOGANS = ["The Best AI", "Built on the Best"];
 
     // ======== ASSETS ========
-    const DEFAULT_LOGOS = [
+    // Base logo line (used in the scripted sequence)
+    const LOGOS = [
       { src: 'grokLogo.svg',   alt: 'Grok',   tint: '#fff' },
       { src: 'googleLogo.svg', alt: 'Google', tint: '#fff' },
       { src: 'metaLogo.svg',   alt: 'Meta',   tint: '#fff' },
@@ -1238,6 +1231,13 @@ const SUGGESTIONS = [
     ];
     const FINAL_LOGO_SRC  = 'onxlogo.svg';
     const FINAL_LOGO_TINT = '#ffffff';
+
+    // NEW ======== FLOATING LOGOS CONFIG (extend this list as you wish) ========
+    // Add/replace with any paths you specify; duplicates are fine.
+    const FLOATING_SOURCES = [
+      'grokLogo.svg','googleLogo.svg','metaLogo.svg','OAILogo.png',
+      'anthropicLogo.svg','mistralLogo.svg','xaiLogo.svg','perplexityLogo.svg'
+    ];
 
     // ===== ELEMENTS =====
     const host    = document.getElementById('onx-card-reveal');
@@ -1250,7 +1250,7 @@ const SUGGESTIONS = [
     (function applySizeOverridesFromData(){
       const MAP = ["all","menu","menuTitle","menuSub","padding","cardWidth","cardHeight","logos","bestAI","O","finalLogo","unified"];
       for (const k of MAP){
-        const dsKey = "size" + k.charAt(0).toUpperCase() + k.slice(1);
+        const dsKey = "size" + k.charAt(0).toUpperCase() + k.slice(1); // e.g. data-size-final-logo -> dataset.sizeFinalLogo
         if (host.dataset[dsKey] !== undefined){
           const v = parseFloat(host.dataset[dsKey]);
           if (Number.isFinite(v)) SIZE[k] = v;
@@ -1293,20 +1293,11 @@ const SUGGESTIONS = [
     };
     if (prefersReducedMotion){ TEMPO.speed = 3.5; } // very fast (less motion)
 
-    // ===== AMBIENT (bouncing logos) CONFIG =====
-    const AMBIENT = {
-      enabled: host.dataset.ambientEnabled ? toBool(host.dataset.ambientEnabled) : true,
-      density: Math.max(0.2, Math.min(3.0, parseFloat(host.dataset.ambientDensity || '1.0'))),
-      speed:   Math.max(0.3, Math.min(3.0, parseFloat(host.dataset.ambientSpeed   || '1.0'))),
-      size:    Math.max(0.5, Math.min(2.0, parseFloat(host.dataset.ambientSize    || '1.0'))),
-      alpha:   Math.max(0.04, Math.min(0.5, parseFloat(host.dataset.ambientOpacity|| '0.16')))
-    };
-
     // ===== CANVAS / BACKING STORE (match stage aspect) =====
     let CONFIG = { w: 2048, h: 1152 }; // overwritten by setConfigFromStage()
     let dpr = 1;
     let stageScale = 1;
-    let OVERSAMPLE = deviceMem <= 4 ? 1.2 : 1.45;
+    let OVERSAMPLE = deviceMem <= 4 ? 1.25 : 1.5;
 
     // High-DPI tint/raster cache for razor-sharp logos
     const TINT_CACHE = new Map();
@@ -1338,9 +1329,11 @@ const SUGGESTIONS = [
 
     function setBackingScale(){
       const raw = window.devicePixelRatio || 1;
-      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);
+      // Mobile stability: lock scaling to reduce jitter during URL bar show/hide
+      const visualScale = (window.visualViewport && !prefersReducedMotion) ? (window.visualViewport.scale || 1) : 1;
+      const eff = Math.min(4, raw * stageScale * OVERSAMPLE / visualScale);
       dpr = eff;
-      TINT_CACHE.clear();
+      TINT_CACHE.clear(); // DPR/backing changed → invalidate cached bitmaps
       canvas.width  = Math.max(1, Math.round(CONFIG.w * dpr));
       canvas.height = Math.max(1, Math.round(CONFIG.h * dpr));
       ctx.setTransform(1,0,0,1,0,0);
@@ -1348,10 +1341,15 @@ const SUGGESTIONS = [
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     }
 
-    // Offscreen BG buffer (kept for future effects)
+    // Offscreen BG buffer
     let BG_CANVAS = document.createElement('canvas');
     let BG_CTX = BG_CANVAS.getContext('2d');
-    function syncBuffers(){ BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h; BG_CTX = BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); }
+
+    function syncBuffers(){
+      BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
+      BG_CTX = BG_CANVAS.getContext('2d');
+      BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
+    }
 
     function clearStage(){
       ctx.setTransform(1,0,0,1,0,0);
@@ -1364,7 +1362,7 @@ const SUGGESTIONS = [
       const rect = stageEl.getBoundingClientRect();
       const wCSS = Math.max(1, rect.width);
       const hCSS = Math.max(1, rect.height);
-      const targetLogicalW = isMobile() ? 1152 : 2048;
+      const targetLogicalW = isMobile() ? 1152 : 2048; // stable logical base
       const aspect = wCSS / hCSS;
       const logicalH = Math.round(targetLogicalW / Math.max(0.1, aspect));
       CONFIG = { w: Math.round(targetLogicalW), h: logicalH };
@@ -1492,48 +1490,11 @@ const SUGGESTIONS = [
     const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
     const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
 
-    // ===== MOBILE AUTO-FIT SCALE (downscale only, quantized to avoid jitter) =====
-    function controlHeight(){
-      const ctrl = document.getElementById('onx-controls');
-      return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
-    }
-    function applyMobileScale(force=false){
-      if (!isMobile()){
-        if (stageScale !== 1 || force){
-          stageEl.style.transform = 'translateZ(0) scale(1)';
-          stageEl.style.transformOrigin = 'center top';
-          stageScale = 1;
-          setBackingScale();
-        }
-        return;
-      }
-      const { vw, vh, top, bottom } = vp();
-      const safeSide = 16;
-      const safeTop  = 16 + top;
-      const safeBot  = 16 + bottom;
-      const ctrlH    = controlHeight();
-      const hostMargins = 24 + 28;
-
-      const rect = stageEl.getBoundingClientRect();
-      const baseW = Math.max(1, rect.width);
-      const baseH = Math.max(1, rect.height);
-
-      const availW = Math.max(240, vw - 2*safeSide);
-      const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
-
-      const scaleW = availW / baseW;
-      const scaleH = availH / baseH;
-      let scale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only (avoid blur)
-
-      // Quantize scale to 0.01 steps to prevent micro-jitter from URL bar changes
-      scale = Math.round(scale * 100) / 100;
-
-      if (Math.abs(scale - stageScale) > 0.02 || force){
-        stageEl.style.transform = `translateZ(0) scale(${scale})`;
-        stageEl.style.transformOrigin = 'center top';
-        stageScale = scale;
-        setBackingScale();
-      }
+    // ===== MOBILE AUTO-FIT SCALE (stability-first; no CSS transform unless absolutely needed) =====
+    function applyMobileScale(){
+      // Keep stageScale = 1 to avoid URL bar jitter; rely on internal logical sizing.
+      stageScale = 1;
+      setBackingScale();
     }
 
     // -------------------- Phase A: Card (models) --------------------
@@ -1686,17 +1647,20 @@ const SUGGESTIONS = [
 
         ctx.save();
         ctx.globalAlpha = a;
-        const drawW = w * s, drawH = logoH * s;
-        ctx.translate(Math.round(x + w/2), Math.round(y));
+        const cx = x + w/2, cy = y;
+        ctx.translate(Math.round(cx), Math.round(cy));
         ctx.scale(s, s);
 
+        // High-DPI, tinted at final draw size to avoid blur
+        const drawW = w * s, drawH = logoH * s;
         if (img.raw){
           const tinted = tintToTarget(img.raw, img.tint, drawW, drawH);
-          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH);
+          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH); // pre-scaled bitmap, draw in pre-scale coords
         } else {
           ctx.fillStyle = '#e9ecf2';
           roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill();
         }
+
         ctx.restore();
 
         positions.push({ x: x + w/2, y, w, h: logoH });
@@ -1755,8 +1719,49 @@ const SUGGESTIONS = [
       });
     }
 
+    // ---------- Apple-style "Unified AI" renderer (per-letter tracking + blur to crisp) ----------
+    function drawAppleUnifiedTitle(progress, cy, afterLogoH){
+      const centerX = Math.round(CONFIG.w/2);
+      const title = 'Unified AI';
+      const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
+      const weight = 800;
+
+      // Progress → opacity, tracking, vertical settle, blur
+      const a   = easeOutCubic(clamp(progress));         // opacity
+      const yOf = lerp(10, 0, a);                        // subtle up-into-place
+      const blurPx = (1 - a) * 2.2;                      // blur → crisp
+      const trackStart = isMobile()? 4.0 : 6.0;          // initial extra letter spacing (px)
+      const track = lerp(trackStart, 0.0, a);
+
+      // Per-letter draw to simulate tracking with perfect centering
+      setFont(weight, size, '"Inter", ui-sans-serif, system-ui');
+      // Measure base widths
+      const widths = [];
+      let fullW = 0;
+      for (const ch of title){ const w = ctx.measureText(ch).width; widths.push(w); fullW += w; }
+      const totalExtra = track * (title.length - 1);
+      const renderW = fullW + totalExtra;
+
+      let x = Math.round(centerX - renderW/2);
+      const baselineY = Math.round(cy + (isMobile()? (afterLogoH/2 + 36) : (afterLogoH/2 + 44)) + yOf);
+
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.filter = blurPx > 0.05 ? `blur(${blurPx}px)` : 'none';
+      ctx.fillStyle = '#ffffff';
+      ctx.textBaseline = 'top';
+
+      // Draw letters
+      for (let i=0;i<title.length;i++){
+        const ch = title[i];
+        ctx.fillText(ch, Math.round(x), baselineY);
+        x += widths[i] + track;
+      }
+      ctx.restore();
+    }
+
     // -------------------- Phase E: O → final logo + "Unified AI" --------------------
-    function renderOToFinalLogo(t, finalLogoImg, subtitleIntro=0){
+    function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
       const centerX = Math.round(CONFIG.w/2);
@@ -1776,7 +1781,7 @@ const SUGGESTIONS = [
       ctx.fillText('O', centerX, centerY);
       ctx.restore();
 
-      // Final logo (high-DPI tinted at exact size)
+      // Final ONX logo
       const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
       const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
                           * SIZE.all * SIZE.finalLogo;
@@ -1796,84 +1801,90 @@ const SUGGESTIONS = [
       }
       ctx.restore();
 
-      // Apple-style "Unified AI" intro: subtle rise + defocus → crisp
-      const a = easeOutCubic(clamp(subtitleIntro));
-      const dy = lerp(14, 0, a);
-      const blurPx = (1 - a) * 1.4 * (isMobile()? 0.6 : 1.0);
-      const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
+      // Apple-style title fade (improved)
+      const subtitleP = clamp((t-0.15)/0.80);
+      if (subtitleP > 0){ drawAppleUnifiedTitle(subtitleP, centerY, h); }
 
-      setFont(700, size, '"Inter", ui-sans-serif, system-ui');
-      ctx.save();
-      ctx.globalAlpha = a;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      if (blurPx > 0.05) ctx.filter = `blur(${Math.max(0, blurPx)}px)`;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('Unified AI', centerX, Math.round(centerY + (h/2) + (isMobile()? 36 : 44) + dy));
-      ctx.restore();
+      // Return geometry for later overlay positioning
+      return { w, h, cx: centerX, cy: centerY, p: subtitleP };
     }
 
-    // =================== Ambient floaters (Phase F) ===================
-    let ambient = null; // { items: [...], startedAt, introDone, lastTs }
-    function buildAmbient(logoImgs){
-      if (!AMBIENT.enabled) return { items: [] };
-      const items = [];
-      // density: e.g., with 6 logos and 1.25 → 8 items
-      const count = Math.max(logoImgs.length, Math.round(logoImgs.length * AMBIENT.density));
-      const minSide = Math.min(CONFIG.w, CONFIG.h);
-      const baseH = (isMobile()? 36 : 48) * SIZE.all * AMBIENT.size; // each floater target height
-      for (let i=0; i<count; i++){
-        const src = logoImgs[i % logoImgs.length];
-        const h = baseH * (0.8 + 0.4 * Math.random()); // slight variance
-        const w = Math.max(8, h * (src.aspect || 1));
-        // random position avoiding immediate overlap with center logo area
-        const margin = Math.max(20, minSide * 0.04);
-        let x = margin + Math.random() * (CONFIG.w - margin*2);
-        let y = margin + Math.random() * (CONFIG.h - margin*2);
-        // velocities
-        const sp = (isMobile()? 28 : 36) * AMBIENT.speed * (0.6 + Math.random()*0.8); // px/sec
-        const angle = Math.random() * Math.PI * 2;
-        const vx = Math.cos(angle) * sp;
-        const vy = Math.sin(angle) * sp;
-        items.push({
-          img: src, w, h, x, y, vx, vy,
-          a: AMBIENT.alpha * (0.85 + Math.random()*0.3),
-          rot: 0,
-          vr: (Math.random() - 0.5) * 0.15 // subtle rotation (radians/sec)
-        });
+    // =================== NEW: End Scene Floating Logo System ===================
+    const floatCfg = {
+      enabled: toBool(host.dataset.floatEnabled ?? 'true'),
+      count: Math.max(2, Math.min(64, parseInt(host.dataset.floatCount||'12',10))),
+      speed: Math.max(0.25, Math.min(3, parseFloat(host.dataset.floatSpeed||'1.0'))),
+      sizeFrac: Math.max(0.04, Math.min(0.20, parseFloat(host.dataset.floatSize||'0.085'))),
+      shadow: toBool(host.dataset.floatShadow ?? 'true'),
+      alpha: Math.max(0.2, Math.min(1.0, parseFloat(host.dataset.floatOpacity||'0.85')))
+    };
+
+    let FLOATERS = [];
+    function buildFloaters(loadedImages){
+      if (!floatCfg.enabled) { FLOATERS = []; return; }
+      // Build a roster from FLOATING_SOURCES, falling back to any loaded images
+      const pool = [];
+      const bySrc = new Map(loadedImages.allSources.map(o => [o.src, o]));
+      FLOATING_SOURCES.forEach(src=>{
+        const found = bySrc.get(src);
+        if (found && found.raw) pool.push(found);
+      });
+      if (pool.length === 0){
+        // fallback: use the scripted logo line images
+        pool.push(...loadedImages.logoImgs);
       }
-      return { items, startedAt: performance.now(), introDone: false, lastTs: performance.now() };
+
+      const area = Math.min(CONFIG.w, CONFIG.h);
+      const baseH = floatCfg.sizeFrac * area; // target height in CSS pixels
+      const margin = Math.max(8, Math.round(baseH*0.25));
+
+      FLOATERS = new Array(floatCfg.count).fill(0).map((_,i)=>{
+        const img = pool[i % pool.length];
+        const h = baseH * (0.85 + Math.random()*0.3);
+        const w = h * Math.max(0.7, Math.min(2.0, img.aspect || 1));
+        const x = margin + Math.random()*(CONFIG.w - 2*margin - w);
+        const y = margin + Math.random()*(CONFIG.h - 2*margin - h);
+        const sp = (0.09 + Math.random()*0.14) * floatCfg.speed * (isMobile()? 0.9 : 1.0);
+        // Random direction
+        const ang = Math.random()*Math.PI*2;
+        const vx = Math.cos(ang)*sp*CONFIG.w;
+        const vy = Math.sin(ang)*sp*CONFIG.h;
+        const rot = (Math.random()*0.6 - 0.3) * (isMobile()? 0.5 : 1.0); // gentle drift rotation
+        return {img, x, y, w, h, vx, vy, rot, a: floatCfg.alpha, margin};
+      });
     }
 
-    function stepAmbient(dt){
-      const items = ambient.items;
-      const left = 6, top = 6, right = CONFIG.w - 6, bottom = CONFIG.h - 6;
-      for (const it of items){
-        it.x += it.vx * dt;
-        it.y += it.vy * dt;
-        it.rot += it.vr * dt;
-
-        // Bounce (consider logo bounds)
-        const halfW = it.w/2, halfH = it.h/2;
-        if (it.x - halfW < left){ it.x = left + halfW; it.vx = Math.abs(it.vx); }
-        else if (it.x + halfW > right){ it.x = right - halfW; it.vx = -Math.abs(it.vx); }
-        if (it.y - halfH < top){ it.y = top + halfH; it.vy = Math.abs(it.vy); }
-        else if (it.y + halfH > bottom){ it.y = bottom - halfH; it.vy = -Math.abs(it.vy); }
+    function stepFloaters(dt){
+      const left = 0, top = 0, right = CONFIG.w, bottom = CONFIG.h;
+      for (const f of FLOATERS){
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+        // walls
+        if (f.x < left + f.margin){ f.x = left + f.margin; f.vx *= -1; }
+        if (f.y < top + f.margin){ f.y = top + f.margin; f.vy *= -1; }
+        if (f.x + f.w > right - f.margin){ f.x = right - f.margin - f.w; f.vx *= -1; }
+        if (f.y + f.h > bottom - f.margin){ f.y = bottom - f.margin - f.h; f.vy *= -1; }
       }
     }
 
-    function drawAmbient(){
-      if (!AMBIENT.enabled || ambient.items.length === 0) return;
-      for (const it of ambient.items){
+    function renderFloaters(){
+      if (!FLOATERS.length) return;
+      for (const f of FLOATERS){
         ctx.save();
-        ctx.globalAlpha = it.a;
-        ctx.translate(Math.round(it.x), Math.round(it.y));
-        if (Math.abs(it.vr) > 0.001){ ctx.rotate(it.rot); }
-        const tinted = it.img.raw ? tintToTarget(it.img.raw, it.img.tint || '#fff', it.w, it.h) : null;
-        if (tinted){
-          ctx.drawImage(tinted, -it.w/2, -it.h/2, it.w, it.h);
-        } else {
-          ctx.fillStyle = 'rgba(255,255,255,0.1)';
-          roundedRect(ctx, -it.w/2, -it.h/2, it.w, it.h, Math.min(12, it.h/2)); ctx.fill();
+        if (floatCfg.shadow){
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = Math.max(8, Math.min(18, f.h*0.25));
+          ctx.shadowOffsetY = Math.max(2, Math.min(10, f.h*0.12));
+        }
+        ctx.globalAlpha = f.a;
+        const cx = Math.round(f.x + f.w/2), cy = Math.round(f.y + f.h/2);
+        ctx.translate(cx, cy);
+        // Optional micro-rotation drift
+        // (very subtle to keep crispness)
+        // ctx.rotate(f.rot * 0.001);
+        if (f.img && f.img.raw){
+          const tinted = tintToTarget(f.img.raw, '#ffffff', f.w, f.h);
+          ctx.drawImage(tinted, Math.round(-f.w/2), Math.round(-f.h/2), Math.round(f.w), Math.round(f.h));
         }
         ctx.restore();
       }
@@ -1891,33 +1902,32 @@ const SUGGESTIONS = [
         img.onload = ()=>{
           const nw = img.naturalWidth || img.width || 1;
           const nh = img.naturalHeight || img.height || 1;
-          resolve({ image: img, aspect: Math.max(0.01, nw / nh) });
+          resolve({ image: img, aspect: Math.max(0.01, nw / nh), src });
         };
-        img.onerror = ()=> resolve({ image: null, aspect: 1 });
+        img.onerror = ()=> resolve({ image: null, aspect: 1, src });
         img.src = src;
       });
     }
 
-    function parseExtraLogos(){
-      const s = (host.dataset.logosList || '').trim();
-      if (!s) return [];
-      return s.split(',').map(x => x.trim()).filter(Boolean).map(path => ({ src: path, alt: 'Logo', tint: '#fff' }));
-    }
-
     async function prepareAssets(){
-      const ALL_LOGOS = DEFAULT_LOGOS.concat(parseExtraLogos());
-      const rawLogoImgs = await Promise.all(ALL_LOGOS.map(l => loadImage(l.src)));
+      const rawLogoImgs = await Promise.all(LOGOS.map(l => loadImage(l.src)));
       const logoImgs = rawLogoImgs.map((r, i) => ({
         raw: r.image,
-        aspect: (Number.isFinite(r.aspect) && r.aspect > 0) ? r.aspect : 1,
-        tint: ALL_LOGOS[i].tint || '#fff'
+        aspect: r.aspect || 1,
+        tint: LOGOS[i].tint || '#fff',
+        src: LOGOS[i].src
       }));
+      logoImgs.forEach(v => { if (!isFinite(v.aspect) || v.aspect <= 0) v.aspect = 1; });
 
       const finalLogoRaw = await loadImage(FINAL_LOGO_SRC);
-      const finalLogo = { raw: finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1, tint: FINAL_LOGO_TINT };
+      const finalLogo = { raw: finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1, tint: FINAL_LOGO_TINT, src: FINAL_LOGO_SRC };
+
+      // Also pre-load floating sources
+      const floatRaws = await Promise.all(FLOATING_SOURCES.map(s => loadImage(s)));
+      const allSources = floatRaws.map(r => ({ raw: r.image, aspect: r.aspect || 1, tint: '#fff', src: r.src }));
 
       if (document.fonts && document.fonts.ready){ try { await document.fonts.ready; } catch {} }
-      return { logoImgs, finalLogo };
+      return { logoImgs, finalLogo, allSources };
     }
 
     function playSequence(assets){
@@ -1974,44 +1984,70 @@ const SUGGESTIONS = [
       function stepE(){
         if (myId !== runId) return;
         const startE = performance.now();
+        let lastGeom = null;
         (function loopE(ts){
           if (myId !== runId) return;
           const tE = clamp( ((ts - startE)/1000) / S(1.15) );
-          // During Phase E we just do the morph-in; ambient not yet shown
-          renderOToFinalLogo(tE, assets.finalLogo, 0);
-          if (tE < 1) { requestAnimationFrame(loopE); }
+          lastGeom = renderOToFinalLogo(tE, assets.finalLogo);
+          if (tE < 1) requestAnimationFrame(loopE);
           else {
-            // Build ambient and transition to infinite loop draw (logos behind final)
-            ambient = buildAmbient(assets.logoImgs);
-            stepF(performance.now(), assets);
+            isAnimating = false;
+            // NEW: kick off the infinite floating background behind final logo + title
+            if (floatCfg.enabled){ startFinalFloatLoop(assets, lastGeom); }
           }
         })(startE);
       }
 
-      function stepF(ts0, assets){
-        if (myId !== runId) return;
-        let last = ts0;
-        let introStart = ts0; // "Unified AI" Apple-style fade/defocus intro
-        function loop(ts){
-          if (myId !== runId) return;
-          const dt = Math.min(0.033, Math.max(0.001, (ts - last)/1000)); // clamp dt for stability
-          last = ts;
-
-          clearStage();
-          // 1) draw animated gradient is under canvas (via CSS); optional BG canvas if needed
-          // 2) ambient floaters behind final logo + text
-          if (ambient && ambient.items.length){ stepAmbient(dt); drawAmbient(); }
-
-          // 3) final overlay (logo + "Unified AI")
-          const tIntro = Math.min(1, (ts - introStart)/S(1.0)); // ~1s apple-like reveal
-          renderOToFinalLogo(1, assets.finalLogo, tIntro);
-
-          requestAnimationFrame(loop);
-        }
-        requestAnimationFrame(loop);
-      }
-
       requestAnimationFrame(stepA);
+    }
+
+    // ---------- NEW: Endless final scene loop with bouncing logos behind the overlay ----------
+    let floatLoopId = 0;
+    function startFinalFloatLoop(assets, lastGeom){
+      const myId = ++floatLoopId;
+      let prev = performance.now();
+      buildFloaters(assets);
+
+      // Fade in overlay again in case user replayed: 0→1 over 900ms
+      let overlayT = 0;
+
+      (function loop(ts){
+        if (myId !== floatLoopId) return; // cancelled by replay
+        const now = ts || performance.now();
+        const dt = Math.min(0.033, Math.max(0.001, (now - prev)/1000));
+        prev = now;
+
+        // Update
+        stepFloaters(dt);
+
+        // Draw: background gradient is DOM; canvas draws floaters first (behind), then overlay
+        clearStage();
+        ctx.drawImage(BG_CANVAS, 0, 0);
+        renderFloaters(); // behind
+
+        // Draw final logo + title overlay (fully visible, but title keeps Apple-style fade for ~900ms)
+        const centerX = Math.round(CONFIG.w/2);
+        const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
+        const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
+                            * SIZE.all * SIZE.finalLogo;
+        const aspect = Math.max(0.01, assets.finalLogo.aspect || 1);
+        const w = baseTargetW, h = w / aspect;
+
+        // ONX final logo
+        ctx.save();
+        ctx.globalAlpha = 1;
+        if (assets.finalLogo.raw){
+          const tinted = tintToTarget(assets.finalLogo.raw, assets.finalLogo.tint, w, h);
+          ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2), Math.round(w), Math.round(h));
+        }
+        ctx.restore();
+
+        // Title fade (Apple-style)
+        overlayT = Math.min(1, overlayT + dt * (prefersReducedMotion ? 3.0 : 1.2));
+        drawAppleUnifiedTitle(overlayT, centerY, h);
+
+        requestAnimationFrame(loop);
+      })(prev);
     }
 
     // ---------- Controls ----------
@@ -2023,6 +2059,8 @@ const SUGGESTIONS = [
       replay.addEventListener('click', async ()=>{
         replay.disabled = true;
         try {
+          // Cancel final loop if running
+          floatLoopId++;
           if (!prepared) prepared = await prepareAssets();
           playSequence(prepared);
         } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
@@ -2031,16 +2069,15 @@ const SUGGESTIONS = [
     }
 
     // ---------- Init ----------
-    function initialBuild(force=false){
+    function initialBuild(){
       setConfigFromStage();
       setBackingScale();
       STYLE = buildStyle();
       layout = measureFinalLayout();
       clearStage(); renderCard(0);
       ensureControls();
-      applyMobileScale(force);
     }
-    initialBuild(true);
+    initialBuild();
 
     // Autoplay when visible
     let autoplayed = false;
@@ -2054,15 +2091,16 @@ const SUGGESTIONS = [
       autoplayed = true;
       if (!prepared) prepared = await prepareAssets();
       if (prefersReducedMotion){
-        // Render static final frame with ambient disabled for reduced motion users
-        renderOToFinalLogo(1, prepared.finalLogo, 1);
+        // Render final still; start floater loop immediately (title fades quickly)
+        const still = renderOToFinalLogo(1, prepared.finalLogo);
+        startFinalFloatLoop(prepared, still);
         isAnimating = false;
       } else {
         playSequence(prepared);
       }
     }
 
-    // Intersection observer for autoplay
+    // Observers
     try {
       const io = new IntersectionObserver((entries)=>{
         for (const e of entries){ if (e.isIntersecting) tryAutoplay(); }
@@ -2073,37 +2111,50 @@ const SUGGESTIONS = [
     // Manual trigger (hidden)
     const playBtn = document.getElementById('onx-play');
     if (playBtn){ playBtn.addEventListener('click', async ()=>{
+      floatLoopId++; // cancel any loop
       if (!prepared) prepared = await prepareAssets();
       playSequence(prepared);
     }, { passive: true }); }
 
-    // Mobile fit + rebuild on resize (throttled & thresholded to prevent jitter)
-    let sched = 0;
-    function throttle(fn, ms){ return function(){ const now = performance.now(); if (now - sched > ms){ sched = now; fn(); } }; }
-    function rebuildIfNeeded(force=false){
-      applyMobileScale(force);
+    // Mobile fit + rebuild on resize (throttled)
+    applyMobileScale();
+    let rid = null;
+    function rebuildIfNeeded(){
+      applyMobileScale();
       const before = `${CONFIG.w}x${CONFIG.h}`;
       setConfigFromStage();
       const after = `${CONFIG.w}x${CONFIG.h}`;
       if (before !== after){ setBackingScale(); }
+
       STYLE = buildStyle();
       layout = measureFinalLayout();
+
       clearStage();
       renderCard(0);
       if (!autoplayed) tryAutoplay();
       ensureControls();
     }
 
-    const onResize = throttle(()=>rebuildIfNeeded(false), 120);
-    window.addEventListener('resize', onResize, { passive: true });
+    const schedule = (fn)=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(fn); };
+    window.addEventListener('resize', ()=> schedule(rebuildIfNeeded), { passive: true });
 
     if (window.visualViewport){
-      const onVVResize = throttle(()=>{ applyMobileScale(false); }, 160);
-      window.visualViewport.addEventListener('resize', onVVResize, { passive: true });
-      // NOTE: we do NOT rescale on visualViewport scroll to avoid bar-induced jitter
+      // Reduce jitter by ignoring small visualViewport oscillations
+      let lastVVW = 0, lastVVH = 0;
+      const vvHandler = ()=>{
+        const v = window.visualViewport;
+        if (!v) return;
+        // Only rebuild if change is significant
+        if (Math.abs(v.width - lastVVW) > 6 || Math.abs(v.height - lastVVH) > 6){
+          lastVVW = v.width; lastVVH = v.height;
+          schedule(rebuildIfNeeded);
+        }
+      };
+      window.visualViewport.addEventListener('resize', vvHandler, { passive: true });
+      window.visualViewport.addEventListener('scroll', ()=> schedule(applyMobileScale), { passive: true });
     }
 
-    window.addEventListener('scroll', throttle(tryAutoplay, 120), { passive: true });
+    window.addEventListener('scroll', tryAutoplay, { passive: true });
 
   })();
   </script>
