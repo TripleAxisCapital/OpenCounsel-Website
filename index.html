@@ -2240,146 +2240,83 @@ Edit the CTA href, colors, and copy in the tokens below.
 
 
 
-<!-- =================================================================== -->
-<!-- ONX Card Reveal (Apple‑grade): Card → Slogan → Logos → “O” → Final  -->
-<!-- Crisp, no overlap/blur. High‑DPI canvas, pixel‑snapped drawing,      -->
-<!-- reduced‑motion friendly, mobile auto‑fit, keyboard‑accessible replay. -->
-<!-- =================================================================== -->
+<!-- =====================================================
+   ONX Card Reveal (Apple‑grade, crisp, no overlap/blurs)
+   - Pixel‑snapped text & shapes (no transform‑scaled text)
+   - High‑DPI canvas that matches visual scale (no softness)
+   - Mobile auto‑fit without double scaling artifacts
+   - Reduced motion respected; one‑click Replay control
+   - Safe aspect ratio, bounds, and overshoot tuning via data‑attrs
+   ===================================================== -->
 
-<section id="onx-card-reveal" class="padTop" aria-label="ONX identity animation"
-         data-speed="1.6"            
-         data-menu-scale="1.5"
-         data-overshoot-x-enabled="false"
-         data-overshoot-y-enabled="true"
-         data-overshoot-x="1.5"
-         data-overshoot-y="1.5"
-         data-peak-x="0.58"
-         data-peak-y="0.60"
-         style="max-width:100%;margin:0 auto;">
+<!-- Section Host -->
+<div id="onx-card-reveal" class="padTop"
+     data-speed="1.6"
+     data-menu-scale="1.5"
+     data-overshoot-x-enabled="false"
+     data-overshoot-y-enabled="true"
+     data-overshoot-x="1.5"
+     data-overshoot-y="1.5"
+     data-peak-x="0.58"
+     data-peak-y="0.60"
+     style="max-width:100%; margin:0 auto;">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 
   <style>
-    /* ---------------- Base ---------------- */
     #onx-card-reveal * { box-sizing: border-box; }
-    #onx-card-reveal { overflow: visible; }
 
-    /* Stage uses aspect-ratio to prevent layout shift */
-    #onx-stage {
-      position: relative;
-      width: min(1100px, 96vw);
-      aspect-ratio: 16/9;
-      margin: 0 auto;
-      border-radius: 32px;
-      overflow: hidden;
-      box-shadow: none;
-      transform-origin: center top;
-      backface-visibility: hidden;
-      will-change: transform;
-      contain: paint;
-      content-visibility: auto;         /* skip offscreen rendering */
-      contain-intrinsic-size: 640px 360px; /* reserve space while offscreen */
+    /* Stage: fixed aspect, clipped, hardware‑friendly */
+    #onx-stage{
+      position:relative; width:min(1100px,96vw); aspect-ratio:16/9; margin:0 auto;
+      border-radius:32px; overflow:hidden; will-change:transform; transform-origin:center top;
+      backface-visibility:hidden; contain: paint;
     }
-    #onx-stage canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      pointer-events: none;             /* not interactive */
-      transform: translateZ(0);         /* prevent raster jitter */
-    }
+    #onx-stage canvas{ width:100%; height:100%; display:block; }
 
-    /* Minimal controls */
-    #onx-controls {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      align-items: center;
-      margin-top: 14px;
-      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui;
-      touch-action: manipulation;
-      user-select: none;
+    /* Minimal control */
+    #onx-controls{
+      display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px;
+      font-family: ui-sans-serif,-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,system-ui;
+      touch-action: manipulation; user-select:none;
     }
-    #onx-controls button {
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 16px;
-      cursor: pointer;
-      background: #000;
-      color: #fff;
-      font-weight: 600;
-      letter-spacing: .2px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.12);
-      transition: transform .15s ease, box-shadow .2s ease, opacity .2s ease;
+    #onx-controls button{
+      border:0; border-radius:999px; padding:10px 16px; cursor:pointer;
+      background:#000; color:#fff; font-weight:700; letter-spacing:.2px;
+      box-shadow:0 6px 18px rgba(0,0,0,.12);
+      transition:transform .15s ease, box-shadow .2s ease, opacity .2s ease;
     }
-    #onx-controls button:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,.18); }
-    #onx-controls button:active { transform: translateY(0); }
-    #onx-controls button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    #onx-controls button:hover{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(0,0,0,.18); }
+    #onx-controls button:active{ transform:translateY(0); }
+    #onx-controls button:disabled{ opacity:.45; cursor:not-allowed; transform:none; }
 
-    /* Focus ring (keyboard) */
-    #onx-controls button:focus-visible {
-      outline: 2px solid #d0d0d0;
-      outline-offset: 2px;
-    }
-
-    @media (max-width: 640px) {
-      #onx-card-reveal { overflow: hidden; margin: 24px auto 28px; }
-      #onx-controls { margin-top: 10px; }
-      #onx-controls button { padding: 9px 14px; font-size: 14px; }
-    }
-
-    /* SR-only helper */
-    .sr-only {
-      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    @media (max-width: 640px){
+      #onx-card-reveal{ overflow:hidden; margin:24px auto 28px; }
+      #onx-controls{ margin-top:10px; }
+      #onx-controls button{ padding:9px 14px; font-size:14px; }
     }
   </style>
 
-  <!-- Stage (apply your gradient classes here) -->
-  <div id="onx-stage" class="g-grad grad-animi">
-    <canvas id="onx-canvas"></canvas>
-  </div>
-
-  <!-- Controls -->
+  <!-- Stage (you may apply your gradient BG via classes) -->
+  <div id="onx-stage" class="g-grad grad-animi"><canvas id="onx-canvas"></canvas></div>
   <div id="onx-controls"></div>
   <div id="onx-play" aria-hidden="true" style="display:none"></div>
-  <p class="sr-only" id="onx-desc">Animation revealing ONX identity: product cards, slogan, partner logos merging into the ONX mark and “Unified AI”.</p>
-
-  <noscript>
-    <div style="text-align:center;color:#111;padding:12px 0;font-family:ui-sans-serif,-apple-system,system-ui;">
-      <img src="onxlogo.svg" alt="ONX" style="height:52px;vertical-align:middle"/> <span style="font-weight:700;">Unified AI</span>
-    </div>
-  </noscript>
 
   <script>
-  (() => { 'use strict';
-    /* =========================== CONFIG ============================ */
-    const DPR_CAP = 4;                         // absolute device pixel cap
-    const OVERSAMPLE_LOW = 1.25;               // low-end memory oversample
-    const OVERSAMPLE_HIGH = 1.5;               // default oversample
+  (()=>{ 'use strict';
 
-    // Tunable UI scale knobs (1.0 = base). Safe 0.6 → 1.6.
+    /* ========================= TUNABLE SIZE MULTIPLIERS ========================= */
     const SIZE = {
-      all: 1.00,
-      menu: 1.00,
-      menuTitle: 1.00,
-      menuSub: 1.00,
-      padding: 1.00,
-      cardWidth: 1.00,
-      cardHeight: 1.00,
-      logos: 2.00,
-      bestAI: 2.00,
-      O: 1.50,
-      finalLogo: 1.50,
-      unified: 2.00
+      all: 1.00, menu: 1.00, menuTitle: 1.00, menuSub: 1.00, padding: 1.00,
+      cardWidth: 1.00, cardHeight: 1.00, logos: 2.00, bestAI: 2.00, O: 1.50,
+      finalLogo: 1.50, unified: 2.00
     };
 
-    // Slogan variants (randomized per run)
+    /* Content */
     const SLOGANS = ["The Best AI", "Built on the Best", "Effortless Intelligence"];
-
-    // Source assets (white tint applied for consistency)
     const LOGOS = [
       { src: 'grokLogo.svg',   alt: 'Grok',   tint: '#fff' },
       { src: 'googleLogo.svg', alt: 'Google', tint: '#fff' },
@@ -2389,178 +2326,156 @@ Edit the CTA href, colors, and copy in the tokens below.
     const FINAL_LOGO_SRC  = 'onxlogo.svg';
     const FINAL_LOGO_TINT = '#ffffff';
 
-    // Elements
-    const host      = document.getElementById('onx-card-reveal');
-    const stageEl   = document.getElementById('onx-stage');
-    const canvas    = document.getElementById('onx-canvas');
-    const controls  = document.getElementById('onx-controls');
+    /* Elements */
+    const host = document.getElementById('onx-card-reveal');
+    const stageEl = document.getElementById('onx-stage');
+    const canvas = document.getElementById('onx-canvas');
+    const controlsEl = document.getElementById('onx-controls');
+    if (!canvas || !stageEl || !host) return;
 
-    if (!canvas) return;
-
-    /* ============================ UTILS ============================ */
-    const ASPECT = 16 / 9;
+    /* Utilities */
     const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+    const ASPECT = 16/9;
     const isMobile = () => matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
-    const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const deviceMem = ('deviceMemory' in navigator) ? (navigator.deviceMemory || 8) : 8;
+    const prefersReducedMotion = matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const deviceMem = ('deviceMemory' in navigator) ? (navigator.deviceMemory||8) : 8;
+    const px = v => Math.round(v) + 0.5; // pixel‑snap for lines/edges
+
     const vp = () => {
       const vv = window.visualViewport;
       if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
       return { vw: Math.max(320, innerWidth || 360), vh: Math.max(320, innerHeight || 640), top: 0, bottom: 0 };
     };
 
-    // Math helpers
-    const clamp = (v, lo=0, hi=1) => Math.min(hi, Math.max(lo, v));
-    const lerp = (a, b, t) => a + (b - a) * t;
-    const easeOutCubic = t => 1 - Math.pow(1 - clamp(t), 3);
-    const easeInOutCubic = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
-    const easeOutQuint = t => 1 - Math.pow(1 - clamp(t), 5);
-    const boomerang = (t, factor=1.08, peak=0.55) => {
-      if (t <= 0) return 0; if (t >= 1) return 1;
-      if (t < peak) return easeOutQuint(t/peak) * factor;
-      const u = (t - peak) / (1 - peak);
-      return 1 + (factor - 1) * (1 - easeOutQuint(u));
-    };
-    const snap = v => Math.round(v);                // pixel snap to avoid subpixel blur
-    const snap05 = v => Math.round(v) + 0.5;        // crisp 1px strokes
-
-    /* ============================ TEMPO ============================ */
+    /* Options from data‑attrs */
     const TEMPO = {
       baseSpeed: parseFloat(host.dataset.speed) || 1.6,
-      get speed() { return this.baseSpeed; },
-      set speed(v) { this.baseSpeed = clamp(v, 0.5, 4); },
-      get menuScale() { return parseFloat(host.dataset.menuScale) || 1.5; },
-      get overshootXEnabled() { return host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false; },
-      get overshootYEnabled() { return host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true; },
-      get overshootX() { return parseFloat(host.dataset.overshootX) || 1.5; },
-      get overshootY() { return parseFloat(host.dataset.overshootY) || 1.5; },
-      get peakX() { return parseFloat(host.dataset.peakX) || 0.58; },
-      get peakY() { return parseFloat(host.dataset.peakY) || 0.60; }
+      get speed(){ return this.baseSpeed; },
+      set speed(v){ this.baseSpeed = Math.max(0.5, Math.min(4, v)); },
+      get menuScale(){ return parseFloat(host.dataset.menuScale) || 1.5; },
+      get overshootXEnabled(){ return host.dataset.overshootXEnabled !== undefined ? toBool(host.dataset.overshootXEnabled) : false; },
+      get overshootYEnabled(){ return host.dataset.overshootYEnabled !== undefined ? toBool(host.dataset.overshootYEnabled) : true; },
+      get overshootX(){ return parseFloat(host.dataset.overshootX) || 1.5; },
+      get overshootY(){ return parseFloat(host.dataset.overshootY) || 1.5; },
+      get peakX(){ return parseFloat(host.dataset.peakX) || 0.58; },
+      get peakY(){ return parseFloat(host.dataset.peakY) || 0.60; }
     };
-    if (prefersReducedMotion) TEMPO.speed = 3.5;     // quick, low-motion path
+    if (prefersReducedMotion) TEMPO.speed = 3.5; // accelerate to reduce motion time
 
-    /* ======================= CANVAS & BACKING ====================== */
-    let CONFIG = isMobile() ? { w: 1152, h: 648 } : { w: 2048, h: 1152 }; // logical size
-    let dpr = 1;                      // effective backing scale (<= DPR_CAP)
-    let stageScale = 1;               // CSS transform scale on #onx-stage (mobile)
-    let OVERSAMPLE = deviceMem <= 4 ? OVERSAMPLE_LOW : OVERSAMPLE_HIGH;
-
+    /* Canvas / DPI */
+    let CONFIG = isMobile() ? { w: 1152, h: 648 } : { w: 2048, h: 1152 }; // logical 16:9
+    let dpr = 1, stageScale = 1, OVERSAMPLE = deviceMem <= 4 ? 1.25 : 1.5;
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
-    if (!ctx) return;
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+    if (!ctx) return; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
 
-    function setBackingScale() {
+    function setBackingScale(){
       const raw = window.devicePixelRatio || 1;
-      const eff = Math.min(DPR_CAP, raw * stageScale * OVERSAMPLE);
+      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);
       dpr = eff;
       canvas.width  = Math.max(1, Math.round(CONFIG.w * dpr));
       canvas.height = Math.max(1, Math.round(CONFIG.h * dpr));
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.scale(dpr, dpr);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
+      ctx.setTransform(1,0,0,1,0,0); ctx.scale(dpr, dpr);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     }
-    function clearStage() {
-      ctx.setTransform(1,0,0,1,0,0);
-      ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr);
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-    }
+    function clearStage(){ ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,CONFIG.w * dpr, CONFIG.h * dpr); ctx.setTransform(dpr,0,0,dpr,0,0); }
 
-    // Static BG buffer (transparent)
-    let BG_CANVAS = document.createElement('canvas');
-    BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
-    let BG_CTX = BG_CANVAS.getContext('2d');
-    BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
+    /* Static BG buffer (optional) */
+    let BG_CANVAS = document.createElement('canvas'); BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
+    let BG_CTX = BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
 
-    /* ============================ STYLE ============================ */
-    const DESIGN = {
-      padX: 26, padY: 26, rowGap: 18, subGap: 8,
-      titleSize: 36, subSize: 20, titleWeight: 800, subWeight: 500,
-      minW: 420, maxW: 820, stageMargin: 56
-    };
+    /* Design tokens for the card */
+    const DESIGN = { padX:26, padY:26, rowGap:18, subGap:8, titleSize:36, subSize:20, titleWeight:800, subWeight:500, minW:420, maxW:820, stageMargin:56 };
     const getMenuScale = () => isMobile() ? Math.min(TEMPO.menuScale, 1.25) : TEMPO.menuScale;
 
-    function buildStyle() {
-      const SCALE = getMenuScale();
-      const ALL  = SIZE.all; const PAD = SIZE.padding; const MENU = SIZE.menu;
+    let STYLE = buildStyle();
+    function buildStyle(){
+      const SCALE = getMenuScale(); const ALL = SIZE.all; const PAD = SIZE.padding; const MENU = SIZE.menu;
       return {
-        padX: snap(DESIGN.padX * SCALE * ALL * PAD),
-        padY: snap(DESIGN.padY * SCALE * ALL * PAD),
-        rowGap: snap(DESIGN.rowGap * SCALE * ALL * PAD),
-        subGap: Math.max(2, snap(DESIGN.subGap * SCALE * ALL * PAD)),
+        padX: Math.round(DESIGN.padX * SCALE * ALL * PAD),
+        padY: Math.round(DESIGN.padY * SCALE * ALL * PAD),
+        rowGap: Math.round(DESIGN.rowGap * SCALE * ALL * PAD),
+        subGap: Math.max(2, Math.round(DESIGN.subGap * SCALE * ALL * PAD)),
         titleSize: DESIGN.titleSize * SCALE * ALL * MENU * SIZE.menuTitle,
-        subSize: DESIGN.subSize * SCALE * ALL * MENU * SIZE.menuSub,
-        titleWeight: DESIGN.titleWeight,
-        subWeight: DESIGN.subWeight,
-        minW: DESIGN.minW * ALL,
-        maxW: DESIGN.maxW * ALL,
-        stageMargin: isMobile() ? Math.max(20, snap(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
+        subSize:   DESIGN.subSize   * SCALE * ALL * MENU * SIZE.menuSub,
+        titleWeight: DESIGN.titleWeight, subWeight: DESIGN.subWeight,
+        minW: DESIGN.minW * ALL, maxW: DESIGN.maxW * ALL,
+        stageMargin: isMobile() ? Math.max(20, Math.round(DESIGN.stageMargin * 0.8)) : DESIGN.stageMargin
       };
     }
-    let STYLE = buildStyle();
 
-    function setFont(weight, size, family='ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui'){
-      ctx.font = `${weight} ${size}px ${family}`;
-      ctx.textRendering = 'optimizeLegibility';
-    }
-    function roundedRect(ctx, x, y, w, h, r){
-      const rr = Math.min(r, w/2, h/2);
-      const x1 = snap05(x), y1 = snap05(y), w1 = snap(w), h1 = snap(h);
-      ctx.beginPath();
-      ctx.moveTo(x1+rr, y1);
-      ctx.arcTo(x1+w1, y1, x1+w1, y1+h1, rr);
-      ctx.arcTo(x1+w1, y1+h1, x1, y1+h1, rr);
-      ctx.arcTo(x1, y1+h1, x1, y1, rr);
-      ctx.arcTo(x1, y1, x1+w1, y1, rr);
-      ctx.closePath();
-    }
-
-    // Content rows
+    /* Rows */
     const rows = [
       { title:'ONX FAST', sub:'Fastest for instant answers' },
       { title:'ONX',      sub:'Default model' },
       { title:'ONX PRO',  sub:'Advanced agentic capabilities' },
     ];
 
-    // Timings
+    /* Easing */
+    const clamp=(v,lo=0,hi=1)=>Math.min(hi,Math.max(lo,v));
+    const lerp=(a,b,t)=>a+(b-a)*t;
+    const easeOutCubic=t=>1-Math.pow(1-clamp(t,0,1),3);
+    const easeInOutCubic=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    const easeOutQuint=t=>1-Math.pow(1-clamp(t,0,1),5);
+    const boomerang=(t,f=1.06,p=0.55)=>{ if(t<=0)return 0; if(t>=1)return 1; if(t<p)return easeOutQuint(t/p)*f; const u=(t-p)/(1-p); return 1+(f-1)*(1-easeOutQuint(u)); };
+
+    /* Font */
+    function setFont(weight,size,fam='Inter, ui-sans-serif, system-ui'){
+      ctx.font = `${weight} ${Math.max(1,Math.round(size))}px ${fam}`;
+      ctx.textRendering = 'optimizeLegibility';
+    }
+    function roundedRect(ctx,x,y,w,h,r){
+      const rr=Math.min(r,w/2,h/2);
+      const x1=Math.round(x)+0.5, y1=Math.round(y)+0.5, w1=Math.round(w), h1=Math.round(h);
+      ctx.beginPath(); ctx.moveTo(x1+rr,y1);
+      ctx.arcTo(x1+w1,y1,x1+w1,y1+h1,rr);
+      ctx.arcTo(x1+w1,y1+h1,x1,y1+h1,rr);
+      ctx.arcTo(x1,y1+h1,x1,y1,rr);
+      ctx.arcTo(x1,y1,x1+w1,y1,rr); ctx.closePath();
+    }
+
+    /* Timings */
     const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
     const S = v => v / TEMPO.speed;
 
-    // Layout measure (no overlap guarantee)
+    /* Layout measurement for final state */
     function measureFinalLayout(){
-      let maxTextW = 0;
-      setFont(800, STYLE.titleSize); rows.forEach(r => { maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
-      setFont(500, STYLE.subSize);  rows.forEach(r => { if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
-
+      let maxTextW = 0; setFont(800, STYLE.titleSize);
+      rows.forEach(r=>{ maxTextW = Math.max(maxTextW, ctx.measureText(r.title).width); });
+      setFont(500, STYLE.subSize);
+      rows.forEach(r=>{ if (r.sub) maxTextW = Math.max(maxTextW, ctx.measureText(r.sub).width); });
       const contentW = Math.ceil(maxTextW);
-      const cardW0 = Math.min(
-        Math.max(contentW + STYLE.padX*2, STYLE.minW),
-        Math.min(STYLE.maxW, CONFIG.w - 2*STYLE.stageMargin)
-      );
-      const cardW = clamp(cardW0 * SIZE.cardWidth, STYLE.minW*0.6, CONFIG.w - 2*STYLE.stageMargin);
-
+      const cardW0 = Math.min(Math.max(contentW + STYLE.padX*2, STYLE.minW), Math.min(STYLE.maxW, CONFIG.w - 2*STYLE.stageMargin));
+      const cardW  = clamp(cardW0 * SIZE.cardWidth, STYLE.minW*0.6, CONFIG.w - 2*STYLE.stageMargin);
       const rowHeights = rows.map(r => STYLE.titleSize + (r.sub ? (STYLE.subGap + STYLE.subSize) : 0));
       const contentH = rowHeights.reduce((a,b)=>a+b,0) + STYLE.rowGap*(rows.length-1);
       const cardH0 = Math.ceil(contentH + STYLE.padY*2);
-      const cardH = Math.min(Math.ceil(cardH0 * SIZE.cardHeight), CONFIG.h - 2*STYLE.stageMargin);
-
+      const cardH  = Math.min(Math.ceil(cardH0 * SIZE.cardHeight), CONFIG.h - 2*STYLE.stageMargin);
       const radius = Math.max(22, Math.min(36, Math.round(Math.min(cardW, cardH) * 0.08)));
       return { cardW, cardH, rowHeights, radius };
     }
     let layout = measureFinalLayout();
 
-    // Seed shape and row schedule
+    /* Seed shape */
     const seed = { w: 120, h: 80, r: 20 };
-    const ROW_POP_DUR = S(BASE.rowPop);
-    const ROW_PAUSE   = S(BASE.rowPause);
+
+    /* Row schedule */
+    const ROW_POP_DUR = S(BASE.rowPop), ROW_PAUSE = S(BASE.rowPause);
     const rowStartTimes = rows.map((_, i) => i * (ROW_POP_DUR + ROW_PAUSE));
 
-    // Mobile finesse
-    const MOBILE_SHADOW_SCALE = isMobile() ? 0.7 : 1.0;
-    const MOBILE_BLUR_SCALE   = isMobile() ? 0.6 : 1.0;
+    /* Mobile fit (visual scale without blur) */
+    function controlHeight(){ const ctrl = controlsEl; return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44; }
+    function applyMobileScale(){
+      if (!isMobile()){ stageEl.style.transform = ''; stageEl.style.transformOrigin = 'center top'; stageScale = 1; setBackingScale(); return; }
+      const { vw, vh, top, bottom } = vp();
+      const safeSide = 16, safeTop = 16 + top, safeBot = 16 + bottom;
+      const ctrlH = controlHeight(), hostMargins = 24 + 28;
+      const baseW = Math.min(1100, 0.96 * vw), baseH = baseW / ASPECT;
+      const availW = Math.max(240, vw - 2*safeSide), availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
+      const scale = Math.max(0.6, Math.min(2.0, availW/baseW, availH/baseH));
+      stageEl.style.transform = `scale(${scale})`; stageEl.style.transformOrigin = 'center top'; stageScale = scale; setBackingScale();
+    }
 
-    // Dynamic logo line height
+    /* Compute logo line height */
     function computeLogoLineHeight(logoImgs){
       const pad = isMobile()? 24 : 36;
       const maxH = (isMobile()? 72 : 96) * SIZE.all * SIZE.logos;
@@ -2570,31 +2485,23 @@ Edit the CTA href, colors, and copy in the tokens below.
       return Math.max(minH, Math.min(maxH, fitH));
     }
 
-    /* =========================== PHASE A =========================== */
+    /* -------------------- Phase A: Card (models) -------------------- */
     function renderCard(t){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-
-      const widthEnd = S(BASE.widthGrow);
-      const tw = clamp(t / widthEnd);
-      const widthScale  = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
+      const widthEnd = S(BASE.widthGrow), tw = clamp(t / widthEnd);
+      const widthScale = TEMPO.overshootXEnabled ? boomerang(tw, TEMPO.overshootX, TEMPO.peakX) : easeInOutCubic(tw);
       const w = lerp(seed.w, layout.cardW, Math.min(widthScale, TEMPO.overshootXEnabled ? TEMPO.overshootX : 1));
 
+      // measure visible height as rows pop in
       let contentVisibleH = 0, visibleRows = 0, poppingIndex = -1, poppingProgress = 0;
-      for (let i=0;i<rows.length;i++){
+      for (let i=0; i<rows.length; i++){
         const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
-        if (local <= 0) break;
-        visibleRows++;
-        if (local < 1){
-          poppingIndex = i; poppingProgress = clamp(local);
-          const rowScale = boomerang(poppingProgress, 1.06, 0.55);
-          contentVisibleH += layout.rowHeights[i] * rowScale;
-        } else {
-          contentVisibleH += layout.rowHeights[i];
-        }
+        if (local <= 0) break; visibleRows++;
+        if (local < 1){ poppingIndex = i; poppingProgress = clamp(local); contentVisibleH += layout.rowHeights[i] * boomerang(poppingProgress, 1.04, 0.55); }
+        else { contentVisibleH += layout.rowHeights[i]; }
       }
       if (visibleRows > 1) contentVisibleH += STYLE.rowGap * (visibleRows - 1);
-
-      let springY = 1; if (poppingIndex >= 0) springY = boomerang(poppingProgress, 1.04, 0.5);
+      const springY = (poppingIndex >= 0) ? boomerang(poppingProgress, 1.03, 0.5) : 1;
       const h = Math.max(seed.h, Math.min(Math.ceil(contentVisibleH * springY + STYLE.padY*2), CONFIG.h - 2*STYLE.stageMargin));
 
       const growT = clamp((w - seed.w) / Math.max(1, layout.cardW - seed.w));
@@ -2603,438 +2510,240 @@ Edit the CTA href, colors, and copy in the tokens below.
 
       // Card
       ctx.shadowColor = `rgba(0,0,0,${lerp(.10,.17,growT)})`;
-      ctx.shadowBlur = lerp(6, 24, growT) * MOBILE_SHADOW_SCALE;
+      ctx.shadowBlur = lerp(6, 24, growT) * (isMobile()? .7 : 1);
       ctx.shadowOffsetY = lerp(6, 14, growT);
-      ctx.fillStyle = '#ffffff';
-      roundedRect(ctx, x, y, w, h, r); ctx.fill();
-      ctx.shadowColor = 'transparent';
-      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
+      ctx.fillStyle = '#ffffff'; roundedRect(ctx, x, y, w, h, r); ctx.fill();
+      ctx.shadowColor='transparent'; ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.stroke();
 
-      // Content
-      ctx.save(); roundedRect(ctx, x, y, w, h, r); ctx.clip();
-      const contentX = x + STYLE.padX;
-      let cursorY = y + STYLE.padY;
+      // Content (no transform‑scaled text → crisp)
+      const contentX = Math.round(x + STYLE.padX);
+      let cursorY = Math.round(y + STYLE.padY);
 
-      for (let i=0;i<rows.length;i++){
-        const local = (t - rowStartTimes[i]) / ROW_POP_DUR;
-        if (local <= 0) break;
-
-        const pr = clamp(local), a = easeOutCubic(pr);
-        const s = 1 - (1 - boomerang(pr, 1.06, 0.55)) * 0.05;
+      for (let i=0; i<rows.length; i++){
+        const local = (t - rowStartTimes[i]) / ROW_POP_DUR; if (local <= 0) break;
+        const pr = clamp(local);
+        const a  = easeOutCubic(pr);
+        const s  = 0.98 + 0.02 * boomerang(pr, 1.06, 0.55); // tight range to avoid softness
         const dy = lerp(10, 0, a);
-        const blurPx = (1 - a) * 1.2 * MOBILE_BLUR_SCALE;
 
-        ctx.save();
-        ctx.translate(snap(contentX), snap(cursorY + dy));
-        ctx.scale(s, s);
-        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-        ctx.globalAlpha = a; if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
+        const titleSize = STYLE.titleSize * s;
+        const subSize   = STYLE.subSize   * s;
 
-        setFont(STYLE.titleWeight, STYLE.titleSize);
+        // Title
+        setFont(800, titleSize, 'Inter, ui-sans-serif, system-ui');
         ctx.fillStyle = '#0b0b10';
-        ctx.fillText(rows[i].title, 0, STYLE.titleSize);
+        ctx.globalAlpha = a; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(rows[i].title, Math.round(contentX), Math.round(cursorY + dy + titleSize));
 
+        // Sub
         if (rows[i].sub){
-          setFont(STYLE.subWeight, STYLE.subSize);
+          setFont(500, subSize, 'Inter, ui-sans-serif, system-ui');
           ctx.fillStyle = 'rgba(0,0,0,0.58)';
-          ctx.fillText(rows[i].sub, 0, STYLE.titleSize + STYLE.subGap + STYLE.subSize);
+          ctx.fillText(rows[i].sub, Math.round(contentX), Math.round(cursorY + dy + titleSize + STYLE.subGap + subSize));
         }
-        ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.restore();
+        ctx.globalAlpha = 1;
+
         cursorY += layout.rowHeights[i] + STYLE.rowGap;
       }
-      ctx.restore();
 
       const lastEnd = rowStartTimes[rows.length - 1] + ROW_POP_DUR;
       const total = lastEnd + S(BASE.holdA) + S(BASE.holdB);
       return { total, x, y, w, h, r };
     }
 
-    /* =========================== PHASE B =========================== */
+    /* -------------------- Phase B: Card → Slogan -------------------- */
     function renderCardToBestAI(startBox, t, slogan){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-
-      const out = easeInOutCubic(clamp(t));
-      const inv = 1 - out;
-
+      const out = easeInOutCubic(clamp(t)), inv = 1 - out;
       const w = lerp(startBox.w, startBox.w*0.9, out);
       const h = lerp(startBox.h, Math.max(100, startBox.h*0.6), out);
       const r = lerp(startBox.r, Math.min(startBox.r, h/2), out);
       const x = (CONFIG.w - w)/2, y = (CONFIG.h - h)/2;
+      ctx.save(); ctx.globalAlpha = Math.max(0, inv * 0.9); ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = `rgba(0,0,0,${0.08*inv})`; ctx.shadowBlur = 16 * inv * (isMobile()? .7 : 1); ctx.shadowOffsetY = 12 * inv;
+      roundedRect(ctx, x, y, w, h, r); ctx.fill(); ctx.shadowColor = 'transparent'; ctx.restore();
 
-      // Fading card
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, inv * 0.9);
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = `rgba(0,0,0,${0.08*inv})`;
-      ctx.shadowBlur = 16 * inv * MOBILE_SHADOW_SCALE;
-      ctx.shadowOffsetY = 12 * inv;
-      roundedRect(ctx, x, y, w, h, r); ctx.fill();
-      ctx.shadowColor = 'transparent'; ctx.restore();
-
-      // Title
-      const scale = boomerang(t, 1.06, 0.55);
+      const scale = 0.98 + 0.02*boomerang(t, 1.06, 0.55);
       const titleSize = Math.round( lerp(72, isMobile() ? 88 : 120, scale) * SIZE.all * SIZE.bestAI );
-      setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
-
-      ctx.save();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.translate(snap(CONFIG.w/2), snap(CONFIG.h/2));
-      ctx.globalAlpha = easeOutCubic(clamp(t));
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(slogan, 0, 0);
-      ctx.restore();
+      setFont(900, titleSize, 'Inter, ui-sans-serif, system-ui');
+      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.globalAlpha = easeOutCubic(clamp(t)); ctx.fillStyle = '#ffffff';
+      ctx.fillText(slogan, Math.round(CONFIG.w/2), Math.round(CONFIG.h/2)); ctx.restore();
     }
 
-    /* =========================== PHASE C =========================== */
+    /* -------------------- Phase C: Slogan → Logos -------------------- */
     function renderBestAIToLogos(t, logoImgs, slogan){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-
-      const titleOut = clamp((t-0.35)/0.30);
-      const titleIn  = 1 - titleOut;
-      const titleSize = Math.round((isMobile()? 88 : 120) * SIZE.all * SIZE.bestAI);
-      setFont(900, titleSize, '"Inter", ui-sans-serif, system-ui');
-      ctx.save();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const titleOut = clamp((t-0.35)/0.30), titleIn = 1 - titleOut;
+      const titleSize = Math.round( (isMobile() ? 88 : 120) * SIZE.all * SIZE.bestAI );
+      setFont(900, titleSize, 'Inter, ui-sans-serif, system-ui');
+      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillStyle = `rgba(255,255,255,${titleIn})`;
-      ctx.fillText(slogan, snap(CONFIG.w/2), snap(CONFIG.h/2));
-      ctx.restore();
+      ctx.fillText(slogan, Math.round(CONFIG.w/2), Math.round(CONFIG.h/2)); ctx.restore();
 
       const inT = easeOutCubic(clamp((t-0.1)/0.7));
-      const lineY = snap(CONFIG.h/2 + lerp(60, 0, inT));
-      const pad = isMobile()? 24 : 36;
-      const logoH = computeLogoLineHeight(logoImgs);
+      const lineY = Math.round(CONFIG.h/2 + lerp(60, 0, inT));
+      const pad = isMobile()? 24 : 36; const logoH = computeLogoLineHeight(logoImgs);
       const totalW = logoImgs.reduce((acc,img,i)=> acc + logoH * (img.aspect||1) + (i?pad:0), 0);
-      let x = (CONFIG.w - totalW)/2;
+      let x = (CONFIG.w - totalW)/2; const positions = [];
 
-      const positions = [];
       logoImgs.forEach((img, i) => {
-        const w = logoH * (img.aspect||1);
-        const appear = clamp((inT - i*0.06)/0.8);
-        const a = easeOutCubic(appear);
-        const s = 0.92 + 0.08 * boomerang(appear, 1.06, 0.55);
-        const y = lineY;
-
-        ctx.save();
-        ctx.globalAlpha = a;
-        const cx = x + w/2, cy = y;
-        ctx.translate(snap(cx), snap(cy));
-        ctx.scale(s, s);
-        if (img.image){ ctx.drawImage(img.image, -snap(w/2), -snap(logoH/2), snap(w), snap(logoH)); }
-        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill(); }
-        ctx.restore();
-
-        positions.push({ x: x + w/2, y, w, h: logoH });
-        x += w + pad;
+        const w = logoH * (img.aspect||1); const appear = clamp((inT - i*0.06)/0.8);
+        const a = easeOutCubic(appear); const s = 0.98 + 0.02 * boomerang(appear, 1.06, 0.55);
+        const cx = x + w/2, cy = lineY; const drawW = w * s, drawH = logoH * s;
+        ctx.save(); ctx.globalAlpha = a; ctx.translate(Math.round(cx), Math.round(cy));
+        if (img.image){ ctx.drawImage(img.image, Math.round(-drawW/2), Math.round(-drawH/2), Math.round(drawW), Math.round(drawH)); }
+        else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -drawW/2, -drawH/2, drawW, drawH, Math.min(drawH/2, 12)); ctx.fill(); }
+        ctx.restore(); positions.push({ x: cx, y: cy, w, h: logoH }); x += w + pad;
       });
       return positions;
     }
 
-    /* =========================== PHASE D =========================== */
+    /* -------------------- Phase D: Logos → O -------------------- */
     function renderLogosIntoO(t, logoImgs, startPositions){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-
-      const centerX = snap(CONFIG.w/2);
-      const centerY = snap(CONFIG.h/2 - (isMobile()? 6 : 10));
+      const centerX = Math.round(CONFIG.w/2), centerY = Math.round(CONFIG.h/2 - (isMobile()? 6 : 10));
       const baseSize = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
-      const size = Math.round( lerp(baseSize*0.9, baseSize*1.04, boomerang(clamp(t), 1.04, 0.55)) );
-
-      // Big "O"
-      ctx.save();
-      setFont(900, size, '"Audiowide", ui-sans-serif, system-ui');
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.shadowColor = 'rgba(0,0,0,0.12)';
-      ctx.shadowBlur = 18 * MOBILE_SHADOW_SCALE; ctx.shadowOffsetY = 10;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText('O', centerX, centerY);
-      ctx.shadowColor = 'transparent';
-      ctx.restore();
+      const size = Math.round( lerp(baseSize*0.98, baseSize*1.02, boomerang(clamp(t), 1.04, 0.55)) );
+      setFont(900, size, 'Audiowide, ui-sans-serif, system-ui');
+      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.12)'; ctx.shadowBlur = 18 * (isMobile()? .7 : 1); ctx.shadowOffsetY = 10;
+      ctx.fillStyle = '#ffffff'; ctx.fillText('O', centerX, centerY); ctx.shadowColor = 'transparent'; ctx.restore();
 
       const pull = easeInOutCubic(clamp(t));
       logoImgs.forEach((img, i) => {
-        const p = startPositions[i]; if (!p) return;
-        const delay = i * 0.06;
-        const tt = clamp((pull - delay)/ (1 - delay));
-        const a  = easeOutCubic(tt);
-        const curX = lerp(p.x, centerX, a);
-        const curY = lerp(p.y, centerY, a);
-        const scale = 1 - 0.85*a;
-        const opacity = 1 - a;
-        const w = (p.w) * scale, h = (p.h) * scale;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, opacity);
-        ctx.translate(snap(curX), snap(curY));
-        if (img.image){ ctx.drawImage(img.image, -snap(w/2), -snap(h/2), snap(w), snap(h)); }
+        const p = startPositions[i]; if (!p) return; const delay = i * 0.06;
+        const tt = clamp((pull - delay)/ (1 - delay)); const a = easeOutCubic(tt);
+        const curX = lerp(p.x, centerX, a), curY = lerp(p.y, centerY, a);
+        const scale = 1 - 0.85*a, opacity = 1 - a; const w = p.w * scale, h = p.h * scale;
+        ctx.save(); ctx.globalAlpha = Math.max(0, opacity); ctx.translate(Math.round(curX), Math.round(curY));
+        if (img.image){ ctx.drawImage(img.image, Math.round(-w/2), Math.round(-h/2), Math.round(w), Math.round(h)); }
         else { ctx.fillStyle = '#e9ecf2'; roundedRect(ctx, -w/2, -h/2, w, h, Math.min(h/2, 12)); ctx.fill(); }
         ctx.restore();
       });
     }
 
-    /* =========================== PHASE E =========================== */
+    /* -------------------- Phase E: O → Final ONX logo + subtitle -------------------- */
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+      const centerX = Math.round(CONFIG.w/2), centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
 
-      const centerX = snap(CONFIG.w/2);
-      const centerY = snap(CONFIG.h/2 - (isMobile()? 10 : 14));
+      // Fade O
+      const oFrom = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
+      const oTo   = (isMobile()? 130 : 180) * SIZE.all * SIZE.O;
+      const oOut = clamp(1 - t), logoIn = easeOutCubic(clamp(t));
+      const oSize = Math.round(lerp(oFrom, oTo, 1 - oOut)); setFont(900, oSize, 'Audiowide, ui-sans-serif, system-ui');
+      ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = oOut; ctx.fillStyle = '#ffffff';
+      ctx.fillText('O', centerX, centerY); ctx.restore();
 
-      // Fade the O
-      const oSizeFrom = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
-      const oSizeTo   = (isMobile()? 130 : 180) * SIZE.all * SIZE.O;
-      const oOut  = clamp(1 - t);
-      const logoIn = easeOutCubic(clamp(t));
-      const oSize = Math.round(lerp(oSizeFrom, oSizeTo, 1 - oOut));
-      ctx.save();
-      setFont(900, oSize, '"Audiowide", ui-sans-serif, system-ui');
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.globalAlpha = oOut; ctx.fillStyle = '#ffffff';
-      ctx.fillText('O', centerX, centerY);
-      ctx.restore();
-
-      // Final logo (preserve aspect, pixel-snapped)
-      const bounce = 0.92 + 0.08 * boomerang(logoIn, 1.04, 0.52);
+      // Final logo
+      const bounce = 0.98 + 0.02*boomerang(logoIn, 1.04, 0.52);
       const baseW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420) * SIZE.all * SIZE.finalLogo;
-      const w = baseW * bounce;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
-      const h = w / aspect;
-
-      ctx.save();
-      ctx.globalAlpha = logoIn;
-      if (finalLogoImg.image) {
-        ctx.drawImage(finalLogoImg.image, snap(centerX - w/2), snap(centerY - h/2), snap(w), snap(h));
-      } else {
-        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(centerX, centerY, snap(w/2), 0, Math.PI*2); ctx.fill();
-      }
+      const w = baseW * bounce; const aspect = Math.max(0.01, finalLogoImg.aspect || 1); const h = w / aspect;
+      ctx.save(); ctx.globalAlpha = logoIn;
+      if (finalLogoImg.image){ ctx.drawImage(finalLogoImg.image, Math.round(centerX - w/2), Math.round(centerY - h/2), Math.round(w), Math.round(h)); }
+      else { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill(); }
       ctx.restore();
 
       // Subtitle
       const subtitleA = easeOutCubic(clamp((t-0.25)/0.6));
       if (subtitleA > 0){
-        const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-        setFont(700, size, '"Inter", ui-sans-serif, system-ui');
-        ctx.save();
-        ctx.globalAlpha = subtitleA; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Unified AI', centerX, snap(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))));
-        ctx.restore();
+        const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified; setFont(700, size, 'Inter, ui-sans-serif, system-ui');
+        ctx.save(); ctx.globalAlpha = subtitleA; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffffff';
+        ctx.fillText('Unified AI', centerX, Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)))); ctx.restore();
       }
     }
 
-    /* ====================== ORCHESTRATOR/ASSETS ==================== */
-    let isAnimating = false;
-    let runId = 0;                 // abort token
-    let prepared = null;           // cached assets
+    /* ================ Orchestrator & Assets ================ */
+    let isAnimating = false, runId = 0, prepared = null; // abort token + cache
 
     function loadImage(src){
-      return new Promise(resolve => {
+      return new Promise(resolve=>{
         const img = new Image(); img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          const nw = img.naturalWidth || img.width || 1;
-          const nh = img.naturalHeight || img.height || 1;
-          resolve({ image: img, aspect: Math.max(0.01, nw/nh) });
-        };
-        img.onerror = () => resolve({ image: null, aspect: 1 });
-        img.src = src;
+        img.onload = ()=>{ const nw = img.naturalWidth||img.width||1, nh = img.naturalHeight||img.height||1; resolve({ image: img, aspect: Math.max(0.01, nw/nh) }); };
+        img.onerror = ()=> resolve({ image: null, aspect: 1 }); img.src = src;
       });
     }
-    function tintTo(img, color='#ffffff'){
-      if (!img) return null;
-      const nw = img.naturalWidth || img.width || 1;
-      const nh = img.naturalHeight || img.height || 1;
-      const off = document.createElement('canvas'); off.width = nw; off.height = nh;
-      const octx = off.getContext('2d');
-      octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high';
-      octx.clearRect(0,0,nw,nh);
-      octx.drawImage(img, 0, 0, nw, nh);
-      octx.globalCompositeOperation = 'source-in';
-      octx.fillStyle = color; octx.fillRect(0,0,nw,nh);
-      octx.globalCompositeOperation = 'source-over';
+    function tintImageToColor(img, color='#ffffff'){
+      if (!img) return null; const nw = img.naturalWidth||img.width||1, nh = img.naturalHeight||img.height||1;
+      const off = document.createElement('canvas'); off.width = nw; off.height = nh; const octx = off.getContext('2d');
+      octx.imageSmoothingEnabled = true; octx.imageSmoothingQuality = 'high'; octx.clearRect(0,0,nw,nh);
+      octx.drawImage(img, 0, 0, nw, nh); octx.globalCompositeOperation = 'source-in'; octx.fillStyle = color; octx.fillRect(0,0,nw,nh); octx.globalCompositeOperation = 'source-over';
       return off;
     }
     async function prepareAssets(){
-      const raw = await Promise.all(LOGOS.map(l => loadImage(l.src)));
-      const logoImgs = raw.map((r, i) => {
-        const want = LOGOS[i].tint; if (r.image && want) {
-          const tinted = tintTo(r.image, want); return { image: tinted, aspect: r.aspect || 1 };
-        }
-        return r;
-      });
+      const rawLogoImgs = await Promise.all(LOGOS.map(l => loadImage(l.src)));
+      const logoImgs = rawLogoImgs.map((r, i) => { const want = LOGOS[i].tint; if (r.image && want){ const tinted = tintImageToColor(r.image, want); return { image: tinted, aspect: r.aspect || 1 }; } return r; });
       logoImgs.forEach(v => { if (!isFinite(v.aspect) || v.aspect <= 0) v.aspect = 1; });
-
-      const finalRaw = await loadImage(FINAL_LOGO_SRC);
-      let tinted = null; if (finalRaw && finalRaw.image) tinted = tintTo(finalRaw.image, FINAL_LOGO_TINT);
-      const finalLogo = { image: tinted || finalRaw.image, aspect: finalRaw.aspect || 1 };
-
-      if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch {} }
+      const finalLogoRaw = await loadImage(FINAL_LOGO_SRC); let tinted = null;
+      if (finalLogoRaw && finalLogoRaw.image){ tinted = tintImageToColor(finalLogoRaw.image, FINAL_LOGO_TINT); }
+      const finalLogo = { image: tinted || finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1 };
+      if (document.fonts && document.fonts.ready){ try { await document.fonts.ready; } catch {} }
       return { logoImgs, finalLogo };
     }
 
     function playSequence(assets){
-      const myId = ++runId; isAnimating = true;
-      const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
+      const myId = ++runId; isAnimating = true; const slogan = SLOGANS[Math.floor(Math.random()*SLOGANS.length)];
 
-      const startA = performance.now();
-      let cardBox = null;
-      function stepA(now){
-        if (myId !== runId) return;
-        const tSec = (now - startA) / 1000;
-        const layoutA = renderCard(tSec);
+      // PHASE A
+      const startA = performance.now(); let cardBox = null;
+      function stepA(now){ if (myId !== runId) return; const tSec = (now - startA)/1000; const layoutA = renderCard(tSec);
         if (!cardBox) cardBox = { x: layoutA.x, y: layoutA.y, w: layoutA.w, h: layoutA.h, r: layoutA.r };
-        if (tSec < layoutA.total) requestAnimationFrame(stepA); else stepB(performance.now());
-      }
-      function stepB(){
-        if (myId !== runId) return;
-        const startB = performance.now();
-        (function loopB(ts){
-          if (myId !== runId) return;
-          const t = clamp(((ts - startB)/1000) / S(0.85));
-          renderCardToBestAI(cardBox, t, slogan);
-          if (t < 1) requestAnimationFrame(loopB); else stepC();
-        })(startB);
-      }
-      function stepC(){
-        if (myId !== runId) return;
-        const startC = performance.now(); let lastPositions = null;
-        (function loopC(ts){
-          if (myId !== runId) return;
-          const tC = clamp(((ts - startC)/1000) / S(1.35));
-          lastPositions = renderBestAIToLogos(tC, assets.logoImgs, slogan);
-          if (tC < 1) requestAnimationFrame(loopC); else stepD(lastPositions);
-        })(startC);
-      }
-      function stepD(lastPositions){
-        if (myId !== runId) return;
-        const startD = performance.now();
-        (function loopD(ts){
-          if (myId !== runId) return;
-          const tD = clamp(((ts - startD)/1000) / S(1.55));
-          renderLogosIntoO(tD, assets.logoImgs, lastPositions);
-          if (tD < 1) requestAnimationFrame(loopD); else stepE();
-        })(startD);
-      }
-      function stepE(){
-        if (myId !== runId) return;
-        const startE = performance.now();
-        (function loopE(ts){
-          if (myId !== runId) return;
-          const tE = clamp(((ts - startE)/1000) / S(1.15));
-          renderOToFinalLogo(tE, assets.finalLogo);
-          if (tE < 1) requestAnimationFrame(loopE); else { isAnimating = false; }
-        })(startE);
-      }
+        if (tSec < layoutA.total){ requestAnimationFrame(stepA); } else { stepB(performance.now()); } }
+
+      // PHASE B
+      function stepB(){ if (myId !== runId) return; const startB = performance.now();
+        (function loopB(ts){ if (myId !== runId) return; const t = clamp(((ts - startB)/1000) / S(0.85));
+          renderCardToBestAI(cardBox, t, slogan); if (t < 1) requestAnimationFrame(loopB); else stepC(); })(startB); }
+
+      // PHASE C
+      function stepC(){ if (myId !== runId) return; const startC = performance.now(); let lastPositions = null;
+        (function loopC(ts){ if (myId !== runId) return; const tC = clamp(((ts - startC)/1000) / S(1.35));
+          lastPositions = renderBestAIToLogos(tC, assets.logoImgs, slogan); if (tC < 1) requestAnimationFrame(loopC); else stepD(lastPositions); })(startC); }
+
+      // PHASE D
+      function stepD(lastPositions){ if (myId !== runId) return; const startD = performance.now();
+        (function loopD(ts){ if (myId !== runId) return; const tD = clamp(((ts - startD)/1000) / S(1.55));
+          renderLogosIntoO(tD, assets.logoImgs, lastPositions); if (tD < 1) requestAnimationFrame(loopD); else stepE(); })(startD); }
+
+      // PHASE E
+      function stepE(){ if (myId !== runId) return; const startE = performance.now();
+        (function loopE(ts){ if (myId !== runId) return; const tE = clamp(((ts - startE)/1000) / S(1.15));
+          renderOToFinalLogo(tE, assets.finalLogo); if (tE < 1) requestAnimationFrame(loopE); else { isAnimating = false; } })(startE); }
+
       requestAnimationFrame(stepA);
     }
 
-    /* =========================== CONTROLS ========================== */
-    function ensureControls(){
-      if (!controls) return;
-      controls.innerHTML = '';
-      const replay = document.createElement('button');
-      replay.type = 'button'; replay.textContent = 'Replay';
-      replay.setAttribute('aria-label', 'Replay ONX animation');
-      replay.addEventListener('click', async () => {
-        replay.disabled = true;
-        try { if (!prepared) prepared = await prepareAssets(); playSequence(prepared); }
-        finally { setTimeout(() => { replay.disabled = false; }, 400); }
-      }, { passive: true });
-      replay.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); replay.click(); }
-      });
-      controls.appendChild(replay);
+    /* Controls */
+    function ensureControls(){ if (!controlsEl) return; controlsEl.innerHTML = '';
+      const replay = document.createElement('button'); replay.type = 'button'; replay.textContent = 'Replay';
+      replay.addEventListener('click', async ()=>{ replay.disabled = true; try { if (!prepared) prepared = await prepareAssets(); playSequence(prepared); } finally { setTimeout(()=>{ replay.disabled = false; }, 400); } }, { passive: true });
+      controlsEl.appendChild(replay);
     }
 
-    /* ===================== MOBILE AUTO-FIT SCALE =================== */
-    function controlHeight(){ const el = controls; return el ? Math.max(0, el.offsetHeight || 44) : 44; }
-    function applyMobileScale(){
-      if (!isMobile()){
-        stageEl.style.transform = '';
-        stageEl.style.transformOrigin = 'center top';
-        stageScale = 1; setBackingScale(); return;
-      }
-      const { vw, vh, top, bottom } = vp();
-      const safeSide = 16, safeTop = 16 + top, safeBot = 16 + bottom;
-      const ctrlH = controlHeight();
-      const hostMargins = 24 + 28; // top/bottom margins around stage
+    /* First frame + autoplay when visible */
+    setBackingScale(); clearStage(); renderCard(0);
+    let autoplayed = false; async function tryAutoplay(){ if (autoplayed || isAnimating) return; const rect = stageEl.getBoundingClientRect(); const vpH = window.visualViewport ? window.visualViewport.height : window.innerHeight; const visible = (vpH/2 >= rect.top && vpH/2 <= rect.bottom); if (!visible) return; autoplayed = true; if (!prepared) prepared = await prepareAssets(); if (prefersReducedMotion){ renderOToFinalLogo(1, prepared.finalLogo); isAnimating = false; } else { playSequence(prepared); } }
 
-      const baseW = Math.min(1100, 0.96 * vw);
-      const baseH = baseW / ASPECT;
-      const availW = Math.max(240, vw - 2*safeSide);
-      const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
-      const scaleW = availW / baseW;
-      const scaleH = availH / baseH;
-      const desired = 2.0;
-      const scale = clamp(Math.min(desired, scaleW, scaleH), 0.6, desired);
+    /* Observers + lifecycle */
+    try { const io = new IntersectionObserver((entries)=>{ for (const e of entries){ if (e.isIntersecting) tryAutoplay(); } }, { root: null, threshold: 0.15 }); io.observe(stageEl); } catch {}
+    document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') tryAutoplay(); }, { passive: true });
 
-      stageEl.style.transform = `scale(${scale})`;
-      stageEl.style.transformOrigin = 'center top';
-      stageScale = scale; setBackingScale();
-    }
+    /* Responsive rebuild */
+    function rebuild(){ applyMobileScale(); const NOW_MOBILE = isMobile(); const newCONFIG = NOW_MOBILE ? { w:1152, h:648 } : { w:2048, h:1152 };
+      if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h){ CONFIG = newCONFIG; BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h; BG_CTX = BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h); setBackingScale(); }
+      STYLE = buildStyle(); layout = measureFinalLayout(); clearStage(); renderCard(0); if (!autoplayed) tryAutoplay(); ensureControls(); }
 
-    /* ======================= OBSERVERS/BOOT ======================== */
-    setBackingScale(); clearStage(); renderCard(0); ensureControls();
+    let rid = null; const rq = fn=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(fn); };
+    addEventListener('resize', ()=> rq(rebuild), { passive: true });
+    if (window.visualViewport){ visualViewport.addEventListener('resize', ()=> rq(rebuild), { passive: true }); visualViewport.addEventListener('scroll', ()=> rq(applyMobileScale), { passive: true }); }
+    addEventListener('scroll', tryAutoplay, { passive: true });
 
-    let autoplayed = false;
-    async function tryAutoplay(){
-      if (autoplayed || isAnimating) return;
-      const rect = stageEl.getBoundingClientRect();
-      const vpH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      const visible = (vpH/2 >= rect.top && vpH/2 <= rect.bottom);
-      if (!visible) return;
-      autoplayed = true;
-      if (!prepared) prepared = await prepareAssets();
-      if (prefersReducedMotion) { renderOToFinalLogo(1, prepared.finalLogo); isAnimating = false; }
-      else { playSequence(prepared); }
-    }
-
-    // IntersectionObserver for autoplay
-    try {
-      const io = new IntersectionObserver((entries) => {
-        for (const e of entries) if (e.isIntersecting) tryAutoplay();
-      }, { root: null, threshold: 0.15 });
-      io.observe(stageEl);
-    } catch {}
-
-    // Hidden manual trigger
-    const playBtn = document.getElementById('onx-play');
-    if (playBtn) playBtn.addEventListener('click', async () => {
-      if (!prepared) prepared = await prepareAssets();
-      playSequence(prepared);
-    }, { passive: true });
-
-    // Rebuild on resize/viewport changes
-    let rid = null;
-    function rebuild(){
-      applyMobileScale();
-      const NOW_MOBILE = isMobile();
-      const newCONFIG = NOW_MOBILE ? { w:1152, h:648 } : { w:2048, h:1152 };
-      if (newCONFIG.w !== CONFIG.w || newCONFIG.h !== CONFIG.h){
-        CONFIG = newCONFIG;
-        BG_CANVAS.width = CONFIG.w; BG_CANVAS.height = CONFIG.h;
-        BG_CTX = BG_CANVAS.getContext('2d'); BG_CTX.clearRect(0,0,CONFIG.w,CONFIG.h);
-        setBackingScale();
-      }
-      STYLE = buildStyle();
-      layout = measureFinalLayout();
-      clearStage(); renderCard(0);
-      if (!autoplayed) tryAutoplay();
-      ensureControls();
-    }
-
-    applyMobileScale();
-    window.addEventListener('resize', () => { cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuild); }, { passive: true });
-    if (window.visualViewport){
-      window.visualViewport.addEventListener('resize', () => { cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuild); }, { passive: true });
-      window.visualViewport.addEventListener('scroll',  () => { cancelAnimationFrame(rid); rid = requestAnimationFrame(applyMobileScale); }, { passive: true });
-    }
-    window.addEventListener('scroll', tryAutoplay, { passive: true });
-
-    // Optional: pause animations when tab hidden (saves power)
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { /* future: could cancel frames via runId */ }
-    });
+    ensureControls();
   })();
   </script>
-</section>
-<!-- =================================================================== -->
+</div>
+<!-- ===================================================== /ONX Card Reveal ===================================================== -->
 
 
 
