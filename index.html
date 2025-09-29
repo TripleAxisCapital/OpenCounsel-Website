@@ -1098,6 +1098,530 @@ const SUGGESTIONS = [
 
 
 
+
+
+
+
+
+
+
+<!-- ======================= ONX — Goals Animation Reel (Drop-in) ======================= -->
+<section id="onx-reel" aria-label="ONX goals animation" data-autoplay="true" data-interval="2400">
+  <style>
+    /* -------------------- Design tokens (namespaced) -------------------- */
+    #onx-reel{
+      --bg:#fff;
+      --ink:#0B0B0C;
+      --muted:#6B7280;
+      --line:#E6E8EC;
+
+      --glass:rgba(255,255,255,.65);
+      --shadowA:0 2px 10px rgba(0,0,0,.04);
+      --shadowB:0 20px 40px rgba(0,0,0,.07);
+
+      --accentA:#3f6768;       /* teal-cyan (matches your chat hero stream) */
+      --accentB:#57c7d9;
+      --accentHi:#60D2E2;
+
+      --radius:28px;
+      --stageH: clamp(520px, 78vh, 760px);
+      --padX: clamp(16px, 4vw, 32px);
+
+      --t1: 420ms;
+      --t2: 700ms;
+      --t3: 1200ms;
+
+      --blur: 28px;
+      --orb: 360px;            /* base orb size; scales on mobile */
+    }
+
+    @media (min-width:920px){
+      #onx-reel{ --orb: 420px; }
+    }
+
+    /* -------------------- Layout -------------------- */
+    #onx-reel{
+      position:relative;
+      background:var(--bg);
+      color:var(--ink);
+      isolation:isolate;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                   "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      overflow:hidden;
+      border-top:1px solid var(--line);
+    }
+
+    #onx-reel .wrap{
+      max-width:1180px; margin:0 auto;
+      padding: clamp(24px, 4vh, 48px) var(--padX);
+    }
+
+    #onx-reel .shell{
+      position:relative;
+      height:var(--stageH);
+      border:1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      background: rgba(255,255,255,.72);
+      backdrop-filter:saturate(1.1) blur(6px);
+      box-shadow: var(--shadowA), var(--shadowB);
+      overflow:hidden;
+    }
+
+    /* -------------------- Top bar: minimal headline + progress -------------------- */
+    #onx-reel .bar{
+      position:absolute; inset:0 0 auto 0; height:64px;
+      display:flex; align-items:center; gap:14px;
+      padding: 0 var(--padX);
+      z-index:3;
+      background:linear-gradient(to bottom, rgba(255,255,255,.9), rgba(255,255,255,.55) 85%, transparent);
+      -webkit-backdrop-filter: blur(8px) saturate(1.2);
+      backdrop-filter: blur(8px) saturate(1.2);
+      border-bottom:1px solid rgba(0,0,0,.04);
+    }
+    #onx-reel .brand{
+      font-weight:700; letter-spacing:-0.02em; font-size: clamp(18px, 2.6vw, 22px);
+    }
+    #onx-reel .tag{
+      margin-left:auto; font-size:12px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase;
+      border:1px solid var(--line); padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.75);
+    }
+
+    /* Progress (5 segments) */
+    #onx-reel .progress{ display:flex; gap:8px; }
+    #onx-reel .dot{
+      width:38px; height:6px; border-radius:999px; background:#E9EDF2; overflow:hidden; position:relative;
+    }
+    #onx-reel .dot > i{
+      position:absolute; left:0; top:0; bottom:0; width:0%;
+      background:linear-gradient(90deg, var(--accentA), var(--accentB));
+      transition: width var(--t2) cubic-bezier(.22,.61,.36,1);
+    }
+    #onx-reel .dot.is-done > i{ width:100%; }
+    #onx-reel .dot.is-active > i{ width:100%; transition-duration: var(--t3); }
+
+    /* -------------------- Stage -------------------- */
+    #onx-reel .stage{
+      position:absolute; inset:0;
+      display:grid; place-items:center;
+      overflow:hidden;
+      z-index:1;
+    }
+
+    /* Orb + glow */
+    #onx-reel .orb{
+      position:relative; width:var(--orb); height:var(--orb); border-radius:50%;
+      background:
+        radial-gradient(36% 36% at 30% 30%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.7) 55%, rgba(255,255,255,.2) 100%),
+        radial-gradient(70% 70% at 60% 70%, rgba(96,210,226,.32), rgba(96,210,226,0) 60%);
+      border:1px solid rgba(0,0,0,.06);
+      box-shadow:
+        0 10px 30px rgba(0,0,0,.04),
+        0 60px 120px rgba(86,196,210,.28),
+        inset 0 0 0 1px rgba(255,255,255,.6);
+      transform:translateZ(0); will-change:transform, filter;
+      animation:orb-breathe 6s ease-in-out infinite;
+    }
+    @keyframes orb-breathe{
+      0%,100%{ transform:scale(1); filter:brightness(1); }
+      50%    { transform:scale(1.02); filter:brightness(1.02); }
+    }
+
+    /* Halo ring */
+    #onx-reel .halo{
+      position:absolute; inset:-24%; border-radius:50%;
+      background:radial-gradient(60% 60% at 50% 50%, rgba(96,210,226,.22), rgba(96,210,226,0) 60%);
+      filter:blur(var(--blur));
+      z-index:-1; pointer-events:none;
+      animation:halo 8s ease-in-out infinite;
+    }
+    @keyframes halo{
+      0%,100%{ transform:scale(1); opacity:.9; }
+      50%    { transform:scale(1.06); opacity:1; }
+    }
+
+    /* -------------------- Chips (models) orbiting -------------------- */
+    #onx-reel .chip{
+      position:absolute; inset:0; width:100%; height:100%;
+      display:grid; place-items:center; pointer-events:none;
+      transform-origin:center;
+      animation: spin 22s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #onx-reel .chip > span{
+      position:absolute;
+      translate: 0 calc(-50% - (var(--orb)/2) - 18px);
+      padding:8px 12px; font-size:12px; letter-spacing:.04em;
+      border:1px solid rgba(0,0,0,.08);
+      background:var(--glass); -webkit-backdrop-filter: blur(8px) saturate(1.2); backdrop-filter: blur(8px) saturate(1.2);
+      border-radius:999px; color:#0B0B0C; box-shadow:0 4px 18px rgba(0,0,0,.06);
+      text-transform:uppercase;
+    }
+
+    /* Different radii / phases for variety */
+    #onx-reel .chip.gpt        { animation-duration: 28s; }
+    #onx-reel .chip.meta       { animation-duration: 24s; }
+    #onx-reel .chip.google     { animation-duration: 20s; }
+    #onx-reel .chip.oss        { animation-duration: 26s; }
+    #onx-reel .chip.grok       { animation-duration: 18s; }
+
+    /* -------------------- Step overlays -------------------- */
+    #onx-reel .overlay{
+      position:absolute; inset:auto 0 42px 0;
+      display:flex; flex-direction:column; align-items:center; gap:12px;
+      text-align:center; z-index:2; pointer-events:none;
+      padding:0 var(--padX);
+    }
+    #onx-reel .title{
+      font-weight:800; letter-spacing:-0.02em; line-height:1.06;
+      font-size: clamp(28px, 5.6vw, 44px);
+    }
+    #onx-reel .desc{
+      max-width: 720px; color:var(--muted);
+      font-size: clamp(14px, 2.4vw, 18px); line-height:1.45;
+    }
+
+    /* Icon rail (changes per step) */
+    #onx-reel .icons{
+      position:absolute; inset:0; display:grid; place-items:center; z-index:2; pointer-events:none;
+    }
+    #onx-reel .icon{
+      opacity:0; transform:translateY(8px) scale(.98);
+      transition: opacity var(--t1) ease, transform var(--t1) ease;
+      filter: drop-shadow(0 8px 24px rgba(0,0,0,.06));
+    }
+    #onx-reel .icon svg{ width: 180px; height: 180px; }
+
+    /* Visible states toggled by step class (s1..s5) */
+    #onx-reel.is-s1 .chip       { opacity:1; }
+    #onx-reel.is-s1 .icon.unify { opacity:1; transform:translateY(0) scale(1); }
+
+    #onx-reel.is-s2 .icon.route { opacity:1; transform:translateY(0) scale(1); }
+    #onx-reel.is-s2 .orb { animation-duration:4s; } /* subtle tempo up */
+
+    #onx-reel.is-s3 .icon.auto  { opacity:1; transform:translateY(0) scale(1); }
+    #onx-reel.is-s3 .orb:after{
+      content:""; position:absolute; inset:-8%;
+      background:conic-gradient(from 0deg, rgba(96,210,226,.15), transparent 45%);
+      border-radius:50%; filter:blur(18px);
+      animation: sweep 1.4s linear infinite;
+    }
+    @keyframes sweep{ to { rotate:360deg; } }
+
+    #onx-reel.is-s4 .icon.priv  { opacity:1; transform:translateY(0) scale(1); }
+    #onx-reel.is-s4 .halo{ animation-duration:12s; opacity:.8; }
+    #onx-reel.is-s4 .orb{ box-shadow:
+      0 10px 30px rgba(0,0,0,.04),
+      0 60px 120px rgba(86,196,210,.22),
+      inset 0 0 0 2px rgba(96,210,226,.45),
+      inset 0 0 0 7px rgba(96,210,226,.10);
+    }
+
+    #onx-reel.is-s5 .icon.ship  { opacity:1; transform:translateY(0) scale(1); }
+    #onx-reel.is-s5 .orb{ animation: orb-breathe 3.8s ease-in-out infinite; }
+
+    /* Hide chips on steps that need focus elsewhere */
+    #onx-reel:not(.is-s1) .chip{ opacity:.12; filter:saturate(.8) blur(.2px); transition:opacity var(--t2) ease; }
+
+    /* -------------------- Controls (optional, keyboard-accessible) -------------------- */
+    #onx-reel .controls{
+      position:absolute; inset:auto var(--padX) 18px auto; left:50%; translate:-50% 0;
+      display:flex; align-items:center; gap:12px; z-index:4;
+      pointer-events:auto;
+    }
+    #onx-reel .btn{
+      width:42px; height:42px; border-radius:12px; border:1px solid var(--line);
+      background:#fff; display:grid; place-items:center; cursor:pointer;
+      transition: transform .12s ease, background-color .2s ease, box-shadow .2s ease;
+      box-shadow: 0 4px 18px rgba(0,0,0,.06);
+    }
+    #onx-reel .btn:hover{ transform: translateY(-1px); }
+    #onx-reel .btn svg{ width:18px; height:18px; stroke:#0B0B0C; stroke-width:2; fill:none; }
+
+    /* -------------------- Dark mode (optional) -------------------- */
+    @media (prefers-color-scheme: dark){
+      #onx-reel{
+        --bg:#0B0B0C; --ink:#F4F7FA; --muted:#A9B2BF; --line:#1E232B;
+        --glass:rgba(18,22,28,.5);
+      }
+      #onx-reel .shell{ background: rgba(13,16,22,.55); }
+      #onx-reel .tag{ background: rgba(16,20,26,.6); border-color: var(--line); color:#C9D3E1; }
+      #onx-reel .dot{ background:#1C2330; }
+    }
+
+    /* -------------------- Reduced motion -------------------- */
+    @media (prefers-reduced-motion: reduce){
+      #onx-reel .chip, #onx-reel .orb, #onx-reel .halo, #onx-reel .orb:after { animation:none !important; }
+    }
+  </style>
+
+  <div class="wrap">
+    <div class="shell" role="group" aria-roledescription="animated story">
+      <!-- Top bar -->
+      <div class="bar" aria-hidden="true">
+        <div class="brand">ONX</div>
+        <div class="progress" aria-label="Progress">
+          <div class="dot"><i></i></div>
+          <div class="dot"><i></i></div>
+          <div class="dot"><i></i></div>
+          <div class="dot"><i></i></div>
+          <div class="dot"><i></i></div>
+        </div>
+        <div class="tag">The AI Workspace. Without Limits.</div>
+      </div>
+
+      <!-- Stage -->
+      <div class="stage" aria-live="polite">
+        <div class="orb" aria-hidden="true"><i class="halo"></i></div>
+
+        <!-- Orbiting model chips -->
+        <div class="chip gpt"    style="rotate:  0deg;"><span>GPT</span></div>
+        <div class="chip meta"   style="rotate: 60deg;"><span>META</span></div>
+        <div class="chip google" style="rotate:120deg;"><span>GOOGLE</span></div>
+        <div class="chip oss"    style="rotate:180deg;"><span>OSS</span></div>
+        <div class="chip grok"   style="rotate:240deg;"><span>GROK</span></div>
+
+        <!-- Center icons per step -->
+        <div class="icons" aria-hidden="true">
+          <!-- Unify -->
+          <div class="icon unify">
+            <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <radialGradient id="g1" cx="50%" cy="50%">
+                  <stop offset="0%"  stop-color="#fff"/>
+                  <stop offset="70%" stop-color="#60D2E2"/>
+                  <stop offset="100%" stop-color="transparent"/>
+                </radialGradient>
+              </defs>
+              <circle cx="80" cy="80" r="54" fill="url(#g1)" opacity=".38"/>
+              <circle cx="80" cy="80" r="42" fill="none" stroke="#60D2E2" stroke-width="2" opacity=".55"/>
+              <g stroke="#0B0B0C" stroke-width="2" fill="none" opacity=".9">
+                <path d="M35 80h90M80 35v90"/>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Route -->
+          <div class="icon route">
+            <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="90" cy="90" r="54" fill="none" stroke="#60D2E2" stroke-width="2" opacity=".5"/>
+              <path d="M30 130 C70 110, 110 110, 150 130" stroke="#0B0B0C" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M30 50 C70 70, 110 70, 150 50" stroke="#0B0B0C" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+              <path d="M150 130l-8-6m8 6l-8 6" stroke="#0B0B0C" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <path d="M150 50l-8-6m8 6l-8 6" stroke="#0B0B0C" stroke-width="2" fill="none" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Automate -->
+          <div class="icon auto">
+            <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+              <g transform="translate(90,90)">
+                <circle r="36" fill="none" stroke="#0B0B0C" stroke-width="2"/>
+                <circle r="12" fill="#60D2E2" opacity=".5"/>
+                <g stroke="#0B0B0C" stroke-width="2" stroke-linecap="round">
+                  <path d="M0 -56 v-10"/>
+                  <path d="M0 56 v10"/>
+                  <path d="M56 0 h10"/>
+                  <path d="M-56 0 h-10"/>
+                  <path d="M40 -40 l7 -7"/>
+                  <path d="M-40 40 l-7 7"/>
+                  <path d="M-40 -40 l-7 -7"/>
+                  <path d="M40 40 l7 7"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Private -->
+          <div class="icon priv">
+            <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="guard" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#60D2E2"/>
+                  <stop offset="100%" stop-color="#3f6768"/>
+                </linearGradient>
+              </defs>
+              <circle cx="90" cy="90" r="58" fill="none" stroke="url(#guard)" stroke-width="3" opacity=".7"/>
+              <path d="M60 88v-10a30 30 0 0 1 60 0v10" fill="none" stroke="#0B0B0C" stroke-width="2"/>
+              <rect x="64" y="88" width="52" height="34" rx="8" fill="none" stroke="#0B0B0C" stroke-width="2"/>
+              <circle cx="90" cy="104" r="6" fill="#0B0B0C"/>
+            </svg>
+          </div>
+
+          <!-- Ship -->
+          <div class="icon ship">
+            <svg viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg">
+              <path d="M40 140 C80 120, 120 120, 160 140" stroke="#60D2E2" stroke-width="3" fill="none" opacity=".6"/>
+              <g transform="translate(150,120) rotate(-12)">
+                <path d="M0 0 L26 10 L0 20 Z" fill="#0B0B0C"/>
+                <path d="M-34 10 Q-12 6 0 10" stroke="#0B0B0C" stroke-width="2" fill="none" opacity=".8"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Copy -->
+        <div class="overlay">
+          <div class="title" data-title></div>
+          <div class="desc" data-desc></div>
+        </div>
+
+        <!-- Controls (optional; keyboard accessible) -->
+        <div class="controls" role="toolbar" aria-label="Animation controls">
+          <button class="btn" type="button" data-prev aria-label="Previous">
+            <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="btn" type="button" data-play aria-label="Play/Pause">
+            <svg viewBox="0 0 24 24" data-icon="play"><path d="M8 5l10 7-10 7"/></svg>
+            <svg viewBox="0 0 24 24" data-icon="pause" style="display:none"><path d="M7 5v14M17 5v14"/></svg>
+          </button>
+          <button class="btn" type="button" data-next aria-label="Next">
+            <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.getElementById('onx-reel');
+      if (!root) return;
+
+      const steps = [
+        {
+          k:'s1',
+          title:'Unify Every Model into One Brain',
+          desc:'GPT, Meta, Google, Grok, and top OSS—ONX merges them behind a single, elegant workspace.'
+        },
+        {
+          k:'s2',
+          title:'Route to the Best Answer—Fast',
+          desc:'ONX auto-picks the right model for speed, cost, and quality. Less waiting, more doing.'
+        },
+        {
+          k:'s3',
+          title:'Automate Real Workflows',
+          desc:'Research, outreach, docs, code, analysis—turn multi-step tasks into one-click runs.'
+        },
+        {
+          k:'s4',
+          title:'Private by Design',
+          desc:'Local-first with optional cloud power. Own your data, lock your IP, sleep like a baby.'
+        },
+        {
+          k:'s5',
+          title:'Ship 2× Faster',
+          desc:'Focus on outcomes. ONX removes busywork so you launch sooner—and look polished doing it.'
+        }
+      ];
+
+      // DOM refs
+      const titleEl = root.querySelector('[data-title]');
+      const descEl  = root.querySelector('[data-desc]');
+      const dots    = [...root.querySelectorAll('.dot')];
+      const btnPrev = root.querySelector('[data-prev]');
+      const btnNext = root.querySelector('[data-next]');
+      const btnPlay = root.querySelector('[data-play]');
+      const iconPlay = btnPlay?.querySelector('[data-icon="play"]');
+      const iconPause= btnPlay?.querySelector('[data-icon="pause"]');
+
+      // Config
+      const intervalMS = +root.dataset.interval || 2400;
+      const autoplay   = root.dataset.autoplay !== 'false';
+      const reduceMotion= window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      let i = 0, timer = null, playing = autoplay && !reduceMotion;
+
+      function applyStep(idx){
+        i = (idx + steps.length) % steps.length;
+        const step = steps[i];
+
+        // Update copy
+        titleEl.textContent = step.title;
+        descEl.textContent  = step.desc;
+
+        // Update segment progress
+        dots.forEach((d, n) => {
+          d.classList.toggle('is-active', n === i);
+          d.classList.toggle('is-done', n < i);
+        });
+
+        // Root state class (is-s1..is-s5)
+        root.classList.remove('is-s1','is-s2','is-s3','is-s4','is-s5');
+        root.classList.add('is-' + step.k);
+
+        // ARIA live region: keep concise
+        root.setAttribute('aria-label', step.title);
+      }
+
+      function next(){ applyStep(i+1); }
+      function prev(){ applyStep(i-1); }
+
+      function play(){
+        if (playing || reduceMotion) return;
+        playing = true;
+        iconPlay && (iconPlay.style.display = 'none');
+        iconPause && (iconPause.style.display = '');
+        loop();
+      }
+
+      function pause(){
+        playing = false;
+        iconPlay && (iconPlay.style.display = '');
+        iconPause && (iconPause.style.display = 'none');
+        if (timer) { clearTimeout(timer); timer = null; }
+      }
+
+      function loop(){
+        if (!playing) return;
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => { next(); loop(); }, intervalMS);
+      }
+
+      // Interaction
+      btnNext?.addEventListener('click', () => { pause(); next(); });
+      btnPrev?.addEventListener('click', () => { pause(); prev(); });
+      btnPlay?.addEventListener('click', () => { playing ? pause() : play(); });
+
+      // Keyboard
+      root.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { pause(); next(); }
+        if (e.key === 'ArrowLeft')  { pause(); prev(); }
+        if (e.key.toLowerCase() === ' ') { e.preventDefault(); playing ? pause() : play(); }
+      });
+
+      // Pause when out of view
+      const io = new IntersectionObserver(entries => {
+        for (const ent of entries){
+          if (ent.isIntersecting){ if (autoplay && !reduceMotion) play(); }
+          else { pause(); }
+        }
+      }, { threshold:.35 });
+      io.observe(root);
+
+      // Init
+      applyStep(0);
+      if (playing) play();
+    })();
+  </script>
+</section>
+<!-- ===================== /ONX — Goals Animation Reel (End) ===================== -->
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- ONX Card Reveal → "The Best AI" → Logos line (bigger) → Suck-into O (Audiowide) → Morph to white onxlogo.svg + "Unified AI" (Apple‑polished) -->
 <div id="onx-card-reveal" class="padTop"
