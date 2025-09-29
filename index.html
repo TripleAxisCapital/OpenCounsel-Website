@@ -1136,6 +1136,15 @@ const SUGGESTIONS = [
 
   NEW: FLOATER COLOR
     data-float-color="rgba(255,255,255,0.55)"  (semi-transparent white default)
+
+  NEW (ORGANIC AVOIDANCE CONTROLS)
+    data-avoid-center="true"            (on/off; default true)
+    data-avoid-radius="1.0"             (multiplier on computed safe radius)
+    data-avoid-strength="220"           (repulsion accel scale)
+    data-avoid-hyst="16"                (px buffer so floaters don’t “hug” the boundary)
+    data-wander-freq="0.12"             (base wander frequency in Hz-ish)
+    data-wander-power="0.6"             (how much the heading drifts)
+    data-swirl-strength="0.28"          (tangential “orbit” strength near the center zone)
 -->
 <div id="onx-card-reveal" class="padTop oc-container section-clip"
      data-speed="1.6"
@@ -1156,13 +1165,21 @@ const SUGGESTIONS = [
      data-float-scale-mobile="1.2"
      data-float-scale-desktop="2.0"
 
-    data-trigger-frac="0.8"
+     data-trigger-frac="0.8"
 
      data-stage-h-mobile="25svh"
      data-stage-h-desktop="50vh"
      data-float-speed-mobile="75"
      data-float-speed-desktop="125"
      data-float-color="rgba(255,255,255,0.45)"
+
+     data-avoid-center="true"
+     data-avoid-radius="1.0"
+     data-avoid-strength="220"
+     data-avoid-hyst="16"
+     data-wander-freq="0.12"
+     data-wander-power="0.6"
+     data-swirl-strength="0.28"
 
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:40vh; --stage-aspect:auto;"
@@ -1202,19 +1219,16 @@ const SUGGESTIONS = [
     #onx-stage canvas{ width: 100%; height: 100%; display: block; }
 
     /* Minimal controls — disabled */
-#onx-controls{
-  display: none !important;   /* hide the bar */
-  margin-top: 0 !important;   /* remove spacing */
-}
+    #onx-controls{
+      display: none !important;   /* hide the bar */
+      margin-top: 0 !important;   /* remove spacing */
+    }
+    #onx-controls button{ display: none !important; }
 
-/* (Optional) if the element exists, hide any buttons too */
-#onx-controls button{ display: none !important; }
-
-@media (max-width: 640px){
-  #onx-card-reveal{ overflow: clip; margin:24px auto 28px; }
-  #onx-controls{ display: none !important; margin-top: 0 !important; }
-}
-
+    @media (max-width: 640px){
+      #onx-card-reveal{ overflow: clip; margin:24px auto 28px; }
+      #onx-controls{ display: none !important; margin-top: 0 !important; }
+    }
   </style>
 
   <!-- Stage -->
@@ -1226,10 +1240,7 @@ const SUGGESTIONS = [
   <script>
   (()=>{ 'use strict';
 
-    /* ========================= GLOBAL SIZE CONTROLS =========================
-       Tweak here or via data-size-* attributes on #onx-card-reveal.
-       Multipliers safe range ~0.6 → 1.6 (1.00 = default).
-    ======================================================================== */
+    /* ========================= GLOBAL SIZE CONTROLS ========================= */
     const SIZE = {
       all:        1.00,
       menu:       1.00,
@@ -1274,30 +1285,39 @@ const SUGGESTIONS = [
     const controlsEl = document.getElementById('onx-controls');
     if (!canvas) return;
 
-    // ---------- FLOATING SIZE KNOBS (mobile/desktop specific) ----------
+    // ---------- FLOATING SIZE KNOBS ----------
     const _num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
 
-    // Default FLOAT_SCALE is 2 to preserve existing visual size
     const FLOAT_SCALE   = _num(host.dataset.floatScale) ?? 2;
     const FLOAT_SCALE_M = _num(host.dataset.floatScaleMobile);
     const FLOAT_SCALE_D = _num(host.dataset.floatScaleDesktop);
 
-    const FLOAT_SIZE    = _num(host.dataset.floatSize);          // absolute px override (all)
-    const FLOAT_SIZE_M  = _num(host.dataset.floatSizeMobile);    // absolute px override (mobile)
-    const FLOAT_SIZE_D  = _num(host.dataset.floatSizeDesktop);   // absolute px override (desktop)
+    const FLOAT_SIZE    = _num(host.dataset.floatSize);
+    const FLOAT_SIZE_M  = _num(host.dataset.floatSizeMobile);
+    const FLOAT_SIZE_D  = _num(host.dataset.floatSizeDesktop);
 
     // ---------- NEW: FLOATING SPEED + COLOR ----------
-    const FLOAT_SPEED    = _num(host.dataset.floatSpeed);           // px/s base (all)
-    const FLOAT_SPEED_M  = _num(host.dataset.floatSpeedMobile);     // px/s base (mobile)
-    const FLOAT_SPEED_D  = _num(host.dataset.floatSpeedDesktop);    // px/s base (desktop)
+    const FLOAT_SPEED    = _num(host.dataset.floatSpeed);
+    const FLOAT_SPEED_M  = _num(host.dataset.floatSpeedMobile);
+    const FLOAT_SPEED_D  = _num(host.dataset.floatSpeedDesktop);
     const FLOAT_COLOR    = host.dataset.floatColor || 'rgba(255,255,255,0.55)';
 
-    // ---------- NEW: PER-PLATFORM STAGE HEIGHT CONTROL ----------
-    const STAGE_H       = host.dataset.stageH; // optional common
+    // ---------- NEW: PER-PLATFORM STAGE HEIGHT ----------
+    const STAGE_H       = host.dataset.stageH;
     const STAGE_H_M     = host.dataset.stageHMobile;
     const STAGE_H_D     = host.dataset.stageHDesktop;
 
-    // ----- OPTIONAL: override SIZE via data-size-* attributes -----
+    // ---------- NEW: ORGANIC AVOIDANCE CONTROLS ----------
+    const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
+    const AVOID_CENTER     = host.dataset.avoidCenter === undefined ? true : toBool(host.dataset.avoidCenter);
+    const AVOID_RADIUS_MULT= _num(host.dataset.avoidRadius) ?? 1.0;
+    const AVOID_STRENGTH   = _num(host.dataset.avoidStrength) ?? 220;  // accel scale
+    const AVOID_HYST       = _num(host.dataset.avoidHyst) ?? 16;       // px buffer
+    const WANDER_FREQ      = _num(host.dataset.wanderFreq) ?? (window.matchMedia('(max-width: 640px)').matches ? 0.18 : 0.12);
+    const WANDER_POWER     = _num(host.dataset.wanderPower) ?? 0.6;    // heading drift amount
+    const SWIRL_STRENGTH   = _num(host.dataset.swirlStrength) ?? 0.28; // tangential deflection near center
+
+    // ----- SIZE overrides via data-size-* -----
     (function applySizeOverridesFromData(){
       const MAP = ["all","menu","menuTitle","menuSub","padding","cardWidth","cardHeight","logos","bestAI","O","finalLogo","unified"];
       for (const k of MAP){
@@ -1310,7 +1330,6 @@ const SUGGESTIONS = [
     })();
 
     // ===== UTILS =====
-    const toBool = v => ['1','true','on','yes'].includes(String(v).toLowerCase().trim());
     const isMobile = () => window.matchMedia('(max-width: 640px)').matches || ('ontouchstart' in window);
     const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const deviceMem = (navigator && 'deviceMemory' in navigator) ? (navigator.deviceMemory||8) : 8;
@@ -1342,7 +1361,7 @@ const SUGGESTIONS = [
       get peakX(){ return parseFloat(host.dataset.peakX) || 0.58; },
       get peakY(){ return parseFloat(host.dataset.peakY) || 0.60; }
     };
-    if (prefersReducedMotion){ TEMPO.speed = 3.5; } // very fast (less motion)
+    if (prefersReducedMotion){ TEMPO.speed = 3.5; }
 
     // ===== CANVAS / BACKING STORE =====
     let CONFIG = { w: 2048, h: 1152 };
@@ -1411,7 +1430,6 @@ const SUGGESTIONS = [
         ? (STAGE_H_M || STAGE_H || css(stageEl, '--stage-h', ''))
         : (STAGE_H_D || STAGE_H || css(stageEl, '--stage-h', ''));
       if (hVal) {
-        // ensure aspect allows explicit height
         stageEl.style.setProperty('--stage-aspect', css(stageEl, '--stage-aspect', 'auto') || 'auto');
         stageEl.style.setProperty('--stage-h', hVal);
       }
@@ -1547,49 +1565,21 @@ const SUGGESTIONS = [
       return ctrl ? Math.max(0, ctrl.offsetHeight || 44) : 44;
     }
     function applyMobileScale(){
-  // Mobile: disable live auto-fit (prevents squish on URL-bar scroll)
-  if (isMobile()){
-    stageEl.style.transform = '';
-    stageEl.style.transformOrigin = 'center top';
-    const prev = stageScale; stageScale = 1;
-    setBackingScale(Math.abs(prev-1)>0.01);
-    return;
-  }
-
-  // Desktop: keep 1:1 as before
-  stageEl.style.transform = '';
-  stageEl.style.transformOrigin = 'center top';
-  const prev = stageScale; stageScale = 1;
-  setBackingScale(Math.abs(prev-1)>0.01);
-  return;
-
-  // (Old mobile auto-fit logic remains below but is never reached)
-  const { vw, vh, top, bottom } = vp();
-  const safeSide = 16;
-  const safeTop  = 16 + top;
-  const safeBot  = 16 + bottom;
-  const ctrlH    = controlHeight();
-  const hostMargins = 24 + 28;
-
-  const rect = stageEl.getBoundingClientRect();
-  const baseW = Math.max(1, rect.width);
-  const baseH = Math.max(1, rect.height);
-
-  const availW = Math.max(240, vw - 2*safeSide);
-  const availH = Math.max(200, vh - safeTop - safeBot - ctrlH - hostMargins);
-
-  const scaleW = availW / baseW;
-  const scaleH = availH / baseH;
-  const nextScale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only
-
-  if (Math.abs(nextScale - stageScale) > 0.02){
-    stageEl.style.transform = `scale(${nextScale})`;
-    stageEl.style.transformOrigin = 'center top';
-    stageScale = nextScale;
-    setBackingScale(true);
-  }
-}
-
+      // Mobile: disable live auto-fit (prevents squish on URL-bar scroll)
+      if (isMobile()){
+        stageEl.style.transform = '';
+        stageEl.style.transformOrigin = 'center top';
+        const prev = stageScale; stageScale = 1;
+        setBackingScale(Math.abs(prev-1)>0.01);
+        return;
+      }
+      // Desktop: keep 1:1
+      stageEl.style.transform = '';
+      stageEl.style.transformOrigin = 'center top';
+      const prev = stageScale; stageScale = 1;
+      setBackingScale(Math.abs(prev-1)>0.01);
+      return;
+    }
 
     // -------------------- Phase A: Card (models) --------------------
     function renderCard(t){
@@ -1674,7 +1664,7 @@ const SUGGESTIONS = [
       return { total, x, y, w, h, r };
     }
 
-    // -------------------- Phase B: Card → Slogan --------------------
+    // -------------------- Phase B --------------------
     function renderCardToBestAI(startBox, t, slogan){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1708,7 +1698,7 @@ const SUGGESTIONS = [
       ctx.restore();
     }
 
-    // -------------------- Phase C: Slogan → Logos --------------------
+    // -------------------- Phase C --------------------
     function renderBestAIToLogos(t, logoImgs, slogan){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1761,7 +1751,7 @@ const SUGGESTIONS = [
       return positions;
     }
 
-    // -------------------- Phase D: Logos → O --------------------
+    // -------------------- Phase D --------------------
     function renderLogosIntoO(t, logoImgs, startPositions){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1810,7 +1800,7 @@ const SUGGESTIONS = [
       });
     }
 
-    // -------------------- Phase E: O → final logo + "Unified AI" --------------------
+    // -------------------- Phase E --------------------
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
@@ -1867,6 +1857,24 @@ const SUGGESTIONS = [
       }
     }
 
+    // ---------- Helper to compute final overlay metrics (for avoid zone) ----------
+    function computeFinalOverlayMetrics(finalLogoImg){
+      const centerX = Math.round(CONFIG.w/2);
+      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
+      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
+                          * SIZE.all * SIZE.finalLogo;
+      const w = baseTargetW;
+      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
+      const h = w / aspect;
+      const textSize = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
+      const textOffset = (isMobile()? 36 : 44);
+      // Safe circle radius that encloses logo + title stack; add hysteresis
+      const halfLogoH = h * 0.5;
+      const verticalReach = halfLogoH + textOffset + textSize * 0.85;
+      const r = Math.sqrt( (w*0.5)*(w*0.5) + verticalReach*verticalReach ) + (AVOID_HYST||0);
+      return { centerX, centerY, w, h, textSize, textOffset, radius: r * (AVOID_RADIUS_MULT||1) };
+    }
+
     // -------------------- Floating logos sizing helper --------------------
     function getFloaterTargetH(){
       const baseH = Math.max(28, Math.min(isMobile()? CONFIG.h*0.12 : CONFIG.h*0.10, 120)) * SIZE.all;
@@ -1882,31 +1890,55 @@ const SUGGESTIONS = [
     let floatLastTS = 0;
     let floatingActive = false;
     let floatAssets = null;
+    let FLOAT_ZONE = null; // {centerX,centerY,radius}
 
     function baseFloaterSpeed(){
-      // NEW: per-platform base speed (px/s) with sensible defaults
       return isMobile()
         ? (FLOAT_SPEED_M ?? FLOAT_SPEED ?? 28)
         : (FLOAT_SPEED_D ?? FLOAT_SPEED ?? 40);
+    }
+
+    function randSeed(){
+      return Math.random()*1000 + 1;
     }
 
     function makeFloaters(logoImgs, perLogo=1){
       const out = [];
       const targetH = getFloaterTargetH();
       const baseS = baseFloaterSpeed();
+      const zone = FLOAT_ZONE;
+
       logoImgs.forEach(img=>{
         for (let k=0;k<perLogo;k++){
           const aspect = Math.max(0.1, img.aspect || 1);
           const w = targetH * aspect;
           const h = targetH;
-          const x = Math.random()*(CONFIG.w - w) + w/2;
-          const y = Math.random()*(CONFIG.h - h) + h/2;
-          // keep natural jitter 0.85–1.55x
+
+          // Initial position: retry a few times to avoid center zone
+          let x, y, tries = 0;
+          do {
+            x = Math.random()*(CONFIG.w - w) + w/2;
+            y = Math.random()*(CONFIG.h - h) + h/2;
+            tries++;
+          } while (AVOID_CENTER && zone && tries < 20 &&
+                   Math.hypot(x - zone.centerX, y - zone.centerY) < (zone.radius + Math.max(w,h)));
+
           const speed = baseS * (0.85 + Math.random()*0.7); // px/s
           const theta = Math.random()*Math.PI*2;
-          const vx = Math.cos(theta)*speed;
-          const vy = Math.sin(theta)*speed;
-          out.push({ img, w, h, x, y, vx, vy, alpha: 0 });
+
+          out.push({
+            img, w, h, x, y,
+            vx: Math.cos(theta)*speed,
+            vy: Math.sin(theta)*speed,
+            alpha: 0,
+            // Wander seeds
+            t: 0,
+            fA: WANDER_FREQ * (0.6 + Math.random()*0.8),
+            fB: WANDER_FREQ * (0.6 + Math.random()*0.8),
+            seedA: randSeed(),
+            seedB: randSeed(),
+            swirlDir: Math.random()<0.5 ? -1 : 1
+          });
         }
       });
       return out;
@@ -1914,17 +1946,81 @@ const SUGGESTIONS = [
 
     function updateFloaters(dt){
       const margin = 4;
+      const zone = FLOAT_ZONE;
+      const desired = baseFloaterSpeed();
+
       for (const f of floaters){
         f.alpha = Math.min(1, f.alpha + dt*1.5);
+        f.t += dt;
+
+        // --- Organic wander: smoothly perturb heading with low-freq drift
+        let ang = Math.atan2(f.vy, f.vx);
+        const drift =
+          (Math.sin((f.seedA + f.t) * f.fA * 2*Math.PI) * 0.7 +
+           Math.cos((f.seedB + f.t) * f.fB * 2*Math.PI) * 0.3) * WANDER_POWER;
+        ang += drift * dt; // small, smooth turn
+        let spd = Math.hypot(f.vx, f.vy) || desired;
+        f.vx = Math.cos(ang)*spd;
+        f.vy = Math.sin(ang)*spd;
+
+        // --- Center avoidance: soft deflection → hard repulsion near boundary
+        if (AVOID_CENTER && zone){
+          const dx = f.x - zone.centerX;
+          const dy = f.y - zone.centerY;
+          const dist = Math.hypot(dx, dy) + 1e-6;
+          const safeR = zone.radius + Math.max(f.w, f.h)*0.55;
+
+          if (dist < safeR){ // strong push out + tangential swirl
+            const push = (safeR - dist) / safeR; // 0..1
+            const nx = dx / dist, ny = dy / dist;
+            // Radial repulsion (acceleration)
+            f.vx += nx * (AVOID_STRENGTH * push) * dt;
+            f.vy += ny * (AVOID_STRENGTH * push) * dt;
+            // Tangential swirl for organic slide-around
+            const tx = -ny, ty = nx;
+            const swirl = SWIRL_STRENGTH * (1 - dist/safeR);
+            f.vx += tx * swirl * desired * dt * f.swirlDir;
+            f.vy += ty * swirl * desired * dt * f.swirlDir;
+            // Nudge position outward a hair so nothing "sticks"
+            f.x += nx * 6 * push;
+            f.y += ny * 6 * push;
+          } else if (dist < safeR * 1.25){ // gentle orbiting deflection
+            const nx = dx/dist, ny = dy/dist;
+            const tx = -ny, ty = nx;
+            const soft = SWIRL_STRENGTH*0.5 * (1 - (dist - safeR)/(safeR*0.25));
+            f.vx += tx * soft * desired * dt * f.swirlDir;
+            f.vy += ty * soft * desired * dt * f.swirlDir;
+          }
+        }
+
+        // --- Soft wall steer to reduce jitter before bounce
+        const halfW = f.w/2, halfH = f.h/2;
+        const nearLeft   = (f.x - halfW) - margin;
+        const nearRight  = (CONFIG.w - margin) - (f.x + halfW);
+        const nearTop    = (f.y - halfH) - margin;
+        const nearBottom = (CONFIG.h - margin) - (f.y + halfH);
+        const softRange = 28;
+
+        if (nearLeft < softRange)  f.vx += (softRange - nearLeft) * (desired/200) * dt;
+        if (nearRight < softRange) f.vx -= (softRange - nearRight) * (desired/200) * dt;
+        if (nearTop < softRange)   f.vy += (softRange - nearTop) * (desired/200) * dt;
+        if (nearBottom < softRange)f.vy -= (softRange - nearBottom) * (desired/200) * dt;
+
+        // Integrate position
         f.x += f.vx * dt;
         f.y += f.vy * dt;
 
-        const halfW = f.w/2, halfH = f.h/2;
-
+        // Hard wall bounce as a final guard
         if (f.x - halfW < margin){ f.x = margin + halfW; f.vx = Math.abs(f.vx); }
         if (f.x + halfW > CONFIG.w - margin){ f.x = CONFIG.w - margin - halfW; f.vx = -Math.abs(f.vx); }
         if (f.y - halfH < margin){ f.y = margin + halfH; f.vy = Math.abs(f.vy); }
         if (f.y + halfH > CONFIG.h - margin){ f.y = CONFIG.h - margin - halfH; f.vy = -Math.abs(f.vy); }
+
+        // Keep speeds in a nice band
+        spd = Math.hypot(f.vx, f.vy);
+        const minS = desired*0.70, maxS = desired*1.35;
+        if (spd < minS){ const s=minS / (spd||1); f.vx*=s; f.vy*=s; }
+        else if (spd > maxS){ const s=maxS/spd; f.vx*=s; f.vy*=s; }
       }
     }
 
@@ -1935,7 +2031,6 @@ const SUGGESTIONS = [
         ctx.globalAlpha = f.alpha;
         ctx.translate(Math.round(f.x), Math.round(f.y));
         if (f.img && f.img.raw){
-          // NEW: tint floaters with semi-transparent white (configurable)
           const tinted = tintToTarget(f.img.raw, FLOAT_COLOR, w, h);
           ctx.drawImage(tinted, -w/2, -h/2, w, h);
         } else {
@@ -1979,6 +2074,10 @@ const SUGGESTIONS = [
       stopFloatingLayer();
       floatingActive = true;
       floatAssets = assets;
+
+      // Compute the protected center zone based on current layout & final logo
+      FLOAT_ZONE = computeFinalOverlayMetrics(assets.finalLogo);
+
       floaters = makeFloaters(assets.logoImgs, 1);
       floatLastTS = performance.now();
 
@@ -1990,6 +2089,7 @@ const SUGGESTIONS = [
         clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
         updateFloaters(dt);
         drawFloaters();
+        // Final overlay always on top
         drawFinalOverlayStatic(assets.finalLogo);
         floatRAF = requestAnimationFrame(loop);
       };
@@ -2125,7 +2225,7 @@ const SUGGESTIONS = [
 
     // ---------- Init ----------
     function initialBuild(){
-      applyStageHeight();       // NEW
+      applyStageHeight();
       setConfigFromStage();
       setBackingScale(true);
       STYLE = buildStyle();
@@ -2138,29 +2238,26 @@ const SUGGESTIONS = [
     // Autoplay when visible
     let autoplayed = false;
     async function tryAutoplay(){
-  if (autoplayed || isAnimating) return;
+      if (autoplayed || isAnimating) return;
 
-  const rect = stageEl.getBoundingClientRect();
-  const vpH  = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const rect = stageEl.getBoundingClientRect();
+      const vpH  = window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
-  // Start earlier based on a simple top-of-section trigger line.
-  // Optional HTML knob: data-trigger-frac="0.70" (0–1). Defaults to 0.70 if not set.
-  const TRIGGER_FRAC = Math.max(0, Math.min(1, parseFloat(host.dataset.triggerFrac) || 0.70));
-  const startLine = vpH * TRIGGER_FRAC;
-  const visible   = (rect.top <= startLine && rect.bottom >= 0);
-  if (!visible) return;
+      const TRIGGER_FRAC = Math.max(0, Math.min(1, parseFloat(host.dataset.triggerFrac) || 0.70));
+      const startLine = vpH * TRIGGER_FRAC;
+      const visible   = (rect.top <= startLine && rect.bottom >= 0);
+      if (!visible) return;
 
-  autoplayed = true;
-  if (!prepared) prepared = await prepareAssets();
-  if (prefersReducedMotion){
-    renderOToFinalLogo(1, prepared.finalLogo);
-    startFloatingLayer(prepared);
-    isAnimating = false;
-  } else {
-    playSequence(prepared);
-  }
-}
-
+      autoplayed = true;
+      if (!prepared) prepared = await prepareAssets();
+      if (prefersReducedMotion){
+        renderOToFinalLogo(1, prepared.finalLogo);
+        startFloatingLayer(prepared);
+        isAnimating = false;
+      } else {
+        playSequence(prepared);
+      }
+    }
 
     try {
       const io = new IntersectionObserver((entries)=>{
@@ -2177,7 +2274,7 @@ const SUGGESTIONS = [
     }, { passive: true }); }
 
     function rebuildIfNeeded(){
-      applyStageHeight();       // NEW on rebuild
+      applyStageHeight();
       applyMobileScale();
       const before = `${CONFIG.w}x${CONFIG.h}`;
       setConfigFromStage();
@@ -2188,6 +2285,9 @@ const SUGGESTIONS = [
       layout = measureFinalLayout();
 
       if (floatingActive && floatAssets){
+        // Recompute protected zone on resize
+        FLOAT_ZONE = computeFinalOverlayMetrics(floatAssets.finalLogo);
+
         const targetH = getFloaterTargetH();
         for (const f of floaters){
           const aspect = Math.max(0.1, f.img.aspect || 1);
@@ -2219,7 +2319,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
 
 
 <!-- ────────────────────────── Become Limitless (Minimal • Conversion-first) ────────────────────────── -->
