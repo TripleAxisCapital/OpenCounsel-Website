@@ -1097,8 +1097,6 @@ const SUGGESTIONS = [
 <!--=====================================================================CHAT END=================================================================================================-->
 
 
-
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- HOW TO SIZE (pick one):
   A) Exact width with aspect:
@@ -1108,6 +1106,8 @@ const SUGGESTIONS = [
   C) Responsive max + viewport cap:
      <div id="onx-card-reveal" style="--stage-w:min(1280px,96vw); --stage-aspect:18/9;">
   Current config: height is 35% of viewport (with dvh precision on mobile).
+  Optional: pass extra bouncing logos (comma-separated) via data-bounce-logos, e.g.
+  data-bounce-logos="anthropic.svg, mistral.svg, xai.svg"
 -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
@@ -1125,13 +1125,6 @@ const SUGGESTIONS = [
      data-size-menu-title="1.0"
      data-size-menu-sub="1.0"
 
-   
-     data-bounce-logos=""          
-     data-bounce-copies="1"      
-     data-bounce-size="1.0"        
-     data-bounce-speed="1.0"            
-     data-bounce-avoid-center="true"     
-     data-bounce-clear=""                
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:35vh; --stage-h:35dvh; --stage-aspect:auto;">
   <!-- Fonts -->
@@ -1163,10 +1156,12 @@ const SUGGESTIONS = [
       will-change: transform;
       transform-origin: center top;
       backface-visibility: hidden;
-      contain: paint;
+      contain: paint style layout; /* stronger containment to stop mobile jitter */
       user-select: none; -webkit-user-select: none; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      isolation: isolate; /* ensure canvas stacks cleanly over bg */
     }
-    #onx-stage canvas{ width: 100%; height: 100%; display: block; }
+    #onx-stage canvas{ width: 100%; height: 100%; display: block; transform: translateZ(0); }
 
     /* Minimal controls */
     #onx-controls{
@@ -1221,7 +1216,7 @@ const SUGGESTIONS = [
 
     const SLOGANS = ["The Best AI", "Built on the Best"];
 
-    // ======== ASSETS (line logos used pre-end) ========
+    // ======== ASSETS ========
     const LOGOS = [
       { src: 'grokLogo.svg',   alt: 'Grok',   tint: '#fff' },
       { src: 'googleLogo.svg', alt: 'Google', tint: '#fff' },
@@ -1269,6 +1264,8 @@ const SUGGESTIONS = [
       if (vv) return { vw: Math.max(320, vv.width), vh: Math.max(320, vv.height), top: vv.offsetTop||0, bottom: (window.innerHeight - vv.height - (vv.offsetTop||0)) };
       return { vw: Math.max(320, window.innerWidth || 360), vh: Math.max(320, window.innerHeight || 640), top: 0, bottom: 0 };
     };
+    const rand = (a,b)=> a + Math.random()*(b-a);
+    const sign = (v)=> v<0?-1:1;
 
     // ===== OPTIONS =====
     const TEMPO = {
@@ -1289,7 +1286,7 @@ const SUGGESTIONS = [
     let CONFIG = { w: 2048, h: 1152 }; // overwritten by setConfigFromStage()
     let dpr = 1;
     let stageScale = 1;
-    let OVERSAMPLE = deviceMem <= 4 ? 1.25 : 1.5;
+    let OVERSAMPLE = deviceMem <= 4 ? 1.20 : 1.45; // slightly lower for mobile stability
 
     // High-DPI tint/raster cache for razor-sharp logos
     const TINT_CACHE = new Map();
@@ -1321,7 +1318,7 @@ const SUGGESTIONS = [
 
     function setBackingScale(){
       const raw = window.devicePixelRatio || 1;
-      const eff = Math.min(4, raw * stageScale * OVERSAMPLE);
+      const eff = Math.min(3.5, raw * stageScale * OVERSAMPLE);
       dpr = eff;
       TINT_CACHE.clear(); // DPR/backing changed → invalidate cached bitmaps
       canvas.width  = Math.max(1, Math.round(CONFIG.w * dpr));
@@ -1438,31 +1435,6 @@ const SUGGESTIONS = [
       ctx.arcTo(x1,y1,x1+w1,y1,rr);
       ctx.closePath();
     }
-    function drawTextWithTracking(str, x, y, opts){
-      const { align='center', baseline='top', tracking=0, fillStyle='#fff', weight=700, size=40, fontFamily='"Inter", ui-sans-serif, system-ui', blur=0, alpha=1 } = opts||{};
-      setFont(weight, size, fontFamily);
-      ctx.save();
-      ctx.textAlign = align;
-      ctx.textBaseline = baseline;
-      ctx.fillStyle = fillStyle;
-      ctx.globalAlpha = alpha;
-      if (blur > 0.01) ctx.filter = `blur(${blur}px)`;
-
-      // Compute starting cursor X based on alignment
-      let width = 0;
-      for (let i=0;i<str.length;i++){ width += ctx.measureText(str[i]).width + (i?tracking:0); }
-      let startX = x;
-      if (align === 'center') startX = x - width/2;
-      else if (align === 'right' || align === 'end') startX = x - width;
-
-      let cursor = startX;
-      for (let i=0;i<str.length;i++){
-        const ch = str[i];
-        ctx.fillText(ch, cursor, y);
-        cursor += ctx.measureText(ch).width + tracking;
-      }
-      ctx.restore();
-    }
 
     // ===== TIMINGS =====
     const BASE = { widthGrow: 0.65, rowPop: 0.42, rowPause: 0.30, holdA: 0.34, holdB: 0.50, morph: 0.95 };
@@ -1512,7 +1484,7 @@ const SUGGESTIONS = [
     }
     function applyMobileScale(){
       if (!isMobile()){
-        stageEl.style.transform = '';
+        stageEl.style.transform = 'translateZ(0)';
         stageEl.style.transformOrigin = 'center top';
         stageScale = 1;
         setBackingScale();
@@ -1534,9 +1506,9 @@ const SUGGESTIONS = [
 
       const scaleW = availW / baseW;
       const scaleH = availH / baseH;
-      const scale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only (avoid blur)
+      const scale = Math.max(0.5, Math.min(1, scaleW, scaleH)); // downscale only
 
-      stageEl.style.transform = `scale(${scale})`;
+      stageEl.style.transform = `translateZ(0) scale(${scale})`; /* GPU composite, reduce jitter */
       stageEl.style.transformOrigin = 'center top';
       stageScale = scale;
       setBackingScale();
@@ -1696,10 +1668,11 @@ const SUGGESTIONS = [
         ctx.translate(Math.round(cx), Math.round(cy));
         ctx.scale(s, s);
 
+        // High-DPI, tinted at final draw size to avoid blur
         const drawW = w * s, drawH = logoH * s;
         if (img.raw){
           const tinted = tintToTarget(img.raw, img.tint, drawW, drawH);
-          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH);
+          ctx.drawImage(tinted, -w/2, -logoH/2, w, logoH); // pre-scaled bitmap, draw in pre-scale coords
         } else {
           ctx.fillStyle = '#e9ecf2';
           roundedRect(ctx, -w/2, -logoH/2, w, logoH, Math.min(logoH/2, 12)); ctx.fill();
@@ -1763,14 +1736,58 @@ const SUGGESTIONS = [
       });
     }
 
-    // -------------------- Phase E: O → final logo + "Unified AI" (enhanced fade) --------------------
+    // -------------------- Phase E: O → final logo + "Unified AI" --------------------
+    function drawUnifiedOverlay(finalLogoImg, alphaLogo=1, alphaText=1, appleIn=1){
+      const centerX = Math.round(CONFIG.w/2);
+      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
+
+      // Final logo
+      const bounceScale = 0.92 + 0.08*boomerang(appleIn, 1.04, 0.52);
+      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
+                          * SIZE.all * SIZE.finalLogo;
+      const w = baseTargetW * bounceScale;
+      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
+      const h = w / aspect;
+
+      ctx.save();
+      ctx.globalAlpha = alphaLogo;
+      if (finalLogoImg.raw){
+        const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
+        ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
+                              Math.round(w), Math.round(h));
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+
+      // "Unified AI" — Apple-style fade: slight upward motion + blur-to-sharp + opacity ramp
+      const textYBase = Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)));
+      const dy = lerp(10, 0, appleIn); // slide up
+      const blurPx = (1 - appleIn) * 6 * MOBILE_BLUR_SCALE; // strong to crisp
+      const scale = lerp(0.985, 1.0, boomerang(appleIn, 1.02, 0.55)); // micro scale settle
+      const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
+
+      setFont(800, size, '"Inter", ui-sans-serif, system-ui');
+      ctx.save();
+      ctx.globalAlpha = alphaText * easeOutCubic(appleIn);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      if (blurPx > 0.05) ctx.filter = `blur(${blurPx}px)`;
+      ctx.translate(centerX, textYBase + dy);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('Unified AI', 0, 0);
+      ctx.filter = 'none';
+      ctx.restore();
+    }
+
     function renderOToFinalLogo(t, finalLogoImg){
       clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
 
       const centerX = Math.round(CONFIG.w/2);
       const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
 
-      // Fade O
+      // Fade O out while final logo/text fade in
       const oSizeBaseFrom = (isMobile()? 180 : 260) * SIZE.all * SIZE.O;
       const oSizeBaseTo   = (isMobile()? 130 : 180) * SIZE.all * SIZE.O;
       const oOut = clamp(1 - t);
@@ -1784,82 +1801,8 @@ const SUGGESTIONS = [
       ctx.fillText('O', centerX, centerY);
       ctx.restore();
 
-      // Final logo (high-DPI tinted at exact size, with gentle arriving bounce)
-      const bounceScale = 0.92 + 0.08*boomerang(logoIn, 1.04, 0.52);
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
-                          * SIZE.all * SIZE.finalLogo;
-      const w = baseTargetW * bounceScale;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
-      const h = w / aspect;
-
-      ctx.save();
-      ctx.globalAlpha = logoIn;
-      if (finalLogoImg.raw){
-        const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
-        ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
-                              Math.round(w), Math.round(h));
-      } else {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
-      }
-      ctx.restore();
-
-      // Apple-style subtitle: blur→sharp + lift + tracking tighten
-      const subT = easeOutQuint(clamp((t-0.20)/0.65));
-      if (subT > 0){
-        const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-        const yLift = lerp(12, 0, subT);
-        const tracking = lerp(-1.2, 0, subT); // tighten → normal
-        const blurPx = (1 - subT) * 2.2;     // soften → sharp
-        const alpha  = subT;
-        drawTextWithTracking('Unified AI',
-          centerX,
-          Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44)) - yLift),
-          {
-            align:'center', baseline:'top', tracking,
-            fillStyle:'#ffffff', weight:800, size,
-            fontFamily:'"Inter", ui-sans-serif, system-ui',
-            blur: blurPx, alpha
-          }
-        );
-      }
-    }
-
-    // ---------- Static final overlay for the infinite loop ----------
-    function drawFinalOverlayStatic(finalLogoImg){
-      const centerX = Math.round(CONFIG.w/2);
-      const centerY = Math.round(CONFIG.h/2 - (isMobile()? 10 : 14));
-      const baseTargetW = Math.min(CONFIG.w * (isMobile()? 0.36 : 0.34), isMobile()? 280 : 420)
-                          * SIZE.all * SIZE.finalLogo;
-      const w = baseTargetW;
-      const aspect = Math.max(0.01, finalLogoImg.aspect || 1);
-      const h = w / aspect;
-
-      // Final logo
-      ctx.save();
-      ctx.globalAlpha = 1;
-      if (finalLogoImg.raw){
-        const tinted = tintToTarget(finalLogoImg.raw, finalLogoImg.tint, w, h);
-        ctx.drawImage(tinted, Math.round(centerX - w/2), Math.round(centerY - h/2),
-                              Math.round(w), Math.round(h));
-      } else {
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(centerX, centerY, Math.round(w/2), 0, Math.PI*2); ctx.fill();
-      }
-      ctx.restore();
-
-      // Subtitle (fully sharp)
-      const size = (isMobile()? 28 : 40) * SIZE.all * SIZE.unified;
-      drawTextWithTracking('Unified AI',
-        centerX,
-        Math.round(centerY + (isMobile()? (h/2 + 36) : (h/2 + 44))),
-        {
-          align:'center', baseline:'top', tracking:0,
-          fillStyle:'#ffffff', weight:800, size,
-          fontFamily:'"Inter", ui-sans-serif, system-ui',
-          blur: 0, alpha: 1
-        }
-      );
+      // Final overlay (logo + Apple-polished "Unified AI")
+      drawUnifiedOverlay(finalLogoImg, logoIn, clamp((t-0.15)/0.7), clamp((t-0.05)/0.9));
     }
 
     // =================== Orchestrator & Assets ===================
@@ -1882,6 +1825,9 @@ const SUGGESTIONS = [
     }
 
     async function prepareAssets(){
+      const extraBounceList = (host.dataset.bounceLogos || '')
+        .split(',').map(s => s.trim()).filter(Boolean);
+
       const rawLogoImgs = await Promise.all(LOGOS.map(l => loadImage(l.src)));
       const logoImgs = rawLogoImgs.map((r, i) => ({
         raw: r.image,
@@ -1890,11 +1836,110 @@ const SUGGESTIONS = [
       }));
       logoImgs.forEach(v => { if (!isFinite(v.aspect) || v.aspect <= 0) v.aspect = 1; });
 
+      const extraLoaded = await Promise.all(extraBounceList.map(src => loadImage(src)));
+      const extraImgs = extraLoaded.map(r => ({ raw: r.image, aspect: r.aspect || 1, tint: '#fff' }));
+
       const finalLogoRaw = await loadImage(FINAL_LOGO_SRC);
       const finalLogo = { raw: finalLogoRaw.image, aspect: finalLogoRaw.aspect || 1, tint: FINAL_LOGO_TINT };
 
       if (document.fonts && document.fonts.ready){ try { await document.fonts.ready; } catch {} }
-      return { logoImgs, finalLogo };
+      return { logoImgs, extraImgs, finalLogo };
+    }
+
+    // ---------- BOUNCING LOGOS (end screen background layer) ----------
+    const BOUNCE = {
+      bodies: [],
+      imgs: [],
+      lastTS: 0,
+      ready: false,
+      speedBase: 0.14, // logical px per ms
+    };
+
+    function initBounce(logosForBounce){
+      BOUNCE.bodies.length = 0;
+      BOUNCE.imgs = logosForBounce;
+      if (!logosForBounce || !logosForBounce.length) return;
+
+      const base = Math.max(36, Math.min(88, Math.round(CONFIG.h * 0.08)));
+      const count = logosForBounce.length;
+      for (let i=0;i<count;i++){
+        const img = logosForBounce[i];
+        const h = rand(base*0.75, base*1.15) * SIZE.all;        // target height
+        const w = h * (img.aspect || 1);
+        const x = rand(w/2 + 8, CONFIG.w - w/2 - 8);
+        const y = rand(h/2 + 8, CONFIG.h - h/2 - 8);
+        const dir = Math.random()*Math.PI*2;
+        const spd = rand(0.6, 1.25) * BOUNCE.speedBase * (isMobile()? 0.9 : 1.0);
+        const vx = Math.cos(dir)*spd, vy = Math.sin(dir)*spd;
+
+        BOUNCE.bodies.push({
+          x, y, w, h, vx, vy, img, spin: rand(-0.001, 0.001), a: rand(0.65, 0.95)
+        });
+      }
+      BOUNCE.lastTS = 0;
+      BOUNCE.ready = true;
+    }
+
+    function stepBounce(dt){
+      if (!BOUNCE.ready) return;
+      const wallPad = 4;
+      for (const b of BOUNCE.bodies){
+        b.x += b.vx * dt * 1000; // convert ms->logical px
+        b.y += b.vy * dt * 1000;
+
+        // Bounce off walls
+        let bounced = false;
+        if (b.x - b.w/2 < wallPad){ b.x = wallPad + b.w/2; b.vx = Math.abs(b.vx); bounced = true; }
+        if (b.x + b.w/2 > CONFIG.w - wallPad){ b.x = CONFIG.w - wallPad - b.w/2; b.vx = -Math.abs(b.vx); bounced = true; }
+        if (b.y - b.h/2 < wallPad){ b.y = wallPad + b.h/2; b.vy = Math.abs(b.vy); bounced = true; }
+        if (b.y + b.h/2 > CONFIG.h - wallPad){ b.y = CONFIG.h - wallPad - b.h/2; b.vy = -Math.abs(b.vy); bounced = true; }
+
+        // keep a minimum speed to avoid stalls
+        const minS = 0.06 * BOUNCE.speedBase;
+        if (Math.abs(b.vx) < minS) b.vx = sign(b.vx||1) * minS;
+        if (Math.abs(b.vy) < minS) b.vy = sign(b.vy||1) * minS;
+
+        // subtle spin (visual interest without rotation blur)
+        b.spin = clamp(b.spin + rand(-0.0001, 0.0001), -0.003, 0.003);
+      }
+    }
+
+    function drawBounce(){
+      if (!BOUNCE.ready) return;
+      // Draw all bouncing logos BEHIND overlay
+      for (const b of BOUNCE.bodies){
+        ctx.save();
+        ctx.globalAlpha = b.a;
+        ctx.translate(Math.round(b.x), Math.round(b.y));
+        // (no rotation to keep tack-sharp logos; spin reserved if you want tiny sway)
+
+        if (b.img && b.img.raw){
+          const tinted = tintToTarget(b.img.raw, b.img.tint || '#fff', b.w, b.h);
+          ctx.drawImage(tinted, -b.w/2, -b.h/2, b.w, b.h);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          roundedRect(ctx, -b.w/2, -b.h/2, b.w, b.h, Math.min(b.h/2, 10)); ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    function playEndLoop(finalLogo){
+      const myId = ++runId;
+      let last = performance.now();
+      // Keep animating the bouncing logos indefinitely behind the final overlay
+      (function loop(ts){
+        if (myId !== runId) return;
+        const dt = clamp((ts - last)/1000, 0, 0.05); // cap to avoid jump on tab switch
+        last = ts;
+
+        clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
+        stepBounce(dt);
+        drawBounce();                            // behind
+        drawUnifiedOverlay(finalLogo, 1, 1, 1);  // on top
+
+        requestAnimationFrame(loop);
+      })(last);
     }
 
     function playSequence(assets){
@@ -1958,8 +2003,10 @@ const SUGGESTIONS = [
           if (tE < 1) requestAnimationFrame(loopE);
           else {
             isAnimating = false;
-            // Start infinite bouncing scene once end-state is reached
-            startBouncingScene(myId, assets);
+            // Initialize and start the infinite bouncing background BEHIND final overlay
+            const bounceImgs = [...assets.logoImgs, ...assets.extraImgs];
+            initBounce(bounceImgs);
+            playEndLoop(assets.finalLogo);
           }
         })(startE);
       }
@@ -1981,145 +2028,6 @@ const SUGGESTIONS = [
         } finally { setTimeout(()=>{ replay.disabled = false; }, 400); }
       }, { passive: true });
       controlsEl.appendChild(replay);
-    }
-
-    // ---------- BOUNCING LOGOS (endless) ----------
-    let bouncers = [];
-    let bouncing = false;
-
-    function pickBounceSources(defaults){
-      // 1) window.ONX_BOUNCE_LOGOS = ['a.svg','b.svg'] (if supplied)
-      if (Array.isArray(window.ONX_BOUNCE_LOGOS) && window.ONX_BOUNCE_LOGOS.length){
-        return window.ONX_BOUNCE_LOGOS.slice();
-      }
-      // 2) data-bounce-logos on host (comma-separated)
-      if (host.dataset.bounceLogos){
-        const parts = host.dataset.bounceLogos.split(',').map(s=>s.trim()).filter(Boolean);
-        if (parts.length) return parts;
-      }
-      // 3) fallback to the same set used earlier
-      return defaults.map(d => d.src).filter(Boolean);
-    }
-
-    async function prepareBounceImages(defaultLogoImgs){
-      const sources = pickBounceSources(LOGOS);
-      const imgs = await Promise.all(sources.map(src => loadImage(src)));
-      // Build objects with white tint by default
-      return imgs.map((it, i)=> ({
-        raw: it.image, aspect: it.aspect || 1, tint: '#ffffff', src: sources[i]
-      })).filter(obj => !!obj.raw);
-    }
-
-    function startBouncingScene(idAtStart, assets){
-      if (bouncing) bouncing = false; // stop any previous loop
-      const myId = idAtStart;
-
-      // Read tuning
-      const sizeMul   = parseFloat(host.dataset.bounceSize || '1') || 1;
-      const speedMul  = parseFloat(host.dataset.bounceSpeed || '1') || 1;
-      const copies    = Math.max(1, parseInt(host.dataset.bounceCopies || '1', 10) || 1);
-      const avoid     = host.dataset.bounceAvoidCenter !== undefined ? toBool(host.dataset.bounceAvoidCenter) : true;
-      const clearRad  = parseFloat(host.dataset.bounceClear || '') || (isMobile()? 120 : 160);
-
-      (async ()=>{
-        const bounceImgs = await prepareBounceImages(LOGOS);
-        // If user provided nothing load fallback originals used before
-        const finalSet = bounceImgs.length ? bounceImgs : assets.logoImgs.map(l=>({ raw:l.raw, aspect:l.aspect, tint:'#ffffff' }));
-
-        // Build entities
-        bouncers = [];
-        const baseH = (isMobile()? 44 : 56) * SIZE.all * SIZE.logos * sizeMul;
-        const SPEED = (isMobile()? 90 : 120) * speedMul; // px/sec
-
-        const centerX = CONFIG.w/2;
-        const centerY = CONFIG.h/2;
-        const clear = { x:centerX, y:centerY, r: clearRad };
-
-        function rand(min,max){ return min + Math.random()*(max-min); }
-        function spawnFor(img){
-          const h = baseH;
-          const w = Math.max(16, h * (img.aspect || 1));
-          // position away from center if avoid=true
-          let x, y, tries=0;
-          do{
-            x = rand(w/2, CONFIG.w - w/2);
-            y = rand(h/2, CONFIG.h - h/2);
-            tries++;
-            if (!avoid) break;
-          } while (tries < 50 && Math.hypot(x - clear.x, y - clear.y) < clear.r + Math.max(w,h));
-          const angle = rand(0, Math.PI*2);
-          const vx = Math.cos(angle) * SPEED;
-          const vy = Math.sin(angle) * SPEED;
-          const spin = rand(-0.4, 0.4); // gentle rotation
-          return { img, x, y, w, h, vx, vy, angle: 0, spin };
-        }
-
-        for (let i=0;i<finalSet.length;i++){
-          for (let c=0;c<copies;c++){ bouncers.push(spawnFor(finalSet[i])); }
-        }
-
-        // Animate
-        bouncing = true;
-        let last = performance.now();
-
-        (function loop(nowTs){
-          if (!bouncing || myId !== runId) return; // stop if replayed
-          const now = performance.now();
-          const dt = Math.min(0.050, Math.max(0.0, (now - last)/1000)); // clamp dt
-          last = now;
-
-          clearStage(); // keep stage transparent over CSS gradient
-
-          // Update + draw bouncers (underlay), then draw final overlay
-          for (const b of bouncers){
-            // Integrate
-            b.x += b.vx * dt;
-            b.y += b.vy * dt;
-            b.angle += b.spin * dt;
-
-            // Walls
-            if (b.x - b.w/2 < 0){ b.x = b.w/2; b.vx *= -1; }
-            if (b.x + b.w/2 > CONFIG.w){ b.x = CONFIG.w - b.w/2; b.vx *= -1; }
-            if (b.y - b.h/2 < 0){ b.y = b.h/2; b.vy *= -1; }
-            if (b.y + b.h/2 > CONFIG.h){ b.y = CONFIG.h - b.h/2; b.vy *= -1; }
-
-            // Optional center exclusion as a "virtual obstacle"
-            if (avoid){
-              const dx = b.x - clear.x, dy = b.y - clear.y;
-              const dist = Math.hypot(dx, dy);
-              const minD = clear.r + Math.max(b.w,b.h)*0.45;
-              if (dist < minD){
-                // Reflect velocity away from center and push out
-                const nx = dx / (dist || 1), ny = dy / (dist || 1);
-                const vdotn = b.vx*nx + b.vy*ny;
-                b.vx = (b.vx - 2*vdotn*nx);
-                b.vy = (b.vy - 2*vdotn*ny);
-                const push = (minD - dist) + 1;
-                b.x += nx * push;
-                b.y += ny * push;
-              }
-            }
-
-            // Draw
-            ctx.save();
-            ctx.translate(Math.round(b.x), Math.round(b.y));
-            ctx.rotate(b.angle * 0.15); // subtle
-            if (b.img && b.img.raw){
-              const tinted = tintToTarget(b.img.raw, b.img.tint || '#fff', b.w, b.h);
-              ctx.drawImage(tinted, -b.w/2, -b.h/2, b.w, b.h);
-            } else {
-              ctx.fillStyle = 'rgba(255,255,255,0.8)';
-              roundedRect(ctx, -b.w/2, -b.h/2, b.w, b.h, Math.min(12, b.h/2)); ctx.fill();
-            }
-            ctx.restore();
-          }
-
-          // Overlay: final logo + subtitle always crisp on top
-          drawFinalOverlayStatic(assets.finalLogo);
-
-          requestAnimationFrame(loop);
-        })(performance.now());
-      })();
     }
 
     // ---------- Init ----------
@@ -2145,9 +2053,11 @@ const SUGGESTIONS = [
       autoplayed = true;
       if (!prepared) prepared = await prepareAssets();
       if (prefersReducedMotion){
+        // Skip to final, then bounce (slow movement still okay even with reduced motion)
         renderOToFinalLogo(1, prepared.finalLogo);
-        // Even with reduced motion, show the calm bouncing scene
-        startBouncingScene(runId, prepared);
+        const bounceImgs = [...prepared.logoImgs, ...prepared.extraImgs];
+        initBounce(bounceImgs);
+        playEndLoop(prepared.finalLogo);
         isAnimating = false;
       } else {
         playSequence(prepared);
@@ -2170,6 +2080,8 @@ const SUGGESTIONS = [
     }, { passive: true }); }
 
     // Mobile fit + rebuild on resize
+    applyMobileScale();
+    let rid = null;
     function rebuildIfNeeded(){
       applyMobileScale();
       const before = `${CONFIG.w}x${CONFIG.h}`;
@@ -2182,26 +2094,16 @@ const SUGGESTIONS = [
 
       clearStage();
       renderCard(0);
-      // If we were bouncing, restart to adapt bounds
-      if (bouncing){
-        // force-stop current and restart a new scene in final state
-        runId++; // cancel loops bound to old id
-        if (prepared){
-          const myId = runId;
-          bouncing = false;
-          startBouncingScene(myId, prepared);
-        }
-      }
       if (!autoplayed) tryAutoplay();
       ensureControls();
     }
 
-    applyMobileScale();
-    let rid = null;
-    window.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
+    // Throttled events to reduce jitter on mobile
+    const onResized = ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); };
+    window.addEventListener('resize', onResized, { passive: true });
 
     if (window.visualViewport){
-      window.visualViewport.addEventListener('resize', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(rebuildIfNeeded); }, { passive: true });
+      window.visualViewport.addEventListener('resize', onResized, { passive: true });
       window.visualViewport.addEventListener('scroll', ()=>{ cancelAnimationFrame(rid); rid = requestAnimationFrame(applyMobileScale); }, { passive: true });
     }
 
@@ -2211,8 +2113,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
-
 
 
 
