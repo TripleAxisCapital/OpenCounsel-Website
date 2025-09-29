@@ -1096,7 +1096,6 @@ const SUGGESTIONS = [
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
 
-
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- HOW TO SIZE (pick one):
   A) Exact width with aspect:
@@ -1106,6 +1105,14 @@ const SUGGESTIONS = [
   C) Responsive max + viewport cap:
      <div id="onx-card-reveal" style="--stage-w:min(1280px,96vw); --stage-aspect:18/9;">
   Current config: height is 35% of viewport (with dvh precision on mobile).
+
+  OPTIONAL FLOATING SIZE CONTROLS (put on this wrapper):
+    data-float-scale="2"                (default scale; used when platform-specific not set)
+    data-float-scale-mobile="1.6"       (mobile-only scale)
+    data-float-scale-desktop="1.2"      (desktop-only scale)
+    data-float-size="96"                (absolute px height override for both; wins over scale)
+    data-float-size-mobile="72"         (absolute px height for mobile; wins over scale)
+    data-float-size-desktop="110"       (absolute px height for desktop; wins over scale)
 -->
 <div id="onx-card-reveal" class="padTop"
      data-speed="1.6"
@@ -1125,8 +1132,6 @@ const SUGGESTIONS = [
 
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:35vh; --stage-h:35dvh; --stage-aspect:auto;"
-     
-    
 >
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1242,6 +1247,17 @@ const SUGGESTIONS = [
     const canvas  = document.getElementById('onx-canvas');
     const controlsEl = document.getElementById('onx-controls');
     if (!canvas) return;
+
+    // ---------- FLOATING SIZE KNOBS (mobile/desktop specific) ----------
+    const _num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : null; };
+    // Default FLOAT_SCALE is 2 to preserve existing visual size (previous makeFloaters used *2.0)
+    const FLOAT_SCALE   = _num(host.dataset.floatScale) ?? 2;
+    const FLOAT_SCALE_M = _num(host.dataset.floatScaleMobile);
+    const FLOAT_SCALE_D = _num(host.dataset.floatScaleDesktop);
+
+    const FLOAT_SIZE    = _num(host.dataset.floatSize);          // absolute px override (all)
+    const FLOAT_SIZE_M  = _num(host.dataset.floatSizeMobile);    // absolute px override (mobile)
+    const FLOAT_SIZE_D  = _num(host.dataset.floatSizeDesktop);   // absolute px override (desktop)
 
     // ----- OPTIONAL: override SIZE via data-size-* attributes -----
     (function applySizeOverridesFromData(){
@@ -1786,7 +1802,7 @@ const SUGGESTIONS = [
       }
       ctx.restore();
 
-      // "Unified AI" — Apple-style: blur → lift → settle (behind kept clear), then crisp
+      // "Unified AI" — Apple-style: blur → lift → settle
       const subT = clamp((t-0.18)/0.72);
       if (subT > 0){
         const a = easeOutCubic(subT);
@@ -1805,7 +1821,19 @@ const SUGGESTIONS = [
       }
     }
 
-    // -------------------- NEW: Floating logos layer (behind final overlay) --------------------
+    // -------------------- Floating logos sizing helper (mobile/desktop aware) --------------------
+    function getFloaterTargetH(){
+      // Base height derived from stage size with sensible clamps
+      const baseH = Math.max(28, Math.min(isMobile()? CONFIG.h*0.12 : CONFIG.h*0.10, 120)) * SIZE.all;
+      // Absolute overrides (win over scale)
+      const abs = isMobile() ? (FLOAT_SIZE_M ?? FLOAT_SIZE) : (FLOAT_SIZE_D ?? FLOAT_SIZE);
+      if (Number.isFinite(abs)) return abs;
+      // Scale fallback (mobile/desktop specific → global → default 2)
+      const scale = isMobile() ? (FLOAT_SCALE_M ?? FLOAT_SCALE) : (FLOAT_SCALE_D ?? FLOAT_SCALE);
+      return baseH * (Number.isFinite(scale) ? scale : 2);
+    }
+
+    // -------------------- Floating logos layer (behind final overlay) --------------------
     let floaters = [];
     let floatRAF = null;
     let floatLastTS = 0;
@@ -1814,7 +1842,7 @@ const SUGGESTIONS = [
 
     function makeFloaters(logoImgs, perLogo=1){
       const out = [];
-      const targetH = Math.max(28, Math.min(isMobile()? CONFIG.h*0.12 : CONFIG.h*0.10, 120)) * SIZE.all * 2.0;
+      const targetH = getFloaterTargetH();
       logoImgs.forEach(img=>{
         for (let k=0;k<perLogo;k++){
           const aspect = Math.max(0.1, img.aspect || 1);
@@ -1911,11 +1939,9 @@ const SUGGESTIONS = [
         const dt = Math.min(0.05, (ts - floatLastTS)/1000 || 0.016);
         floatLastTS = ts;
 
-        // Rebuild BG if needed and draw scene
         clearStage(); ctx.drawImage(BG_CANVAS, 0, 0);
-
         updateFloaters(dt);
-        drawFloaters();                 // behind
+        drawFloaters();                       // behind
         drawFinalOverlayStatic(assets.finalLogo); // overlay above
         floatRAF = requestAnimationFrame(loop);
       };
@@ -2115,8 +2141,8 @@ const SUGGESTIONS = [
 
       // Keep floating layer consistent across resizes: clamp sizes & positions
       if (floatingActive && floatAssets){
-        // rescale floater size to new target height
-        const targetH = Math.max(28, Math.min(isMobile()? CONFIG.h*0.12 : CONFIG.h*0.10, 120)) * SIZE.all * 1.0;
+        // rescale floater size to new target height (mobile/desktop aware)
+        const targetH = getFloaterTargetH();
         for (const f of floaters){
           const aspect = Math.max(0.1, f.img.aspect || 1);
           f.w = targetH * aspect; f.h = targetH;
@@ -2150,8 +2176,6 @@ const SUGGESTIONS = [
   </script>
 </div>
 <!--======================================================================================================================================================================-->
-
-
 
 
 
