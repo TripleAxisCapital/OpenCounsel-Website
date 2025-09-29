@@ -2132,22 +2132,29 @@ const SUGGESTIONS = [
     // Autoplay when visible
     let autoplayed = false;
     async function tryAutoplay(){
-      if (autoplayed || isAnimating) return;
-      const rect = stageEl.getBoundingClientRect();
-      const vpH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      const vpCenterY = vpH / 2;
-      const visible = (vpCenterY >= rect.top && vpCenterY <= rect.bottom);
-      if (!visible) return;
-      autoplayed = true;
-      if (!prepared) prepared = await prepareAssets();
-      if (prefersReducedMotion){
-        renderOToFinalLogo(1, prepared.finalLogo);
-        startFloatingLayer(prepared);
-        isAnimating = false;
-      } else {
-        playSequence(prepared);
-      }
-    }
+  if (autoplayed || isAnimating) return;
+
+  const rect = stageEl.getBoundingClientRect();
+  const vpH  = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+  // Start earlier based on a simple top-of-section trigger line.
+  // Optional HTML knob: data-trigger-frac="0.70" (0–1). Defaults to 0.70 if not set.
+  const TRIGGER_FRAC = Math.max(0, Math.min(1, parseFloat(host.dataset.triggerFrac) || 0.70));
+  const startLine = vpH * TRIGGER_FRAC;
+  const visible   = (rect.top <= startLine && rect.bottom >= 0);
+  if (!visible) return;
+
+  autoplayed = true;
+  if (!prepared) prepared = await prepareAssets();
+  if (prefersReducedMotion){
+    renderOToFinalLogo(1, prepared.finalLogo);
+    startFloatingLayer(prepared);
+    isAnimating = false;
+  } else {
+    playSequence(prepared);
+  }
+}
+
 
     try {
       const io = new IntersectionObserver((entries)=>{
