@@ -2737,5 +2737,172 @@
   }
 })();
   </script>
+
+
+
+
+
+
+<!-- ── Tipsy: minimal Apple-style organic motion (drop-in) ── -->
+<style>
+  .tipsy{
+    /* Default controls (overridable per-element via data-*) */
+    --amp: 6px;         /* float amplitude (px) */
+    --rot: 0.35deg;     /* rotation amplitude */
+    --scale: 0.008;     /* scale amplitude (0.008 = 0.8%) */
+    --speed: 10s;       /* seconds per cycle */
+    --hover: 0.6;       /* hover response strength (0..1) */
+    --ease: cubic-bezier(.22,.61,.36,1); /* Apple-ish ease */
+
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    transition: transform 320ms var(--ease), filter 320ms var(--ease);
+  }
+  /* Slight polish on hover/focus */
+  .tipsy:where(:hover,:focus-within){
+    filter: saturate(1.02) contrast(1.02);
+  }
+
+  /* Respect reduced motion: keep only a gentle hover tilt */
+  @media (prefers-reduced-motion: reduce){
+    .tipsy{ transition-duration: 160ms; }
+    .tipsy[data-tipsy-animated="0"]{ transform: none !important; }
+  }
+</style>
+
+<script>
+(() => {
+  const els = Array.from(document.querySelectorAll('.tipsy'));
+  if (!els.length) return;
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Global defaults (can be tuned once for your whole site)
+  const DEFAULTS = {
+    amp: 6,          // px vertical float
+    rot: 0.35,       // deg rotation amplitude
+    scale: 0.008,    // 0.8% scale pulsing
+    speed: 10,       // seconds per cycle
+    hover: 0.6       // 0..1 hover influence
+  };
+
+  // Per element state
+  const S = new WeakMap();
+
+  // Helper: read number from data-* with fallback
+  const num = (el, name, fallback) => {
+    const v = el.dataset[name];
+    return (v === undefined || v === '') ? fallback : Number(v);
+  };
+
+  // Initialize elements
+  els.forEach((el, i) => {
+    // Per-element controls (override via data-amp, data-rot, data-scale, data-speed, data-hover)
+    const amp   = num(el, 'amp',   DEFAULTS.amp);     // px
+    const rot   = num(el, 'rot',   DEFAULTS.rot);     // deg
+    const scale = num(el, 'scale', DEFAULTS.scale);   // unitless
+    const speed = num(el, 'speed', DEFAULTS.speed);   // seconds
+    const hover = num(el, 'hover', DEFAULTS.hover);   // 0..1
+
+    // Randomize phase so elements don't sync
+    const phase = Math.random() * Math.PI * 2;
+    // Slight speed variance for organic feel
+    const spVar = speed * (0.9 + Math.random() * 0.2);
+
+    // Hover targets eased over time
+    const hoverState = { tx: 0, ty: 0, tRot: 0, tScale: 0, k: hover };
+
+    // Pointer tracking for hover tilt
+    let rect = null;
+    const onEnter = () => { rect = el.getBoundingClientRect(); };
+    const onMove = (e) => {
+      if (!rect) rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width;   // 0..1
+      const y = (e.clientY - rect.top)  / rect.height;  // 0..1
+      // Centered -0.5..0.5
+      const cx = x - 0.5, cy = y - 0.5;
+      // Modest hover offsets
+      hoverState.tx   = cx * amp * 0.4 * hoverState.k;         // px
+      hoverState.ty   = cy * amp * 0.4 * hoverState.k;         // px
+      hoverState.tRot = -cx * rot * 0.8 * hoverState.k;        // deg
+      hoverState.tScale = Math.max(0, (0.5 - Math.hypot(cx,cy))) * scale * 1.2 * hoverState.k;
+    };
+    const onLeave = () => {
+      rect = null;
+      hoverState.tx = hoverState.ty = hoverState.tRot = hoverState.tScale = 0;
+    };
+
+    el.addEventListener('pointerenter', onEnter);
+    el.addEventListener('pointermove',  onMove);
+    el.addEventListener('pointerleave', onLeave);
+
+    S.set(el, {
+      amp, rot, scale, speed: spVar, phase,
+      hover: hoverState,
+      live: false,      // becomes true when in-view
+      t: 0,             // time accumulator
+      ex: 0, ey: 0, erot: 0, esc: 0 // eased hover offsets
+    });
+  });
+
+  // Only animate when on screen
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(({isIntersecting, target}) => {
+      const st = S.get(target);
+      if (!st) return;
+      st.live = isIntersecting;
+      target.dataset.tipsyAnimated = prefersReduced ? '0' : (isIntersecting ? '1' : '0');
+    });
+  }, { root: null, rootMargin: '20% 0px', threshold: 0 });
+
+  els.forEach(el => io.observe(el));
+
+  // RAF loop
+  let last = performance.now();
+  function tick(now){
+    const dt = Math.min(0.05, (now - last) / 1000); // clamp dt
+    last = now;
+
+    els.forEach(el => {
+      const st = S.get(el); if (!st) return;
+
+      // Ease hover offsets toward targets
+      const ease = 1 - Math.pow(0.08, dt * 60); // framerate independent
+      st.ex   += (st.hover.tx   - st.ex)   * ease;
+      st.ey   += (st.hover.ty   - st.ey)   * ease;
+      st.erot += (st.hover.tRot - st.erot) * ease;
+      st.esc  += (st.hover.tScale - st.esc)* ease;
+
+      if (!prefersReduced && st.live){
+        st.t += dt;
+        const w = (st.t + st.phase) * (Math.PI * 2 / st.speed);
+        // Organic multi-sine blend (very subtle)
+        const s1 = Math.sin(w);
+        const s2 = Math.sin(w * 0.5 + 0.7);
+        const s3 = Math.sin(w * 0.23 + 1.3);
+        const blend = (s1*0.62 + s2*0.28 + s3*0.10);
+
+        const y    = blend * st.amp;
+        const rdeg = blend * st.rot;
+        const scl  = 1 + blend * st.scale;
+
+        // Compose base float + eased hover offsets
+        const ty = y + st.ey;
+        const rot = rdeg + st.erot;
+        const sc  = scl + st.esc;
+
+        el.style.transform = `translate3d(${st.ex.toFixed(2)}px, ${ty.toFixed(2)}px, 0) rotate(${rot.toFixed(3)}deg) scale(${sc.toFixed(4)})`;
+      } else {
+        // Reduced motion: only react gently to hover
+        el.style.transform = `translate3d(${st.ex.toFixed(2)}px, ${st.ey.toFixed(2)}px, 0) rotate(${st.erot.toFixed(3)}deg)`;
+      }
+    });
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
 </body>
 </html>
