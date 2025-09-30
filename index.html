@@ -254,8 +254,8 @@
       --muted:#77808d;
       --line:#E6E8EC;
 
-      --radius:28px;                 /* bubble radius 28 */
-      --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) 78 */
+      --radius:28px;                 /* bubble radius */
+      --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
       --maxW:940px;                  /* max bubble width */
       --screenPadX:20px;             /* bubble -> viewport side padding */
       --titleGap:28px;               /* space between title and bubble */
@@ -263,7 +263,7 @@
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
 
-      /* === Edit me (mobile & desktop controls) === */
+      /* === Chat controls (mobile & desktop) === */
       /* Mobile (default) */
       --padX-m:16px;
       --padY-m:14px;
@@ -308,29 +308,31 @@
       --fadeH-bottom: 14vh;          /* bottom reveal fade height */
       --fadeH-top: 10vh;             /* top dissolve fade height */
 
-      /* ============================ */
-      /* DOWNLOAD BUTTON CONTROLS     */
-      /* ============================ */
-      /* Mobile (default) */
-      --dlGap-m: 18px;              /* space between bubble bottom and button */
-      --dlH-m: 44px;                /* button height */
-      --dlPadX-m: 22px;             /* horizontal padding */
-      --dlFont-m: 16px;             /* font size */
+      /* =============================
+         DOWNLOAD BUTTON CONTROLS
+         (edit these only)
+         ============================= */
+      /* Mobile defaults */
+      --dlGap-m: 22px;               /* distance from bottom edge of chat bubble */
+      --dlH-m:   46px;               /* button height */
+      --dlPX-m:  22px;               /* horizontal padding */
+      --dlFont-m: 15px;              /* font size */
 
-      /* Desktop (>=768px) */
-      --dlGap-d: 22px;
-      --dlH-d: 48px;
-      --dlPadX-d: 26px;
-      --dlFont-d: 17px;
+      /* Desktop overrides (>=768px) */
+      --dlGap-d: 26px;
+      --dlH-d:   52px;
+      --dlPX-d:  26px;
+      --dlFont-d: 16px;
 
-      /* Active mappings (switch via media query below) */
-      --dlGap: var(--dlGap-m);
-      --dlH: var(--dlH-m);
-      --dlPadX: var(--dlPadX-m);
+      /* Mappings (auto-switch with media query below) */
+      --dlGap:  var(--dlGap-m);
+      --dlH:    var(--dlH-m);
+      --dlPX:   var(--dlPX-m);
       --dlFont: var(--dlFont-m);
 
-      /* Shared */
-      --dlRadius: 999px;            /* pill shape */
+      --dlRadius: 999px;             /* pill roundness */
+      --dlSheenOpacity: .22;         /* intensity of sheen */
+      --dlSheenSpeed: 3.2s;          /* sheen speed */
     }
 
     @media (min-width:768px){
@@ -342,10 +344,10 @@
         --fadeH-bottom: 16vh;
         --fadeH-top: 12vh;
 
-        /* Activate desktop button controls */
-        --dlGap: var(--dlGap-d);
-        --dlH: var(--dlH-d);
-        --dlPadX: var(--dlPadX-d);
+        /* bind desktop download controls */
+        --dlGap:  var(--dlGap-d);
+        --dlH:    var(--dlH-d);
+        --dlPX:   var(--dlPX-d);
         --dlFont: var(--dlFont-d);
       }
     }
@@ -375,14 +377,12 @@
       position:absolute;
       left:0; right:0;
       pointer-events:none;
-      z-index:1; /* between word-stream (0) and UI (2) */
+      z-index:1;
     }
-    /* top dissolve */
     #chat-hero::before{
       top:0; height:var(--fadeH-top);
       background:linear-gradient(to bottom, var(--bg) 0%, rgba(255,255,255,0) 100%);
     }
-    /* bottom reveal */
     #chat-hero::after{
       bottom:0; height:var(--fadeH-bottom);
       background:linear-gradient(to top, var(--bg) 0%, rgba(255,255,255,0) 100%);
@@ -390,22 +390,12 @@
 
     /* ---------------- Background word stream ---------------- */
     #chat-hero .word-stream{
-      position:absolute;
-      inset:0;
-      z-index:0;                 /* stays behind everything */
-      pointer-events:none;
-      overflow:hidden;
+      position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden;
     }
-
-    /* rising word container */
     #chat-hero .ws-word{
-      position:absolute;
-      left:50%;
-      top:var(--startTop);
+      position:absolute; left:50%; top:var(--startTop);
       transform:translate3d(-50%,0,0) scale(var(--scale,1));
-      margin-left:var(--x,0%);
-      opacity:0;
-      will-change:transform,opacity;
+      margin-left:var(--x,0%); opacity:0; will-change:transform,opacity;
       animation:ws-rise var(--dur,10s) cubic-bezier(.22,.61,.36,1) var(--delay,0s) forwards;
     }
     @keyframes ws-rise{
@@ -413,48 +403,19 @@
       10%  { opacity:1; }
       100% { opacity:1; transform:translate3d(calc(-50% + var(--x,0%)), calc(var(--rise) * -1), 0) scale(var(--scale,1)); }
     }
-
-    /* lateral sway wrapper */
-    #chat-hero .ws-sway{
-      display:inline-block;
-      will-change:transform;
-      animation:ws-sway var(--swaydur,8s) ease-in-out var(--delay,0s) infinite alternate;
-    }
-    @keyframes ws-sway{
-      from { transform:translateX(0); }
-      to   { transform:translateX(var(--sway,3%)); }
-    }
-
-    /* gradient/shimmering text */
+    #chat-hero .ws-sway{ display:inline-block; will-change:transform; animation:ws-sway var(--swaydur,8s) ease-in-out var(--delay,0s) infinite alternate; }
+    @keyframes ws-sway{ from{transform:translateX(0)} to{transform:translateX(var(--sway,3%))} }
     #chat-hero .ws-text{
-      display:block;
-      font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size:clamp(28px,8vw,72px);
-      font-weight:500;
-      letter-spacing:0.26em;
-      line-height:1.15;
-      text-transform:uppercase;
-      white-space:nowrap;
-
-      background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%);
-      background-size:220% 100%;
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-
-      animation:
-        ws-shimmer 8s ease-in-out infinite,
-        ws-float   3.8s ease-in-out infinite alternate,
-        ws-breathe 7s  ease-in-out infinite;
-      will-change:background-position, filter, transform;
-      text-shadow:none;
+      display:block; font-family: Inter, -apple-system, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size:clamp(28px,8vw,72px); font-weight:500; letter-spacing:0.26em; line-height:1.15; text-transform:uppercase; white-space:nowrap;
+      background:linear-gradient(120deg, var(--c1) 20%, var(--c2) 50%, var(--c1) 80%); background-size:220% 100%;
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      animation: ws-shimmer 8s ease-in-out infinite, ws-float 3.8s ease-in-out infinite alternate, ws-breathe 7s ease-in-out infinite;
+      will-change:background-position, filter, transform; text-shadow:none;
     }
     @keyframes ws-shimmer{ 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
     @keyframes ws-float  { from{transform:translateY(0)} to{transform:translateY(-2px)} }
-    @keyframes ws-breathe{
-      0%,100% { filter:brightness(1) saturate(1); text-shadow:none; }
-      50%     { filter:brightness(1.06) saturate(1.03); text-shadow:0 0 12px rgba(87,199,217,.12); }
-    }
+    @keyframes ws-breathe{ 0%,100% { filter:brightness(1) saturate(1) } 50% { filter:brightness(1.06) saturate(1.03) } }
 
     /* ------------------ Foreground UI (above stream) --------------------- */
     #chat-hero .hero-title{ z-index:2; }
@@ -466,224 +427,157 @@
       left:50%;
       top: calc(50vh - (var(--bubbleH) / 2) - var(--titleGap));
       transform: translate(-50%, -100%);
-      margin:0;
-      text-align:center;
-      letter-spacing:-0.02em;
-      line-height:1.1;
-      font-weight:700;
-      font-size:clamp(28px, 5.2vw, 54px);
-      padding:0 12px;
+      margin:0; text-align:center; letter-spacing:-0.02em; line-height:1.1; font-weight:700;
+      font-size:clamp(28px, 5.2vw, 54px); padding:0 12px;
     }
-
-    /* Adaptive legibility shield (no plate; glow + micro stroke) */
+    /* Adaptive legibility shield */
     #chat-hero .hero-title .title-blur{
-      -webkit-text-stroke: 0 transparent;
-      text-shadow: none;
-      filter: drop-shadow(0 0 10px rgba(255,255,255,.9))
-              drop-shadow(0 0 22px rgba(255,255,255,.6));
+      -webkit-text-stroke: 0 transparent; text-shadow: none;
+      filter: drop-shadow(0 0 10px rgba(255,255,255,.9)) drop-shadow(0 0 22px rgba(255,255,255,.6));
     }
 
     /* --------------- Bubble spot (center) ---------- */
     #chat-hero .bubble-spot{
-      position:absolute;
-      left:50%;
-      top:50vh;
-      transform:translate(-50%, -50%);
-      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW));
-      height:auto;
+      position:absolute; left:50%; top:50vh; transform:translate(-50%, -50%);
+      width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
     }
 
     /* --------------- Chat bubble shell ------------- */
     #chat-hero .bubble{
-      position:relative;
-      width:100%;
-      min-height:var(--bubbleH);
-      height:auto;
-      display:flex;
-      align-items:center;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:#fff;
-      box-shadow:var(--shadowA), var(--shadowB);
-      padding-left:var(--padX);
-      padding-right:calc(var(--padX) + var(--sendSize) + 14px);
-      padding-top:var(--padY);
-      padding-bottom:var(--padY);
-      transition:box-shadow .15s ease;
-      box-sizing:border-box;
+      position:relative; width:100%; min-height:var(--bubbleH); height:auto; display:flex; align-items:center;
+      border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadowA), var(--shadowB);
+      padding-left:var(--padX); padding-right:calc(var(--padX) + var(--sendSize) + 14px); padding-top:var(--padY); padding-bottom:var(--padY);
+      transition:box-shadow .15s ease; box-sizing:border-box;
     }
-
-    /* Keyboard-only focus ring */
-    #chat-hero .bubble:has(.prompt:focus-visible){
-      box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB);
-    }
+    #chat-hero .bubble:has(.prompt:focus-visible){ box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB); }
 
     /* ---------------- Multiline input ------------- */
     #chat-hero .prompt{
-      flex:1 1 auto;
-      display:block;
-      width:100%;
-      min-height:1.35em;
-      font-size:clamp(16px, 2.2vw, 22px);
-      line-height:1.35;
-      color:#0b0b0c;
-      border:0; background:transparent; outline:0;
-      caret-color:#0b0b0c;
-      resize:none; overflow:hidden;
-      padding:0;
-      white-space:pre-wrap;
-      word-break:break-word;
-      overflow-wrap:anywhere;
-      -webkit-appearance:none; appearance:none;
-      transition:opacity var(--fade) ease;
-      opacity:1;
+      flex:1 1 auto; display:block; width:100%; min-height:1.35em;
+      font-size:clamp(16px, 2.2vw, 22px); line-height:1.35; color:#0b0b0c;
+      border:0; background:transparent; outline:0; caret-color:#0b0b0c; resize:none; overflow:hidden; padding:0;
+      white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; -webkit-appearance:none; appearance:none;
+      transition:opacity var(--fade) ease; opacity:1;
     }
     #chat-hero .prompt.is-fading{ opacity:0; }
     #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
 
     /* ---------------- Scalable Send button ---------- */
     #chat-hero .send{
-      position:absolute;
-      right:10px; top:50%; transform:translateY(-50%);
+      position:absolute; right:10px; top:50%; transform:translateY(-50%);
       width:var(--sendSize); height:var(--sendSize);
-      border-radius:999px; border:1px solid #0b0b0c;
-      background:#0b0b0c; display:grid; place-items:center;
-      cursor:pointer;
-      transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
-      box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08);
-      touch-action:manipulation;
-      z-index:3;
+      border-radius:999px; border:1px solid #0b0b0c; background:#0b0b0c; display:grid; place-items:center;
+      cursor:pointer; transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
+      box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08); touch-action:manipulation; z-index:3;
     }
     #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
     #chat-hero .send:active{ transform:translateY(-50%); }
-    #chat-hero .send svg{
-      width:calc(var(--sendSize) * var(--sendIconRatio));
-      height:calc(var(--sendSize) * var(--sendIconRatio));
-      display:block; fill:none; stroke:#fff;
-      stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
-    }
+    #chat-hero .send svg{ width:calc(var(--sendSize) * var(--sendIconRatio)); height:calc(var(--sendSize) * var(--sendIconRatio)); display:block; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 
-    /* ------------- Reduced motion ------------- */
+    /* ------------------ Reduced motion ------------------ */
     @media (prefers-reduced-motion: reduce){
-      #chat-hero .send{ transition:none; }
-      #chat-hero .prompt{ transition:none; }
-      #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{
-        animation:none !important; opacity:1 !important; transform:none !important;
-      }
-      #chat-hero .download-btn::after{ display:none !important; }
+      #chat-hero .send, #chat-hero .prompt{ transition:none; }
+      #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{ animation:none !important; opacity:1 !important; transform:none !important; }
     }
 
-    /* Audiowide, solid black (no breathing/shimmer) */
+    /* Audiowide, solid black (logo/title) */
     #chat-hero .hero-title .title-onx{
       font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      font-weight:400;
-      color:#0B0B0C;
-      background:none;
-      -webkit-background-clip:initial;
-      background-clip:initial;
-      animation:none;
+      font-weight:400; color:#0B0B0C; background:none; -webkit-background-clip:initial; background-clip:initial; animation:none;
     }
 
-    /* === Subtitle styling (existing) === */
+    /* === Subtitle styling === */
     #hero-onx-title .hero-subtitle{
-      display:block;
-      margin-top:.45em;
-      line-height:1.25;
-      letter-spacing:0.01em;
-      max-width: 38ch;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
-      text-wrap: balance;
+      display:block; margin-top:.45em; line-height:1.25; letter-spacing:0.01em;
+      max-width: 38ch; margin-left:auto; margin-right:auto; text-align:center; text-wrap:balance;
       font-family: "SF Pro Text", -apple-system, system-ui, "Segoe UI", Roboto, Arial, sans-serif;
-      font-weight: 500;
-      font-size: clamp(16px, 1.6vw, 18px);
-      color: #5B6572;
+      font-weight:500; font-size:clamp(16px, 1.6vw, 18px); color:#5B6572;
     }
     @media (min-width: 400px){
-      #hero-onx-title .hero-subtitle{ max-width: 50ch; }
+      #hero-onx-title .hero-subtitle{ max-width:50ch; }
     }
 
-    /* ============================ */
-    /* DOWNLOAD CTA (new)           */
-    /* ============================ */
-
-    /* Position the CTA directly below the bubble, spaced by --dlGap */
-    #chat-hero .cta-spot{
+    /* =========================
+       DOWNLOAD BUTTON STYLES
+       ========================= */
+    #chat-hero .download-spot{
       position:absolute;
       left:50%;
+      /* position exactly below bubble: center (50vh) + half bubble height + gap */
       top: calc(50vh + (var(--bubbleH) / 2) + var(--dlGap));
       transform: translateX(-50%);
-      z-index:2;
       width: max-content;
-      pointer-events:auto;
+      z-index: 2;
     }
 
-    /* Pill button — black, minimal, subtle Apple-style sheen */
-    #chat-hero .download-btn{
+    #chat-hero .dl-btn{
       position: relative;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
+      gap: 10px;
       height: var(--dlH);
-      padding: 0 var(--dlPadX);
+      padding: 0 var(--dlPX);
       border-radius: var(--dlRadius);
-      border: 1px solid #000;                 /* crisp outline like the reference */
-      background: #000;                        /* pure black base */
+      background: #0B0B0C;
       color: #fff;
       font-weight: 600;
       font-size: var(--dlFont);
       letter-spacing: .01em;
-      line-height: 1;
-      text-decoration: none;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.08),
+        0 6px 18px rgba(0,0,0,.18),
+        0 2px 6px rgba(0,0,0,.10);
+      -webkit-font-smoothing:antialiased;
       cursor: pointer;
+      user-select: none;
       -webkit-tap-highlight-color: transparent;
-      box-shadow: 0 6px 18px rgba(0,0,0,.16), 0 1px 0 rgba(255,255,255,.02) inset;
-      transition: transform .15s ease, box-shadow .2s ease, background-color .2s ease, opacity .2s ease;
-      will-change: transform, box-shadow;
+      transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+      outline: none;
     }
+    #chat-hero .dl-btn:hover{
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 10px 28px rgba(0,0,0,.22),
+        0 3px 8px rgba(0,0,0,.12);
+    }
+    #chat-hero .dl-btn:active{ transform: translateY(0); }
 
-    /* Sheen pass (very subtle, continuous) */
-    #chat-hero .download-btn::after{
+    /* Sheen (subtle Apple-style) */
+    #chat-hero .dl-btn::after{
       content:"";
-      position:absolute;
-      inset:-1px;                              /* cover border for a uniform pass */
+      position:absolute; inset:0;
       border-radius: inherit;
+      /* very soft diagonal sheen sweep */
       background:
-        linear-gradient( to right,
+        linear-gradient(120deg,
           rgba(255,255,255,0) 0%,
-          rgba(255,255,255,.14) 48%,
-          rgba(255,255,255,0) 100%
-        );
-      transform: translateX(-120%);
-      animation: dl-sheen 2.8s linear infinite;
+          rgba(255,255,255,var(--dlSheenOpacity)) 12%,
+          rgba(255,255,255,0) 26%) ;
+      background-size: 200% 100%;
+      mix-blend-mode: soft-light;
       pointer-events:none;
-      mix-blend-mode: screen;                   /* soft, Apple-like */
+      animation: dl-sheen var(--dlSheenSpeed) linear infinite;
+      opacity: .9;
     }
     @keyframes dl-sheen{
-      0%   { transform: translateX(-120%); }
-      100% { transform: translateX(120%); }
+      0%   { background-position: -120% 0; }
+      100% { background-position: 120% 0; }
     }
 
-    /* Hover & active */
-    #chat-hero .download-btn:hover{
-      box-shadow: 0 8px 22px rgba(0,0,0,.22);
-      transform: translateY(-1px);
-      background:#0A0A0A;
+    #chat-hero .dl-ico{
+      width: 1.15em; height: 1.15em; display: inline-block;
     }
-    #chat-hero .download-btn:active{
-      transform: translateY(0);
-      box-shadow: 0 4px 12px rgba(0,0,0,.18);
-    }
+    #chat-hero .dl-ico svg{ width:100%; height:100%; display:block; fill:#fff; }
 
-    /* Focus-visible ring (keyboard) */
-    #chat-hero .download-btn:focus-visible{
-      outline: none;
-      box-shadow:
-        0 0 0 2px #0A0A0A,
-        0 0 0 5px rgba(0,102,255,.22),
-        0 8px 22px rgba(0,0,0,.22);
-    }
+    /* OS switching: show only the detected icon */
+    #chat-hero .ico-mac, #chat-hero .ico-win{ display:none; }
+    #chat-hero.os-mac  .ico-mac{ display:inline-block; }
+    #chat-hero.os-win  .ico-win{ display:inline-block; }
+
+    /* Button text */
+    #chat-hero .dl-label{ display:inline-block; line-height:1; }
   </style>
 
   <!-- Background floating words (starts ONLY after user scrolls) -->
@@ -700,9 +594,13 @@
     <script>
       (() => {
         const STREAM_WORDS = [
-          "CODE","CREATE","PLAN","EXECUTE","DESIGN","PRODUCE","MASTER","RESEARCH","INTELLIGENCE","PASSIVE INCOME","BUILD","LAUNCH","SHIP","SCALE","AUTOMATE","OPTIMIZE","MONETIZE","DEPLOY","ANALYZE","STRATEGIZE","REDEFINE","ITERATE","POLISH","EXCEL","FOCUS","SIMPLIFY","ELEVATE","ACCELERATE","GROW","LIMITLESS","UNSTOPPABLE",
-          "DOMINATE","DISRUPT","CONQUER","COMMAND","OUTPERFORM","WIN","AMPLIFY","ASCEND","LEVERAGE","CONVERT","CLOSE","SECURE","TRANSFORM","EVOLVE","PROFIT","LEAD","PREVAIL","OWN","CAPTURE","INNOVATE"
+          "CODE","CREATE","PLAN","EXECUTE","DESIGN","PRODUCE","MASTER","RESEARCH","INTELLIGENCE","PASSIVE INCOME",
+          "BUILD","LAUNCH","SHIP","SCALE","AUTOMATE","OPTIMIZE","MONETIZE","DEPLOY","ANALYZE","STRATEGIZE",
+          "REDEFINE","ITERATE","POLISH","EXCEL","FOCUS","SIMPLIFY","ELEVATE","ACCELERATE","GROW","LIMITLESS","UNSTOPPABLE",
+          "DOMINATE","DISRUPT","CONQUER","COMMAND","OUTPERFORM","WIN","AMPLIFY","ASCEND","LEVERAGE","CONVERT",
+          "CLOSE","SECURE","TRANSFORM","EVOLVE","PROFIT","LEAD","PREVAIL","OWN","CAPTURE","INNOVATE"
         ];
+
         const host = document.currentScript.parentElement;
         const RATE   = +(host.dataset.rate  || 900);
         const DMIN   = +(host.dataset.dmin  || 9);
@@ -717,9 +615,7 @@
         const EARLY_DUR_MULT = 0.72;
         const SEED_BURST  = 4;
 
-        const laneOffsets = Array.from({length: LANES}, (_, i) => {
-          return (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND;
-        });
+        const laneOffsets = Array.from({length: LANES}, (_, i) => (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND);
         const laneReadyAt = new Array(LANES).fill(0);
 
         const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]] } return a; };
@@ -755,26 +651,18 @@
           outer.style.setProperty('--dur',   dur.toFixed(2)+'s');
           outer.style.setProperty('--x',     laneX.toFixed(2)+'%');
           outer.style.setProperty('--scale', scale.toFixed(2));
-
           const delaySeconds = opts.seed ? 0 : (opts.early ? Math.random()*0.15 : Math.random()*0.6);
           outer.style.setProperty('--delay', delaySeconds.toFixed(2) + 's');
 
-          const sw = document.createElement('span');
-          sw.className = 'ws-sway';
-          sw.style.setProperty('--sway',    sway.toFixed(2)+'%');
-          sw.style.setProperty('--swaydur', swayDur.toFixed(2)+'s');
+          const sw = document.createElement('span'); sw.className = 'ws-sway';
+          sw.style.setProperty('--sway', ( (Math.random()<.5?-1:1) * (0.6 + Math.random()*3) ).toFixed(2)+'%' );
+          sw.style.setProperty('--swaydur', (6 + Math.random()*6).toFixed(2)+'s');
 
-          const t = document.createElement('span');
-          t.className = 'ws-text';
-          t.textContent = phrase;
+          const t = document.createElement('span'); t.className = 'ws-text'; t.textContent = phrase;
 
-          sw.appendChild(t);
-          outer.appendChild(sw);
-          host.appendChild(outer);
+          sw.appendChild(t); outer.appendChild(sw); host.appendChild(outer);
 
-          const nodes = host.querySelectorAll('.ws-word');
-          if (nodes.length > MAXN) nodes[0]?.remove();
-
+          const nodes = host.querySelectorAll('.ws-word'); if (nodes.length > MAXN) nodes[0]?.remove();
           laneReadyAt[lane] = now + LANE_GAP;
           outer.addEventListener('animationend', () => outer.remove(), {once:true});
         }
@@ -783,10 +671,9 @@
         function scheduleNext(delay){
           timerId = setTimeout(() => {
             const useEarly = earlyLeft > 0;
-            spawn({ seed:false, early:useEarly });
+            spawn({ early:useEarly });
             if (useEarly) earlyLeft--;
-            const nextGap = (earlyLeft > 0) ? EARLY_GAP : RATE;
-            scheduleNext(nextGap);
+            scheduleNext( (earlyLeft > 0) ? EARLY_GAP : RATE );
           }, delay);
         }
 
@@ -802,39 +689,28 @@
         window.addEventListener('touchmove', start, {once:true, passive:true});
 
         const obs = new MutationObserver(() => {
-          if (!document.body.contains(host) && timerId){
-            clearTimeout(timerId);
-            obs.disconnect();
-          }
+          if (!document.body.contains(host) && timerId){ clearTimeout(timerId); obs.disconnect(); }
         });
         obs.observe(document.body, {childList:true, subtree:true});
       })();
     </script>
   </div>
 
-  <!-- Title (mobile: single line, auto-fit) -->
+  <!-- Title -->
   <h1 class="hero-title" id="hero-onx-title">
     <span class="title-blur">
       <span class="fit-line">Your Unfair Advantage.</span>
     </span>
-
     <!-- Subtitle -->
     <span class="hero-subtitle">Superpowered, unified AI—research, design, and execute without limits.</span>
 
     <style>
-      /* Hide the mobile break by default (desktop) */
+      /* Keep existing mobile/desktop tweaks for title */
       #hero-onx-title .br-mobile { display: none; }
-
-      /* Desktop only: add adjustable gap after "ONX." */
       @media (min-width:601px){
         #hero-onx-title{ --desktop-gap: 0.35em; }
-        #hero-onx-title .title-onx{
-          display: inline-block;
-          margin-right: var(--desktop-gap);
-        }
+        #hero-onx-title .title-onx{ display:inline-block; margin-right: var(--desktop-gap); }
       }
-
-      /* Mobile only: show the break; remove right margin just in case */
       @media (max-width:600px){
         #hero-onx-title .br-mobile { display: inline; }
         #hero-onx-title .title-onx{ margin-right: 0; }
@@ -846,31 +722,20 @@
     /* Only affect this title on mobile */
     @media (max-width:600px){
       #hero-onx-title{
-        --xpad: 60px;          /* left/right padding of sentence */
-        --ypad: 0px;           /* top/bottom padding inside the sentence */
-        --outer-top: 0px;      /* space above this whole block (post-squash) */
-        --outer-bottom: 0px;   /* space below this whole block */
+        --xpad: 60px; --ypad: 0px; --outer-top: 0px; --outer-bottom: 0px;
         margin: var(--outer-top) 0 var(--outer-bottom) !important;
       }
       #hero-onx-title .title-blur{
-        display:block;
-        width:100vw;
-        padding: var(--ypad) var(--xpad);
-        box-sizing:border-box;
-        line-height:0;
+        display:block; width:100vw; padding: var(--ypad) var(--xpad); box-sizing:border-box; line-height:0;
       }
       #hero-onx-title .fit-line{
-        display:block;
-        white-space:nowrap;
-        line-height:1.05;
-        font-weight:700;
-        font-size:120px;        /* base; JS will shrink to fit width */
-        transform: none;
+        display:block; white-space:nowrap; line-height:1.05; font-weight:700; font-size:120px; transform:none;
       }
     }
   </style>
 
   <script>
+    /* Fit title on mobile and sync bubble height */
     (function(){
       const root  = document.getElementById('hero-onx-title');
       const line  = root?.querySelector('.fit-line');
@@ -932,10 +797,21 @@
     </form>
   </div>
 
-  <!-- NEW: Download button, perfectly aligned below the bubble -->
-  <div class="cta-spot">
-    <!-- Replace href with your download link -->
-    <a class="download-btn" href="#" aria-label="Download ONX">Download</a>
+  <!-- ===== Download button (below the bubble) ===== -->
+  <div class="download-spot">
+    <button class="dl-btn" type="button" id="onx-download"
+      data-mac-url="/downloads/ONX-mac.dmg"
+      data-win-url="/downloads/ONX-win.exe">
+      <span class="dl-ico ico-mac" aria-hidden="true">
+        <!-- Apple logo -->
+        <svg viewBox="0 0 24 24"><path d="M16.365 13.246c.03 3.23 2.83 4.307 2.86 4.32-.023.074-.447 1.518-1.474 3-0.888 1.29-1.812 2.58-3.26 2.604-1.43.026-1.89-.84-3.52-.84-1.63 0-2.15.813-3.5.867-1.404.053-2.477-1.39-3.372-2.675-1.84-2.64-3.25-7.46-1.36-10.73.94-1.63 2.62-2.67 4.45-2.698 1.39-.027 2.71.93 3.52.93.81 0 2.43-1.15 4.11-0.98.7.03 2.66.28 3.92 2.11-.1.06-2.34 1.36-2.32 4.09zM13.9 3.6c.76-.92 1.27-2.2 1.13-3.49-1.09.044-2.41.72-3.2 1.64-.7.81-1.31 2.12-1.14 3.37 1.2.093 2.44-.61 3.21-1.52z"/></svg>
+      </span>
+      <span class="dl-ico ico-win" aria-hidden="true">
+        <!-- Windows logo -->
+        <svg viewBox="0 0 24 24"><path d="M2 3.5l9-1.3v9.1H2V3.5zm9 9.2v9.1l-9-1.3V12.7h9zM22 2v9.3h-9.5V3.3L22 2zm-9.5 10.7H22V22l-9.5-1.3v-8z"/></svg>
+      </span>
+      <span class="dl-label">Download</span>
+    </button>
   </div>
 
   <script>
@@ -950,81 +826,8 @@
       "Identify 3 undervalued micro-SaaS buys under $2M we can acquire now.",
       "Draft a no-BS investor memo that raises $1M with traction-light signals.",
       "Ship a viral ONX launch that hits #1 on Product Hunt within 48 hours.",
-      "Audit pricing and add a premium tier that lifts ARPU by 40%.",
-      "Engineer a launch that lands 10,000 signups in 48 hours—zero fluff.",
-      "Rewrite my landing page to add +35% conversion—cut everything that doesn’t sell.",
-      "Outrank our #1 competitor in 14 days with a white-hat SEO war plan.",
-      "Turn one tweet thread into 100k impressions—systematize it.",
-      "Design a referral loop that compounds daily—no discounts, only desire.",
-      "Ship a Product Hunt #1 launch—minute-by-minute battle plan.",
-      "Turn my homepage into a ‘shut up and take my money’ page—today.",
-      "Make a creator collab engine that feeds us 1,000 leads/week.",
-      "Crush churned-user winbacks with a 3-email sequence that feels irresistible.",
-      "Give me a shocking before/after demo script that goes viral on X/LinkedIn.",
-      "Cold email that books 10 meetings/day—feels human, gets replies, scales.",
-      "Rewrite my offer so ‘yes’ is the only sane answer.",
-      "Design a 3-tier pricing that lifts ARPU by 40% without hurting conversion.",
-      "Build a premium anchor that makes $199/mo feel like a steal.",
-      "Create a discovery call script that closes in 20 minutes—no pressure, all pull.",
-      "Turn testimonials into a money page—zero cringe, maximum proof.",
-      "Build a no-risk guarantee that boosts buys and keeps refunds sane.",
-      "Construct a sales objection map—one-liners that vaporize hesitations.",
-      "Write the checkout microcopy that bumps take-rate by 10% overnight.",
-      "Design a founder-led sales loop—repeatable, calendar-filling, fun to run.",
-      "Investor memo that forces a meeting in 60 seconds—tight, credible, bold.",
-      "Craft a ‘why now’ story that makes our space feel inevitable.",
-      "Pre-close 50% of the round before demo day—warm intro machine.",
-      "Design a traction-light deck that screams momentum—without lying.",
-      "Create a list of 25 partner funds that match our thesis like a glove.",
-      "Write the ‘market secrets’ section that makes us look dangerous (and right).",
-      "Build a monthly update template investors actually read—and forward.",
-      "Turn a messy backlog into a 2-week roadmap that prints revenue.",
-      "Design a product hook that users can’t stop showing friends.",
-      "Create a defensible moat—data, workflows, switching costs—pick two now.",
-      "Add one feature that 10x’s perceived value without 10x’ing scope.",
-      "Build a self-serve onboarding that converts 35% of trials to paid.",
-      "Instrument the product: find the 3 events that predict churn early.",
-      "Design an in-product upsell that feels like a gift, not a pitch.",
-      "Kill 50% of our UI to feel premium—Apple-grade minimalism checklist.",
-      "Automate 80% of ops with off-the-shelf tools—document the whole stack.",
-      "Cut churn under 3% in 60 days—hard math, real levers.",
-      "Turn support into sales with ‘one reply = one upgrade’ macros.",
-      "Design a weekly operating cadence that compounds output, not meetings.",
-      "Build a KPI cockpit the team actually checks—and acts on—daily.",
-      "Reverse-engineer the competitor funnel and out-convert it by 30%—legally.",
-      "Find 3 micro-SaaS buys under $2M with ugly metrics but fixable growth.",
-      "Own one niche so hard the big guys can’t follow—pick it and plan it.",
-      "Map the power players in our market and secure 5 unfair partnerships.",
-      "Create a positioning line that makes competitors look outdated overnight.",
-      "Make every model mine—route tasks across GPT/Qwen/Gemma for cost + speed wins.",
-      "Design a multi-model router that beats GPT-4 on latency by 50%.",
-      "Build an onboarding agent that writes, demos, and closes—hands-free.",
-      "Create a ‘cheat-code’ research flow that finds non-obvious opportunities fast.",
-      "Draft a privacy-first AI policy so enterprises can say ‘yes’ without lawyers stalling.",
-      "Replace 10 SaaS tools with one ONX workflow—document the savings.",
-      "Write a brand voice that sounds like me on my best day—then automate it.",
-      "Generate 30 days of content in 60 minutes—on-brand, zero filler.",
-      "Design an AI QA harness so features ship twice as fast with half the bugs.",
-      "Build a fine-tuning plan that makes our outputs feel handcrafted.",
-      "Legal negotiation script that drops vendor costs 25% without burning bridges.",
-      "Vendor scorecard that forces discounts—or upgrades—by next renewal.",
-      "Rewrite our MSA to protect margin and speed contracts—deal-closing redlines.",
-      "Build BATNAs for our top 3 deals so we never negotiate scared.",
-      "Homepage headline that slaps: 10 edgy options, investor-safe variants included.",
-      "Visual identity brief: Apple-clean, premium, unmistakably ours—deliver today.",
-      "Write a manifesto that makes users feel like insiders from line one.",
-      "Craft a viral demo script that says ‘ONX is the unfair advantage’.",
-      "Design a launch video storyboard—60 seconds, goosebumps ending.",
-      "Founder routine that unlocks 4 hours of deep work—no monk mode.",
-      "Calendar purge: keep only what moves revenue—weekly ritual.",
-      "Decision framework that kills dithering and ships faster.",
-      "Build a recruiting magnet: top 1% candidates only—message, funnel, close.",
-      "Write the ad that makes people feel late if they don’t buy now.",
-      "Craft a ‘Buy the Edge’ landing—proof, tension, irresistible CTA.",
-      "Turn AI into ROI: 90-day plan, week-by-week, no theory.",
-      "Install my unfair advantage—step-by-step, today."
+      "Audit pricing and add a premium tier that lifts ARPU by 40%."
     ];
-
     const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
@@ -1036,66 +839,58 @@
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      function autosize(){
-        input.style.height = 'auto';
-        input.style.height = input.scrollHeight + 'px';
-      }
-      function syncBubbleH(){
-        const h = bubble.getBoundingClientRect().height;
-        hero.style.setProperty('--bubbleH', h + 'px');
-      }
+      function autosize(){ input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; }
+      function syncBubbleH(){ hero.style.setProperty('--bubbleH', bubble.getBoundingClientRect().height + 'px'); }
 
-      const ro = new ResizeObserver(syncBubbleH);
-      ro.observe(bubble);
+      const ro = new ResizeObserver(syncBubbleH); ro.observe(bubble);
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduceMotion) {
-        input.value = SUGGESTIONS[0] || "";
-        autosize(); syncBubbleH();
-        return;
-      }
+      if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; autosize(); syncBubbleH(); return; }
 
       let i = 0, j = 0;
       function typeNextChar(){
         const phrase = SUGGESTIONS[i] || "";
         input.classList.remove('is-fading');
-
         if (j < phrase.length){
-          input.value += phrase[j++];
-          autosize(); syncBubbleH();
-          setTimeout(typeNextChar, TYPER.type);
+          input.value += phrase[j++]; autosize(); syncBubbleH(); setTimeout(typeNextChar, TYPER.type);
         } else {
           setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
         }
       }
-
       function fadeOutThenAdvance(){
         input.classList.add('is-fading');
-
         const onEnd = (e) => {
           if (e.propertyName && e.propertyName !== 'opacity') return;
           input.removeEventListener('transitionend', onEnd);
-
-          input.value = "";
-          autosize(); syncBubbleH();
-
-          i = (i + 1) % SUGGESTIONS.length;
-          j = 0;
-
+          input.value = ""; autosize(); syncBubbleH();
+          i = (i + 1) % SUGGESTIONS.length; j = 0;
           setTimeout(typeNextChar, TYPER.gap);
         };
-
         input.addEventListener('transitionend', onEnd, { once:true });
-        setTimeout(() => {
-          if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend'));
-        }, 1000);
+        setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
       }
-
-      input.value = "";
-      autosize(); syncBubbleH();
-      setTimeout(typeNextChar, TYPER.startDelay);
-
+      input.value = ""; autosize(); syncBubbleH(); setTimeout(typeNextChar, TYPER.startDelay);
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
+    })();
+
+    /* ===== OS detection + button routing ===== */
+    (function(){
+      const host = document.getElementById('chat-hero');
+      const btn  = document.getElementById('onx-download');
+      if (!host || !btn) return;
+
+      // very simple detection (good enough for icon swap)
+      const ua = navigator.userAgent.toLowerCase();
+      const isMac = ua.includes('mac os x') || ua.includes('macintosh') || ua.includes('mac');
+      host.classList.add(isMac ? 'os-mac' : 'os-win');
+
+      btn.addEventListener('click', () => {
+        const mac = btn.getAttribute('data-mac-url') || '#';
+        const win = btn.getAttribute('data-win-url') || '#';
+        const url = isMac ? mac : win;
+        // Navigate to the proper installer URL
+        window.location.href = url;
+      });
     })();
   </script>
 </section>
