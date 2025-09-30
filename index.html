@@ -175,15 +175,44 @@
 
     /* ========= PRIMITIVES ========= */
     .g-grad, .grad-anim{
-      background: linear-gradient(var(--angle,150deg),
-  #090C11cc 0%,
-  #0F141Acc 22%,
-  #1A2027cc 48%,
-  #0C1116e6 52%, /* soft highlight for a premium sheen */
-  #1A2027cc 56%,
-  #0F141Acc 80%,
-  #090C11cc 100%
-);
+      /* ONX Breathing Graphite */
+.onx-breathe {
+  --angle: 150deg;
+  --a1: #090C11cc;
+  --a2: #0F141Acc;
+  --a3: #1A2027cc;
+  --highlight: #0C1116e6; /* soft sheen */
+
+  background: linear-gradient(var(--angle),
+    var(--a1) 0%,
+    var(--a2) 22%,
+    var(--a3) 48%,
+    var(--highlight) 52%,
+    var(--a3) 56%,
+    var(--a2) 80%,
+    var(--a1) 100%);
+  animation: onx-breathe-angle 9s ease-in-out infinite alternate,
+             onx-breathe-sheen 9s ease-in-out infinite alternate;
+  background-attachment: fixed; /* luxe feel */
+  will-change: background;
+}
+
+/* Smoothly animate the angle */
+@keyframes onx-breathe-angle {
+  0%   { background-image: linear-gradient(140deg, var(--a1) 0%, var(--a2) 22%, var(--a3) 48%, var(--highlight) 52%, var(--a3) 56%, var(--a2) 80%, var(--a1) 100%); }
+  100% { background-image: linear-gradient(170deg, var(--a1) 0%, var(--a2) 22%, var(--a3) 46%, var(--highlight) 50%, var(--a3) 54%, var(--a2) 80%, var(--a1) 100%); }
+}
+
+/* Gently shift the sheen band */
+@keyframes onx-breathe-sheen {
+  0%   { filter: brightness(1); }
+  100% { filter: brightness(1.06); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .onx-breathe { animation: none; }
+}
 
       background-size: 300% 300%; animation: gradientShift var(--speed, 16s) ease-in-out infinite; will-change: background-position;
     }
