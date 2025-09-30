@@ -911,6 +911,11 @@
   NEW: STAGE HEIGHT PER PLATFORM (overrides --stage-h when provided)
     data-stage-h-mobile="40dvh"         (examples: 40dvh, 35vh, 520px)
     data-stage-h-desktop="40vh"
+
+  NEW: SAFE BOTTOM PAD (prevents cut-off at bottom of section)
+    data-bottom-pad-mobile="16svh"      (examples: 16svh, 12vh, 120px)
+    data-bottom-pad-desktop="12vh"
+    data-bottom-pad="14vh"              (optional universal fallback)
 -->
 <div id="onx-card-reveal" class="padTop oc-container section-clip"
      data-speed="1.6"
@@ -933,6 +938,10 @@
      data-stage-h-mobile="25svh"
      data-stage-h-desktop="50vh"
 
+     <!-- NEW: bottom pad controls -->
+     data-bottom-pad-mobile="16svh"
+     data-bottom-pad-desktop="12vh"
+
      role="img" aria-label="ONX brand animation"
      style="--stage-w:1200px; --stage-h:40vh; --stage-aspect:auto;"
 >
@@ -943,7 +952,13 @@
 
   <style>
     /* ---------- Structure / resets ---------- */
-    #onx-card-reveal { max-width: 100%; margin: 0 auto; overflow: clip; }
+    #onx-card-reveal {
+      max-width: 100%;
+      margin: 0 auto;
+      overflow: clip; /* keep clipping for overshoot hygiene */
+      /* NEW: safe bottom breathing room so the main card never looks cut */
+      padding-bottom: var(--bottom-pad, clamp(72px, 12vh, 200px));
+    }
     #onx-card-reveal * { box-sizing: border-box; }
     #onx-card-reveal, #onx-card-reveal * {
       -webkit-font-smoothing: antialiased;
@@ -978,7 +993,11 @@
     #onx-controls button{ display: none !important; }
 
     @media (max-width: 640px){
-      #onx-card-reveal{ overflow: clip; margin:24px auto 28px; }
+      #onx-card-reveal{
+        overflow: clip;
+        margin:24px auto 28px;
+        /* mobile keeps the same bottom pad var; value is set via JS for svh accuracy */
+      }
       #onx-controls{ display: none !important; margin-top: 0 !important; }
     }
   </style>
@@ -1041,6 +1060,11 @@
     const STAGE_H       = host.dataset.stageH;
     const STAGE_H_M     = host.dataset.stageHMobile;
     const STAGE_H_D     = host.dataset.stageHDesktop;
+
+    // ---------- NEW: PER-PLATFORM BOTTOM PAD ----------
+    const BP_ALL = host.dataset.bottomPad;
+    const BP_M   = host.dataset.bottomPadMobile;
+    const BP_D   = host.dataset.bottomPadDesktop;
 
     // ----- SIZE overrides via data-size-* -----
     (function applySizeOverridesFromData(){
@@ -1158,6 +1182,16 @@
         stageEl.style.setProperty('--stage-aspect', css(stageEl, '--stage-aspect', 'auto') || 'auto');
         stageEl.style.setProperty('--stage-h', hVal);
       }
+    }
+
+    // ---------- NEW: Apply per-platform bottom pad ----------
+    function applyBottomPad(){
+      const val = isMobile()
+        ? (BP_M || BP_ALL || '')
+        : (BP_D || BP_ALL || '');
+      // default if nothing provided: generous, but bounded
+      const fallback = isMobile() ? '16svh' : '12vh';
+      host.style.setProperty('--bottom-pad', (val && String(val).trim()) ? val : fallback);
     }
 
     function setConfigFromStage(){
@@ -1705,6 +1739,7 @@
     // ---------- Init ----------
     function initialBuild(){
       applyStageHeight();
+      applyBottomPad();             // NEW: ensure safe bottom space
       setConfigFromStage();
       setBackingScale(true);
       STYLE = buildStyle();
@@ -1752,6 +1787,7 @@
 
     function rebuildIfNeeded(){
       applyStageHeight();
+      applyBottomPad();             // NEW: re-apply on viewport/platform changes
       applyMobileScale();
       const before = `${CONFIG.w}x${CONFIG.h}`;
       setConfigFromStage();
