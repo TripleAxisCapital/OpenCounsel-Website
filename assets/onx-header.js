@@ -86,7 +86,7 @@ class ONXHeader extends HTMLElement {
       <style>
         :host{
           /* gradient */
-          --grad-from:#3f6768; --grad-via:#57c7d9; --grad-to:#57c7d9;
+          --grad-from:#3f6768; --grad-via:#57c7d9; --grad-to:#0E6F5Ccc;
           --angle:135deg; --speed:16s;
 
           /* Tunables */
