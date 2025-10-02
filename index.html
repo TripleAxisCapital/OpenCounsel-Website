@@ -242,7 +242,9 @@
     <!-- Extra center nav links -->
 
     <!-- Extra right-side action -->
-  </onx-header><!--=======================================================================START===============================================================================================-->
+  </onx-header>
+  
+  <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -254,7 +256,7 @@
       --muted:#77808d;
       --line:#E6E8EC;
 
-      --radius:28px;                 /* bubble radius */
+      --radius:28px;                 /* bubble radius (kept; bubble overrides to pill locally) */
       --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
       --maxW:940px;                  /* max bubble width */
       --screenPadX:20px;             /* bubble -> viewport side padding */
@@ -442,37 +444,120 @@
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
     }
 
-    /* --------------- Chat bubble shell ------------- */
+    /* --------------- Chat bubble shell (RESTYLED to match photo) ------------- */
     #chat-hero .bubble{
-      position:relative; width:100%; min-height:var(--bubbleH); height:auto; display:flex; align-items:center;
-      border:1px solid var(--line); border-radius:var(--radius); background:#fff; box-shadow:var(--shadowA), var(--shadowB);
-      padding-left:var(--padX); padding-right:calc(var(--padX) + var(--sendSize) + 14px); padding-top:var(--padY); padding-bottom:var(--padY);
-      transition:box-shadow .15s ease; box-sizing:border-box;
-    }
-    #chat-hero .bubble:has(.prompt:focus-visible){ box-shadow:0 0 0 2px #DBE3FF inset, var(--shadowA), var(--shadowB); }
+      position:relative;
+      width:100%;
+      min-height:var(--bubbleH);
+      height:auto;
+      display:flex;
+      align-items:center;
 
-    /* ---------------- Multiline input ------------- */
+      /* Apple-style pill with chrome border + soft fill */
+      border:1px solid transparent;
+      border-radius:999px; /* pill */
+      background:
+        linear-gradient(180deg,#FCFDFE 0%,#F6F8FB 100%) padding-box,
+        linear-gradient(180deg,rgba(255,255,255,.85),rgba(0,0,0,.06)) border-box;
+
+      /* subtle inner + outer depth */
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.85),
+        inset 0 -1px 0 rgba(0,0,0,.04),
+        0 2px 6px rgba(0,0,0,.08),
+        0 10px 24px rgba(0,0,0,.06);
+
+      /* roomy horizontal padding + reserved space for send */
+      padding-left:calc(var(--padX) + 2px);
+      padding-right:calc(var(--padX) + var(--sendSize) + 16px);
+      padding-top:calc(var(--padY) - 2px);
+      padding-bottom:calc(var(--padY) - 2px);
+
+      transition:box-shadow .12s ease, transform .12s ease;
+      box-sizing:border-box;
+    }
+    /* Focused state: crisp ring + lift */
+    #chat-hero .bubble:has(.prompt:focus-visible){
+      box-shadow:
+        0 0 0 3px rgba(59,130,246,.20),
+        inset 0 1px 0 rgba(255,255,255,.85),
+        inset 0 -1px 0 rgba(0,0,0,.04),
+        0 6px 22px rgba(0,0,0,.10);
+      transform: translateY(-1px);
+    }
+
+    /* ---------------- Multiline input (restyled) ------------- */
     #chat-hero .prompt{
-      flex:1 1 auto; display:block; width:100%; min-height:1.35em;
-      font-size:clamp(16px, 2.2vw, 22px); line-height:1.35; color:#0b0b0c;
-      border:0; background:transparent; outline:0; caret-color:#0b0b0c; resize:none; overflow:hidden; padding:0;
-      white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere; -webkit-appearance:none; appearance:none;
-      transition:opacity var(--fade) ease; opacity:1;
+      flex:1 1 auto;
+      display:block;
+      width:100%;
+      min-height:1.35em;
+      font-size:clamp(16px, 2.2vw, 20px);
+      line-height:1.4;
+      color:#0b0b0c;
+
+      /* no borders—clean pill interior */
+      border:0;
+      background:transparent;
+      outline:0;
+      caret-color:#0b0b0c;
+      resize:none;
+      overflow:hidden;
+      padding:2px 0 0 0;
+
+      white-space:pre-wrap;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+      -webkit-appearance:none; appearance:none;
+
+      transition:opacity var(--fade) ease;
+      opacity:1;
     }
     #chat-hero .prompt.is-fading{ opacity:0; }
-    #chat-hero .prompt::placeholder{ color:var(--muted); opacity:.95; }
-
-    /* ---------------- Scalable Send button ---------- */
-    #chat-hero .send{
-      position:absolute; right:10px; top:50%; transform:translateY(-50%);
-      width:var(--sendSize); height:var(--sendSize);
-      border-radius:999px; border:1px solid #0b0b0c; background:#0b0b0c; display:grid; place-items:center;
-      cursor:pointer; transition:transform .15s ease, background-color .15s ease, box-shadow .15s ease, border-color .15s ease;
-      box-shadow:0 2px 6px rgba(0,0,0,.10), 0 10px 24px rgba(0,0,0,.08); touch-action:manipulation; z-index:3;
+    #chat-hero .prompt::placeholder{
+      color:#99A2AF; /* softer muted */
+      opacity:.95;
     }
-    #chat-hero .send:hover{ background:#121212; transform:translateY(calc(-50% - 1px)); }
+
+    /* ------------------ Send button (kept logic, refined look) ---------- */
+    #chat-hero .send{
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      width:var(--sendSize);
+      height:var(--sendSize);
+      border-radius:999px;
+      border:1px solid #0b0b0c;
+      background:#0b0b0c;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      transition:transform .12s ease, background-color .12s ease, box-shadow .12s ease, border-color .12s ease;
+      box-shadow:
+        0 2px 6px rgba(0,0,0,.14),
+        0 10px 24px rgba(0,0,0,.10);
+      touch-action:manipulation;
+      z-index:3;
+    }
+    #chat-hero .send:hover{
+      background:#111315;
+      transform:translateY(calc(-50% - 1px));
+      box-shadow:
+        0 4px 10px rgba(0,0,0,.16),
+        0 16px 32px rgba(0,0,0,.12);
+    }
     #chat-hero .send:active{ transform:translateY(-50%); }
-    #chat-hero .send svg{ width:calc(var(--sendSize) * var(--sendIconRatio)); height:calc(var(--sendSize) * var(--sendIconRatio)); display:block; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    #chat-hero .send svg{
+      width:calc(var(--sendSize) * var(--sendIconRatio));
+      height:calc(var(--sendSize) * var(--sendIconRatio));
+      display:block;
+      fill:none;
+      stroke:#fff;
+      stroke-width:2;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
 
     /* ------------------ Reduced motion ------------------ */
     @media (prefers-reduced-motion: reduce){
