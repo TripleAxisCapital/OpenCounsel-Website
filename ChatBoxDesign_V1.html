@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Chat Bar — Tight</title>
+<style>
+  /* ===== Tokens (tweak freely) ===== */
+  :root{
+    --bg:#f6f7f8; --ink:#0B0B0C; --muted:#9AA3AF;
+    --barH:64px; --btn:#0B0B0C; --radius:9999px;
+    --shadow:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);
+    --shadow-focus:0 16px 44px rgba(0,0,0,.12),0 3px 12px rgba(0,0,0,.06);
+    --gap:12px; --btnPad:10px; --logoSize:70px;
+    /* supports negatives to pull logo left */
+    --logoLeftGap:-2.0px;
+    /* exact distance from logo edge to text (± ok) */
+    --logoToText:13px;
+
+    /* === New: global size for the top logo above the chat box === */
+    --topLogoSize: px; /* adjust this to resize the top logo globally */
+  }
+
+  html,body{height:100%}
+  body{
+    margin:0;display:grid;place-items:center;background:var(--bg);color:var(--ink);
+    font:16px/1.4 ui-sans-serif,system-ui,Inter,Segoe UI,Roboto,Helvetica,Arial
+  }
+
+  /* === New: wrapper to stack top logo and chat bar without touching chat bar styling === */
+  .stack{
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .logo-top{
+    width:var(--topLogoSize);height:auto;display:block;object-fit:contain;
+    margin-bottom:px; /* sits exactly 24px above the chat bar */
+  }
+
+  .chatbar{
+    width:min(1100px, calc(100% - 32px));
+    height:var(--barH);
+    display:flex;align-items:center;gap:var(--gap);
+    background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+    padding-inline:16px var(--btnPad);
+    /* keep container padding non-negative; allow negative logo pull via margin */
+    padding-inline-start:max(0px,var(--logoLeftGap));
+    transition:box-shadow .25s ease,transform .25s ease;
+  }
+  .chatbar:focus-within{box-shadow:var(--shadow-focus);transform:translateY(-1px)}
+
+  .logo{
+    width:var(--logoSize);height:var(--logoSize);flex:none;display:block;object-fit:contain;
+    margin-inline-start:min(0px,var(--logoLeftGap));
+  }
+
+  .chatbar input{
+    flex:1;height:100%;border:0;background:transparent;color:var(--ink);
+    font-size:18px;padding:0;margin:0;-webkit-appearance:none;appearance:none;
+    /* shift only the text (placeholder + typed) in either direction */
+    text-indent:calc(var(--logoToText) - var(--gap));
+  }
+  .chatbar input::placeholder{color:var(--muted)}
+
+  .send{
+    flex:none;inline-size:calc(var(--barH) - 2*var(--btnPad));
+    block-size:calc(var(--barH) - 2*var(--btnPad));
+    display:grid;place-items:center;cursor:pointer;border:0;border-radius:50%;
+    background:var(--btn);color:#fff;
+    box-shadow:0 12px 28px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.1);
+    transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+  }
+  .send:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.28)}
+  .send:active{transform:translateY(0);filter:brightness(.96)}
+  .send svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.5;fill:none}
+
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+
+<div class="stack">
+  <!-- New top logo (size controlled via --topLogoSize) -->
+  <img class="logo-top" src="logo.svg" alt="Logo">
+  </div>
+
+  <!-- Unchanged chat bar -->
+  <form class="chatbar" action="#" onsubmit="event.preventDefault()">
+    <img class="logo" src="logo.svg" alt="Logo">
+    <label class="sr-only" for="q">Message</label>
+    <input id="q" name="q" type="text" placeholder="Ask anything…" autocomplete="off"/>
+    <button class="send" type="submit" aria-label="Send">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 12h12" stroke-linecap="round"/>
+        <path d="M13 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </form>
+
+</body>
+</html>
