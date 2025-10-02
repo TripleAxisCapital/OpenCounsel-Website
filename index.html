@@ -256,11 +256,11 @@
       --muted:#77808d;
       --line:#E6E8EC;
 
-      --radius:28px;                 /* bubble radius (kept; bubble overrides to pill locally) */
-      --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
-      --maxW:940px;                  /* max bubble width */
-      --screenPadX:20px;             /* bubble -> viewport side padding */
-      --titleGap:28px;               /* space between title and bubble */
+      --radius:28px;                 /* keeps for overall look */
+      --bubbleH:78px;                /* auto-updates via JS */
+      --maxW:940px;                  /* max width for chat area */
+      --screenPadX:20px;             /* viewport side padding */
+      --titleGap:28px;               /* space between title and chat bar */
 
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
@@ -315,7 +315,7 @@
          (edit these only)
          ============================= */
       /* Mobile defaults */
-      --dlGap-m: 22px;               /* distance from bottom edge of chat bubble */
+      --dlGap-m: 22px;               /* distance from bottom edge of chat bar */
       --dlH-m:   46px;               /* button height */
       --dlPX-m:  22px;               /* horizontal padding */
       --dlFont-m: 15px;              /* font size */
@@ -337,16 +337,19 @@
       --dlSheenSpeed: 3.2s;          /* sheen speed */
 
       /* =============================
-         CHAT BAR TOKENS (from CHAT BAR CODE, scoped)
+         CHAT BAR TOKENS (from CHAT BAR CODE)
+         Scoped here so you can tweak globally
          ============================= */
-      --barH:64px; --btn:#0B0B0C; --radius-chat:9999px;
-      --shadow-chat:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);
-      --shadow-chat-focus:0 16px 44px rgba(0,0,0,.12),0 3px 12px rgba(0,0,0,.06);
-      --gap:12px; --btnPad:10px; --logoSize:70px;
-      /* supports negatives to pull logo left */
-      --logoLeftGap:-2px;
-      /* exact distance from logo edge to text (± ok) */
-      --logoToText:13px;
+      --barH:64px;                            /* chat bar height */
+      --btn:#0B0B0C;                          /* send button color */
+      --radius-chat:9999px;                   /* pill */
+      --shadow:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);
+      --shadow-focus:0 16px 44px rgba(0,0,0,.12),0 3px 12px rgba(0,0,0,.06);
+      --gap:12px;
+      --btnPad:10px;
+      --logoSize:70px;
+      --logoLeftGap:-2px;                     /* supports negatives */
+      --logoToText:13px;                      /* exact distance logo → text (± ok) */
     }
 
     @media (min-width:768px){
@@ -450,75 +453,57 @@
       filter: drop-shadow(0 0 10px rgba(255,255,255,.9)) drop-shadow(0 0 22px rgba(255,255,255,.6));
     }
 
-    /* --------------- Bubble spot (center) ---------- */
+    /* --------------- Chat bar spot (center) ---------- */
     #chat-hero .bubble-spot{
       position:absolute; left:50%; top:50vh; transform:translate(-50%, -50%);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
-      display:grid; place-items:center; /* centers the chatbar inside */
     }
 
-    /* ================================
-       CHAT BAR (from CHAT BAR CODE)
-       scoped to #chat-hero
-       ================================ */
+    /* =========================
+       CHAT BAR (from CHAT BAR CODE), scoped to #chat-hero
+       ========================= */
     #chat-hero .chatbar{
-      width:min(1100px, calc(100% - 32px));
+      width:100%;
       height:var(--barH);
-      display:flex; align-items:center; gap:var(--gap);
-      background:#fff; border-radius:var(--radius-chat); box-shadow:var(--shadow-chat);
+      display:flex;align-items:center;gap:var(--gap);
+      background:#fff;border-radius:var(--radius-chat);box-shadow:var(--shadow);
       padding-inline:16px var(--btnPad);
       /* keep container padding non-negative; allow negative logo pull via margin */
       padding-inline-start:max(0px,var(--logoLeftGap));
-      transition:box-shadow .25s ease, transform .25s ease;
+      transition:box-shadow .25s ease,transform .25s ease;
       box-sizing:border-box;
     }
-    #chat-hero .chatbar:focus-within{ box-shadow:var(--shadow-chat-focus); transform:translateY(-1px) }
+    #chat-hero .chatbar:focus-within{box-shadow:var(--shadow-focus);transform:translateY(-1px)}
 
     #chat-hero .logo{
-      width:var(--logoSize); height:var(--logoSize); flex:none; display:block; object-fit:contain;
+      width:var(--logoSize);height:var(--logoSize);flex:none;display:block;object-fit:contain;
       margin-inline-start:min(0px,var(--logoLeftGap));
     }
 
     #chat-hero .chatbar input{
-      flex:1; height:100%; border:0; background:transparent; color:var(--ink);
-      font-size:18px; padding:0; margin:0; -webkit-appearance:none; appearance:none;
+      flex:1;height:100%;border:0;background:transparent;color:var(--ink);
+      font-size:18px;padding:0;margin:0;-webkit-appearance:none;appearance:none;
       /* shift only the text (placeholder + typed) in either direction */
       text-indent:calc(var(--logoToText) - var(--gap));
-      transition: opacity var(--fade) ease; /* to support is-fading class from typer */
-      outline: none;
+      transition:opacity var(--fade) ease;
     }
     #chat-hero .chatbar input.is-fading{ opacity:0; }
-    #chat-hero .chatbar input::placeholder{ color:var(--muted) }
+    #chat-hero .chatbar input::placeholder{color:var(--muted)}
 
     #chat-hero .send{
-      flex:none;
-      inline-size:calc(var(--barH) - 2*var(--btnPad));
+      flex:none;inline-size:calc(var(--barH) - 2*var(--btnPad));
       block-size:calc(var(--barH) - 2*var(--btnPad));
-      display:grid; place-items:center; cursor:pointer; border:0; border-radius:50%;
-      background:var(--btn); color:#fff;
-      box-shadow:0 12px 28px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.1);
-      transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+      display:grid;place-items:center;cursor:pointer;border:0;border-radius:50%;
+      background:var(--btn);color:#fff;
+      box-shadow:0 12px 28px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.1);
+      transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+      touch-action:manipulation;
     }
-    #chat-hero .send:hover{ transform:translateY(-1px); box-shadow:0 16px 36px rgba(0,0,0,.28) }
-    #chat-hero .send:active{ transform:translateY(0); filter:brightness(.96) }
-    #chat-hero .send svg{ width:20px; height:20px; stroke:currentColor; stroke-width:2.5; fill:none }
+    #chat-hero .send:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.28)}
+    #chat-hero .send:active{transform:translateY(0);filter:brightness(.96)}
+    #chat-hero .send svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.5;fill:none}
 
-    #chat-hero .sr-only{
-      position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-      overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
-    }
-
-    /* ------------------ Reduced motion ------------------ */
-    @media (prefers-reduced-motion: reduce){
-      #chat-hero .chatbar input{ transition:none; }
-      #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{ animation:none !important; opacity:1 !important; transform:none !important; }
-    }
-
-    /* Audiowide, solid black (logo/title) */
-    #chat-hero .hero-title .title-onx{
-      font-family:"Audiowide", ui-sans-serif, system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      font-weight:400; color:#0B0B0C; background:none; -webkit-background-clip:initial; background-clip:initial; animation:none;
-    }
+    #chat-hero .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
     /* === Subtitle styling === */
     #hero-onx-title .hero-subtitle{
@@ -537,7 +522,7 @@
     #chat-hero .download-spot{
       position:absolute;
       left:50%;
-      /* position exactly below bubble: center (50vh) + half bubble height + gap */
+      /* position exactly below chat bar: center (50vh) + half bar height + gap */
       top: calc(50vh + (var(--bubbleH) / 2) + var(--dlGap));
       transform: translateX(-50%);
       width: max-content;
@@ -583,7 +568,6 @@
       content:"";
       position:absolute; inset:0;
       border-radius: inherit;
-      /* very soft diagonal sheen sweep */
       background:
         linear-gradient(120deg,
           rgba(255,255,255,0) 0%,
@@ -600,12 +584,10 @@
       100% { background-position: 120% 0; }
     }
 
-    #chat-hero .dl-ico{
-      width: 1.15em; height: 1.15em; display: inline-block;
-    }
+    #chat-hero .dl-ico{ width: 1.15em; height: 1.15em; display: inline-block; }
     #chat-hero .dl-ico svg{ width:100%; height:100%; display:block; fill:#fff; }
 
-    /* OS switching: show only the detected icon */
+    /* OS switching: keep icon swap behavior */
     #chat-hero .ico-mac, #chat-hero .ico-win{ display:none; }
     #chat-hero.os-mac  .ico-mac{ display:inline-block; }
     #chat-hero.os-win  .ico-win{ display:inline-block; }
@@ -652,7 +634,7 @@
         const laneOffsets = Array.from({length: LANES}, (_, i) => (LANES === 1) ? 0 : ((i/(LANES-1))*2 - 1) * BAND);
         const laneReadyAt = new Array(LANES).fill(0);
 
-        const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]] } return a; };
+        const shuffle = a => { for(let i=a.length-1;i>0;i++){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j]] } return a; };
         let queue = shuffle([...STREAM_WORDS]);
 
         function pickLane(now){
@@ -769,7 +751,7 @@
   </style>
 
   <script>
-    /* Fit title on mobile and sync bubble height */
+    /* Fit title on mobile and sync chat bar height variable */
     (function(){
       const root  = document.getElementById('hero-onx-title');
       const line  = root?.querySelector('.fit-line');
@@ -808,7 +790,7 @@
     })();
   </script>
 
-  <!-- The centered input (REPLACED with Chat Bar) -->
+  <!-- The centered CHAT BAR (replaces demo bubble) -->
   <div class="bubble-spot">
     <form class="chatbar" action="#" onsubmit="event.preventDefault()">
       <img class="logo" src="logo.svg" alt="Logo">
@@ -823,7 +805,7 @@
     </form>
   </div>
 
-  <!-- ===== Download button (below the bubble) ===== -->
+  <!-- ===== Download button (below the chat bar) ===== -->
   <div class="download-spot">
     <button class="dl-btn" type="button" id="onx-download">
       <span class="dl-ico ico-mac" aria-hidden="true">
@@ -839,15 +821,15 @@
   </div>
 
   <script>
-    /* Simple redirect (kept) */
+    /* Simple redirect (keep this if you want SignUp.html) */
     document.getElementById("onx-download").addEventListener("click", function(e) {
-      e.preventDefault(); // prevent default button behavior
-      window.location.href = "SignUp.html"; // redirect to SignUp.html
+      e.preventDefault();
+      window.location.href = "SignUp.html";
     });
   </script>
 
   <script>
-    /* ===== Hero type-in lines (wired to new #q input) ===== */
+    /* ===== Hero type-in lines (edgy edition) — now types into #q ===== */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
       "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
@@ -863,18 +845,17 @@
     const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
-      const input  = document.querySelector('#chat-hero .chatbar #q');
-      const shell  = document.querySelector('#chat-hero .chatbar');
+      const input  = document.getElementById('q');                 // ← NEW target
+      const bar    = document.querySelector('#chat-hero .chatbar'); // ← observe for height
       const hero   = document.getElementById('chat-hero');
-      if (!input || !shell || !hero) return;
+      if (!input || !bar || !hero) return;
 
-      /* Disable manual typing for demo */
+      // Prevent manual typing (demo mode)
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      /* Sync hero --bubbleH to chatbar height */
-      function syncBubbleH(){ hero.style.setProperty('--bubbleH', shell.getBoundingClientRect().height + 'px'); }
-      const ro = new ResizeObserver(syncBubbleH); ro.observe(shell);
+      function syncBubbleH(){ hero.style.setProperty('--bubbleH', bar.getBoundingClientRect().height + 'px'); }
+      const ro = new ResizeObserver(syncBubbleH); ro.observe(bar);
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; syncBubbleH(); return; }
@@ -899,32 +880,15 @@
           setTimeout(typeNextChar, TYPER.gap);
         };
         input.addEventListener('transitionend', onEnd, { once:true });
-        /* Fallback in case transitionend is missed */
         setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
       }
-
       input.value = ""; syncBubbleH(); setTimeout(typeNextChar, TYPER.startDelay);
-      window.addEventListener('resize', syncBubbleH, { passive:true });
-    })();
+      window.addEventListener('resize', () => { syncBubbleH(); });
 
-    /* ===== OS detection + button routing (kept) ===== */
-    (function(){
-      const host = document.getElementById('chat-hero');
-      const btn  = document.getElementById('onx-download');
-      if (!host || !btn) return;
-
-      // very simple detection (good enough for icon swap)
+      /* Optional: keep OS class for icon swap */
       const ua = navigator.userAgent.toLowerCase();
       const isMac = ua.includes('mac os x') || ua.includes('macintosh') || ua.includes('mac');
-      host.classList.add(isMac ? 'os-mac' : 'os-win');
-
-      btn.addEventListener('click', () => {
-        const mac = btn.getAttribute('data-mac-url') || '#';
-        const win = btn.getAttribute('data-win-url') || '#';
-        const url = isMac ? mac : win;
-        // Navigate to the proper installer URL
-        window.location.href = url;
-      });
+      hero.classList.add(isMac ? 'os-mac' : 'os-win');
     })();
   </script>
 </section>
