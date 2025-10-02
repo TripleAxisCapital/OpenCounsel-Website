@@ -48,13 +48,11 @@
       background:#0B0B0C; display:flex; 
       align-items:center; justify-content:center;
       transition:transform .25s var(--ease), background .25s var(--ease);
-      position: relative;
-      overflow: hidden;
     }
     .send-btn:hover{ background:#222; }
     .send-btn svg{ width:18px; height:18px; stroke:#fff; fill:none; stroke-width:2.5; }
 
-    /* Interactive pulse */
+    /* Interactive click pulse */
     .send-btn:active{
       transform:scale(0.9);
     }
@@ -65,16 +63,6 @@
       0% { transform: scale(1); }
       50% { transform: scale(1.15); }
       100% { transform: scale(1); }
-    }
-
-    /* Fly-off animation */
-    .fly-away {
-      animation: fly 0.8s var(--ease) forwards;
-    }
-    @keyframes fly {
-      0% { transform: translate(0,0) scale(1); opacity:1; }
-      40% { transform: translate(20px,-10px) scale(1.1); opacity:1; }
-      100% { transform: translate(150px,-120px) scale(0.6); opacity:0; }
     }
   </style>
 </head>
@@ -96,7 +84,7 @@
                  placeholder="" autocomplete="email" required aria-required="true" />
           <button class="send-btn" type="submit" aria-label="Submit">
             <!-- Upward arrow (↑) -->
-            <svg viewBox="0 0 24 24" id="arrow-icon">
+            <svg viewBox="0 0 24 24">
               <line x1="12" y1="19" x2="12" y2="5"/>
               <polyline points="5 12 12 5 19 12"/>
             </svg>
@@ -110,9 +98,8 @@
     const input = document.getElementById('email');
     const form = document.getElementById('joinForm');
     const btn = document.querySelector('.send-btn');
-    const arrow = document.getElementById('arrow-icon');
 
-    // Initial placeholder typing
+    // Initial placeholder type animation
     const initText = "Enter your email to join the waitlist.";
     let i = 0;
     function typeWriterInit(){
@@ -124,6 +111,7 @@
     }
     window.onload = typeWriterInit;
 
+    // Form validation + success animation
     form.addEventListener('submit', (e) => {
       const email = input.value.trim();
       if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
@@ -132,16 +120,11 @@
         return;
       }
 
-      // Pulse + fly-away animation
+      // Add Apple-like pulse animation to button
       btn.classList.add('animate');
-      arrow.classList.add('fly-away');
+      setTimeout(()=> btn.classList.remove('animate'), 500);
 
-      // After flight, reset arrow position
-      setTimeout(() => {
-        arrow.classList.remove('fly-away');
-      }, 1000);
-
-      // After submission, clear input + success typing
+      // After submission, clear input and type out success message
       setTimeout(() => {
         input.value = "";
         let msg = "You have now joined the ONX waitlist!";
