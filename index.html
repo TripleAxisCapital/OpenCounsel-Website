@@ -256,11 +256,11 @@
       --muted:#77808d;
       --line:#E6E8EC;
 
-      --radius:28px;                 /* keeps for overall look */
-      --bubbleH:78px;                /* auto-updates via JS */
-      --maxW:940px;                  /* max width for chat area */
-      --screenPadX:20px;             /* viewport side padding */
-      --titleGap:28px;               /* space between title and chat bar */
+      --radius:28px;                 /* bubble radius (kept; bubble overrides to pill locally) */
+      --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
+      --maxW:940px;                  /* max bubble width */
+      --screenPadX:20px;             /* bubble -> viewport side padding */
+      --titleGap:28px;               /* space between title and bubble */
 
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
@@ -315,7 +315,7 @@
          (edit these only)
          ============================= */
       /* Mobile defaults */
-      --dlGap-m: 22px;               /* distance from bottom edge of chat bar */
+      --dlGap-m: 22px;               /* distance from bottom edge of chat bubble */
       --dlH-m:   46px;               /* button height */
       --dlPX-m:  22px;               /* horizontal padding */
       --dlFont-m: 15px;              /* font size */
@@ -336,20 +336,16 @@
       --dlSheenOpacity: .22;         /* intensity of sheen */
       --dlSheenSpeed: 3.2s;          /* sheen speed */
 
-      /* =============================
-         CHAT BAR TOKENS (from CHAT BAR CODE)
-         Scoped here so you can tweak globally
-         ============================= */
-      --barH:64px;                            /* chat bar height */
-      --btn:#0B0B0C;                          /* send button color */
-      --radius-chat:9999px;                   /* pill */
+      /* ===== Scoped Chat Bar tokens (from CHAT BAR CODE) ===== */
+      --barH:64px;                   /* chat bar height */
+      --btn:#0B0B0C;                 /* send button color */
+      --radius-pill:9999px;          /* pill radius for chat bar */
       --shadow:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);
       --shadow-focus:0 16px 44px rgba(0,0,0,.12),0 3px 12px rgba(0,0,0,.06);
-      --gap:12px;
-      --btnPad:10px;
+      --gap:12px; --btnPad:10px;
       --logoSize:70px;
-      --logoLeftGap:-2px;                     /* supports negatives */
-      --logoToText:13px;                      /* exact distance logo → text (± ok) */
+      --logoLeftGap:-2px;            /* supports negatives to pull logo left */
+      --logoToText:13px;             /* exact distance from logo edge to text (± ok) */
     }
 
     @media (min-width:768px){
@@ -453,25 +449,37 @@
       filter: drop-shadow(0 0 10px rgba(255,255,255,.9)) drop-shadow(0 0 22px rgba(255,255,255,.6));
     }
 
-    /* --------------- Chat bar spot (center) ---------- */
+    /* --------------- Bubble spot (center) ---------- */
     #chat-hero .bubble-spot{
       position:absolute; left:50%; top:50vh; transform:translate(-50%, -50%);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
     }
 
-    /* =========================
-       CHAT BAR (from CHAT BAR CODE), scoped to #chat-hero
-       ========================= */
+    /* ===== (Override) Bubble shell becomes a transparent wrapper for the Chat Bar ===== */
+    #chat-hero .bubble{
+      position:relative;
+      width:100%;
+      height:auto;
+      min-height:auto;
+      display:block;
+      padding:0;
+      background:none;
+      border:0;
+      border-radius:0;
+      box-shadow:none;
+      box-sizing:border-box;
+    }
+
+    /* ================= Chat Bar styles (scoped) ================= */
     #chat-hero .chatbar{
       width:100%;
       height:var(--barH);
       display:flex;align-items:center;gap:var(--gap);
-      background:#fff;border-radius:var(--radius-chat);box-shadow:var(--shadow);
+      background:#fff;border-radius:var(--radius-pill);box-shadow:var(--shadow);
       padding-inline:16px var(--btnPad);
       /* keep container padding non-negative; allow negative logo pull via margin */
       padding-inline-start:max(0px,var(--logoLeftGap));
       transition:box-shadow .25s ease,transform .25s ease;
-      box-sizing:border-box;
     }
     #chat-hero .chatbar:focus-within{box-shadow:var(--shadow-focus);transform:translateY(-1px)}
 
@@ -485,12 +493,13 @@
       font-size:18px;padding:0;margin:0;-webkit-appearance:none;appearance:none;
       /* shift only the text (placeholder + typed) in either direction */
       text-indent:calc(var(--logoToText) - var(--gap));
+      outline:none;
       transition:opacity var(--fade) ease;
     }
     #chat-hero .chatbar input.is-fading{ opacity:0; }
     #chat-hero .chatbar input::placeholder{color:var(--muted)}
 
-    #chat-hero .send{
+    #chat-hero .chatbar .send{
       flex:none;inline-size:calc(var(--barH) - 2*var(--btnPad));
       block-size:calc(var(--barH) - 2*var(--btnPad));
       display:grid;place-items:center;cursor:pointer;border:0;border-radius:50%;
@@ -499,13 +508,13 @@
       transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
       touch-action:manipulation;
     }
-    #chat-hero .send:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.28)}
-    #chat-hero .send:active{transform:translateY(0);filter:brightness(.96)}
-    #chat-hero .send svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.5;fill:none}
+    #chat-hero .chatbar .send:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.28)}
+    #chat-hero .chatbar .send:active{transform:translateY(0);filter:brightness(.96)}
+    #chat-hero .chatbar .send svg{width:20px;height:20px;stroke:currentColor;stroke-width:2.5;fill:none}
 
     #chat-hero .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
-    /* === Subtitle styling === */
+    /* === Subtitle styling (unchanged) === */
     #hero-onx-title .hero-subtitle{
       display:block; margin-top:.45em; line-height:1.25; letter-spacing:0.01em;
       max-width: 38ch; margin-left:auto; margin-right:auto; text-align:center; text-wrap:balance;
@@ -518,11 +527,11 @@
 
     /* =========================
        DOWNLOAD BUTTON STYLES
-       ========================= */
+       ========================== */
     #chat-hero .download-spot{
       position:absolute;
       left:50%;
-      /* position exactly below chat bar: center (50vh) + half bar height + gap */
+      /* position exactly below bubble: center (50vh) + half bubble height + gap */
       top: calc(50vh + (var(--bubbleH) / 2) + var(--dlGap));
       transform: translateX(-50%);
       width: max-content;
@@ -568,6 +577,7 @@
       content:"";
       position:absolute; inset:0;
       border-radius: inherit;
+      /* very soft diagonal sheen sweep */
       background:
         linear-gradient(120deg,
           rgba(255,255,255,0) 0%,
@@ -584,10 +594,12 @@
       100% { background-position: 120% 0; }
     }
 
-    #chat-hero .dl-ico{ width: 1.15em; height: 1.15em; display: inline-block; }
+    #chat-hero .dl-ico{
+      width: 1.15em; height: 1.15em; display: inline-block;
+    }
     #chat-hero .dl-ico svg{ width:100%; height:100%; display:block; fill:#fff; }
 
-    /* OS switching: keep icon swap behavior */
+    /* OS switching: show only the detected icon */
     #chat-hero .ico-mac, #chat-hero .ico-win{ display:none; }
     #chat-hero.os-mac  .ico-mac{ display:inline-block; }
     #chat-hero.os-win  .ico-win{ display:inline-block; }
@@ -717,7 +729,7 @@
     <span class="title-blur">
       <span class="fit-line">Your Unfair Advantage.</span>
       <!-- Subtitle -->
-      <span class="hero-subtitle">Superpowered AI—research, design, and execute without limits.</span>
+    <span class="hero-subtitle">Superpowered AI—research, design, and execute without limits.</span>
     </span>
 
     <style>
@@ -751,7 +763,7 @@
   </style>
 
   <script>
-    /* Fit title on mobile and sync chat bar height variable */
+    /* Fit title on mobile and sync bubble height */
     (function(){
       const root  = document.getElementById('hero-onx-title');
       const line  = root?.querySelector('.fit-line');
@@ -790,9 +802,10 @@
     })();
   </script>
 
-  <!-- The centered CHAT BAR (replaces demo bubble) -->
+  <!-- The centered bubble wrapper now contains the Chat Bar -->
   <div class="bubble-spot">
-    <form class="chatbar" action="#" onsubmit="event.preventDefault()">
+    <!-- Single form acts as chatbar (avoid nested forms). Keeps .bubble for height sync. -->
+    <form class="bubble chatbar" action="#" onsubmit="event.preventDefault()">
       <img class="logo" src="logo.svg" alt="Logo">
       <label class="sr-only" for="q">Message</label>
       <input id="q" name="q" type="text" placeholder="Ask anything…" autocomplete="off"/>
@@ -805,7 +818,7 @@
     </form>
   </div>
 
-  <!-- ===== Download button (below the chat bar) ===== -->
+  <!-- ===== Download button (below the bubble) ===== -->
   <div class="download-spot">
     <button class="dl-btn" type="button" id="onx-download">
       <span class="dl-ico ico-mac" aria-hidden="true">
@@ -821,7 +834,7 @@
   </div>
 
   <script>
-    /* Simple redirect (keep this if you want SignUp.html) */
+    /* Keep your SignUp redirect hook (left intact) */
     document.getElementById("onx-download").addEventListener("click", function(e) {
       e.preventDefault();
       window.location.href = "SignUp.html";
@@ -829,7 +842,7 @@
   </script>
 
   <script>
-    /* ===== Hero type-in lines (edgy edition) — now types into #q ===== */
+    /* ===== Hero type-in lines — rewired to #q (Chat Bar input) ===== */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
       "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
@@ -845,17 +858,18 @@
     const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
-      const input  = document.getElementById('q');                 // ← NEW target
-      const bar    = document.querySelector('#chat-hero .chatbar'); // ← observe for height
+      const input  = document.getElementById('q');                              // <- new input
+      const bubble = document.querySelector('#chat-hero .chatbar');             // <- use chatbar element for height
       const hero   = document.getElementById('chat-hero');
-      if (!input || !bar || !hero) return;
+      if (!input || !bubble || !hero) return;
 
-      // Prevent manual typing (demo mode)
+      /* Demo mode: block user typing so the typewriter owns the field */
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      function syncBubbleH(){ hero.style.setProperty('--bubbleH', bar.getBoundingClientRect().height + 'px'); }
-      const ro = new ResizeObserver(syncBubbleH); ro.observe(bar);
+      function syncBubbleH(){ hero.style.setProperty('--bubbleH', bubble.getBoundingClientRect().height + 'px'); }
+
+      const ro = new ResizeObserver(syncBubbleH); ro.observe(bubble);
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; syncBubbleH(); return; }
@@ -880,15 +894,32 @@
           setTimeout(typeNextChar, TYPER.gap);
         };
         input.addEventListener('transitionend', onEnd, { once:true });
+        /* safety dispatch in case transitionend is missed */
         setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
       }
       input.value = ""; syncBubbleH(); setTimeout(typeNextChar, TYPER.startDelay);
       window.addEventListener('resize', () => { syncBubbleH(); });
+    })();
 
-      /* Optional: keep OS class for icon swap */
+    /* ===== OS detection + icon swap (left intact) ===== */
+    (function(){
+      const host = document.getElementById('chat-hero');
+      const btn  = document.getElementById('onx-download');
+      if (!host || !btn) return;
+
       const ua = navigator.userAgent.toLowerCase();
       const isMac = ua.includes('mac os x') || ua.includes('macintosh') || ua.includes('mac');
-      hero.classList.add(isMac ? 'os-mac' : 'os-win');
+      host.classList.add(isMac ? 'os-mac' : 'os-win');
+
+      /* NOTE: you also have a SignUp redirect listener above. This extra click
+         handler from the original code is preserved for icon swap parity. */
+      btn.addEventListener('click', () => {
+        const mac = btn.getAttribute('data-mac-url') || '#';
+        const win = btn.getAttribute('data-win-url') || '#';
+        const url = isMac ? mac : win;
+        /* If desired, remove navigation here to rely solely on SignUp redirect. */
+        void url;
+      });
     })();
   </script>
 </section>
