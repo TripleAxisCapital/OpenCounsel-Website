@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ONX Pro Waitlist</title>
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root{
+      --bg: #ffffff;
+      --ink: #0B0B0C;
+      --muted: #6B7280;
+      --radius: 32px;
+      --fieldH: 70px;
+      --ease: cubic-bezier(.2,.8,.2,1);
+    }
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, system-ui;
+      -webkit-font-smoothing: antialiased;
+      display:flex; justify-content:center; align-items:center; height:100vh;
+    }
+    .wrap{ width:100%; max-width:640px; padding:0 20px; text-align:center; }
+
+    header h1{ font-size:2.6rem; margin-bottom:1rem; }
+    header p.sub{ color:var(--muted); margin-bottom:1.5rem; }
+
+    .form-wrap{ width:100%; }
+    .field-row{
+      display:flex; align-items:center; 
+      border-radius: var(--radius);
+      box-shadow: 0 15px 40px rgba(0,0,0,.08);
+      border:1px solid #E5E7EB;
+      background:#fff;
+      overflow:hidden;
+    }
+    .input{
+      flex:1; border:none; outline:none; 
+      font-size:16px; padding:0 18px;
+      height:var(--fieldH); 
+    }
+    .input::placeholder{ color:#9CA3AF; }
+    .send-btn{
+      width:48px; height:48px;
+      margin-right:10px;
+      border-radius:50%;
+      border:none; cursor:pointer;
+      background:#0B0B0C; display:flex; 
+      align-items:center; justify-content:center;
+      transition:background .2s var(--ease);
+    }
+    .send-btn:hover{ background:#222; }
+    .send-btn svg{ width:18px; height:18px; stroke:#fff; fill:none; stroke-width:2.5; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>ONX Pro Waitlist</h1>
+      <p class="sub">High-end, Apple-grade AI workspace. Be first to get access and early updates.</p>
+    </header>
+
+    <section class="form-wrap" aria-label="Waitlist signup">
+      <iframe name="form-target" id="form-target" hidden></iframe>
+      <form id="joinForm" method="POST" target="form-target" 
+        action="https://script.google.com/macros/s/AKfycbzskuzONwUt11lttmENWPfNQxR6FCgStxNu0Ubcv4QOGwhnAYDo951srK7p8NOSIYo/exec" novalidate>
+        
+        <div class="field-row">
+          <input class="input" id="email" name="email" type="email" 
+                 placeholder="" autocomplete="email" required aria-required="true" />
+          <button class="send-btn" type="submit" aria-label="Submit">
+            <!-- Upward arrow (↑) -->
+            <svg viewBox="0 0 24 24">
+              <line x1="12" y1="19" x2="12" y2="5"/>
+              <polyline points="5 12 12 5 19 12"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    // Auto type animation
+    const input = document.getElementById('email');
+    const text = "Enter your email to join the waitlist.";
+    let i = 0;
+    function typeWriter(){
+      if(i < text.length){
+        input.setAttribute("placeholder", text.substring(0, i+1));
+        i++;
+        setTimeout(typeWriter, 60);
+      }
+    }
+    window.onload = typeWriter;
+
+    // Form validation
+    const form = document.getElementById('joinForm');
+    form.addEventListener('submit', (e) => {
+      const email = input.value.trim();
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
+        e.preventDefault();
+        alert("Please enter a valid email.");
+      }
+    });
+  </script>
+</body>
+</html>
