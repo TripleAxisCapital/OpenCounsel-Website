@@ -47,22 +47,30 @@
       border:none; cursor:pointer;
       background:#0B0B0C; display:flex; 
       align-items:center; justify-content:center;
-      transition:background .2s var(--ease);
+      transition:transform .25s var(--ease), background .25s var(--ease);
     }
     .send-btn:hover{ background:#222; }
     .send-btn svg{ width:18px; height:18px; stroke:#fff; fill:none; stroke-width:2.5; }
+
+    /* Interactive click pulse */
+    .send-btn:active{
+      transform:scale(0.9);
+    }
+    .send-btn.animate {
+      animation: pulse 0.5s var(--ease);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
   </style>
-  
 </head>
 
 <body>
- 
   <main class="wrap">
-
-    
     <header>
       <h1>ONX Pro Waitlist</h1>
-      
       <p class="sub">High-end, Apple-grade AI workspace. Be first to get access and early updates.</p>
     </header>
 
@@ -87,27 +95,50 @@
   </main>
 
   <script>
-    // Auto type animation
     const input = document.getElementById('email');
-    const text = "Enter your email to join the waitlist.";
+    const form = document.getElementById('joinForm');
+    const btn = document.querySelector('.send-btn');
+
+    // Initial placeholder type animation
+    const initText = "Enter your email to join the waitlist.";
     let i = 0;
-    function typeWriter(){
-      if(i < text.length){
-        input.setAttribute("placeholder", text.substring(0, i+1));
+    function typeWriterInit(){
+      if(i < initText.length){
+        input.setAttribute("placeholder", initText.substring(0, i+1));
         i++;
-        setTimeout(typeWriter, 60);
+        setTimeout(typeWriterInit, 60);
       }
     }
-    window.onload = typeWriter;
+    window.onload = typeWriterInit;
 
-    // Form validation
-    const form = document.getElementById('joinForm');
+    // Form validation + success animation
     form.addEventListener('submit', (e) => {
       const email = input.value.trim();
       if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
         e.preventDefault();
         alert("Please enter a valid email.");
+        return;
       }
+
+      // Add Apple-like pulse animation to button
+      btn.classList.add('animate');
+      setTimeout(()=> btn.classList.remove('animate'), 500);
+
+      // After submission, clear input and type out success message
+      setTimeout(() => {
+        input.value = "";
+        let msg = "You have now joined the ONX waitlist!";
+        let j = 0;
+        input.setAttribute("placeholder", "");
+        function typeSuccess(){
+          if(j < msg.length){
+            input.setAttribute("placeholder", msg.substring(0, j+1));
+            j++;
+            setTimeout(typeSuccess, 50);
+          }
+        }
+        typeSuccess();
+      }, 600);
     });
   </script>
 </body>
