@@ -1110,7 +1110,7 @@
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
 
-<!-- ====================== ONX Trust Strip — Centered (Apple-minimal) ====================== -->
+<!-- ====================== ONX Trust Strip — Centered (with global scales) ====================== -->
 <section id="onx-trust-strip" aria-label="Trusted by leading AI companies">
   <style>
     /* ---------- Tunables (change in-place) ---------- */
@@ -1122,9 +1122,15 @@
       --gap-mobile: 20px;             /* logo gaps */
       --gap-desktop: 28px;
 
-      /* Logo sizing (5a) */
-      --logoH-mobile: 24px;
-      --logoH-desktop: 32px;
+      /* NEW: Global scaling controls */
+      --textScale-mobile: 1;          /* scale tagline on mobile */
+      --textScale-desktop: 1;         /* scale tagline on desktop */
+      --logoScale-mobile: 1;          /* scale logos on mobile */
+      --logoScale-desktop: 1;         /* scale logos on desktop */
+
+      /* Logo sizing base (5a) */
+      --logoH-mobile: 24px;           /* multiplied by --logoScale-mobile */
+      --logoH-desktop: 32px;          /* multiplied by --logoScale-desktop */
 
       /* Motion (6b) */
       --stagger: 80ms;                /* per-item delay 60–80ms */
@@ -1137,7 +1143,7 @@
       background: var(--bg);
     }
 
-    /* Optional: add .breathing-bg to the section to enable a subtle breathing gradient */
+    /* Optional: add .breathing-bg to enable a subtle breathing gradient (9a → swappable) */
     #onx-trust-strip.breathing-bg{
       --g1: #ffffff;
       --g2: #f6f7fb;
@@ -1161,12 +1167,13 @@
       #onx-trust-strip .wrap{ padding-block: var(--padY-desktop); }
     }
 
-    /* Tagline with Apple-style bullet separator (4d) */
+    /* Tagline with Apple-style bullet separator (4d)
+       NOTE: font-size is globally scalable via --textScale-* */
     #onx-trust-strip .tagline{
       display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
       gap: .5ch;
       color: var(--ink);
-      font-size: clamp(14px, 2vw, 16px);
+      font-size: calc(clamp(14px, 2vw, 16px) * var(--textScale-mobile));
       line-height: 1.4;
       letter-spacing: 0.01em;
       opacity: 0; transform: translateY(8px);
@@ -1174,6 +1181,11 @@
                   transform 320ms var(--ease) var(--totalDelay,0ms);
       text-align: center;
       margin: 0 0 16px 0;
+    }
+    @media (min-width: 768px){
+      #onx-trust-strip .tagline{
+        font-size: calc(clamp(15px, 1.6vw, 18px) * var(--textScale-desktop));
+      }
     }
     #onx-trust-strip .tagline .dot{ opacity: .6; }
     #onx-trust-strip.is-visible .tagline{ opacity: 1; transform: none; }
@@ -1188,11 +1200,11 @@
       #onx-trust-strip .brand-logos{ gap: var(--gap-desktop); }
     }
 
-    #onx-trust-strip .brand-logos .logo{
-      flex: 0 1 auto;
-    }
+    #onx-trust-strip .brand-logos .logo{ flex: 0 1 auto; }
+
+    /* NOTE: logo height is globally scalable via --logoScale-* */
     #onx-trust-strip .brand-logos .logo img{
-      height: var(--logoH-mobile);
+      height: calc(var(--logoH-mobile) * var(--logoScale-mobile));
       width: auto; max-width: min(32vw, 220px);
       filter: grayscale(1);
       opacity: .9;
@@ -1203,7 +1215,9 @@
         transform 360ms var(--ease) calc(var(--i,0) * var(--stagger));
     }
     @media (min-width: 768px){
-      #onx-trust-strip .brand-logos .logo img{ height: var(--logoH-desktop); }
+      #onx-trust-strip .brand-logos .logo img{
+        height: calc(var(--logoH-desktop) * var(--logoScale-desktop));
+      }
     }
     #onx-trust-strip.is-visible .brand-logos .logo img{
       opacity: 1; transform: none;
@@ -1219,7 +1233,6 @@
   </style>
 
   <div class="wrap">
-    <!-- Visible bullet separator; aria-label preserves exact copy (15) -->
     <p class="tagline"
        aria-label="Powered by the world’s leading intelligence. Orchestrated by ONX.">
       <span>Powered by the world’s leading intelligence</span>
@@ -1241,7 +1254,7 @@
       const section = document.getElementById('onx-trust-strip');
       const logos = Array.from(section.querySelectorAll('.brand-logos .logo img'));
 
-      // index for staggering & total delay for tagline (logos first, then tagline)
+      // Stagger indices & compute total delay so the tagline fades in after logos
       logos.forEach((img, i) => img.parentElement.style.setProperty('--i', i));
       section.style.setProperty('--totalDelay', `calc(${logos.length} * var(--stagger) + 120ms)`);
 
@@ -1254,7 +1267,7 @@
       const io = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) section.classList.add('is-visible');
-          else                       section.classList.remove('is-visible'); // (7b) re-animate on re-enter
+          else                       section.classList.remove('is-visible'); // re-animate on re-enter (7b)
         });
       }, { threshold: 0.35, rootMargin: '0px 0px -10% 0px' });
 
@@ -1262,7 +1275,7 @@
     })();
   </script>
 </section>
-<!-- =================== /ONX Trust Strip — drop-in single file snippet =================== -->
+<!-- =================== /ONX Trust Strip — now with simple global scaling =================== -->
 
 
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
