@@ -245,6 +245,7 @@
   </onx-header>
   
   <!--=======================================================================START===============================================================================================-->
+<!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -345,11 +346,13 @@
       --radiusBar:9999px;
       --shadowBar:0 10px 30px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);
       --shadowBar-focus:0 16px 44px rgba(0,0,0,.12),0 3px 12px rgba(0,0,0,.06);
-      --gapBar:12px;                 /* gap between logo | field | send */
+      --gapBar:12px;                 /* gap between field | send */
       --btnPad:10px;                 /* right padding cell for send sizing */
-      --logoSize:70px;               /* global logo size */
-      --logoLeftGap:-2px;            /* supports negatives to pull logo left */
-      --logoToText:13px;             /* exact text offset from logo edge (± ok) */
+
+      /* legacy logo tokens (kept for compatibility; no logo in this variant) */
+      --logoSize:70px;
+      --logoLeftGap:-2px;
+      --logoToText:13px;
     }
 
     @media (min-width:768px){
@@ -468,21 +471,25 @@
     #chat-hero .chatbar{
       width:100%;
       min-height:var(--barH);                   /* grows if textarea expands */
+      /* Smooth, organic size transitions for multi-line expansion */
+      max-height:var(--pillH, var(--barH));     /* animated via JS */
+      will-change:max-height;
+      overflow:hidden;
+
       display:flex; align-items:center; gap:var(--gapBar);
       background:#fff; border-radius:var(--radiusBar);
       box-shadow:var(--shadowBar);
-      padding-inline:16px var(--btnPad);
-      /* keep container padding non-negative; allow negative logo pull via margin */
-      padding-inline-start:max(0px,var(--logoLeftGap));
-      transition:box-shadow .25s ease, transform .25s ease;
+      padding-inline:16px var(--btnPad);        /* default left pad */
+      transition:
+        max-height .26s cubic-bezier(.2,.7,.2,1),
+        box-shadow .25s ease,
+        transform .25s ease;
       box-sizing:border-box;
     }
-    #chat-hero .chatbar:focus-within{ box-shadow:var(--shadowBar-focus); transform:translateY(-1px) }
+    /* If a logo were reintroduced, opt-in left pad override */
+    #chat-hero .chatbar.has-logo{ padding-inline-start:max(0px,var(--logoLeftGap)); }
 
-    #chat-hero .chatbar .logo{
-      width:var(--logoSize); height:var(--logoSize); flex:none; display:block; object-fit:contain;
-      margin-inline-start:min(0px,var(--logoLeftGap)); /* negative pulls left */
-    }
+    #chat-hero .chatbar:focus-within{ box-shadow:var(--shadowBar-focus); transform:translateY(-1px) }
 
     /* Field (textarea to support your typewriter + autosize) */
     #chat-hero .chatbar input,
@@ -491,7 +498,7 @@
       border:0; background:transparent; color:var(--ink);
       font-size:18px; line-height:1.35; padding:0; margin:0;
       -webkit-appearance:none; appearance:none; outline:0; resize:none; overflow:hidden;
-      /* shift only the text (placeholder + typed) in either direction */
+      /* shift only the text (placeholder + typed) in either direction (legacy token kept) */
       text-indent:calc(var(--logoToText) - var(--gapBar));
     }
     #chat-hero .chatbar input::placeholder,
@@ -518,6 +525,7 @@
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
+      #chat-hero .chatbar{ transition:none; }
       #chat-hero .chatbar .send, #chat-hero .prompt{ transition:none; }
       #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{ animation:none !important; opacity:1 !important; transform:none !important; }
     }
@@ -746,7 +754,7 @@
     <span class="title-blur">
       <span class="fit-line">Your Unfair Advantage.</span>
       <!-- Subtitle -->
-    <span class="hero-subtitle">Superpowered AI—research, design, and execute without limits.</span>
+      <span class="hero-subtitle">Superpowered AI—research, design, and execute without limits.</span>
     </span>
 
     <style>
@@ -822,7 +830,7 @@
   <!-- The centered bubble (now hosts the embedded chatbar) -->
   <div class="bubble-spot">
     <form class="chatbar bubble" action="#" onsubmit="event.preventDefault()">
-      <img class="logo" src="logo.svg" alt="Logo">
+      <!-- logo removed per request -->
       <label class="sr-only" for="prompt-input">Message</label>
       <!-- textarea keeps your typewriter + autosize logic -->
       <textarea
@@ -885,27 +893,54 @@
 
     (function initTypewriter(){
       const input  = document.getElementById('prompt-input');
-      const bubble = document.querySelector('#chat-hero .bubble');  // now the .chatbar form
+      const bubble = document.querySelector('#chat-hero .bubble');  // the .chatbar form
+      const chatbar = bubble;
       const hero   = document.getElementById('chat-hero');
       if (!input || !bubble || !hero) return;
 
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      function autosize(){ input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; }
-      function syncBubbleH(){ hero.style.setProperty('--bubbleH', bubble.getBoundingClientRect().height + 'px'); }
+      /* autosize textarea + smooth pill growth */
+      function autosize(){
+        input.style.height = 'auto';
+        input.style.height = input.scrollHeight + 'px';
+        syncPillHeight();
+      }
 
-      const ro = new ResizeObserver(syncBubbleH); ro.observe(bubble);
+      /* keep hero layout synced to bubble height */
+      function syncBubbleH(){
+        hero.style.setProperty('--bubbleH', bubble.getBoundingClientRect().height + 'px');
+      }
+
+      /* NEW: animate pill height gracefully for multi-line content */
+      function syncPillHeight(){
+        if (!chatbar) return;
+        const cs = getComputedStyle(chatbar);
+        const minH = parseFloat(cs.minHeight) || 0;
+        const target = Math.max(minH, chatbar.scrollHeight);
+        chatbar.style.setProperty('--pillH', target + 'px');
+      }
+
+      const ro = new ResizeObserver(() => { syncBubbleH(); syncPillHeight(); });
+      ro.observe(bubble);
+      ro.observe(input);
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (reduceMotion) { input.value = SUGGESTIONS[0] || ""; autosize(); syncBubbleH(); return; }
+      if (reduceMotion) {
+        input.value = SUGGESTIONS[0] || "";
+        autosize(); syncBubbleH();
+        return;
+      }
 
       let i = 0, j = 0;
       function typeNextChar(){
         const phrase = SUGGESTIONS[i] || "";
         input.classList.remove('is-fading');
         if (j < phrase.length){
-          input.value += phrase[j++]; autosize(); syncBubbleH(); setTimeout(typeNextChar, TYPER.type);
+          input.value += phrase[j++];
+          autosize(); syncBubbleH();
+          setTimeout(typeNextChar, TYPER.type);
         } else {
           setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
         }
@@ -915,15 +950,21 @@
         const onEnd = (e) => {
           if (e.propertyName && e.propertyName !== 'opacity') return;
           input.removeEventListener('transitionend', onEnd);
-          input.value = ""; autosize(); syncBubbleH();
+          input.value = "";
+          autosize(); syncBubbleH();
           i = (i + 1) % SUGGESTIONS.length; j = 0;
           setTimeout(typeNextChar, TYPER.gap);
         };
         input.addEventListener('transitionend', onEnd, { once:true });
+        /* safety dispatch if transition canceled */
         setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
       }
-      input.value = ""; autosize(); syncBubbleH(); setTimeout(typeNextChar, TYPER.startDelay);
+
+      input.value = "";
+      autosize(); syncBubbleH();   /* initialize sizes smoothly */
+      setTimeout(typeNextChar, TYPER.startDelay);
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
+      window.addEventListener('orientationchange', () => { autosize(); syncBubbleH(); });
     })();
 
     /* ===== OS detection + button routing ===== */
