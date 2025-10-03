@@ -1109,7 +1109,6 @@
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
-
 <!-- ====================== ONX Trust Strip — Centered (with global scales) ====================== -->
 <section id="onx-trust-strip" aria-label="Trusted by leading AI companies">
   <style>
@@ -1123,10 +1122,10 @@
       --gap-desktop: 28px;
 
       /* NEW: Global scaling controls */
-      --textScale-mobile: 1.5;          /* scale tagline on mobile */
-      --textScale-desktop: 1.5;         /* scale tagline on desktop */
-      --logoScale-mobile: 1.5;          /* scale logos on mobile */
-      --logoScale-desktop: 1.5;         /* scale logos on desktop */
+      --textScale-mobile: 1.5;        /* scale tagline on mobile */
+      --textScale-desktop: 1.5;       /* scale tagline on desktop */
+      --logoScale-mobile: 1.5;        /* scale logos on mobile */
+      --logoScale-desktop: 1.5;       /* scale logos on desktop */
 
       /* Logo sizing base (5a) */
       --logoH-mobile: 24px;           /* multiplied by --logoScale-mobile */
@@ -1135,6 +1134,9 @@
       /* Motion (6b) */
       --stagger: 80ms;                /* per-item delay 60–80ms */
       --ease: cubic-bezier(.2,.8,.2,1);
+      /* Added for a touch more presence */
+      --logoPopDur: 520ms;            /* logo pop duration */
+      --textFadeDur: 560ms;           /* tagline fade duration */
 
       /* Theme (9a) */
       --bg: #ffffff;
@@ -1176,9 +1178,12 @@
       font-size: calc(clamp(14px, 2vw, 16px) * var(--textScale-mobile));
       line-height: 1.4;
       letter-spacing: 0.01em;
-      opacity: 0; transform: translateY(8px);
-      transition: opacity 320ms var(--ease) var(--totalDelay,0ms),
-                  transform 320ms var(--ease) var(--totalDelay,0ms);
+      /* Improved reveal: softer lift + blur-to-sharp */
+      opacity: 0; transform: translateY(10px); filter: blur(6px);
+      transition:
+        opacity var(--textFadeDur) var(--ease) var(--totalDelay,0ms),
+        transform var(--textFadeDur) var(--ease) var(--totalDelay,0ms),
+        filter var(--textFadeDur) var(--ease) var(--totalDelay,0ms);
       text-align: center;
       margin: 0 0 16px 0;
     }
@@ -1188,7 +1193,7 @@
       }
     }
     #onx-trust-strip .tagline .dot{ opacity: .6; }
-    #onx-trust-strip.is-visible .tagline{ opacity: 1; transform: none; }
+    #onx-trust-strip.is-visible .tagline{ opacity: 1; transform: none; filter: blur(0); }
 
     /* Logos row */
     #onx-trust-strip .brand-logos{
@@ -1206,28 +1211,38 @@
     #onx-trust-strip .brand-logos .logo img{
       height: calc(var(--logoH-mobile) * var(--logoScale-mobile));
       width: auto; max-width: min(32vw, 220px);
-      filter: grayscale(1);
-      opacity: .9;
-      transform: translateY(6px) scale(0.94);
-      will-change: transform, opacity;
+      filter: grayscale(1) blur(1.2px);
+      opacity: .65;
+      transform: translateY(14px) scale(0.9);
+      will-change: transform, opacity, filter;
+      /* Keep transitions for non-transform props; transform will be handled by a keyframed pop */
       transition:
-        opacity 320ms var(--ease) calc(var(--i,0) * var(--stagger)),
-        transform 360ms var(--ease) calc(var(--i,0) * var(--stagger));
+        opacity 420ms var(--ease) calc(var(--i,0) * var(--stagger)),
+        filter 420ms var(--ease) calc(var(--i,0) * var(--stagger));
     }
     @media (min-width: 768px){
       #onx-trust-strip .brand-logos .logo img{
         height: calc(var(--logoH-desktop) * var(--logoScale-desktop));
       }
     }
+    /* More noticeable, classy pop-in with slight overshoot and stagger */
     #onx-trust-strip.is-visible .brand-logos .logo img{
-      opacity: 1; transform: none;
+      opacity: 1; filter: grayscale(1) blur(0);
+      animation: onx-pop var(--logoPopDur) var(--ease) both;
+      animation-delay: calc(var(--i,0) * var(--stagger));
+    }
+    @keyframes onx-pop{
+      0%   { transform: translateY(14px) scale(0.90); }
+      60%  { transform: translateY(-2px) scale(1.06); } /* tasteful overshoot */
+      100% { transform: translateY(0) scale(1.00); }
     }
 
     /* Respect reduced motion */
     @media (prefers-reduced-motion: reduce){
       #onx-trust-strip .tagline,
       #onx-trust-strip .brand-logos .logo img{
-        transition: none !important; transform: none !important; opacity: 1 !important;
+        transition: none !important; transform: none !important; opacity: 1 !important; filter: none !important;
+        animation: none !important;
       }
     }
   </style>
