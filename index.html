@@ -244,11 +244,6 @@
     <!-- Extra right-side action -->
   </onx-header>
   <!--=======================================================================START===============================================================================================-->
-
-
-
-  
-<!--=======================================================================START===============================================================================================-->
 <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
@@ -267,8 +262,11 @@
       --screenPadX:20px;             /* bubble -> viewport side padding */
       --titleGap:28px;               /* space between title and bubble */
 
-      /* Animation timings */
+      /* Animation timings & easings (subtle, premium feel) */
       --fade:360ms;                  /* fade-out duration for sentence swap */
+      --spring: cubic-bezier(.20,.75,.20,1);            /* smooth baseline */
+      --springOver: cubic-bezier(.20,1.10,.12,1);       /* gentle overshoot for height changes */
+      --hoverElev: cubic-bezier(.2,.7,.2,1);
 
       /* === Chat controls (mobile & desktop) === */
       /* Mobile (default) */
@@ -289,12 +287,12 @@
       --sendSize:calc(var(--sendBase) * var(--sendScale));
       --sendIconRatio:.3928571429;   /* 22/56 */
 
-      /* === Global text padding inside the pill (ALL lines & placeholder) === */
+      /* === Global text padding inside the pill (affects ALL lines & placeholder) === */
       /* Mobile defaults */
-      --pillTextPadX-m: 10px;
-      --pillTextPadY-m: 14px;
+      --pillTextPadX-m: 14px;   /* horizontal padding around text */
+      --pillTextPadY-m: 14px;   /* vertical padding around text */
       /* Desktop overrides (>=768px) */
-      --pillTextPadX-d: 12px;
+      --pillTextPadX-d: 16px;
       --pillTextPadY-d: 16px;
       /* Active mappings */
       --pillTextPadX: var(--pillTextPadX-m);
@@ -327,8 +325,7 @@
       --fadeH-top: 10vh;
 
       /* =============================
-         DOWNLOAD BUTTON CONTROLS
-         (edit these only)
+         DOWNLOAD BUTTON CONTROLS (edit these only)
          ============================= */
       /* Mobile defaults */
       --dlGap-m: 22px;               /* distance from bottom edge of chat bubble */
@@ -368,6 +365,10 @@
       --logoSize:70px;
       --logoLeftGap:-2px;
       --logoToText:13px;
+
+      /* Scroll parallax intensity (subtle) */
+      --parallaxY: 0px;              /* set via JS on scroll, used for small translateY */
+      --parallaxScale: 1;            /* set via JS for a tiny scale on hero */
     }
 
     @media (min-width:768px){
@@ -465,16 +466,10 @@
       position:absolute;
       left:50%;
       top: calc(50vh - (var(--bubbleH) / 2) - var(--titleGap));
-      transform: translate(-50%, -100%);
+      transform: translate(-50%, calc(-100% + var(--parallaxY))) scale(var(--parallaxScale));
       margin:0; text-align:center; letter-spacing:-0.02em; line-height:1.1; font-weight:700;
       font-size:clamp(28px, 5.2vw, 54px); padding:0 12px;
-      /* subtle ambient breathing */
-      animation: title-breathe 16s ease-in-out infinite;
-      will-change: filter, transform;
-    }
-    @keyframes title-breathe{
-      0%,100% { filter:brightness(1); transform: translate(-50%, -100%) }
-      50%     { filter:brightness(1.02); transform: translate(-50%, calc(-100% - 0.3px)) }
+      will-change:transform;
     }
     /* Adaptive legibility shield */
     #chat-hero .hero-title .title-blur{
@@ -484,8 +479,9 @@
 
     /* --------------- Bubble spot (center) ---------- */
     #chat-hero .bubble-spot{
-      position:absolute; left:50%; top:50vh; transform:translate(-50%, -50%);
+      position:absolute; left:50%; top:50vh; transform:translate(calc(-50%), calc(-50% + var(--parallaxY)));
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
+      will-change:transform;
     }
 
     /* =======================
@@ -497,26 +493,22 @@
     #chat-hero .chatbar{
       width:100%;
       min-height:var(--barH);                   /* grows if textarea expands */
-      height: var(--barH);                      /* JS will animate this to target px */
-      will-change: height, box-shadow, transform;
+
+      /* Organic, springy expansion using variable + transform micro-bounce */
+      max-height:var(--pillH, var(--barH));     /* animated via JS */
+      will-change:max-height, transform, box-shadow;
       overflow:hidden;
 
       display:flex; align-items:center; gap:var(--gapBar);
       background:#fff; border-radius:var(--radiusBar);
       box-shadow:var(--shadowBar);
-      padding-inline:16px var(--btnPad);
+      padding-inline:16px var(--btnPad);        /* default left pad */
       transition:
-        height .36s cubic-bezier(.16,1,.3,1),   /* organic, spring-like */
-        box-shadow .25s ease,
-        transform .25s ease;
+        max-height 340ms var(--springOver),
+        box-shadow .25s var(--hoverElev),
+        transform .25s var(--hoverElev);
       box-sizing:border-box;
-
-      /* ambient breathing for the pill (very subtle) */
-      animation: pill-breathe 12s ease-in-out infinite;
-    }
-    @keyframes pill-breathe{
-      0%,100% { filter:brightness(1) saturate(1); }
-      50%     { filter:brightness(1.015) saturate(1.01); }
+      transform: translateZ(0);                 /* composite for smoother anims */
     }
     /* If a logo were reintroduced, opt-in left pad override */
     #chat-hero .chatbar.has-logo{ padding-inline-start:max(0px,var(--logoLeftGap)); }
@@ -524,7 +516,6 @@
     #chat-hero .chatbar:focus-within{
       box-shadow:var(--shadowBar-focus);
       transform:translateY(-1px);
-      animation-play-state: paused; /* pause ambient breath while interacting */
     }
 
     /* Field (textarea to support your typewriter + autosize) */
@@ -555,10 +546,20 @@
       background:var(--btn); color:#fff;
       box-shadow:0 12px 28px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.1);
       transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+      will-change:transform, box-shadow;
     }
     #chat-hero .chatbar .send:hover{ transform:translateY(-1px); box-shadow:0 16px 36px rgba(0,0,0,.28) }
     #chat-hero .chatbar .send:active{ transform:translateY(0); filter:brightness(.96) }
     #chat-hero .chatbar .send svg{ width:20px; height:20px; stroke:currentColor; stroke-width:2.5; fill:none }
+
+    /* Micro breathing when idle (very subtle) */
+    @keyframes micro-breathe {
+      0%,100% { transform: translateY(0) }
+      50%     { transform: translateY(-0.5px) }
+    }
+    #chat-hero .chatbar[data-idle="1"]{
+      animation: micro-breathe 5.4s ease-in-out infinite;
+    }
 
     /* Keep your fade effect on the prompt */
     #chat-hero .prompt{ transition:opacity var(--fade) ease; opacity:1; }
@@ -566,10 +567,10 @@
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
-      #chat-hero .chatbar{ transition:height .01ms linear, box-shadow .01ms linear, transform .01ms linear; animation:none !important; }
-      #chat-hero .chatbar .send, #chat-hero .prompt{ transition:none !important; }
+      #chat-hero .chatbar{ transition:none; animation:none !important; transform:none !important; }
+      #chat-hero .chatbar .send, #chat-hero .prompt{ transition:none; }
       #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{ animation:none !important; opacity:1 !important; transform:none !important; }
-      #chat-hero .hero-title{ animation:none !important; }
+      #chat-hero .hero-title, #chat-hero .bubble-spot{ transform:translate(-50%, -50%) scale(1) !important; }
     }
 
     /* Audiowide, solid black (logo/title) */
@@ -600,6 +601,7 @@
       transform: translateX(-50%);
       width: max-content;
       z-index: 2;
+      will-change:transform;
     }
 
     #chat-hero .dl-btn{
@@ -626,13 +628,7 @@
       -webkit-tap-highlight-color: transparent;
       transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
       outline: none;
-
-      /* very subtle breathing to match page rhythm */
-      animation: cta-breathe 14s ease-in-out infinite;
-    }
-    @keyframes cta-breathe{
-      0%,100% { transform: translateY(0); }
-      50%     { transform: translateY(-0.5px); }
+      will-change:transform, box-shadow;
     }
     #chat-hero .dl-btn:hover{
       transform: translateY(-1px);
@@ -837,7 +833,7 @@
   </style>
 
   <script>
-    /* Fit title on mobile and sync bubble height */
+    /* Fit title on mobile and sync bubble height + subtle parallax */
     (function(){
       const root  = document.getElementById('hero-onx-title');
       const line  = root?.querySelector('.fit-line');
@@ -878,7 +874,7 @@
 
   <!-- The centered bubble (now hosts the embedded chatbar) -->
   <div class="bubble-spot">
-    <form class="chatbar bubble" action="#" onsubmit="event.preventDefault()">
+    <form class="chatbar bubble" action="#" onsubmit="event.preventDefault()" aria-label="Chat input">
       <!-- logo removed per request -->
       <label class="sr-only" for="prompt-input">Message</label>
       <!-- textarea keeps your typewriter + autosize logic -->
@@ -891,7 +887,8 @@
         autocapitalize="off"
         autocorrect="off"
         spellcheck="false"
-        placeholder="Ask anything…"></textarea>
+        placeholder="Ask anything…"
+        aria-live="polite"></textarea>
 
       <button class="send" type="submit" aria-label="Send">
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -904,7 +901,7 @@
 
   <!-- ===== Download button (below the bubble) ===== -->
   <div class="download-spot">
-    <button class="dl-btn" type="button" id="onx-download" data-mac-url="SignUp.html" data-win-url="SignUp.html">
+    <button class="dl-btn" type="button" id="onx-download" aria-label="Download ONX">
       <span class="dl-ico ico-mac" aria-hidden="true">
         <!-- Apple logo -->
         <svg viewBox="0 0 24 24"><path d="M16.365 13.246c.03 3.23 2.83 4.307 2.86 4.32-.023.074-.447 1.518-1.474 3-0.888 1.29-1.812 2.58-3.26 2.604-1.43.026-1.89-.84-3.52-.84-1.63 0-2.15.813-3.5.867-1.404.053-2.477-1.39-3.372-2.675-1.84-2.64-3.25-7.46-1.36-10.73.94-1.63 2.62-2.67 4.45-2.698 1.39-.027 2.71.93 3.52.93.81 0 2.43-1.15 4.11-0.98.7.03 2.66.28 3.92 2.11-.1.06-2.34 1.36-2.32 4.09zM13.9 3.6c.76-.92 1.27-2.2 1.13-3.49-1.09.044-2.41.72-3.2 1.64-.7.81-1.31 2.12-1.14 3.37 1.2.093 2.44-.61 3.21-1.52z"/></svg>
@@ -918,7 +915,14 @@
   </div>
 
   <script>
-    /* ===== Hero type-in lines (edgy edition) + Organic pill animation ===== */
+    document.getElementById("onx-download").addEventListener("click", function(e) {
+      e.preventDefault();
+      window.location.href = "SignUp.html";
+    });
+  </script>
+
+  <script>
+    /* ===== Hero type-in lines (edgy edition) ===== */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
       "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
@@ -934,145 +938,159 @@
     const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
-      const input  = document.getElementById('prompt-input');
-      const bubble = document.querySelector('#chat-hero .bubble');  // the .chatbar form
-      const chatbar = bubble;
-      const hero   = document.getElementById('chat-hero');
-      if (!input || !bubble || !hero) return;
+      const input   = document.getElementById('prompt-input');
+      const chatbar = document.querySelector('#chat-hero .chatbar');  // the .chatbar form
+      const hero    = document.getElementById('chat-hero');
+      if (!input || !chatbar || !hero) return;
 
-      /* Prevent manual typing in demo */
+      /* prevent manual typing in demo */
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      /* --- Organic height animator (no slap/jerk on settle) --- */
-      let animFrame = 0, running = false;
-      const EASE_MS = 360; // should match CSS height transition
-      function animatePillTo(targetPx){
-        if (!chatbar) return;
-        cancelAnimationFrame(animFrame);
-
-        const cs = getComputedStyle(chatbar);
-        const minH = parseFloat(cs.minHeight) || 0;
-        const target = Math.max(minH, Math.ceil(targetPx));
-
-        const current = parseFloat(cs.height) || minH;
-        if (Math.abs(current - target) < 0.5) return; // already there
-
-        running = true;
-        chatbar.style.willChange = 'height';
-        chatbar.style.transitionProperty = 'height';
-        chatbar.style.transitionDuration = EASE_MS + 'ms';
-        chatbar.style.transitionTimingFunction = 'cubic-bezier(.16,1,.3,1)';
-
-        // set the current height explicitly to enable transition
-        chatbar.style.height = current + 'px';
-
-        // next frame: set to target to trigger the animation
-        animFrame = requestAnimationFrame(() => {
-          chatbar.style.height = target + 'px';
-        });
-
-        const onEnd = (ev) => {
-          if (ev.propertyName && ev.propertyName !== 'height') return;
-          chatbar.removeEventListener('transitionend', onEnd);
-          chatbar.style.willChange = '';
-          running = false;
-          // keep explicit px to preserve seamless shrink/expand with next updates (no auto snap-back)
-        };
-        chatbar.addEventListener('transitionend', onEnd, { once:true });
-      }
-
-      /* autosize textarea, then animate container height to match */
+      /* ====== Organic pill expansion ======
+         - autosize textarea to content
+         - animate container's max-height + a tiny transform spring
+      */
+      let lastH = 0;
       function autosize(){
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
-        syncHeights();
+        syncHeights(true);
       }
 
-      function syncHeights(){
-        const target = Math.max(chatbar.scrollHeight, parseFloat(getComputedStyle(chatbar).minHeight) || 0);
-        animatePillTo(target);
-        // keep hero layout synced to bubble height
+      function syncBubbleH(){
         hero.style.setProperty('--bubbleH', chatbar.getBoundingClientRect().height + 'px');
       }
 
-      const ro = new ResizeObserver(() => { syncHeights(); });
+      function springBounce(){
+        // Tiny overshoot via WAAPI transform; respects prefers-reduced-motion by early return
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        chatbar.animate(
+          [
+            { transform: 'translateY(0) scaleY(0.995)' },
+            { transform: 'translateY(-0.5px) scaleY(1.012)' },
+            { transform: 'translateY(0) scaleY(1.000)' }
+          ],
+          { duration: 260, easing: 'cubic-bezier(.20,.9,.10,1)', fill: 'none' }
+        );
+      }
+
+      function syncHeights(withBounce){
+        const cs = getComputedStyle(chatbar);
+        const minH = parseFloat(cs.minHeight) || 0;
+        const target = Math.max(minH, chatbar.scrollHeight);
+        const changed = Math.abs(target - lastH) > 0.5;
+
+        chatbar.style.setProperty('--pillH', target + 'px');
+        if (changed && withBounce) springBounce();
+
+        lastH = target;
+        syncBubbleH();
+      }
+
+      /* Idle micro-breathe toggle */
+      let idleTimer = null;
+      function armIdle(){
+        clearTimeout(idleTimer);
+        chatbar.dataset.idle = "0";
+        idleTimer = setTimeout(() => { chatbar.dataset.idle = "1"; }, 2200);
+      }
+
+      const ro = new ResizeObserver(() => { syncHeights(false); });
       ro.observe(chatbar);
       ro.observe(input);
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) {
         input.value = SUGGESTIONS[0] || "";
-        input.style.height = 'auto';
-        input.style.height = input.scrollHeight + 'px';
-        chatbar.style.height = Math.max(chatbar.scrollHeight, parseFloat(getComputedStyle(chatbar).minHeight)||0) + 'px';
-        hero.style.setProperty('--bubbleH', chatbar.getBoundingClientRect().height + 'px');
-        return;
-      }
-
-      let i = 0, j = 0;
-      function typeNextChar(){
-        const phrase = SUGGESTIONS[i] || "";
-        input.classList.remove('is-fading');
-        if (j < phrase.length){
-          input.value += phrase[j++];
-          autosize();
-          setTimeout(typeNextChar, TYPER.type);
-        } else {
-          setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
+        autosize(); syncHeights(false);
+      } else {
+        let i = 0, j = 0;
+        function typeNextChar(){
+          const phrase = SUGGESTIONS[i] || "";
+          input.classList.remove('is-fading');
+          if (j < phrase.length){
+            input.value += phrase[j++];
+            autosize();
+            armIdle();
+            setTimeout(typeNextChar, TYPER.type);
+          } else {
+            setTimeout(() => fadeOutThenAdvance(), TYPER.hold);
+          }
         }
-      }
-      function fadeOutThenAdvance(){
-        input.classList.add('is-fading');
-        const onEnd = (e) => {
-          if (e.propertyName && e.propertyName !== 'opacity') return;
-          input.removeEventListener('transitionend', onEnd);
-          input.value = "";
-          autosize();
-          i = (i + 1) % SUGGESTIONS.length; j = 0;
-          setTimeout(typeNextChar, TYPER.gap);
-        };
-        input.addEventListener('transitionend', onEnd, { once:true });
-        /* safety dispatch if transition canceled */
-        setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
+        function fadeOutThenAdvance(){
+          input.classList.add('is-fading');
+          const onEnd = (e) => {
+            if (e.propertyName && e.propertyName !== 'opacity') return;
+            input.removeEventListener('transitionend', onEnd);
+            input.value = "";
+            autosize();
+            i = (i + 1) % SUGGESTIONS.length; j = 0;
+            setTimeout(typeNextChar, TYPER.gap);
+          };
+          input.addEventListener('transitionend', onEnd, { once:true });
+          /* safety dispatch if transition canceled */
+          setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
+        }
+
+        input.value = "";
+        autosize();                       /* initialize sizes smoothly */
+        setTimeout(typeNextChar, TYPER.startDelay);
+        window.addEventListener('resize', () => { autosize(); }, { passive:true });
+        window.addEventListener('orientationchange', () => { autosize(); }, { passive:true });
       }
 
-      input.value = "";
-      autosize();   /* initialize sizes smoothly */
-      setTimeout(typeNextChar, TYPER.startDelay);
-      window.addEventListener('resize', () => { autosize(); }, {passive:true});
-      window.addEventListener('orientationchange', () => { autosize(); }, {passive:true});
-      window.addEventListener('pageshow', () => { autosize(); }, {passive:true});
+      /* Subtle parallax on scroll (Apple-like) */
+      (function parallax(){
+        const maxShiftPx = 6;     // cap overall shift
+        const maxScale   = 1.008; // tiny scale-in on scroll
+        let ticking = false;
+
+        function onScroll(){
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
+            const h = window.innerHeight || 1;
+            const y = Math.max(0, Math.min(1, window.scrollY / h)); // 0..1 for first viewport
+            const shift = (y * maxShiftPx).toFixed(2) + 'px';
+            const scale = (1 + (y * (maxScale - 1))).toFixed(4);
+
+            hero.style.setProperty('--parallaxY', shift);
+            hero.style.setProperty('--parallaxScale', scale);
+            ticking = false;
+          });
+        }
+
+        window.addEventListener('scroll', onScroll, { passive:true });
+        onScroll();
+      })();
+
+      // Prime idle animation
+      armIdle();
     })();
 
-    /* ===== OS detection + button routing (single, consolidated handler with fallback) ===== */
+    /* ===== OS detection + button routing ===== */
     (function(){
       const host = document.getElementById('chat-hero');
       const btn  = document.getElementById('onx-download');
       if (!host || !btn) return;
 
-      // simple detection for icon swap & routing
+      // very simple detection (good enough for icon swap)
       const ua = navigator.userAgent.toLowerCase();
       const isMac = ua.includes('mac os x') || ua.includes('macintosh') || ua.includes('mac');
       host.classList.add(isMac ? 'os-mac' : 'os-win');
 
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const mac = btn.getAttribute('data-mac-url') || 'SignUp.html';
-        const win = btn.getAttribute('data-win-url') || 'SignUp.html';
-        window.location.href = isMac ? mac : win;
-      }, {passive:false});
+      btn.addEventListener('click', () => {
+        const mac = btn.getAttribute('data-mac-url') || '#';
+        const win = btn.getAttribute('data-win-url') || '#';
+        const url = isMac ? mac : win;
+        window.location.href = url;
+      });
     })();
   </script>
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
-
-
-
-
-
-
 
 
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
