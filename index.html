@@ -269,6 +269,18 @@
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
 
+      /* Micro-motion / springs */
+      --springDur: 360ms;
+      --springEase: cubic-bezier(.2,.8,.2,1); /* gentle, organic */
+      --hoverLift: 1px;
+
+      /* Global “breathing” */
+      --breathScale: 1.006;          /* subtle scale */
+      --breathShift: 2px;            /* subtle translateY */
+      --breathDurSlow: 7.2s;
+      --breathDurMed: 6.2s;
+      --breathDurFast: 5.4s;
+
       /* === Chat controls (mobile & desktop) === */
       /* Mobile (default) */
       --padX-m:16px;
@@ -288,13 +300,13 @@
       --sendSize:calc(var(--sendBase) * var(--sendScale));
       --sendIconRatio:.3928571429;   /* 22/56 */
 
-      /* === Global text padding inside the pill (ALL lines & placeholder) === */
+      /* === Global text padding inside the pill (affects ALL lines & placeholder) === */
       /* Mobile defaults */
-      --pillTextPadX-m: 10px;   /* horizontal padding around text (adds to pill’s own edge) */
-      --pillTextPadY-m: 14px;   /* vertical   padding around text */
+      --pillTextPadX-m: 12px;
+      --pillTextPadY-m: 14px;
       /* Desktop overrides (>=768px) */
-      --pillTextPadX-d: 0px;
-      --pillTextPadY-d: 0px;
+      --pillTextPadX-d: 14px;
+      --pillTextPadY-d: 16px;
       /* Active mappings */
       --pillTextPadX: var(--pillTextPadX-m);
       --pillTextPadY: var(--pillTextPadY-m);
@@ -367,10 +379,6 @@
       --logoSize:70px;
       --logoLeftGap:-2px;
       --logoToText:13px;
-
-      /* ===== Organic pill growth controls (JS will set --pillDur dynamically) ===== */
-      --pillDur: 280ms;              /* fallback transition duration */
-      --springEase: cubic-bezier(.22,.72,.18,1); /* slightly springy */
     }
 
     @media (min-width:768px){
@@ -471,15 +479,13 @@
       transform: translate(-50%, -100%);
       margin:0; text-align:center; letter-spacing:-0.02em; line-height:1.1; font-weight:700;
       font-size:clamp(28px, 5.2vw, 54px); padding:0 12px;
-      /* subtle breathing movement (transform-only for perf) */
-      animation: ui-breathe-title 9s ease-in-out infinite;
-      will-change: transform;
+      will-change: transform, filter;
+      animation: hero-breathe var(--breathDurSlow) ease-in-out infinite;
     }
-    @keyframes ui-breathe-title{
-      0%,100% { transform: translate(-50%, -100%) scale(1) }
-      50%     { transform: translate(calc(-50% - .2px), calc(-100% - .2px)) scale(1.003) }
+    @keyframes hero-breathe{
+      0%,100% { transform: translate(-50%, -100%) scale(1); filter:brightness(1); }
+      50%     { transform: translate(calc(-50%), calc(-100% - var(--breathShift))) scale(var(--breathScale)); filter:brightness(1.02); }
     }
-
     /* Adaptive legibility shield */
     #chat-hero .hero-title .title-blur{
       -webkit-text-stroke: 0 transparent; text-shadow: none;
@@ -490,6 +496,12 @@
     #chat-hero .bubble-spot{
       position:absolute; left:50%; top:50vh; transform:translate(-50%, -50%);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
+      will-change: transform;
+      animation: bubble-breathe var(--breathDurMed) ease-in-out infinite;
+    }
+    @keyframes bubble-breathe{
+      0%,100% { transform: translate(-50%, -50%) scale(1) }
+      50%     { transform: translate(calc(-50%), calc(-50% - var(--breathShift))) scale(var(--breathScale)) }
     }
 
     /* =======================
@@ -500,34 +512,32 @@
 
     #chat-hero .chatbar{
       width:100%;
-      min-height:var(--barH);                   /* grows if textarea expands */
-      /* Smooth, organic size transitions for multi-line expansion */
-      max-height:var(--pillH, var(--barH));     /* animated via JS */
-      will-change:max-height, transform, box-shadow;
-      overflow:hidden;
-
+      min-height:var(--barH);                 /* grows if textarea expands */
       display:flex; align-items:center; gap:var(--gapBar);
       background:#fff; border-radius:var(--radiusBar);
       box-shadow:var(--shadowBar);
-      padding-inline:16px var(--btnPad);        /* default left pad */
-      transition:
-        max-height var(--pillDur) var(--springEase),
-        box-shadow .25s ease,
-        transform .25s ease;
+      padding-inline:16px var(--btnPad);
       box-sizing:border-box;
 
-      /* gentle ambient breathing */
-      animation: ui-breathe 10.5s ease-in-out infinite;
+      /* Organic expansion: JS animates height; CSS provides graceful fallback */
+      transition:
+        box-shadow .25s ease,
+        transform .25s ease;
+      will-change: height, transform;
+      contain: layout paint style;
+      transform: translateZ(0); /* promote for smoother WAAPI */
+      overflow:hidden; /* clipped during height animation; restored by JS when done */
     }
     /* If a logo were reintroduced, opt-in left pad override */
     #chat-hero .chatbar.has-logo{ padding-inline-start:max(0px,var(--logoLeftGap)); }
 
     #chat-hero .chatbar:focus-within{
       box-shadow:var(--shadowBar-focus);
-      transform:translateY(-1px);
+      transform:translateY(calc(var(--hoverLift) * -1));
+      animation: none; /* pause breathing while typing focus */
     }
 
-    /* Field (textarea to support your typewriter + autosize) */
+    /* Field (textarea supports typewriter + autosize) */
     #chat-hero .chatbar input,
     #chat-hero .chatbar textarea{
       flex:1; min-height:1.35em; height:100%;
@@ -535,17 +545,17 @@
       font-size:18px; line-height:1.35; margin:0;
       -webkit-appearance:none; appearance:none; outline:0; resize:none; overflow:hidden;
 
-      /* === IMPORTANT: global padding for ALL lines (and placeholder) === */
+      /* Global padding for ALL lines (and placeholder) */
       padding-inline: var(--pillTextPadX);
       padding-block:  var(--pillTextPadY);
 
-      /* Remove old first-line-only shift so multiline keeps alignment */
+      /* Ensure multiline keeps alignment */
       text-indent: 0 !important;
     }
     #chat-hero .chatbar input::placeholder,
     #chat-hero .chatbar textarea::placeholder{ color:var(--muted) }
 
-    /* Send button (scoped override so it replaces old absolute .send) */
+    /* Send button */
     #chat-hero .chatbar .send{
       position:static !important; transform:none;
       inline-size:calc(var(--barH) - 2*var(--btnPad));
@@ -555,11 +565,12 @@
       background:var(--btn); color:#fff;
       box-shadow:0 12px 28px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.1);
       transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
-      animation: ui-breathe 12s ease-in-out infinite;
-      will-change: transform, box-shadow;
     }
     #chat-hero .chatbar .send:hover{ transform:translateY(-1px); box-shadow:0 16px 36px rgba(0,0,0,.28) }
     #chat-hero .chatbar .send:active{ transform:translateY(0); filter:brightness(.96) }
+    #chat-hero .chatbar .send:focus-visible{
+      outline: 2px solid #0b0b0c; outline-offset: 3px;
+    }
     #chat-hero .chatbar .send svg{ width:20px; height:20px; stroke:currentColor; stroke-width:2.5; fill:none }
 
     /* Keep your fade effect on the prompt */
@@ -568,11 +579,10 @@
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
-      #chat-hero .chatbar{ transition:max-height 0.01ms linear, box-shadow 0.01ms linear, transform 0.01ms linear; animation:none !important; }
-      #chat-hero .chatbar .send, #chat-hero .prompt{ transition:none; animation:none !important; }
-      #chat-hero .hero-title{ animation:none !important; }
-      #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{ animation:none !important; opacity:1 !important; transform:none !important; }
-      #chat-hero .dl-btn{ animation:none !important; }
+      #chat-hero .chatbar{ transition:none; animation:none; }
+      #chat-hero .chatbar .send, #chat-hero .prompt{ transition:none; }
+      #chat-hero .word-stream *{ animation:none !important; opacity:1 !important; transform:none !important; }
+      #chat-hero .hero-title, #chat-hero .bubble-spot, #chat-hero .download-spot{ animation:none !important; }
     }
 
     /* Audiowide, solid black (logo/title) */
@@ -603,6 +613,12 @@
       transform: translateX(-50%);
       width: max-content;
       z-index: 2;
+      will-change: transform, filter;
+      animation: dl-breathe var(--breathDurFast) ease-in-out infinite;
+    }
+    @keyframes dl-breathe{
+      0%,100% { transform: translateX(-50%) translateY(0) scale(1); filter:brightness(1); }
+      50%     { transform: translateX(-50%) translateY(calc(var(--breathShift) * -1)) scale(var(--breathScale)); filter:brightness(1.02); }
     }
 
     #chat-hero .dl-btn{
@@ -629,8 +645,6 @@
       -webkit-tap-highlight-color: transparent;
       transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
       outline: none;
-      animation: ui-breathe 11.2s ease-in-out infinite;
-      will-change: transform, box-shadow;
     }
     #chat-hero .dl-btn:hover{
       transform: translateY(-1px);
@@ -640,6 +654,7 @@
         0 3px 8px rgba(0,0,0,.12);
     }
     #chat-hero .dl-btn:active{ transform: translateY(0); }
+    #chat-hero .dl-btn:focus-visible{ outline: 2px solid #0b0b0c; outline-offset: 3px; }
 
     /* Sheen (subtle Apple-style) */
     #chat-hero .dl-btn::after{
@@ -677,12 +692,6 @@
     #chat-hero .sr-only{
       position:absolute; width:1px; height:1px; padding:0; margin:-1px;
       overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
-    }
-
-    /* ===== Shared breathing keyframe (tiny amplitude, transform-only) ===== */
-    @keyframes ui-breathe{
-      0%,100% { transform: translateY(0) scale(1); }
-      50%     { transform: translateY(-0.6px) scale(1.004); }
     }
   </style>
 
@@ -749,9 +758,6 @@
 
           const laneSpan = (LANES === 1) ? (BAND*2) : (2*BAND)/(LANES-1);
           const swayMax  = Math.max(0.6, (laneSpan*0.38));
-          const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()*(swayMax - 0.6));
-          const swayDur  = 6 + Math.random()*6;
-
           const outer = document.createElement('span');
           outer.className = 'ws-word';
           outer.style.setProperty('--dur',   dur.toFixed(2)+'s');
@@ -908,7 +914,8 @@
 
   <!-- ===== Download button (below the bubble) ===== -->
   <div class="download-spot">
-    <button class="dl-btn" type="button" id="onx-download">
+    <button class="dl-btn" type="button" id="onx-download"
+            data-mac-url="SignUp.html" data-win-url="SignUp.html">
       <span class="dl-ico ico-mac" aria-hidden="true">
         <!-- Apple logo -->
         <svg viewBox="0 0 24 24"><path d="M16.365 13.246c.03 3.23 2.83 4.307 2.86 4.32-.023.074-.447 1.518-1.474 3-0.888 1.29-1.812 2.58-3.26 2.604-1.43.026-1.89-.84-3.52-.84-1.63 0-2.15.813-3.5.867-1.404.053-2.477-1.39-3.372-2.675-1.84-2.64-3.25-7.46-1.36-10.73.94-1.63 2.62-2.67 4.45-2.698 1.39-.027 2.71.93 3.52.93.81 0 2.43-1.15 4.11-0.98.7.03 2.66.28 3.92 2.11-.1.06-2.34 1.36-2.32 4.09zM13.9 3.6c.76-.92 1.27-2.2 1.13-3.49-1.09.044-2.41.72-3.2 1.64-.7.81-1.31 2.12-1.14 3.37 1.2.093 2.44-.61 3.21-1.52z"/></svg>
@@ -920,13 +927,6 @@
       <span class="dl-label">Download</span>
     </button>
   </div>
-
-  <script>
-    document.getElementById("onx-download").addEventListener("click", function(e) {
-      e.preventDefault();
-      window.location.href = "SignUp.html";
-    });
-  </script>
 
   <script>
     /* ===== Hero type-in lines (edgy edition) ===== */
@@ -951,15 +951,57 @@
       const hero   = document.getElementById('chat-hero');
       if (!input || !bubble || !hero) return;
 
-      /* Demo mode: freeze manual typing so the typewriter owns the field */
+      /* Prevent manual typing in demo */
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
+
+      /* ---------- Organic height animation (spring-like) ---------- */
+      let heightAnim = null;
+      function animatePillTo(targetPx){
+        const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const el = chatbar;
+        if (!el) return;
+
+        // Cancel any in-flight animation
+        heightAnim?.cancel?.();
+
+        // Current rendered height
+        const from = el.getBoundingClientRect().height;
+        const to   = Math.max(parseFloat(getComputedStyle(el).minHeight)||0, targetPx);
+
+        if (prefersReduced || typeof el.animate !== 'function'){
+          // Fallback: jump + rely on slight transform focus shift
+          el.style.height = to + 'px';
+          requestAnimationFrame(()=>{ el.style.height = ''; });
+          return;
+        }
+
+        // Lock starting height and animate to target
+        el.style.height = from + 'px';
+        // Keyframes with a tiny overshoot using transform scaleY for organic feel
+        const kf = [
+          { height: from + 'px', transform: 'scaleY(1)' },
+          { height: to   + 'px', offset: .86, transform: 'scaleY(1.015)' },
+          { height: to   + 'px', transform: 'scaleY(1)' }
+        ];
+        heightAnim = el.animate(kf, {
+          duration: 360,
+          easing: 'cubic-bezier(.2,.8,.2,1)',
+        });
+        heightAnim.onfinish = () => {
+          el.style.height = '';       // release to auto
+          heightAnim = null;
+          syncBubbleH();              // keep title positioning perfect
+        };
+      }
 
       /* autosize textarea + smooth pill growth */
       function autosize(){
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
-        syncPillHeight();
+        // target height is chatbar’s scrollHeight
+        const target = chatbar.scrollHeight;
+        animatePillTo(target);
       }
 
       /* keep hero layout synced to bubble height */
@@ -967,52 +1009,7 @@
         hero.style.setProperty('--bubbleH', bubble.getBoundingClientRect().height + 'px');
       }
 
-      /* === Organic pill height animation ===
-         - Measures delta between current and target height
-         - Maps to a spring-like duration (short for small deltas, longer for big)
-         - Adds a micro overshoot for life-like feel on expansion
-      */
-      let lastH = bubble.getBoundingClientRect().height || parseFloat(getComputedStyle(chatbar).minHeight) || 64;
-
-      function syncPillHeight(){
-        if (!chatbar) return;
-        const cs = getComputedStyle(chatbar);
-        const minH = parseFloat(cs.minHeight) || 0;
-        const target = Math.max(minH, chatbar.scrollHeight);
-
-        const delta = Math.abs(target - lastH);
-        /* duration map: 160ms–460ms depending on delta (px) */
-        const durMs = Math.max(160, Math.min(460, 120 + delta * 1.2));
-        chatbar.style.setProperty('--pillDur', durMs + 'ms');
-
-        /* set target height */
-        chatbar.style.setProperty('--pillH', target + 'px');
-
-        /* micro-overshoot only when expanding noticeably */
-        if (target > lastH && delta > 6){
-          chatbar.classList.add('is-expanding');
-          /* nudge transform without fighting focus-within translate */
-          const kill = setTimeout(()=> chatbar.classList.remove('is-expanding'), Math.min(380, durMs + 80));
-          /* safety */
-          chatbar.addEventListener('transitioncancel', ()=>{ chatbar.classList.remove('is-expanding'); clearTimeout(kill); }, {once:true});
-        }
-
-        lastH = target;
-      }
-
-      /* Expansion flourish */
-      const style = document.createElement('style');
-      style.textContent = `
-        #chat-hero .chatbar.is-expanding{ animation: pill-pop var(--pillDur) var(--springEase) 1; }
-        @keyframes pill-pop{
-          0%   { transform: translateY(0) scale(1) }
-          55%  { transform: translateY(-0.5px) scale(1.005) }
-          100% { transform: translateY(0) scale(1) }
-        }
-      `;
-      document.head.appendChild(style);
-
-      const ro = new ResizeObserver(() => { syncBubbleH(); syncPillHeight(); });
+      const ro = new ResizeObserver(() => { syncBubbleH(); });
       ro.observe(bubble);
       ro.observe(input);
 
@@ -1057,22 +1054,22 @@
       window.addEventListener('orientationchange', () => { autosize(); syncBubbleH(); });
     })();
 
-    /* ===== OS detection + button routing ===== */
+    /* ===== OS detection + button routing (unified) ===== */
     (function(){
       const host = document.getElementById('chat-hero');
       const btn  = document.getElementById('onx-download');
       if (!host || !btn) return;
 
-      // very simple detection (good enough for icon swap)
+      // simple detection (good enough for icon swap)
       const ua = navigator.userAgent.toLowerCase();
       const isMac = ua.includes('mac os x') || ua.includes('macintosh') || ua.includes('mac');
       host.classList.add(isMac ? 'os-mac' : 'os-win');
 
-      btn.addEventListener('click', () => {
-        const mac = btn.getAttribute('data-mac-url') || '#';
-        const win = btn.getAttribute('data-win-url') || '#';
-        const url = isMac ? mac : win;
-        window.location.href = url;
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const mac = btn.getAttribute('data-mac-url') || 'SignUp.html';
+        const win = btn.getAttribute('data-win-url') || 'SignUp.html';
+        window.location.href = isMac ? mac : win;
       });
     })();
   </script>
@@ -1081,7 +1078,7 @@
 <!--=====================================================================CHAT END=================================================================================================-->
 
 
-
+  
 
 <!--=========================================================================SHOWCASE VIDEO SECTION=============================================================================================-->
 <!-- HOW TO SIZE (pick one):
