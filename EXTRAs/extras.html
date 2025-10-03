@@ -4950,3 +4950,330 @@ Edit the CTA href, colors, and copy in the tokens below.
 
 
 
+<!-- ===================== ONX Feature Modal — Apple-style demo ===================== -->
+<section id="onx-feature-modal" aria-label="ONX preview">
+  <style>
+    /* ---------------- Tunables (change in place) ---------------- */
+    #onx-feature-modal{
+      --padY-mobile: 72px;
+      --padY-desktop: 108px;
+      --maxW: 1080px;
+      --radius: 18px;                 /* window radius */
+      --modalRadius: 16px;            /* inner modal radius */
+      --shadow: 0 30px 80px rgba(0,0,0,.20), 0 8px 24px rgba(0,0,0,.10);
+      --ink: #0B0B0C;
+      --muted: #6F7682;
+      --line: #E6E8EC;
+      --bg: #ffffff;
+      --grad1: #c4f0ff;
+      --grad2: #e2d6ff;
+      --grad3: #c2ffd8;
+      --breathe: 28s;                 /* background gradient cycle */
+      --reveal: 520ms;                /* window/modal pop-in */
+      --featureFade: 560ms;           /* feature cross-fade duration */
+      --featureHold: 2200ms;          /* time each feature stays visible */
+      --tilt: 10deg;                  /* max tilt for parallax */
+      --scaleIn: .996;                /* initial scale before pop-in */
+      --blurGlass: 10px;              /* glass blur for modal */
+    }
+
+    /* ---------- Layout container + breathing gradient ---------- */
+    #onx-feature-modal{
+      position: relative;
+      overflow: clip;
+      color: var(--ink);
+      padding: var(--padY-mobile) 16px;
+      isolation: isolate;
+    }
+    @media (min-width: 900px){
+      #onx-feature-modal{ padding: var(--padY-desktop) 24px; }
+    }
+    #onx-feature-modal::before{
+      content:"";
+      position: absolute; inset: -20%;
+      background: radial-gradient(40% 35% at 20% 25%, var(--grad1), transparent 60%),
+                  radial-gradient(35% 30% at 80% 30%, var(--grad2), transparent 60%),
+                  radial-gradient(35% 30% at 50% 85%, var(--grad3), transparent 60%);
+      filter: blur(40px) saturate(120%);
+      animation: onx-breathe var(--breathe) ease-in-out infinite alternate;
+      z-index: -2;
+      opacity: .85;
+    }
+    @keyframes onx-breathe{
+      0%   { transform: translate3d(0,0,0) scale(1); }
+      100% { transform: translate3d(0,-2%,0) scale(1.03); }
+    }
+
+    /* ---------- Window shell (ghost app) ---------- */
+    .onx-window{
+      margin: 0 auto;
+      max-width: var(--maxW);
+      background: #fff;
+      border: 1px solid rgba(12,12,13,.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      transform: perspective(1200px) rotateX(0) rotateY(0) scale(var(--scaleIn));
+      opacity: 0;
+      transition: transform var(--reveal) cubic-bezier(.2,.7,.2,1), opacity var(--reveal) ease;
+      will-change: transform, opacity;
+      position: relative;
+    }
+    .onx-window.in{ transform: perspective(1200px) rotateX(0) rotateY(0) scale(1); opacity: 1; }
+
+    /* Titlebar */
+    .onx-titlebar{
+      display:flex; align-items:center; gap:10px;
+      padding: 12px 14px; border-bottom:1px solid var(--line);
+      background: linear-gradient(#FCFCFD,#F7F8FA);
+      border-top-left-radius: var(--radius); border-top-right-radius: var(--radius);
+      user-select:none;
+    }
+    .onx-dots{ display:flex; gap:8px; margin-right:6px; }
+    .onx-dot{ width:10px; height:10px; border-radius:50%; }
+    .onx-dot.red{ background:#ff5f56; }
+    .onx-dot.yellow{ background:#ffbd2e; }
+    .onx-dot.green{ background:#27c93f; }
+    .onx-title{ font: 600 13px/1.2 system-ui, -apple-system, "SF Pro", Inter, Arial, sans-serif; color:#2d3137; letter-spacing:.2px; }
+    .onx-actions{ margin-left:auto; display:flex; gap:8px; }
+    .onx-pill{
+      padding:6px 10px; border:1px solid var(--line); border-radius:999px; font: 600 12px/1 system-ui, -apple-system, Inter, Arial, sans-serif;
+      color:#3a3f46; background:#fff; box-shadow: 0 1px 0 rgba(0,0,0,.03);
+    }
+
+    .onx-body{ position:relative; min-height: 520px; background:#F9FAFB; border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+
+    /* Ghost sidebar + content to echo the screenshot */
+    .ghost{
+      position:absolute; inset:0; display:grid; grid-template-columns: 260px 1fr;
+      pointer-events:none;
+    }
+    .ghost .side{ border-right:1px solid #eef0f3; background:#FBFCFD; }
+    .ghost .content{ }
+    .ghost .stub{
+      height: 12px; width: 60%; border-radius:8px; background: #E9EDF2;
+      margin: 14px 18px;
+    }
+    .ghost .list{ display:grid; gap:12px; padding: 8px 8px 120px 8px; }
+    .ghost .tile{
+      height: 52px; border-radius: 12px; margin: 0 8px;
+      background: linear-gradient(180deg,#F4F7FA,#EEF2F7);
+      border:1px solid #E6ECF2;
+    }
+
+    /* ---------- Center modal (glass) ---------- */
+    .onx-modal{
+      position:absolute; left:50%; top:50%; transform: translate(-50%,-50%) translateZ(0) scale(.985);
+      width:min(760px, calc(100% - 48px));
+      background: rgba(255,255,255,.72);
+      backdrop-filter: blur(var(--blurGlass)) saturate(120%);
+      -webkit-backdrop-filter: blur(var(--blurGlass)) saturate(120%);
+      border:1px solid rgba(12,12,13,.08);
+      border-radius: var(--modalRadius);
+      box-shadow: 0 20px 60px rgba(0,0,0,.18), 0 6px 20px rgba(0,0,0,.08);
+      opacity: 0;
+      transition: transform var(--reveal) cubic-bezier(.2,.7,.2,1) var(--reveal), opacity var(--reveal) ease var(--reveal);
+      overflow:hidden;
+    }
+    .onx-modal.in{ transform: translate(-50%,-50%) translateZ(0) scale(1); opacity:1; }
+
+    .modal-head{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 14px 16px; border-bottom:1px solid rgba(12,12,13,.08);
+      background: linear-gradient(#ffffffaa,#ffffff66);
+      font: 600 14px/1.1 system-ui, -apple-system, "SF Pro", Inter, Arial, sans-serif;
+    }
+    .modal-title{ color:#2b3037; }
+    .btn{
+      padding: 8px 12px; border-radius: 10px; border:1px solid var(--line); background:#fff; color:#2b3037;
+      font: 600 12px/1 system-ui, -apple-system, Inter, Arial, sans-serif;
+    }
+
+    .modal-body{
+      display:grid; place-items:center; text-align:center;
+      padding: 38px 20px 48px;
+      background: linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.85));
+    }
+    .spinner{
+      width: 28px; height: 28px; border-radius: 50%; border: 3px solid #e7ebf1; border-top-color:#3b82f6; animation: spin 1.2s linear infinite; margin-bottom:14px;
+    }
+    @keyframes spin{ to{ transform: rotate(1turn); } }
+
+    .lead{
+      max-width: 520px; color: var(--muted);
+      font: 500 14px/1.45 system-ui, -apple-system, "SF Pro", Inter, Arial, sans-serif;
+    }
+
+    /* ---------- Feature carousel ---------- */
+    .feature{
+      margin-top: 16px;
+      display: grid; justify-items:center; gap:10px;
+      min-height: 112px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap:10px;
+      padding: 10px 14px; border-radius: 999px; border:1px solid var(--line); background:#fff;
+      font: 600 12px/1 system-ui,-apple-system,Inter,Arial,sans-serif; color:#2d3137;
+      box-shadow: 0 2px 6px rgba(0,0,0,.04);
+      opacity:0; transform: translateY(6px);
+      transition: opacity var(--featureFade) ease, transform var(--featureFade) ease;
+    }
+    .chip svg{ width:16px; height:16px; }
+    .feature h3{
+      font: 700 22px/1.2 system-ui, -apple-system, "SF Pro Display", Inter, Arial, sans-serif;
+      margin: 2px 0 4px; opacity:0; transform: translateY(6px);
+      transition: opacity var(--featureFade) ease, transform var(--featureFade) ease;
+    }
+    .feature p{
+      color: var(--muted);
+      font: 500 14px/1.45 system-ui, -apple-system, Inter, Arial, sans-serif;
+      max-width: 560px; margin: 0 auto; opacity:0; transform: translateY(6px);
+      transition: opacity var(--featureFade) ease, transform var(--featureFade) ease;
+    }
+    .feature.active .chip,
+    .feature.active h3,
+    .feature.active p{ opacity:1; transform: translateY(0); }
+
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce){
+      #onx-feature-modal::before, .onx-window, .onx-modal, .chip, .feature h3, .feature p { animation:none !important; transition:none !important; }
+      .spinner{ display:none; }
+    }
+  </style>
+
+  <div class="onx-window" data-tilt>
+    <div class="onx-titlebar">
+      <div class="onx-dots"><span class="onx-dot red"></span><span class="onx-dot yellow"></span><span class="onx-dot green"></span></div>
+      <div class="onx-title">ONX Workspace</div>
+      <div class="onx-actions">
+        <button class="onx-pill">Share</button>
+      </div>
+    </div>
+
+    <div class="onx-body">
+      <!-- ghost sidebar/content to mimic the screenshot -->
+      <div class="ghost">
+        <div class="side">
+          <div class="stub" style="width:120px;margin-top:16px;"></div>
+          <div class="list">
+            <div class="tile"></div>
+            <div class="tile" style="height:56px;"></div>
+            <div class="tile" style="height:48px;"></div>
+            <div class="tile" style="height:64px;"></div>
+            <div class="tile" style="height:52px;"></div>
+          </div>
+        </div>
+        <div class="content"></div>
+      </div>
+
+      <!-- centered modal -->
+      <div class="onx-modal" id="onxModal">
+        <div class="modal-head">
+          <div class="modal-title">Project files</div>
+          <button class="btn">Add files</button>
+        </div>
+        <div class="modal-body">
+          <div class="spinner" aria-hidden="true"></div>
+          <p class="lead">
+            Drop documents, code, and images. <b>ONX</b> understands them inside your project chats—
+            orchestrating the best models securely.
+          </p>
+
+          <!-- Feature carousel -->
+          <div class="feature" id="feature">
+            <!-- populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const root = document.querySelector('#onx-feature-modal');
+      const win  = root.querySelector('.onx-window');
+      const modal= root.querySelector('#onxModal');
+      const featureEl = root.querySelector('#feature');
+
+      /* ---------- Feature data (edit these to customize copy) ---------- */
+      const features = [
+        {
+          chip: 'Multi-Model',
+          title: 'Orchestrates OpenAI, Google, Meta & Grok',
+          desc:  'ONX routes each task to the model that will perform best—no “single-model” bottlenecks.'
+        },
+        {
+          chip: 'Deep Research',
+          title: 'Autonomous agents that read, cite, and summarize',
+          desc:  'Spin up ONX Agents to comb the web and your files, compile notes, and deliver linked briefs.'
+        },
+        {
+          chip: 'Project Files',
+          title: 'RAG that actually understands structure',
+          desc:  'Code blocks, tables, PDFs, and slides become searchable knowledge with trustworthy retrieval.'
+        },
+        {
+          chip: 'Privacy-First',
+          title: 'Local-first workspace with fine-grained control',
+          desc:  'Your data stays yours. Choose local only, cloud boost, or hybrid—per project or per task.'
+        },
+        {
+          chip: 'Automation',
+          title: 'Workflows, triggers, and scheduled jobs',
+          desc:  'Chain prompts, tools, and scrapers into repeatable plays that run while you build.'
+        }
+      ];
+
+      /* ---------- Build first feature node ---------- */
+      const icon = `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 12h14M12 5v14" stroke="#4b5563" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>`;
+
+      function renderFeature(i){
+        const f = features[i % features.length];
+        featureEl.innerHTML = `
+          <div class="chip">${icon}<span>${f.chip}</span></div>
+          <h3>${f.title}</h3>
+          <p>${f.desc}</p>
+        `;
+        requestAnimationFrame(()=>featureEl.classList.add('active'));
+      }
+
+      let idx = 0, timer;
+      function startCarousel(){
+        renderFeature(idx++);
+        timer = setInterval(()=>{
+          featureEl.classList.remove('active');
+          setTimeout(()=> renderFeature(idx++), parseInt(getComputedStyle(featureEl).getPropertyValue('--featureFade')) || 560);
+        }, (parseInt(getComputedStyle(featureEl).getPropertyValue('--featureHold')) || 2200));
+      }
+
+      /* ---------- Reveal on enter + re-animate on re-enter ---------- */
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if(e.isIntersecting){
+            win.classList.add('in');
+            setTimeout(()=> modal.classList.add('in'), 80);
+            clearInterval(timer); startCarousel();
+          }else{
+            win.classList.remove('in'); modal.classList.remove('in');
+            clearInterval(timer);
+          }
+        });
+      }, { threshold: .25 });
+      io.observe(win);
+
+      /* ---------- Subtle tilt/parallax ---------- */
+      const maxTilt = parseFloat(getComputedStyle(root).getPropertyValue('--tilt')) || 10;
+      function tilt(e){
+        const r = win.getBoundingClientRect();
+        const cx = r.left + r.width/2, cy = r.top + r.height/2;
+        const dx = (e.clientX - cx) / (r.width/2);
+        const dy = (e.clientY - cy) / (r.height/2);
+        win.style.transform = `perspective(1200px) rotateX(${(-dy*maxTilt)}deg) rotateY(${(dx*maxTilt)}deg) scale(1)`;
+      }
+      function resetTilt(){ win.style.transform = 'perspective(1200px) rotateX(0) rotateY(0) scale(1)'; }
+      win.addEventListener('pointermove', tilt);
+      win.addEventListener('pointerleave', resetTilt, { passive:true });
+    })();
+  </script>
+</section>
