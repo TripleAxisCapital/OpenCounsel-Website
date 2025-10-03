@@ -285,6 +285,17 @@
       --sendSize:calc(var(--sendBase) * var(--sendScale));
       --sendIconRatio:.3928571429;   /* 22/56 */
 
+      /* === NEW: global text padding inside the pill (affects ALL lines & placeholder) === */
+      /* Mobile defaults */
+      --pillTextPadX-m: 0px;   /* horizontal padding around text (adds to pill’s own edge) */
+      --pillTextPadY-m: 0px;   /* vertical   padding around text */
+      /* Desktop overrides (>=768px) */
+      --pillTextPadX-d: 0px;
+      --pillTextPadY-d: 0px;
+      /* Active mappings */
+      --pillTextPadX: var(--pillTextPadX-m);
+      --pillTextPadY: var(--pillTextPadY-m);
+
       --shadowA:0 1px 0 rgba(0,0,0,.04);
       --shadowB:0 18px 40px rgba(0,0,0,.06);
 
@@ -369,6 +380,10 @@
         --dlH:    var(--dlH-d);
         --dlPX:   var(--dlPX-d);
         --dlFont: var(--dlFont-d);
+
+        /* activate desktop text padding map */
+        --pillTextPadX: var(--pillTextPadX-d);
+        --pillTextPadY: var(--pillTextPadY-d);
       }
     }
 
@@ -496,10 +511,15 @@
     #chat-hero .chatbar textarea{
       flex:1; min-height:1.35em; height:100%;
       border:0; background:transparent; color:var(--ink);
-      font-size:18px; line-height:1.35; padding:0; margin:0;
+      font-size:18px; line-height:1.35; margin:0;
       -webkit-appearance:none; appearance:none; outline:0; resize:none; overflow:hidden;
-      /* shift only the text (placeholder + typed) in either direction (legacy token kept) */
-      text-indent:calc(var(--logoToText) - var(--gapBar));
+
+      /* === IMPORTANT: global padding for ALL lines (and placeholder) === */
+      padding-inline: var(--pillTextPadX);
+      padding-block:  var(--pillTextPadY);
+
+      /* Remove old first-line-only shift so multiline keeps alignment */
+      text-indent: 0 !important;
     }
     #chat-hero .chatbar input::placeholder,
     #chat-hero .chatbar textarea::placeholder{ color:var(--muted) }
