@@ -244,7 +244,9 @@
     <!-- Extra right-side action -->
   </onx-header>
   <!--=======================================================================START===============================================================================================-->
-<!--=======================================================================START===============================================================================================-->
+
+
+  <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -297,6 +299,17 @@
       /* Active mappings */
       --pillTextPadX: var(--pillTextPadX-m);
       --pillTextPadY: var(--pillTextPadY-m);
+
+      /* === NEW: Global outer padding ABOVE/BELOW the chat pill (mobile & desktop) === */
+      /* Mobile defaults */
+      --pillOuterTop-m: 50px;       /* space above the pill (affects title position) */
+      --pillOuterBottom-m: 50px;    /* space below the pill (affects download button position) */
+      /* Desktop overrides (>=768px) */
+      --pillOuterTop-d: 50px;
+      --pillOuterBottom-d: 50px;
+      /* Active mappings (auto-switched in media query) */
+      --pillOuterTop: var(--pillOuterTop-m);
+      --pillOuterBottom: var(--pillOuterBottom-m);
 
       --shadowA:0 1px 0 rgba(0,0,0,.04);
       --shadowB:0 18px 40px rgba(0,0,0,.06);
@@ -389,6 +402,10 @@
         /* activate desktop text padding map */
         --pillTextPadX: var(--pillTextPadX-d);
         --pillTextPadY: var(--pillTextPadY-d);
+
+        /* NEW: activate desktop outer padding map */
+        --pillOuterTop: var(--pillOuterTop-d);
+        --pillOuterBottom: var(--pillOuterBottom-d);
       }
     }
 
@@ -465,7 +482,8 @@
     #chat-hero .hero-title{
       position:absolute;
       left:50%;
-      top: calc(50vh - (var(--bubbleH) / 2) - var(--titleGap));
+      /* NEW: subtract outer top padding so title sits higher above the pill */
+      top: calc(50vh - (var(--bubbleH) / 2) - var(--titleGap) - var(--pillOuterTop));
       transform: translate(-50%, calc(-100% + var(--parallaxY))) scale(var(--parallaxScale));
       margin:0; text-align:center; letter-spacing:-0.02em; line-height:1.1; font-weight:700;
       font-size:clamp(28px, 5.2vw, 54px); padding:0 12px;
@@ -596,8 +614,8 @@
     #chat-hero .download-spot{
       position:absolute;
       left:50%;
-      /* position exactly below bubble: center (50vh) + half bubble height + gap */
-      top: calc(50vh + (var(--bubbleH) / 2) + var(--dlGap));
+      /* NEW: add outer bottom padding so button sits lower below the pill */
+      top: calc(50vh + (var(--bubbleH) / 2) + var(--dlGap) + var(--pillOuterBottom));
       transform: translateX(-50%);
       width: max-content;
       z-index: 2;
