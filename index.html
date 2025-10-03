@@ -243,7 +243,6 @@
 
     <!-- Extra right-side action -->
   </onx-header>
-  
   <!--=======================================================================START===============================================================================================-->
 <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
@@ -265,6 +264,8 @@
 
       /* Animation timings */
       --fade:360ms;                  /* fade-out duration for sentence swap */
+      --springOut:cubic-bezier(.16,1,.3,1);           /* Apple-like ease-out */
+      --springIn:cubic-bezier(.32,0,.2,1);            /* smooth ease-in */
 
       /* === Chat controls (mobile & desktop) === */
       /* Mobile (default) */
@@ -285,13 +286,13 @@
       --sendSize:calc(var(--sendBase) * var(--sendScale));
       --sendIconRatio:.3928571429;   /* 22/56 */
 
-      /* === NEW: global text padding inside the pill (affects ALL lines & placeholder) === */
+      /* === Global text padding inside the pill (ALL lines & placeholder) === */
       /* Mobile defaults */
-      --pillTextPadX-m: 10px;   /* horizontal padding around text (adds to pill’s own edge) */
-      --pillTextPadY-m: 14px;   /* vertical   padding around text */
+      --pillTextPadX-m: 14px;
+      --pillTextPadY-m: 14px;
       /* Desktop overrides (>=768px) */
-      --pillTextPadX-d: 0px;
-      --pillTextPadY-d: 0px;
+      --pillTextPadX-d: 16px;
+      --pillTextPadY-d: 16px;
       /* Active mappings */
       --pillTextPadX: var(--pillTextPadX-m);
       --pillTextPadY: var(--pillTextPadY-m);
@@ -324,7 +325,6 @@
 
       /* =============================
          DOWNLOAD BUTTON CONTROLS
-         (edit these only)
          ============================= */
       /* Mobile defaults */
       --dlGap-m: 22px;               /* distance from bottom edge of chat bubble */
@@ -473,8 +473,21 @@
 
     /* --------------- Bubble spot (center) ---------- */
     #chat-hero .bubble-spot{
-      position:absolute; left:50%; top:50vh; transform:translate(-50%, -50%);
+      position:absolute; left:50%; top:50vh;
+      /* Parallax variables (set via JS) */
+      --parX: 0px; --parY: 0px;
+      transform:translate(-50%, -50%) translate3d(var(--parX), var(--parY), 0);
       width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW)); height:auto;
+      will-change:transform;
+    }
+    /* Inner shell floats subtly so parallax + float can combine without transform conflicts */
+    #chat-hero .bubble-shell{
+      animation: bs-float 9s ease-in-out infinite alternate;
+      will-change:transform;
+    }
+    @keyframes bs-float {
+      from { transform: translateY(0) }
+      to   { transform: translateY(-3px) }
     }
 
     /* =======================
@@ -485,26 +498,38 @@
 
     #chat-hero .chatbar{
       width:100%;
-      min-height:var(--barH);                   /* grows if textarea expands */
-      /* Smooth, organic size transitions for multi-line expansion */
-      max-height:var(--pillH, var(--barH));     /* animated via JS */
-      will-change:max-height;
+      min-height:var(--barH);                      /* grows if textarea expands */
+      max-height:var(--pillH, var(--barH));        /* animated via JS */
+      will-change:max-height, transform, box-shadow;
       overflow:hidden;
 
       display:flex; align-items:center; gap:var(--gapBar);
       background:#fff; border-radius:var(--radiusBar);
       box-shadow:var(--shadowBar);
-      padding-inline:16px var(--btnPad);        /* default left pad */
+      padding-inline:16px var(--btnPad);
       transition:
-        max-height .26s cubic-bezier(.2,.7,.2,1),
+        max-height .34s var(--springOut),
         box-shadow .25s ease,
         transform .25s ease;
       box-sizing:border-box;
     }
+    /* Organic micro-squish during size change (added/removed via JS) */
+    #chat-hero .chatbar.is-sizing{
+      animation: pill-squish 360ms var(--springOut);
+    }
+    @keyframes pill-squish{
+      0%   { transform: scaleY(.985) }
+      60%  { transform: scaleY(1.008) }
+      100% { transform: scaleY(1) }
+    }
+
     /* If a logo were reintroduced, opt-in left pad override */
     #chat-hero .chatbar.has-logo{ padding-inline-start:max(0px,var(--logoLeftGap)); }
 
-    #chat-hero .chatbar:focus-within{ box-shadow:var(--shadowBar-focus); transform:translateY(-1px) }
+    #chat-hero .chatbar:focus-within{
+      box-shadow:var(--shadowBar-focus);
+      transform:translateY(-1px);
+    }
 
     /* Field (textarea to support your typewriter + autosize) */
     #chat-hero .chatbar input,
@@ -518,7 +543,7 @@
       padding-inline: var(--pillTextPadX);
       padding-block:  var(--pillTextPadY);
 
-      /* Remove old first-line-only shift so multiline keeps alignment */
+      /* Ensure multiline alignment remains consistent */
       text-indent: 0 !important;
     }
     #chat-hero .chatbar input::placeholder,
@@ -545,7 +570,9 @@
 
     /* Reduced motion */
     @media (prefers-reduced-motion: reduce){
-      #chat-hero .chatbar{ transition:none; }
+      #chat-hero .bubble-shell{ animation:none !important; }
+      #chat-hero .chatbar{ transition:max-height .2s ease; }
+      #chat-hero .chatbar.is-sizing{ animation:none !important; }
       #chat-hero .chatbar .send, #chat-hero .prompt{ transition:none; }
       #chat-hero .ws-word, #chat-hero .ws-sway, #chat-hero .ws-text{ animation:none !important; opacity:1 !important; transform:none !important; }
     }
@@ -716,7 +743,7 @@
 
           const laneSpan = (LANES === 1) ? (BAND*2) : (2*BAND)/(LANES-1);
           const swayMax  = Math.max(0.6, (laneSpan*0.38));
-          const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()*(swayMax - 0.6));
+          const sway     = (Math.random()<.5?-1:1) * (0.6 + Math.random()*(3));
           const swayDur  = 6 + Math.random()*6;
 
           const outer = document.createElement('span');
@@ -729,7 +756,7 @@
 
           const sw = document.createElement('span'); sw.className = 'ws-sway';
           sw.style.setProperty('--sway', ( (Math.random()<.5?-1:1) * (0.6 + Math.random()*3) ).toFixed(2)+'%' );
-          sw.style.setProperty('--swaydur', (6 + Math.random()*6).toFixed(2)+'s');
+          sw.style.setProperty('--swaydur', (swayDur).toFixed(2)+'s');
 
           const t = document.createElement('span'); t.className = 'ws-text'; t.textContent = phrase;
 
@@ -849,28 +876,30 @@
 
   <!-- The centered bubble (now hosts the embedded chatbar) -->
   <div class="bubble-spot">
-    <form class="chatbar bubble" action="#" onsubmit="event.preventDefault()">
-      <!-- logo removed per request -->
-      <label class="sr-only" for="prompt-input">Message</label>
-      <!-- textarea keeps your typewriter + autosize logic -->
-      <textarea
-        class="prompt"
-        id="prompt-input"
-        name="q"
-        rows="1"
-        autocomplete="off"
-        autocapitalize="off"
-        autocorrect="off"
-        spellcheck="false"
-        placeholder="Ask anything…"></textarea>
+    <div class="bubble-shell">
+      <form class="chatbar bubble" action="#" onsubmit="event.preventDefault()">
+        <!-- logo removed per request -->
+        <label class="sr-only" for="prompt-input">Message</label>
+        <!-- textarea keeps your typewriter + autosize logic -->
+        <textarea
+          class="prompt"
+          id="prompt-input"
+          name="q"
+          rows="1"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="Ask anything…"></textarea>
 
-      <button class="send" type="submit" aria-label="Send">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 12h12" stroke-linecap="round"/>
-          <path d="M13 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
-    </form>
+        <button class="send" type="submit" aria-label="Send">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h12" stroke-linecap="round"/>
+            <path d="M13 7l5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </form>
+    </div>
   </div>
 
   <!-- ===== Download button (below the bubble) ===== -->
@@ -889,14 +918,20 @@
   </div>
 
   <script>
-    document.getElementById("onx-download").addEventListener("click", function(e) {
-      e.preventDefault();
-      window.location.href = "SignUp.html";
-    });
+    /* Fallback click (kept to preserve feature); only fires if no OS URLs set */
+    (function fallbackDownload(){
+      const btn = document.getElementById("onx-download");
+      if(!btn) return;
+      btn.addEventListener("click", function(e) {
+        const mac = btn.getAttribute('data-mac-url');
+        const win = btn.getAttribute('data-win-url');
+        if (!mac && !win) { window.location.href = "SignUp.html"; }
+      });
+    })();
   </script>
 
   <script>
-    /* ===== Hero type-in lines (edgy edition) ===== */
+    /* ===== Hero type-in lines (edgy edition) + Organic pill expansion ===== */
     const SUGGESTIONS = [
       "Design a ruthless—but legal—negotiation script that cuts supplier prices 25%.",
       "Turn $10k into $100k in 12 months: step-by-step arbitrage game plan.",
@@ -912,37 +947,47 @@
     const TYPER = { startDelay:500, type:34, hold:1600, gap:650, loop:true };
 
     (function initTypewriter(){
-      const input  = document.getElementById('prompt-input');
-      const bubble = document.querySelector('#chat-hero .bubble');  // the .chatbar form
-      const chatbar = bubble;
-      const hero   = document.getElementById('chat-hero');
+      const input   = document.getElementById('prompt-input');
+      const bubble  = document.querySelector('#chat-hero .bubble');     // the .chatbar form
+      const chatbar = bubble;                                            // alias
+      const hero    = document.getElementById('chat-hero');
       if (!input || !bubble || !hero) return;
 
+      /* prevent manual typing in demo */
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      /* autosize textarea + smooth pill growth */
+      /* --- Organic height syncing (smooth + springy) --- */
+      let lastH = 0, sizingTimer = null;
+
       function autosize(){
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
-        syncPillHeight();
+        syncHeights();
       }
 
-      /* keep hero layout synced to bubble height */
       function syncBubbleH(){
         hero.style.setProperty('--bubbleH', bubble.getBoundingClientRect().height + 'px');
       }
 
-      /* NEW: animate pill height gracefully for multi-line content */
-      function syncPillHeight(){
+      function syncHeights(){
         if (!chatbar) return;
-        const cs = getComputedStyle(chatbar);
-        const minH = parseFloat(cs.minHeight) || 0;
+        // target container height
+        const minH   = parseFloat(getComputedStyle(chatbar).minHeight) || 0;
         const target = Math.max(minH, chatbar.scrollHeight);
         chatbar.style.setProperty('--pillH', target + 'px');
+
+        // add organic micro-squish on height changes
+        const nowH = target;
+        if (Math.abs(nowH - lastH) > 0.5) {
+          chatbar.classList.add('is-sizing');
+          clearTimeout(sizingTimer);
+          sizingTimer = setTimeout(() => chatbar.classList.remove('is-sizing'), 360);
+          lastH = nowH;
+        }
       }
 
-      const ro = new ResizeObserver(() => { syncBubbleH(); syncPillHeight(); });
+      const ro = new ResizeObserver(() => { syncBubbleH(); syncHeights(); });
       ro.observe(bubble);
       ro.observe(input);
 
@@ -983,11 +1028,12 @@
       input.value = "";
       autosize(); syncBubbleH();   /* initialize sizes smoothly */
       setTimeout(typeNextChar, TYPER.startDelay);
+
       window.addEventListener('resize', () => { autosize(); syncBubbleH(); });
       window.addEventListener('orientationchange', () => { autosize(); syncBubbleH(); });
     })();
 
-    /* ===== OS detection + button routing ===== */
+    /* ===== OS detection + button routing (kept) ===== */
     (function(){
       const host = document.getElementById('chat-hero');
       const btn  = document.getElementById('onx-download');
@@ -1002,8 +1048,45 @@
         const mac = btn.getAttribute('data-mac-url') || '#';
         const win = btn.getAttribute('data-win-url') || '#';
         const url = isMac ? mac : win;
-        window.location.href = url;
+        if (url && url !== '#') window.location.href = url;
       });
+    })();
+
+    /* ===== Subtle parallax (Apple-like) on the bubble ===== */
+    (function(){
+      const root = document.getElementById('chat-hero');
+      const spot = root?.querySelector('.bubble-spot');
+      if (!root || !spot) return;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (reduce.matches) return;
+
+      let raf = 0, targetX = 0, targetY = 0, curX = 0, curY = 0;
+
+      function onMove(e){
+        const rect = root.getBoundingClientRect();
+        const cx   = rect.left + rect.width/2;
+        const cy   = rect.top  + rect.height/2;
+        const x    = (('touches' in e) ? e.touches[0].clientX : e.clientX) - cx;
+        const y    = (('touches' in e) ? e.touches[0].clientY : e.clientY) - cy;
+        targetX = Math.max(-12, Math.min(12, x * 0.02));  // clamp
+        targetY = Math.max(-12, Math.min(12, y * 0.02));
+        if (!raf) raf = requestAnimationFrame(tick);
+      }
+
+      function tick(){
+        curX += (targetX - curX) * 0.08;
+        curY += (targetY - curY) * 0.08;
+        spot.style.setProperty('--parX', curX.toFixed(2) + 'px');
+        spot.style.setProperty('--parY', curY.toFixed(2) + 'px');
+        if (Math.abs(curX - targetX) > .1 || Math.abs(curY - targetY) > .1){
+          raf = requestAnimationFrame(tick);
+        } else {
+          raf = 0;
+        }
+      }
+
+      window.addEventListener('mousemove', onMove, {passive:true});
+      window.addEventListener('touchmove', onMove, {passive:true});
     })();
   </script>
 </section>
