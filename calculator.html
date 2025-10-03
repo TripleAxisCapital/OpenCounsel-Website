@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apple‑Style Calculator — ONX</title>
+  <style>
+    :root{
+      --bg:#ffffff;         /* background */
+      --panel:#f5f6f7;      /* surfaces */
+      --ink:#0b0b0c;        /* primary text */
+      --muted:#6b7280;      /* secondary text */
+      --line:#e7e8eb;       /* borders */
+      --accent:#0a84ff;     /* Apple blue */
+      --accent-ink:#fff;    
+      --ok:#10b981;        
+      --danger:#ef4444;    
+      --shadow: 0 10px 30px rgba(0,0,0,.06), 0 2px 6px rgba(0,0,0,.05);
+      --radius:20px;        /* rounded corners */
+      --btnRadius:16px;     /* key radius */
+    }
+    html,body{height:100%;}
+    body{
+      margin:0; background:var(--bg); color:var(--ink);
+      font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,system-ui,Segoe UI,Roboto,Apple Color Emoji,Segoe UI Emoji,sans-serif;
+    }
+    .app{max-width:980px; margin:48px auto; padding:0 20px;}
+    .grid{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:24px;}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr;} }
+
+    /* Panel shells */
+    .panel{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);} 
+    .shell{padding:18px;}
+
+    /* Header controls */
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:14px}
+    .title{font-weight:600; letter-spacing:.2px}
+    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+
+    /* Toggle switch */
+    .switch{position:relative; display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--muted)}
+    .switch input{appearance:none; -webkit-appearance:none; width:44px; height:26px; border-radius:26px; background:#d1d5db; position:relative; outline:0; transition:all .2s ease; border:1px solid #cfd3d8}
+    .switch input:checked{background:var(--accent); border-color:var(--accent)}
+    .switch input::after{content:""; position:absolute; width:22px; height:22px; top:1px; left:1px; border-radius:22px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.15); transition:all .2s ease}
+    .switch input:checked::after{left:21px}
+
+    /* Display */
+    .display{background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px 16px 12px; box-shadow:inset 0 1px 0 #fff, 0 6px 20px rgba(0,0,0,.04)}
+    .expr{color:var(--muted); font-size:13px; min-height:18px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .big{display:flex; align-items:center; justify-content:space-between; gap:8px}
+    .number{font-size:34px; font-weight:700; letter-spacing:.2px; overflow:auto; white-space:nowrap}
+    .actions{display:flex; gap:8px}
+    .ghostbtn{appearance:none; border:1px solid var(--line); background:#fff; border-radius:12px; padding:8px 10px; font-size:13px; cursor:pointer}
+    .ghostbtn:hover{border-color:#cfd3d8}
+    .sci{color:var(--muted); font-size:13px; margin-top:8px; display:flex; align-items:center; gap:8px}
+    .help{color:var(--muted); font-size:12px; margin-top:6px}
+
+    /* Keypad */
+    .keys{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-top:14px}
+    .key{appearance:none; border:0; border-radius:var(--btnRadius); padding:16px; font-size:18px; font-weight:600; background:#fff; border:1px solid var(--line); box-shadow:0 1px 0 #fff, 0 8px 16px rgba(0,0,0,.04); cursor:pointer; transition:transform .03s ease}
+    .key:active{transform:translateY(1px)}
+    .key.op{background:#f8faff; border-color:#dbeafe; color:#1d4ed8}
+    .key.eq{background:var(--accent); color:var(--accent-ink); border-color:transparent}
+    .key.danger{background:#fff5f5; color:#b91c1c; border-color:#fecaca}
+    .span2{grid-column: span 2}
+
+    /* History */
+    .history{height:520px; overflow:auto; padding:12px 12px 6px}
+    .hist-row{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:10px; display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center}
+    .hist-expr{font-size:12px; color:var(--muted);}
+    .hist-res{font-weight:600; font-size:14px}
+    .row-actions{display:flex; gap:8px}
+    .tiny{font-size:12px; color:var(--muted)}
+
+    .bar{display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-top:1px solid var(--line)}
+    .linkbtn{font-size:13px; color:#2563eb; background:transparent; border:0; cursor:pointer}
+    .linkbtn:hover{text-decoration:underline}
+
+    /* Diagnostics */
+    details#diag{margin-top:16px;}
+    details#diag summary{cursor:pointer; color:#374151; font-size:13px}
+    .pass{color:#065f46}
+    .fail{color:#b91c1c}
+
+    /* Stickiness for typing */
+    .type-capture{position:fixed; inset:0; outline:none}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="grid">
+      <!-- Left: Calculator -->
+      <section class="panel">
+        <div class="shell">
+          <div class="topbar">
+            <div class="title">Apple‑Style Calculator</div>
+            <div class="controls">
+              <label class="switch" title="Show thousands separators">
+                <input id="toggle-commas" type="checkbox" checked />
+                <span>Commas</span>
+              </label>
+              <label class="switch" title="Enable words like 10k, million, billion">
+                <input id="toggle-words" type="checkbox" checked />
+                <span>Words</span>
+              </label>
+              <button class="ghostbtn" id="run-tests" title="Run built‑in tests">Run tests</button>
+            </div>
+          </div>
+
+          <div class="display">
+            <div class="expr" id="expr-line">&nbsp;</div>
+            <div class="big">
+              <div class="number" id="result-line">0</div>
+              <div class="actions">
+                <button class="ghostbtn" id="copy-btn" title="Copy result">Copy</button>
+              </div>
+            </div>
+            <div class="sci" id="sci-line">0 × 10<sup>0</sup></div>
+            <div class="help">Type numbers, + − × ÷, or words like <b>10k</b>, <b>2.5m</b>, <b>million</b>. Enter = evaluate. ⌫ = backspace.</div>
+          </div>
+
+          <div class="keys" aria-label="Keypad">
+            <button class="key danger" data-key="AC">AC</button>
+            <button class="key" data-key="DEL">⌫</button>
+            <button class="key" data-key="%">%</button>
+            <button class="key op" data-key="/">÷</button>
+
+            <button class="key" data-key="7">7</button>
+            <button class="key" data-key="8">8</button>
+            <button class="key" data-key="9">9</button>
+            <button class="key op" data-key="*">×</button>
+
+            <button class="key" data-key="4">4</button>
+            <button class="key" data-key="5">5</button>
+            <button class="key" data-key="6">6</button>
+            <button class="key op" data-key="-">−</button>
+
+            <button class="key" data-key="1">1</button>
+            <button class="key" data-key="2">2</button>
+            <button class="key" data-key="3">3</button>
+            <button class="key op" data-key="+">+</button>
+
+            <button class="key span2" data-key="0">0</button>
+            <button class="key" data-key=".">.</button>
+            <button class="key eq" data-key="=">=</button>
+          </div>
+
+          <details id="diag">
+            <summary>Diagnostics / Tests (click to expand)</summary>
+            <div id="test-log" class="tiny"></div>
+          </details>
+        </div>
+      </section>
+
+      <!-- Right: History -->
+      <section class="panel" aria-label="History">
+        <div class="shell">
+          <div class="topbar">
+            <div class="title">History</div>
+            <div class="controls">
+              <button class="ghostbtn" id="clear-history">Clear</button>
+              <button class="ghostbtn" id="export-history">Export .txt</button>
+            </div>
+          </div>
+          <div id="history" class="history" role="list"></div>
+          <div class="bar"><span class="tiny">Click a row to reuse. Copy copies the result.</span></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Full‑page (invisible) element that captures keyboard so you can just start typing -->
+  <div class="type-capture" tabindex="0" id="capture" aria-hidden="true"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // DOM
+  const exprLine = document.getElementById('expr-line');
+  const resultLine = document.getElementById('result-line');
+  const sciLine = document.getElementById('sci-line');
+  const copyBtn = document.getElementById('copy-btn');
+  const histEl = document.getElementById('history');
+  const clearHistoryBtn = document.getElementById('clear-history');
+  const exportBtn = document.getElementById('export-history');
+  const toggleCommas = document.getElementById('toggle-commas');
+  const toggleWords = document.getElementById('toggle-words');
+  const capture = document.getElementById('capture');
+  const runTestsBtn = document.getElementById('run-tests');
+  const testLog = document.getElementById('test-log');
+
+  // State
+  let expr = "";                 // raw expression the user is typing
+  let history = loadHistory();
+
+  // Helpers — formatting
+  function addCommas(str){
+    if (!str) return str;
+    let sign = '';
+    if (str[0] === '-') { sign = '-'; str = str.slice(1); }
+    const parts = str.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return sign + parts.join('.');
+  }
+  function expandSciToDecimal(mantStr, exp){
+    let neg = false;
+    if (mantStr.startsWith('-')) { neg = true; mantStr = mantStr.slice(1); }
+    const [i, f = ""] = mantStr.split('.');
+    const point = i.length;
+    if (exp >= 0){
+      if (f.length <= exp){
+        const z = '0'.repeat(exp - f.length);
+        return (neg?'-':'') + i + f + z;
+      } else {
+        const left = i + f.slice(0, exp);
+        const right = f.slice(exp);
+        return (neg?'-':'') + left + (right ? '.'+right : '');
+      }
+    } else {
+      const shift = -exp;
+      if (point <= shift){
+        const z = '0'.repeat(shift - point);
+        return (neg?'-':'') + '0.' + z + i + f;
+      } else {
+        const newInt = i.slice(0, point - shift);
+        const newFrac = i.slice(point - shift) + f;
+        return (neg?'-':'') + newInt + '.' + newFrac;
+      }
+    }
+  }
+  function toFullNumber(n, useCommas){
+    if (!isFinite(n)) return 'Error';
+    let s = String(n);
+    if (/e/i.test(s)){
+      const [mant, e] = s.toLowerCase().split('e');
+      s = expandSciToDecimal(mant, parseInt(e,10));
+    }
+    if (s.includes('.')) s = s.replace(/\.0+$/,'').replace(/(\.[0-9]*?)0+$/, '$1').replace(/\.$/, '');
+    if (useCommas) s = addCommas(s);
+    return s;
+  }
+  function toScientificHTML(n){
+    if (!isFinite(n)) return '—';
+    if (n === 0) return '0 × 10<sup>0</sup>';
+    const exp = Math.floor(Math.log10(Math.abs(n)));
+    const mant = n / Math.pow(10, exp);
+    let mantStr = Number(mant).toPrecision(12).replace(/\.0+$/,'').replace(/(\.[0-9]*?)0+$/, '$1');
+    return `${mantStr} × 10<sup>${exp}</sup>`;
+  }
+
+  // Helpers — parsing words & safety
+  const MULT = { hundred:1e2, thousand:1e3, million:1e6, billion:1e9, trillion:1e12 };
+  const SUFFIX = { k:1e3, m:1e6, bn:1e9, b:1e9, t:1e12 }; // order includes 'bn' separately
+
+  function preprocess(raw){
+    // Strip visual commas entirely (keeps math valid)
+    let s = raw.replace(/,/g,'').toLowerCase();
+
+    if (toggleWords.checked){
+      // IMPORTANT: put 'bn' before 'b' so we don't half-match 'bn' as 'b'
+      s = s.replace(/(\d+(?:\.\d+)?)\s*(bn|k|m|b|t)\b/g, (m, num, suf) => `(${num}*${SUFFIX[suf]})`);
+      s = s.replace(/(\d+(?:\.\d+)?)\s*(hundred|thousand|million|billion|trillion)\b/g, (m, num, word) => `(${num}*${MULT[word]})`);
+      s = s.replace(/\b(hundred|thousand|million|billion|trillion)\b/g, (m, word) => String(MULT[word]));
+    }
+
+    // Allow scientific e notation; then remove anything outside math alphabet
+    s = s.replace(/[^0-9eE+\-*/().\s]/g, '');
+
+    return { ok: balanced(s), expr:s };
+  }
+
+  function balanced(s){
+    const stack = [];
+    for (let ch of s){
+      if (ch === '(') stack.push(ch);
+      else if (ch === ')') { if (!stack.length) return false; stack.pop(); }
+    }
+    return stack.length === 0;
+  }
+
+  function soften(exprStr){
+    // Make a best-effort preview expression by trimming trailing incomplete tokens
+    let s = preprocess(exprStr).expr.trim();
+    if (!s) return '';
+
+    // Remove trailing junk like operators, solitary 'e', 'e+' or 'e-'
+    let prev;
+    do {
+      prev = s;
+      s = s.replace(/\s+$/,'');
+      s = s.replace(/e[+\-]?$/i,'');
+      s = s.replace(/[+\-*/(]$/,'');
+      s = s.replace(/\.$/,'');
+    } while (s !== prev && s.length);
+
+    // Balance any open parentheses by appending closers
+    const opens = (s.match(/\(/g)||[]).length;
+    const closes = (s.match(/\)/g)||[]).length;
+    if (opens > closes) s += ')'.repeat(opens - closes);
+
+    return s;
+  }
+
+  function safeEval(s){
+    try{
+      // eslint-disable-next-line no-new-func
+      const val = Function('"use strict"; return (' + s + ')')();
+      if (typeof val !== 'number' || !isFinite(val)) return NaN;
+      return val;
+    }catch{ return NaN; }
+  }
+
+  function parseLastNumber(raw){
+    const r = /(\d+(?:\.\d+)?(?:e[+\-]?\d+)?)\s*(k|m|bn|b|t|hundred|thousand|million|billion|trillion)?\s*$/i;
+    const m = raw.match(r);
+    if (!m) return NaN;
+    const num = parseFloat(m[1]);
+    if (!isFinite(num)) return NaN;
+    const unit = (m[2]||'').toLowerCase();
+    if (!unit) return num;
+    if (SUFFIX[unit]) return num * SUFFIX[unit];
+    if (MULT[unit]) return num * MULT[unit];
+    return num;
+  }
+
+  // UI wiring
+  function setExpr(newExpr){
+    expr = newExpr;
+    exprLine.textContent = expr || '\u00A0';
+    livePreview();
+  }
+
+  function insert(token){ setExpr(expr + token); }
+  function backspace(){ setExpr(expr.slice(0,-1)); }
+  function clearAll(){ setExpr(''); }
+
+  function applyPercent(){
+    const m = expr.match(/([0-9.]+(?:\s*(?:k|m|bn|b|t|hundred|thousand|million|billion|trillion))?)\s*$/i);
+    if (!m) return;
+    const before = expr.slice(0, m.index);
+    const token = m[1];
+    setExpr(before + '(' + token + ')/100');
+  }
+
+  function evaluate(){
+    const pp = preprocess(expr);
+    if (!pp.ok) { flashError(); return; }
+    const val = safeEval(pp.expr);
+    if (Number.isNaN(val)) { flashError(); return; }
+    updateResult(val);
+    pushHistory(expr, val);
+    setExpr(String(val)); // chainable
+  }
+
+  function livePreview(){
+    // 1) Try strict eval
+    let pp = preprocess(expr);
+    let v = safeEval(pp.expr);
+
+    // 2) If invalid, try softened eval (trim trailing ops, balance parens)
+    if (!Number.isFinite(v)){
+      const soft = soften(expr);
+      if (soft) v = safeEval(soft);
+    }
+
+    // 3) If still invalid, show the last number token if present
+    if (!Number.isFinite(v)){
+      v = parseLastNumber(expr);
+    }
+
+    updateResult(v);
+  }
+
+  function updateResult(val){
+    if (!Number.isFinite(val)){
+      resultLine.textContent = '—';
+      sciLine.innerHTML = '—';
+      return;
+    }
+    const full = toFullNumber(val, toggleCommas.checked);
+    resultLine.textContent = full;
+    sciLine.innerHTML = toScientificHTML(val);
+  }
+
+  function flashError(){
+    resultLine.textContent = 'Error';
+    sciLine.innerHTML = '—';
+  }
+
+  // History
+  function loadHistory(){
+    try{
+      const raw = localStorage.getItem('onx_calc_history');
+      return raw ? JSON.parse(raw) : [];
+    }catch{ return []; }
+  }
+  function saveHistory(){
+    try{ localStorage.setItem('onx_calc_history', JSON.stringify(history)); }catch{}
+  }
+  function pushHistory(e, v){
+    history.unshift({ t: Date.now(), e, v });
+    if (history.length > 200) history.pop();
+    saveHistory();
+    renderHistory();
+  }
+  function renderHistory(){
+    histEl.innerHTML = '';
+    if (!history.length){ histEl.innerHTML = '<div class="tiny" style="padding:8px">No history yet.</div>'; return; }
+    const useCommas = toggleCommas.checked;
+    for (const item of history){
+      const row = document.createElement('div');
+      row.className = 'hist-row';
+      row.innerHTML = `
+        <div>
+          <div class="hist-expr">${escapeHTML(item.e)}</div>
+          <div class="hist-res">${escapeHTML(toFullNumber(item.v, useCommas))}</div>
+        </div>
+        <div class="row-actions">
+          <button class="ghostbtn" data-act="reuse">Insert</button>
+          <button class="ghostbtn" data-act="copy">Copy</button>
+        </div>`;
+      row.addEventListener('click', (ev)=>{
+        const act = ev.target.getAttribute('data-act');
+        if (act === 'copy'){
+          navigator.clipboard?.writeText(String(item.v));
+        } else if (act === 'reuse'){
+          setExpr(item.e);
+        } else {
+          if (!act) setExpr(String(item.v));
+        }
+      });
+      histEl.appendChild(row);
+    }
+  }
+  function clearHistory(){ history = []; saveHistory(); renderHistory(); }
+  function exportHistory(){
+    const lines = history.map(h => `${new Date(h.t).toISOString()}\t${h.e} = ${h.v}`);
+    const blob = new Blob([lines.join('\n') + '\n'], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'onx-calculator-history.txt'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Clipboard
+  function copyResult(){
+    const pp = preprocess(expr);
+    const val = safeEval(pp.expr);
+    const copyVal = Number.isFinite(val) ? String(val) : (resultLine.textContent || '');
+    if (!copyVal || copyVal === '—' || copyVal === 'Error') return;
+    navigator.clipboard?.writeText(copyVal);
+  }
+
+  // Keyboard — just start typing anywhere
+  function handleKey(ev){
+    if (ev.metaKey || ev.ctrlKey){
+      if ((ev.key === 'c' || ev.key === 'C')){ ev.preventDefault(); copyResult(); }
+      return;
+    }
+
+    let k = ev.key;
+
+    // Map common symbols to operators
+    if (k === 'x' || k === 'X' || k === '×'){ ev.preventDefault(); insert('*'); return; }
+    if (k === '÷'){ ev.preventDefault(); insert('/'); return; }
+
+    if (k === 'Enter' || k === '='){ ev.preventDefault(); evaluate(); return; }
+    if (k === 'Backspace'){ ev.preventDefault(); backspace(); return; }
+    if (k === 'Escape'){ ev.preventDefault(); clearAll(); return; }
+    if (k === '%'){ ev.preventDefault(); applyPercent(); return; }
+    if (k === ','){ ev.preventDefault(); return; }
+
+    const allowed = '0123456789+-*/().';
+    if (allowed.includes(k)){
+      ev.preventDefault(); insert(k); return;
+    }
+
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    if (letters.includes(k.toLowerCase())){
+      const useful = 'kmbtneulior dhasbn'.replace(/\s/g,'');
+      if (useful.includes(k.toLowerCase())){ ev.preventDefault(); insert(k.toLowerCase()); }
+      return;
+    }
+  }
+
+  // Buttons
+  function onKeypadClick(ev){
+    const el = ev.target.closest('[data-key]');
+    if (!el) return;
+    const k = el.getAttribute('data-key');
+    if (k === 'AC') return void clearAll();
+    if (k === 'DEL') return void backspace();
+    if (k === '%') return void applyPercent();
+    if (k === '=') return void evaluate();
+    insert(k);
+  }
+
+  // Utilities
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+  }
+
+  // ====== Test harness ======
+  function log(msg, ok){
+    const div = document.createElement('div');
+    div.className = ok ? 'pass' : 'fail';
+    div.textContent = (ok ? '✔ ' : '✘ ') + msg;
+    testLog.appendChild(div);
+  }
+  function approxEq(a,b,eps=1e-9){ return Math.abs(a-b) <= eps*Math.max(1,Math.abs(a),Math.abs(b)); }
+  function assertEq(name, actual, expected){
+    const ok = (typeof expected === 'number') ? approxEq(actual, expected) : (actual === expected);
+    log(`${name}: ${typeof actual==='number'?actual:JSON.stringify(actual)} === ${typeof expected==='number'?expected:JSON.stringify(expected)}`, ok);
+  }
+  function runTests(){
+    testLog.innerHTML = '';
+    // Parsing & units
+    assertEq('10k', safeEval(preprocess('10k').expr), 10000);
+    assertEq('2.5m + 1e3', safeEval(preprocess('2.5m+1e3').expr), 2501000);
+    assertEq('million + 5', safeEval(preprocess('million+5').expr), 1000005);
+    assertEq('1bn + 2b', safeEval(preprocess('1bn+2b').expr), 3000000000);
+    assertEq('Commas in input', safeEval(preprocess('1,234,567.89+1').expr), 1234568.89);
+    // Formatting
+    assertEq('Commas format', toFullNumber(1234567.5, true), '1,234,567.5');
+    assertEq('Sci to full (1e-6)', toFullNumber(1e-6, false), '0.000001');
+    // Percent token expansion (manual)
+    assertEq('Percent helper', safeEval(preprocess('(50)/100').expr), 0.5);
+    // Basic math
+    assertEq('2*3', safeEval(preprocess('2*3').expr), 6);
+  }
+
+  // Init
+  document.addEventListener('keydown', handleKey, {capture:true});
+  document.querySelector('.keys').addEventListener('click', onKeypadClick);
+  copyBtn.addEventListener('click', copyResult);
+  clearHistoryBtn.addEventListener('click', clearHistory);
+  exportBtn.addEventListener('click', exportHistory);
+  toggleCommas.addEventListener('change', ()=>{ livePreview(); renderHistory(); });
+  toggleWords.addEventListener('change', ()=>{ livePreview(); });
+  runTestsBtn.addEventListener('click', runTests);
+
+  // Focus the invisible capture so keyboard works immediately
+  capture.focus({preventScroll:true});
+
+  // First render
+  setExpr('');
+  renderHistory();
+})();
+</script>
+</body>
+</html>
