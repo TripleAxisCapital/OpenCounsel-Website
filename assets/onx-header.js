@@ -625,7 +625,7 @@ class ONXHeader extends HTMLElement {
           animation: gradientShift var(--speed,16s) ease-in-out infinite !important;
         }
 
-        /* ───────────────── NEW: Get Started button behavior ────────────────
+        /* ───────────────── NEW: Sign Up button behavior ────────────────
            Start black at page top; switch to gradient animation in pill state.
            Applies to BOTH desktop .desktop-actions and mobile .mobile-actions.
            (Keeps theme overrides intact.)
@@ -693,7 +693,7 @@ class ONXHeader extends HTMLElement {
             <div class="desktop-actions">
               <slot name="actions"></slot>
               <a class="btn g-grad grad-anim" href="/SignUp.html" aria-label="Download">
-                <span>Get Started</span>
+                <span>Sign Up</span>
               </a>
             </div>
 
@@ -730,7 +730,7 @@ class ONXHeader extends HTMLElement {
           <div class="mobile-actions">
             <div class="mobile-extra-actions"></div>
             <a class="btn g-grad grad-anim" href="/SignUp.html" aria-label="Download">
-             <span>Get Started</span>
+             <span>Sign Up</span>
             </a>
           </div>
         </div>
