@@ -245,9 +245,7 @@
   </onx-header>
   <!--=======================================================================START===============================================================================================-->
 
-
-
-  <!--=======================================================================START===============================================================================================-->
+<!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
 <section id="chat-hero" aria-label="Chat hero">
@@ -528,7 +526,6 @@
         transform .25s var(--hoverElev);
       box-sizing:border-box;
       transform: translateZ(0);                 /* composite for smoother anims */
-      transform-origin: center center;          /* keeps expansion centered for mobile override */
     }
     /* If a logo were reintroduced, opt-in left pad override */
     #chat-hero .chatbar.has-logo{ padding-inline-start:max(0px,var(--logoLeftGap)); }
@@ -696,6 +693,32 @@
       position:absolute; width:1px; height:1px; padding:0; margin:-1px;
       overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
     }
+
+    /* ===========================================================
+       MOBILE-ONLY LOCKS (do not affect desktop)
+       - Center chat input exactly
+       - Prevent title & download from moving when chat expands
+       ===========================================================*/
+    @media (max-width: 767px){
+      /* Keep the chat pill exactly centered; remove parallax drift on mobile */
+      #chat-hero .bubble-spot{
+        top:50vh;
+        transform: translate(-50%, -50%) !important;
+      }
+
+      /* Lock title position relative to a constant bar height, not the live bubble height */
+      #chat-hero .hero-title{
+        top: calc(50vh - (var(--barH) / 2) - var(--titleGap) - var(--pillOuterTop)) !important;
+        transform: translate(-50%, -100%) scale(1) !important;
+        margin-top: 0 !important;
+      }
+
+      /* Lock download position symmetrically below the centered pill */
+      #chat-hero .download-spot{
+        top: calc(50vh + (var(--barH) / 2) + var(--dlGap) + var(--pillOuterBottom)) !important;
+        transform: translateX(-50%) !important;
+      }
+    }
   </style>
 
   <!-- Background floating words (starts ONLY after user scrolls) -->
@@ -852,35 +875,6 @@
     }
   </style>
 
-  <!-- ********** MOBILE-ONLY LAYOUT OVERRIDES (center chat; lock title & download) ********** -->
-  <style>
-    @media (max-width: 767px){
-      /* Keep title and download visually fixed, not tied to chat height */
-      #chat-hero .hero-title{
-        position:fixed; z-index:3;
-        top: clamp(48px, 14svh, 160px);
-        left:50%;
-        transform: translateX(-50%); /* no vertical shift; no parallax dependency */
-      }
-      #chat-hero .bubble-spot{
-        position:fixed; z-index:2;
-        top: 50svh; left:50%;
-        transform: translate(-50%, -50%); /* EXACT center */
-        width:min(calc(100vw - (var(--screenPadX)*2)), var(--maxW));
-      }
-      #chat-hero .download-spot{
-        position:fixed; z-index:3;
-        left:50%; top:auto;
-        bottom: clamp(18px, 8svh, 72px);
-        transform: translateX(-50%);
-      }
-
-      /* On mobile, ignore bubble height for layout computations */
-      #chat-hero{ --bubbleH: var(--barH); }
-    }
-  </style>
-  <!-- ********** END MOBILE OVERRIDES ********** -->
-
   <script>
     /* Fit title on mobile and sync bubble height + subtle parallax */
     (function(){
@@ -903,13 +897,8 @@
         const scale     = Math.min(1, available / needed);
         line.style.fontSize = (BASE * scale) + 'px';
 
-        const prev = root.previousElementSibling;
-        if (prev){
-          const gap = Math.round(root.getBoundingClientRect().top - prev.getBoundingClientRect().bottom);
-          root.style.marginTop = (gap > 0 ? (-gap) : 0) + 'px';
-        } else {
-          root.style.marginTop = '0px';
-        }
+        /* Do not nudge margin on mobile; positions are locked by CSS */
+        root.style.marginTop = '0px';
       }
 
       function fit(){ fitOnce(); requestAnimationFrame(fitOnce); }
@@ -1001,7 +990,6 @@
          - animate container's HEIGHT with a tiny transform spring
        */
       let lastH = 0;
-      const isMobileMQ = window.matchMedia('(max-width: 767px)');
 
       function autosize(){
         input.style.height = 'auto';
@@ -1010,11 +998,7 @@
       }
 
       function syncBubbleH(){
-        /* On desktop, keep --bubbleH in sync for legacy positioning.
-           On mobile, we purposely do NOTHING so title/download never move. */
-        if (!isMobileMQ.matches){
-          hero.style.setProperty('--bubbleH', chatbar.getBoundingClientRect().height + 'px');
-        }
+        hero.style.setProperty('--bubbleH', chatbar.getBoundingClientRect().height + 'px');
       }
 
       function springBounce(delta){
@@ -1118,7 +1102,6 @@
             const shift = (y * maxShiftPx).toFixed(2) + 'px';
             const scale = (1 + (y * (maxScale - 1))).toFixed(4);
 
-            /* Parallax only influences section-level vars; mobile fixed elements ignore it */
             hero.style.setProperty('--parallaxY', shift);
             hero.style.setProperty('--parallaxScale', scale);
             ticking = false;
@@ -1155,6 +1138,7 @@
 </section>
 <!--======================================================================================================================================================================-->
 <!--=====================================================================CHAT END=================================================================================================-->
+
 
 
 <!-- ====================== ONX Trust Strip — Centered (with global scales) ====================== -->
