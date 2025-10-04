@@ -502,7 +502,7 @@
 
     /* =======================
        CHAT BAR (embedded)
-       ======================== */
+       ======================= */
     /* Neutralize old .bubble visuals; keep it as a measurement hook for --bubbleH */
     #chat-hero .bubble{ all:unset; display:block; }
 
@@ -510,10 +510,9 @@
       width:100%;
       min-height:var(--barH);                   /* grows if textarea expands */
 
-      /* We will animate explicit 'height' via WAAPI for perfect expand/collapse.
-         Keep max-height as a harmless fallback (not used for the main animation). */
-      max-height:var(--pillH, var(--barH));
-      will-change:transform, box-shadow;
+      /* CHANGE: animate real height (both expansion + collapse) for zero snap */
+      height:var(--pillH, var(--barH));         /* controlled via JS */
+      will-change:height, transform, box-shadow;
       overflow:hidden;
 
       display:flex; align-items:center; gap:var(--gapBar);
@@ -521,6 +520,7 @@
       box-shadow:var(--shadowBar);
       padding-inline:16px var(--btnPad);        /* default left pad */
       transition:
+        height 340ms var(--springOver),
         box-shadow .25s var(--hoverElev),
         transform .25s var(--hoverElev);
       box-sizing:border-box;
@@ -963,114 +963,54 @@
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      /* ====== Smooth height engine (FLIP + spring bounce) ====== */
-      let heightAnim = null, rafId = 0;
+      /* ====== Organic pill expansion (no snap on collapse) ======
+         - autosize textarea to content
+         - animate container's HEIGHT with a tiny transform spring
+      */
+      let lastH = 0;
 
-      function syncBubbleH(){
-        hero.style.setProperty('--bubbleH', chatbar.getBoundingClientRect().height + 'px');
-      }
-
-      function stopRaf(){ if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } }
-
-      function trackDuring(anim){
-        stopRaf();
-        const tick = () => {
-          syncBubbleH();
-          if (!anim || anim.playState === 'finished' || anim.playState === 'idle') return;
-          rafId = requestAnimationFrame(tick);
-        };
-        rafId = requestAnimationFrame(tick);
-      }
-
-      function springScaleMicro(){
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-        chatbar.animate(
-          [
-            { transform: 'translateZ(0) scaleY(0.995)' },
-            { transform: 'translateZ(0) scaleY(1.012)' },
-            { transform: 'translateZ(0) scaleY(1.000)' }
-          ],
-          { duration: 240, easing: 'cubic-bezier(.20,.9,.10,1)', fill: 'none' }
-        );
-      }
-
-      function animateHeightTo(targetPx, withBounce){
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-          chatbar.style.height = '';
-          syncBubbleH();
-          return;
-        }
-
-        const start = chatbar.getBoundingClientRect().height;
-        const end   = Math.max(parseFloat(getComputedStyle(chatbar).minHeight)||0, targetPx);
-        const delta = Math.abs(end - start);
-        if (delta < 0.5) { syncBubbleH(); return; }
-
-        // cancel prior animation safely
-        if (heightAnim) { heightAnim.cancel(); heightAnim = null; }
-        stopRaf();
-
-        // lock current height, animate to target with a tasteful overshoot
-        chatbar.style.overflow = 'hidden';
-        chatbar.style.height   = start + 'px';
-
-        const expanding  = end > start;
-        const o1 = expanding ? end * 1.035 : end * 0.975;   // overshoot
-        const duration = Math.min(560, Math.max(220, 150 + delta * 0.9)); // scale with distance
-
-        const keyframes = withBounce ? [
-          { height: start + 'px', offset: 0,   easing: 'cubic-bezier(.2,.7,.2,1)' },
-          { height: o1.toFixed(2) + 'px', offset: 0.72, easing: 'cubic-bezier(.16,1,.24,1)' },
-          { height: end + 'px',   offset: 1,   easing: 'cubic-bezier(.16,1,.24,1)' }
-        ] : [
-          { height: start + 'px' },
-          { height: end + 'px' }
-        ];
-
-        heightAnim = chatbar.animate(keyframes, { duration, fill: 'forwards', easing: 'linear' });
-        trackDuring(heightAnim);
-        springScaleMicro();
-
-        heightAnim.onfinish = () => {
-          heightAnim = null;
-          stopRaf();
-          chatbar.style.height = '';       // return to auto
-          chatbar.style.overflow = '';
-          syncBubbleH();
-        };
-        heightAnim.oncancel = () => {
-          heightAnim = null;
-          stopRaf();
-          syncBubbleH();
-        };
-      }
-
-      /* ====== Autosize textarea + drive height engine ====== */
-      let lastTarget = 0;
       function autosize(){
-        // grow/shrink textarea instantly (no jank); container animates smoothly
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
         syncHeights(true);
       }
 
-      function computeTarget(){
-        const cs = getComputedStyle(chatbar);
-        const minH = parseFloat(cs.minHeight) || 0;
-        // scrollHeight already reflects textarea height we just set
-        return Math.max(minH, chatbar.scrollHeight);
+      function syncBubbleH(){
+        hero.style.setProperty('--bubbleH', chatbar.getBoundingClientRect().height + 'px');
+      }
+
+      function springBounce(delta){
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const grow = delta > 0;
+        const frames = grow
+          ? [
+              { transform: 'translateY(0) scaleY(0.995)' },
+              { transform: 'translateY(-0.5px) scaleY(1.012)' },
+              { transform: 'translateY(0) scaleY(1.000)' }
+            ]
+          : [
+              { transform: 'translateY(0) scaleY(1.005)' },
+              { transform: 'translateY(0.5px) scaleY(0.988)' },
+              { transform: 'translateY(0) scaleY(1.000)' }
+            ];
+        chatbar.animate(frames, { duration: 260, easing: 'cubic-bezier(.20,.9,.10,1)', fill: 'none' });
       }
 
       function syncHeights(withBounce){
-        const target = computeTarget();
-        if (Math.abs(target - lastTarget) > 0.5){
-          // keep fallback var (not used for the animation but harmless + future-proof)
-          chatbar.style.setProperty('--pillH', target + 'px');
-          animateHeightTo(target, withBounce);
-          lastTarget = target;
-        } else {
-          syncBubbleH();
-        }
+        const cs = getComputedStyle(chatbar);
+        const minH = parseFloat(cs.minHeight) || 0;
+        const target = Math.max(minH, input.scrollHeight);
+        const delta  = target - lastH;
+        const changed = Math.abs(delta) > 0.5;
+
+        /* Drive height directly; also keep CSS var in sync for legacy hooks */
+        chatbar.style.height = target + 'px';
+        chatbar.style.setProperty('--pillH', target + 'px');
+
+        if (changed && withBounce) springBounce(delta);
+
+        lastH = target;
+        syncBubbleH();
       }
 
       /* Idle micro-breathe toggle */
@@ -1081,18 +1021,14 @@
         idleTimer = setTimeout(() => { chatbar.dataset.idle = "1"; }, 2200);
       }
 
-      // ResizeObserver: only sync the bubble height (do NOT fight the animation)
-      const ro = new ResizeObserver(() => { syncBubbleH(); });
+      const ro = new ResizeObserver(() => { syncHeights(false); });
       ro.observe(chatbar);
       ro.observe(input);
 
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) {
         input.value = SUGGESTIONS[0] || "";
-        input.style.height = 'auto';
-        input.style.height = input.scrollHeight + 'px';
-        chatbar.style.height = '';
-        syncBubbleH();
+        autosize(); syncHeights(false);
       } else {
         let i = 0, j = 0;
         function typeNextChar(){
@@ -1113,7 +1049,7 @@
             if (e.propertyName && e.propertyName !== 'opacity') return;
             input.removeEventListener('transitionend', onEnd);
             input.value = "";
-            autosize();                         // animate collapse smoothly
+            autosize();                /* smoothly collapses now */
             i = (i + 1) % SUGGESTIONS.length; j = 0;
             setTimeout(typeNextChar, TYPER.gap);
           };
