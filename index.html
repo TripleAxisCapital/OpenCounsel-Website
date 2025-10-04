@@ -244,7 +244,6 @@
     <!-- Extra right-side action -->
   </onx-header>
   <!--=======================================================================START===============================================================================================-->
-
 <!--=======================================================================START===============================================================================================-->
 <!--======================================================================CHAT SECTION================================================================================================-->
 <!-- ===== Full-screen Chat Hero (Apple-minimal) — centered bubble + background word stream ===== -->
@@ -258,7 +257,7 @@
       --line:#E6E8EC;
 
       --radius:28px;                 /* bubble radius (kept; bubble overrides to pill locally) */
-      --bubbleH:78px;                /* initial min bubble height (auto-updates via JS) */
+      --bubbleH:78px;                /* dynamic bubble height (kept for desktop) */
       --maxW:940px;                  /* max bubble width */
       --screenPadX:20px;             /* bubble -> viewport side padding */
       --titleGap:28px;               /* space between title and bubble */
@@ -299,10 +298,10 @@
       --pillTextPadX: var(--pillTextPadX-m);
       --pillTextPadY: var(--pillTextPadY-m);
 
-      /* === NEW: Global outer padding ABOVE/BELOW the chat pill (mobile & desktop) === */
+      /* === Global outer padding ABOVE/BELOW the chat pill === */
       /* Mobile defaults */
-      --pillOuterTop-m: 100px;       /* space above the pill (affects title position) */
-      --pillOuterBottom-m: 100px;    /* space below the pill (affects download button position) */
+      --pillOuterTop-m: 100px;
+      --pillOuterBottom-m: 100px;
       /* Desktop overrides (>=768px) */
       --pillOuterTop-d: 50px;
       --pillOuterBottom-d: 50px;
@@ -378,9 +377,9 @@
       --logoLeftGap:-2px;
       --logoToText:13px;
 
-      /* Scroll parallax intensity (subtle) */
-      --parallaxY: 0px;              /* set via JS on scroll, used for small translateY */
-      --parallaxScale: 1;            /* set via JS for a tiny scale on hero */
+      /* Parallax will be disabled on mobile (kept for desktop) */
+      --parallaxY: 0px;
+      --parallaxScale: 1;
     }
 
     @media (min-width:768px){
@@ -481,7 +480,7 @@
     #chat-hero .hero-title{
       position:absolute;
       left:50%;
-      /* NEW: subtract outer top padding so title sits higher above the pill */
+      /* Desktop & default math (kept for desktop) */
       top: calc(50vh - (var(--bubbleH) / 2) - var(--titleGap) - var(--pillOuterTop));
       transform: translate(-50%, calc(-100% + var(--parallaxY))) scale(var(--parallaxScale));
       margin:0; text-align:center; letter-spacing:-0.02em; line-height:1.1; font-weight:700;
@@ -511,7 +510,7 @@
       width:100%;
       min-height:var(--barH);                   /* grows if textarea expands */
 
-      /* CHANGE: animate real height (both expansion + collapse) for zero snap */
+      /* animate real height (both expansion + collapse) */
       height:var(--pillH, var(--barH));         /* controlled via JS */
       will-change:height, transform, box-shadow;
       overflow:hidden;
@@ -525,7 +524,7 @@
         box-shadow .25s var(--hoverElev),
         transform .25s var(--hoverElev);
       box-sizing:border-box;
-      transform: translateZ(0);                 /* composite for smoother anims */
+      transform: translateZ(0);
     }
     /* If a logo were reintroduced, opt-in left pad override */
     #chat-hero .chatbar.has-logo{ padding-inline-start:max(0px,var(--logoLeftGap)); }
@@ -543,17 +542,15 @@
       font-size:18px; line-height:1.35; margin:0;
       -webkit-appearance:none; appearance:none; outline:0; resize:none; overflow:hidden;
 
-      /* === IMPORTANT: global padding for ALL lines (and placeholder) === */
+      /* global padding for ALL lines (and placeholder) */
       padding-inline: var(--pillTextPadX);
       padding-block:  var(--pillTextPadY);
-
-      /* Remove old first-line-only shift so multiline keeps alignment */
       text-indent: 0 !important;
     }
     #chat-hero .chatbar input::placeholder,
     #chat-hero .chatbar textarea::placeholder{ color:var(--muted) }
 
-    /* Send button (scoped override so it replaces old absolute .send) */
+    /* Send button */
     #chat-hero .chatbar .send{
       position:static !important; transform:none;
       inline-size:calc(var(--barH) - 2*var(--btnPad));
@@ -613,7 +610,7 @@
     #chat-hero .download-spot{
       position:absolute;
       left:50%;
-      /* NEW: add outer bottom padding so button sits lower below the pill */
+      /* Desktop & default math (kept for desktop) */
       top: calc(50vh + (var(--bubbleH) / 2) + var(--dlGap) + var(--pillOuterBottom));
       transform: translateX(-50%);
       width: max-content;
@@ -692,6 +689,32 @@
     #chat-hero .sr-only{
       position:absolute; width:1px; height:1px; padding:0; margin:-1px;
       overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+    }
+
+    /* =========================
+       MOBILE-ONLY LOCKING (no push/jitter on expand)
+       ========================= */
+    @media (max-width: 767.98px){
+      /* Disable parallax on mobile so the pill stays perfectly centered */
+      #chat-hero{ --parallaxY: 0px; --parallaxScale: 1; }
+
+      /* Lock title position relative to the viewport center using the INITIAL bubble height */
+      #chat-hero .hero-title{
+        top: calc(50svh - (var(--bubbleHLock, var(--barH)) / 2) - var(--titleGap) - var(--pillOuterTop));
+        transform: translate(-50%, -100%) scale(1);
+      }
+
+      /* Keep the chat pill exactly centered on mobile */
+      #chat-hero .bubble-spot{
+        top: 50svh; transform: translate(-50%, -50%);
+        width: min(calc(100vw - (var(--screenPadX)*2)), var(--maxW));
+      }
+
+      /* Lock download button relative to viewport center using the INITIAL bubble height */
+      #chat-hero .download-spot{
+        top: calc(50svh + (var(--bubbleHLock, var(--barH)) / 2) + var(--dlGap) + var(--pillOuterBottom));
+        transform: translateX(-50%);
+      }
     }
   </style>
 
@@ -850,17 +873,17 @@
   </style>
 
   <script>
-    /* Fit title on mobile and sync bubble height + subtle parallax */
+    /* Fit title on mobile and sync bubble height + subtle parallax (parallax disabled on mobile) */
     (function(){
       const root  = document.getElementById('hero-onx-title');
       const line  = root?.querySelector('.fit-line');
       const shell = root?.querySelector('.title-blur');
-      const mq    = window.matchMedia('(max-width: 600px)');
+      const mq600 = window.matchMedia('(max-width: 600px)');
       const BASE  = 120;
 
       function fitOnce(){
         if(!root || !line || !shell) return;
-        if(!mq.matches){ line.style.fontSize = ''; root.style.marginTop=''; return; }
+        if(!mq600.matches){ line.style.fontSize = ''; root.style.marginTop=''; return; }
 
         line.style.fontSize = BASE + 'px';
         const rectW = shell.getBoundingClientRect().width;
@@ -892,9 +915,7 @@
   <!-- The centered bubble (now hosts the embedded chatbar) -->
   <div class="bubble-spot">
     <form class="chatbar bubble" action="#" onsubmit="event.preventDefault()" aria-label="Chat input">
-      <!-- logo removed per request -->
       <label class="sr-only" for="prompt-input">Message</label>
-      <!-- textarea keeps your typewriter + autosize logic -->
       <textarea
         class="prompt"
         id="prompt-input"
@@ -964,10 +985,7 @@
       input.addEventListener('keydown', e => e.preventDefault());
       input.addEventListener('beforeinput', e => e.preventDefault());
 
-      /* ====== Organic pill expansion (no snap on collapse) ======
-         - autosize textarea to content
-         - animate container's HEIGHT with a tiny transform spring
-      */
+      /* ====== Organic pill expansion (no snap on collapse) ====== */
       let lastH = 0;
 
       function autosize(){
@@ -1004,7 +1022,6 @@
         const delta  = target - lastH;
         const changed = Math.abs(delta) > 0.5;
 
-        /* Drive height directly; also keep CSS var in sync for legacy hooks */
         chatbar.style.height = target + 'px';
         chatbar.style.setProperty('--pillH', target + 'px');
 
@@ -1012,6 +1029,16 @@
 
         lastH = target;
         syncBubbleH();
+      }
+
+      /* ===== MOBILE POSITION LOCK: capture initial bubble height and freeze title/button math ===== */
+      const mqMobile = window.matchMedia('(max-width: 767.98px)');
+      let lockedOnce = false;
+      function lockMobilePositionsOnce(){
+        if (!mqMobile.matches || lockedOnce) return;
+        const h = chatbar.getBoundingClientRect().height;
+        hero.style.setProperty('--bubbleHLock', h + 'px');  // used only by mobile CSS
+        lockedOnce = true;
       }
 
       /* Idle micro-breathe toggle */
@@ -1029,7 +1056,7 @@
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduceMotion) {
         input.value = SUGGESTIONS[0] || "";
-        autosize(); syncHeights(false);
+        autosize(); syncHeights(false); lockMobilePositionsOnce();
       } else {
         let i = 0, j = 0;
         function typeNextChar(){
@@ -1055,21 +1082,28 @@
             setTimeout(typeNextChar, TYPER.gap);
           };
           input.addEventListener('transitionend', onEnd, { once:true });
-          /* safety dispatch if transition canceled */
           setTimeout(() => { if (input.classList.contains('is-fading')) input.dispatchEvent(new Event('transitionend')); }, 1000);
         }
 
         input.value = "";
-        autosize();                       /* initialize sizes smoothly */
+        autosize();
+        syncHeights(false);
+        lockMobilePositionsOnce();     /* lock after first measure */
         setTimeout(typeNextChar, TYPER.startDelay);
         window.addEventListener('resize', () => { autosize(); }, { passive:true });
-        window.addEventListener('orientationchange', () => { autosize(); }, { passive:true });
+        window.addEventListener('orientationchange', () => {
+          /* re-lock after orientation changes */
+          lockedOnce = false;
+          setTimeout(() => { autosize(); syncHeights(false); lockMobilePositionsOnce(); }, 120);
+        }, { passive:true });
       }
 
-      /* Subtle parallax on scroll (Apple-like) */
+      /* Subtle parallax on scroll — desktop only */
       (function parallax(){
-        const maxShiftPx = 6;     // cap overall shift
-        const maxScale   = 1.008; // tiny scale-in on scroll
+        const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+        if (!isDesktop) return; // keep mobile perfectly centered
+        const maxShiftPx = 6;
+        const maxScale   = 1.008;
         let ticking = false;
 
         function onScroll(){
