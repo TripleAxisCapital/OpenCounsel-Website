@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ONX — Elevate the Future</title>
+
+  <!-- Audiowide font (logo O) -->
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #0b1020;
+      --bg-soft: #0e1220;
+      --card: rgba(255,255,255,0.08);
+      --card-strong: rgba(255,255,255,0.14);
+      --text: #eaf2ff;
+      --muted: #aab6d0;
+      --accent: #7bdfff;
+      --accent2: #8b5cf6;
+      --shadow: 0 20px 40px rgba(0,0,0,.25);
+      --radius: 14px;
+      --grad: linear-gradient(135deg, rgba(110, 230, 255, 0.25) 0%, rgba(139, 92, 246, 0.25) 50%, rgba(124, 58, 237, 0.25) 100%);
+    }
+
+    /* Reset-ish */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto;
+      color: var(--text);
+      background: radial-gradient( circle at 20% -10%, rgba(90, 0, 60, 0.25), transparent 40% ),
+                  radial-gradient( circle at 90% 10%, rgba(0, 120, 190, 0.25), transparent 40% ),
+                  linear-gradient(#0a0e1a 0%, #0a0f1b 100%);
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+
+    /* Layout helpers */
+    .container {
+      width: min(1120px, 90%);
+      margin: 0 auto;
+    }
+
+    header.nav {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(10, 14, 28, 0.7);
+      backdrop-filter: saturate(1.2) blur(6px);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .nav-inner {
+      height: 68px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px; text-decoration: none;
+    }
+    .logo {
+      font-family: "Audiowide", sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: #fff;
+      text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 52px; height: 52px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.22), rgba(255,255,255,0) 40%);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.08);
+      user-select: none;
+    }
+    .brand-name {
+      font-weight: 600; letter-spacing: .4px;
+      color: #eaf2ff; font-size: 18px;
+    }
+
+    nav ul {
+      display: flex; gap: 18px; align-items: center; list-style: none; padding: 0; margin: 0;
+    }
+    nav a {
+      color: #eaf2ff; text-decoration: none; font-weight: 500; font-size: 14px;
+      padding: 8px 12px; border-radius: 999px;
+    }
+    nav a:hover { background: rgba(255,255,255,.08); }
+
+    .cta-small {
+      padding: 10px 14px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.25);
+      color: #eaf2ff; text-decoration: none; font-weight: 600;
+      transition: transform .3s ease;
+    }
+    .cta-small:hover { transform: translateY(-1px); background: rgba(255,255,255,.08); }
+
+    /* Hero */
+    .hero {
+      display: grid; grid-template-columns: 1.1fr 0.9fr;
+      align-items: center; min-height: 76vh; gap: 40px;
+      padding: 64px 0 48px;
+    }
+
+    .hero-content {
+      padding: 8px 0;
+    }
+
+    .eyebrow {
+      display: inline-block; color: var(--muted); font-size: 13px; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 12px;
+    }
+
+    .title {
+      font-family: "Inter", system-ui, sans-serif;
+      font-size: 64px; line-height: 1.04; margin: 0 0 16px; letter-spacing: .5px;
+    }
+    .subtitle {
+      color: #cbd7ff; font-size: 18px; max-width: 60ch; line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .cta {
+      display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    }
+    .btn {
+      padding: 14px 20px; border-radius: 12px; border: none; cursor: pointer;
+      font-weight: 700; font-size: 14px;
+      transition: transform .25s ease, box-shadow .25s ease;
+      text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #4da6ff 0%, #7c3aed 60%, #a855f7 100%);
+      color: white; box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(0,0,0,.28); }
+    .btn-outline {
+      background: rgba(255,255,255,.08);
+      color: #eaf2ff; border: 1px solid rgba(255,255,255,.25);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,.12); }
+
+    /* Hero art (stylized O + abstract shapes) */
+    .hero-art {
+      position: relative; width: 100%; height: 520px;
+      border-radius: var(--radius); overflow: hidden;
+      background: radial-gradient(circle at 60% 30%, rgba(125, 255, 240, .15), transparent 40%),
+                  linear-gradient(135deg, rgba(9,12,28,.85), rgba(9,12,28,.65) 60%, rgba(9,12,28,.9));
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: var(--shadow);
+    }
+
+    /* Floating glow shapes inside the art area */
+    .orb, .orbit {
+      position: absolute; border-radius: 50%;
+      filter: blur(0.3px);
+      opacity: .9;
+    }
+    .orb {
+      width: 260px; height: 260px; top: 60px; left: 60px;
+      background: radial-gradient(circle at 30% 30%, rgba(0,200,255,.75), rgba(0,200,255,.0) 60%);
+      animation: floatY 6s ease-in-out infinite;
+      box-shadow: 0 0 120px rgba(0,200,255,.5);
+    }
+    .orbit {
+      width: 180px; height: 180px; bottom: 40px; right: 80px;
+      border: 1px solid rgba(135, 200, 255, .9);
+      animation: rotate 8s linear infinite;
+      box-shadow: inset 0 0 60px rgba(110, 230, 255, .4);
+      background: radial-gradient(circle at 40% 40%, rgba(110,230,255,.25), rgba(110,230,255,.0) 60%);
+    }
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Sections */
+    section { padding: 72px 0; }
+    .section-title {
+      font-size: 28px; margin: 0 0 28px; color: #eaf2ff;
+    }
+
+    /* Features grid */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    }
+    .feature {
+      padding: 20px; border-radius: 12px; background: var(--card);
+      border: 1px solid rgba(255,255,255,.08);
+      min-height: 140px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .feature h3 { margin: 0; font-size: 18px; }
+    .feature p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, rgba(110,230,255,.9), rgba(139,92,246,.9));
+      color: white; margin-bottom: 6px;
+      box-shadow: 0 6px 14px rgba(0,0,0,.15);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .stat {
+      background: var(--card);
+      padding: 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: baseline; justify-content: space-between;
+    }
+    .stat .num { font-family: "Audiowide", sans-serif; font-size: 28px; }
+    .stat .lbl { color: var(--muted); font-size: 12px; }
+
+    /* Testimonials */
+    .testimonials { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { padding: 18px; border-radius: 12px; background: var(--card);
+            border: 1px solid rgba(255,255,255,.08); }
+    .quote { font-size: 14px; color: #dbe7ff; line-height: 1.6; margin-bottom: 8px; }
+    .author { font-weight: 600; font-size: 13px; color: #eaf2ff; }
+
+    /* Footer */
+    footer { padding: 40px 0; color: var(--muted); font-size: 12px; text-align: center; }
+
+    /* Reveal animations (on scroll) */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+    .inview { opacity: 1; transform: none; }
+
+    /* Responsive */
+    @media (max-width: 1024px){
+      .hero { grid-template-columns: 1fr; padding: 40px 0; }
+      .hero-art { height: 420px; margin: 0 auto; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .testimonials { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px){
+      .title { font-size: 44px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .nav-inner { padding: 0 8px; }
+      .brand-name { display: none; } /* compact on small screens */
+      .logo { font-size: 42px; width: 44px; height: 44px; }
+    }
+
+    /* Reduced motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="nav" aria-label="Main navigation">
+    <div class="container nav-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a href="#" class="brand" aria-label="ONX home">
+        <span class="logo" aria-label="ONX logo">O</span>
+        <span class="brand-name">ONX</span>
+      </a>
+
+      <nav aria-label="Primary">
+        <ul>
+          <li><a href="#features" class="cta-small">Features</a></li>
+          <li><a href="#tech" class="cta-small">Tech</a></li>
+          <li><a href="#testimonials" class="cta-small">Results</a></li>
+          <li><a href="#signup" class="btn btn-primary" style="padding:10px 14px;" aria-label="Get early access">Get Early Access</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero" aria-label="Intro to ONX">
+    <div class="hero-content">
+      <span class="eyebrow reveal" style="opacity:.9;">Introducing</span>
+      <h1 class="title reveal" style="font-weight:800; letter-spacing:.5px; margin-top:6px;">
+        ONX
+        <span style="font-family:inherit; font-weight:400;"> — The next-gen platform</span>
+      </h1>
+      <p class="subtitle reveal">
+        A high-performance solution engineered for scale, elegance, and security. Built to power the most demanding products with a refined, high-end experience.
+      </p>
+
+      <div class="cta reveal" style="gap:12px;">
+        <a href="#signup" class="btn btn-primary" aria-label="Request early access">Request Early Access</a>
+        <a href="#demo" class="btn btn-outline" aria-label="Watch demo">Watch Demo</a>
+      </div>
+    </div>
+
+    <div class="hero-art reveal" aria-label="ONX visual art" style="position:relative;">
+      <div class="orb" aria-hidden="true"></div>
+      <div class="orbit" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" aria-labelledby="features-title" class="container" >
+    <h2 id="features-title" class="section-title reveal" style="margin-bottom:4px;">What makes ONX unique</h2>
+    <p class="subtitle reveal" style="max-width:60ch; margin-bottom:18px;">
+      A combination of performance, design, and security that aligns with the standards of premium brands.
+    </p>
+
+    <div class="features-grid reveal" style="opacity:.95;">
+      <div class="feature">
+        <div class="icon" aria-label="Performance">
+          <!-- simple SVG icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12h4l3-7 4 9 5-5" />
+            <path d="M7 12h4" />
+          </svg>
+        </div>
+        <h3>Blazing Performance</h3>
+        <p>Engineered for ultra-low latency and scalable throughput across regions.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon" aria-label="Design">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3l7 4v10l-7 4-7-4V7l7-4z" />
+            <path d="M9 10h6" />
+          </svg>
+        </div>
+        <h3>Timeless Design</h3>
+        <p>Material-inspired aesthetics with a focus on clarity, typography, and motion.</p>
+      </div>
+
+      <div class="feature">
+        <div class="icon" aria-label="Security">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2" aria-hidden="true">
+            <path d="M12 1l8 4v6c0 5-3.8 8.7-8 11-4.2-2.3-8-6-8-11V5l8-4z" />
+            <path d="M9 11l3 3 3-3" />
+          </svg>
+        </div>
+        <h3>Security by Design</h3>
+        <p>Designed with defense-in-depth, zero-trust access, and auditability at its core.</p>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:28px;">
+      <div class="stat reveal">
+        <div class="num" aria-label="Latency">1 ms</div>
+        <div class="lbl">Average latency</div>
+      </div>
+      <div class="stat reveal">
+        <div class="num" aria-label="Uptime">99.999%</div>
+        <div class="lbl">Uptime</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech / specs -->
+  <section id="tech" aria-labelledby="tech-title" class="container">
+    <h2 id="tech-title" class="section-title reveal">Core Technology</h2>
+
+    <div class="testimonials" style="gap:20px; margin-top:8px;">
+      <div class="card reveal" style="min-height:120px;">
+        <div class="quote">ONX leverages a hybrid architecture blending edge-compute with cloud-grade orchestration, delivering resilient performance under load.</div>
+        <div class="author">- Lead Architect, ONX</div>
+      </div>
+
+      <div class="card reveal" style="min-height:120px;">
+        <div class="quote">A clean API surface and thoughtful motion make integration feel effortless while preserving power and security.</div>
+        <div class="author">- Head of Platform, ONX</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials / results -->
+  <section id="testimonials" aria-labelledby="testimonials-title" class="container">
+    <h2 id="testimonials-title" class="section-title reveal">What partners say</h2>
+    <p class="subtitle reveal" style="max-width:60ch;">
+      Industry leaders rely on ONX to power premium experiences with reliability and grace.
+    </p>
+
+    <div class="testimonials" style="margin-top:14px;">
+      <div class="card reveal" aria-label="Testimonial 1">
+        <div class="quote">“ONX transformed our product velocity. The platform scales as we grow without compromising the user experience.”</div>
+        <div class="author">— VP Product, Global Brand</div>
+      </div>
+      <div class="card reveal" aria-label="Testimonial 2">
+        <div class="quote">“The design language and motion cues align perfectly with our high-end branding. It just feels right.”</div>
+        <div class="author">— CTO, Luxury Tech Co.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to action / signup -->
+  <section id="signup" aria-label="Join ONX waitlist" class="container" style="padding-bottom: 60px;">
+    <div class="card" style="padding:28px; background: linear-gradient(135deg, rgba(10,14,28,.75), rgba(10,14,28,.55)); border:1px solid rgba(255,255,255,.12); border-radius: 14px;">
+      <div class="grid-2" style="align-items:center;">
+        <div>
+          <h3 style="margin:0 0 6px; font-size:20px;">Join the ONX waitlist</h3>
+          <p class="subtitle" style="margin:0; max-width: 60ch;">Be the first to experience ONX. Get early access, demo invites, and exclusive updates.</p>
+        </div>
+        <form action="#" method="post" style="display:flex; gap:10px; align-items:center;">
+          <input aria-label="Email address" type="email" placeholder="your@email.com" required
+                 style="flex:1; padding:12px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color:#fff; min-width:0;">
+          <button class="btn btn-primary" type="submit" aria-label="Join waitlist" style="white-space:nowrap;">Join</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer aria-label="Footer">
+    <div class="container">
+      © <span id="year"></span> ONX. All rights reserved. 
+      <span style="margin-left:12px;">Privacy • Terms</span>
+    </div>
+  </footer>
+
+  <script>
+    // Set current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Simple reveal on scroll
+    const revealElements = document.querySelectorAll('.reveal');
+    const inview = (entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('inview');
+          observer.unobserve(entry.target);
+        }
+      });
+    };
+    const observer = new IntersectionObserver(inview, { threshold: 0.12 });
+    revealElements.forEach(el => {
+      observer.observe(el);
+    });
+
+    // Optional: smooth anchor scrolling for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Respect reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.querySelectorAll('.reveal').forEach(el => el.style.transition = 'none');
+    }
+  </script>
+</body>
+</html>
