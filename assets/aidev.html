@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ONX — Chatbot UI (Single-File • Novita Streaming)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Audiowide&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --chat-h-desktop: 64px;
+      --chat-w-desktop: min(1000px, 92vw);
+      --chat-h-mobile: 56px;
+      --chat-w-mobile: min(620px, 94vw);
+      --logo-gap-desktop: 50px;
+      --logo-gap-mobile: 42px;
+
+      --bg:#fafafa; --card:#fff; --fg:#0e0f11; --muted:#7b7c81; --border:rgba(0,0,0,.08);
+      --shadow-chat: 0 6px 20px rgba(0,0,0,.06), 0 22px 48px rgba(0,0,0,.08);
+      --shadow-fab: 0 8px 28px rgba(0,0,0,.18);
+      --accent:#0f0f10;
+
+      --chat-h: var(--chat-h-desktop);
+      --chat-w: var(--chat-w-desktop);
+      --logo-gap: var(--logo-gap-desktop);
+      --padV: clamp(8px, calc(var(--chat-h) * 0.18), 14px);
+      --padH: clamp(10px, min(calc(var(--chat-h) * 0.18 + 6px), calc(var(--chat-w) * 0.04)), 26px);
+      --send-d: calc(var(--chat-h) - (2 * var(--padV)));
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --dock-bottom: calc(14px + var(--safe-bottom));
+    }
+    @media (max-width:700px){
+      :root{ --chat-h: var(--chat-h-mobile); --chat-w: var(--chat-w-mobile); --logo-gap: var(--logo-gap-mobile); }
+    }
+    @media (prefers-color-scheme: dark){
+      :root{ --bg:#0b0c0e; --card:#121316; --fg:#eceef1; --muted:#9aa0a9; --border:rgba(255,255,255,.10); --shadow-chat: 0 16px 44px rgba(0,0,0,.65); --shadow-fab: 0 16px 44px rgba(0,0,0,.70); }
+    }
+    @media (prefers-reduced-motion: reduce){
+      *{ animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+    }
+
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0; background:var(--bg); color:var(--fg);
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      text-rendering: optimizeLegibility;
+    }
+
+    .app{ min-height:100svh; display:grid; grid-template-columns:1fr }
+    .main{ position:relative; min-height:100svh }
+
+    /* ====== Center intro ====== */
+    #stageIntro{
+      position:fixed; inset:auto 0 0 0; top:50%; transform:translateY(-50%);
+      display:flex; flex-direction:column; align-items:center; gap: var(--logo-gap);
+      text-align:center; z-index:5; pointer-events:auto; padding:0 12px;
+    }
+    #stageIntro .logo h1{
+      font-family:'Audiowide', Inter, system-ui;
+      font-size: clamp(36px, 6vw, 48px); margin:0; letter-spacing:.6px; font-weight:400;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    body.chat-live #stageIntro .logo h1{ opacity:0; transform: translateY(-10px) }
+
+    /* ====== Dock (bottom) ====== */
+    #dock{ position:fixed; left:0; right:0; bottom: var(--dock-bottom); display:flex; justify-content:center; z-index:7; pointer-events:none; padding:0 12px }
+    #dock > .search{ pointer-events:auto }
+
+    /* ====== Chat bar ====== */
+    .search{
+      width: var(--chat-w);
+      display:flex; align-items:center; gap:10px;
+      background:var(--card); border:1px solid var(--border); border-radius:9999px;
+      padding: var(--padV) var(--padH); min-height: var(--chat-h);
+      box-shadow: var(--shadow-chat);
+    }
+    .query{
+      flex:1; min-height:24px; max-height:160px; resize:none;
+      border:none; outline:none; font-size:16px; line-height:1.35; padding:0 6px;
+      background:transparent; color:var(--fg);
+      overflow:auto; scrollbar-gutter:stable;
+    }
+    .query::placeholder{ color:var(--muted) }
+    .send,.stop{
+      flex:0 0 auto; width: var(--send-d); height: var(--send-d);
+      border-radius:9999px; border:1px solid rgba(0,0,0,.85);
+      background:var(--accent); display:grid; place-items:center; color:#fff; cursor:pointer;
+      box-shadow: var(--shadow-fab);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .send svg,.stop svg{ width: calc(var(--send-d) * 0.32); height: calc(var(--send-d) * 0.32) }
+    .stop{ display:none }
+
+    /* ====== Thread ====== */
+    .thread{ display:none; max-width: var(--chat-w); margin:0 auto; padding:72px 16px calc(var(--chat-h) + var(--dock-bottom) + 48px) }
+    .msg{ display:flex; margin:12px 0 }
+    .msg .bubble{ max-width:84%; padding:12px 14px; border-radius:16px; box-shadow:0 2px 10px rgba(0,0,0,.06); white-space:pre-wrap; overflow-wrap:anywhere }
+    .msg.user{ justify-content:flex-end }
+    .msg.user .bubble{ background:#0f0f10; color:#fff; border:1px solid rgba(0,0,0,.85); border-bottom-right-radius:6px }
+    .msg.assistant{ justify-content:flex-start }
+    .msg.assistant .bubble{ background:var(--card); color:var(--fg); border:1px solid var(--border); border-bottom-left-radius:6px }
+
+    /* ====== Modal (kept for API key / system prompt when needed) ====== */
+    .modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:20; padding:16px }
+    .modal.open{ display:flex }
+    .dialog{ width:min(640px, 94vw); background:var(--card); color:var(--fg); border:1px solid var(--border); border-radius:16px; box-shadow:0 24px 80px rgba(0,0,0,.18); padding:20px }
+    .dialog h2{ margin:0 0 14px 0; font-size:18px }
+    .field{ display:flex; flex-direction:column; gap:8px; margin:10px 0 }
+    .field input,.field textarea{ width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--fg) }
+    .row{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+    .btn{ padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--fg); cursor:pointer }
+    .btn.primary{ background:#0f0f10; color:#fff; border:1px solid rgba(0,0,0,.85) }
+
+    .i svg{ display:block; width:18px; height:18px }
+    .sr-only{ position:absolute!important; height:1px; width:1px; overflow:hidden; clip:rect(1px,1px,1px,1px); white-space:nowrap }
+  </style>
+</head>
+<body>
+  <div class="app" role="application">
+    <main class="main">
+      <!-- (Top bar removed by request) -->
+
+      <!-- Centered intro -->
+      <div id="stageIntro" aria-hidden="false">
+        <div class="logo"><h1>ONX</h1></div>
+        <div class="search" id="searchBar" role="search" aria-label="Ask ONX">
+          <label for="q" class="sr-only">Message</label>
+          <textarea class="query" id="q" rows="1" placeholder="Type a message…" aria-label="Message"></textarea>
+          <button class="send" id="sendBtn" aria-label="Send" title="Send (Enter)"><span class="i" data-icon="arrow-right"></span></button>
+          <button class="stop" id="stopBtn" aria-label="Stop" title="Stop generation">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bottom dock target -->
+      <div id="dock"></div>
+
+      <!-- Conversation thread -->
+      <div id="thread" class="thread" role="log" aria-live="polite" aria-relevant="additions"></div>
+    </main>
+  </div>
+
+  <!-- Settings Modal (only shown automatically if API key missing) -->
+  <div id="settingsModal" class="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <h2 id="settingsTitle">ONX Settings</h2>
+      <div class="field">
+        <label for="apiKeyInput">Novita API Key <small>(stored in localStorage)</small></label>
+        <input id="apiKeyInput" type="password" placeholder="novita-..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="systemInput">System Prompt</label>
+        <textarea id="systemInput" placeholder="Be a helpful assistant."></textarea>
+        <div id="systemLockedNote" class="sr-only">Locked by code.</div>
+      </div>
+      <div class="row">
+        <button class="btn" id="cancelSettings" type="button">Cancel</button>
+        <button class="btn primary" id="saveSettings" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================
+    //  CONFIG — Edit in Code
+    // ============================
+    const CONFIG = {
+      DEFAULT_SYSTEM_PROMPT: `You are ONX — concise, accurate, and calm. Prefer clear structure and actionable specifics. Avoid fluff. For risky topics (security, legal, medical), add a brief caution + safer alternative.`,
+      LOCK_SYSTEM_PROMPT: false, // true = UI cannot change; code-only
+      NOVITA_URL: 'https://api.novita.ai/openai/chat/completions',
+      MAX_TOKENS: 8192,
+      TEMPERATURE: 0.7,
+      TOP_P: 1,
+      EXTRA_BODY: { top_k: 50, repetition_penalty: 1, min_p: 0 },
+      // Set your fixed default model here:
+      MODELS: [
+        { id: 'google/gemma-3-1b-it', label: 'Gemma 3 (1B) Thinking' },
+        { id: 'google/gemma-2-9b-it', label: 'Gemma 2 (9B) Instant' },
+        { id: 'meta/llama-3.1-8b-instruct', label: 'Llama 3.1 8B' }
+      ],
+      DEFAULT_MODEL: 'google/gemma-3-1b-it'
+    };
+
+    // ============================
+    //  DOM
+    // ============================
+    const q = document.getElementById('q');
+    const sendBtn = document.getElementById('sendBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const dock = document.getElementById('dock');
+    const bar = document.getElementById('searchBar');
+    const thread = document.getElementById('thread');
+
+    // (Topbar & model menu removed)
+    // Settings modal
+    const settingsModal = document.getElementById('settingsModal');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const systemInput = document.getElementById('systemInput');
+    const systemLockedNote = document.getElementById('systemLockedNote');
+    const saveSettings = document.getElementById('saveSettings');
+    const cancelSettings = document.getElementById('cancelSettings');
+
+    // ============================
+    //  State (persisted + runtime)
+    // ============================
+    let NOVITA_API_KEY = localStorage.getItem('novita_key') || '';
+    let MODEL = localStorage.getItem('novita_model') || CONFIG.DEFAULT_MODEL;
+    let SYSTEM_PROMPT = CONFIG.LOCK_SYSTEM_PROMPT
+      ? CONFIG.DEFAULT_SYSTEM_PROMPT
+      : (localStorage.getItem('system_prompt') || CONFIG.DEFAULT_SYSTEM_PROMPT);
+
+    const history = [ { role:'system', content:SYSTEM_PROMPT } ];
+
+    // Initialize fields
+    apiKeyInput.value = NOVITA_API_KEY;
+    systemInput.value = SYSTEM_PROMPT;
+    systemInput.disabled = !!CONFIG.LOCK_SYSTEM_PROMPT;
+    systemLockedNote.style.display = CONFIG.LOCK_SYSTEM_PROMPT ? 'block' : 'none';
+
+    // ============================
+    //  Settings Modal (auto only)
+    // ============================
+    function openSettings(){
+      settingsModal.classList.add('open');
+      settingsModal.setAttribute('aria-hidden','false');
+      apiKeyInput.focus();
+    }
+    function closeSettings(){
+      settingsModal.classList.remove('open');
+      settingsModal.setAttribute('aria-hidden','true');
+    }
+    cancelSettings?.addEventListener('click', closeSettings);
+    settingsModal?.addEventListener('click', (e)=>{ if(e.target === settingsModal) closeSettings(); });
+    window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && settingsModal.classList.contains('open')) closeSettings(); });
+
+    saveSettings?.addEventListener('click', ()=>{
+      NOVITA_API_KEY = apiKeyInput.value.trim();
+      if(!CONFIG.LOCK_SYSTEM_PROMPT){
+        SYSTEM_PROMPT = systemInput.value.trim() || CONFIG.DEFAULT_SYSTEM_PROMPT;
+        localStorage.setItem('system_prompt', SYSTEM_PROMPT);
+        history.length = 0;
+        history.push({ role:'system', content:SYSTEM_PROMPT });
+        thread.innerHTML = '';
+        document.body.classList.remove('chat-live');
+        document.getElementById('stageIntro')?.appendChild(bar);
+      }
+      localStorage.setItem('novita_key', NOVITA_API_KEY);
+      closeSettings();
+    });
+
+    // ============================
+    //  UI Helpers
+    // ============================
+    function ensureDocked(){
+      if (document.body.classList.contains('chat-live')) return;
+      document.body.classList.add('chat-live');
+      thread.style.display = 'block';
+      const first = bar.getBoundingClientRect();
+      dock.appendChild(bar);
+      const last = bar.getBoundingClientRect();
+      const dx = first.left - last.left;
+      const dy = first.top - last.top;
+      const anim = bar.animate([
+        { transform:`translate(${dx}px, ${dy}px)` },
+        { transform:'translate(0,0)' }
+      ], { duration:420, easing:'cubic-bezier(.2,.8,.2,1)' });
+      anim?.addEventListener?.('finish', ()=> bar.style.transform='');
+    }
+
+    function autoResizeTextarea(el){
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 240) + 'px';
+    }
+    q.addEventListener('input', ()=> autoResizeTextarea(q));
+    autoResizeTextarea(q);
+
+    function scrollToBottom(smooth=true){
+      window.scrollTo({ top: document.body.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    function appendMessage(role, text){
+      const msg = document.createElement('div');
+      msg.className = `msg ${role}`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      msg.appendChild(bubble);
+      thread.appendChild(msg);
+      requestAnimationFrame(()=> scrollToBottom(true));
+      return bubble;
+    }
+
+    // ============================
+    //  Streaming
+    // ============================
+    function processSSE(buffer, onToken){
+      let done = false;
+      const events = buffer.split(/\r?\n\r?\n/);
+      buffer = events.pop() ?? '';
+      for(const evt of events){
+        const lines = evt.split(/\r?\n/);
+        for(const line of lines){
+          const m = line.match(/^data:\s*(.*)$/);
+          if(!m) continue;
+          const data = m[1].trim();
+          if(data === '[DONE]'){ done = true; break; }
+          try{
+            const json = JSON.parse(data);
+            const delta = json?.choices?.[0]?.delta ?? {};
+            const content = typeof delta.content === 'string' ? delta.content : '';
+            if(content) onToken(content);
+          }catch{}
+        }
+        if(done) break;
+      }
+      return { buffer, done };
+    }
+
+    let controller = null;
+    let sending = false;
+
+    async function streamNovita(){
+      if(!NOVITA_API_KEY){
+        openSettings(); // prompt for key since topbar was removed
+        throw new Error('Missing Novita API key');
+      }
+      const payload = {
+        model: MODEL,
+        messages: history,
+        stream: true,
+        max_tokens: CONFIG.MAX_TOKENS,
+        temperature: CONFIG.TEMPERATURE,
+        top_p: CONFIG.TOP_P,
+        presence_penalty: 0,
+        frequency_penalty: 0,
+        response_format: { type:'text' },
+        extra_body: CONFIG.EXTRA_BODY
+      };
+
+      controller = new AbortController();
+      const resp = await fetch(CONFIG.NOVITA_URL, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':`Bearer ${NOVITA_API_KEY}`
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      if(!resp.ok || !resp.body){
+        let message = `Network error (${resp.status || 'no-stream'})`;
+        try{ const t = await resp.text(); if(t) message += ` — ${t}`; }catch{}
+        throw new Error(message);
+      }
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+
+      let assistantText = '';
+      const bubble = appendMessage('assistant', '');
+
+      let buffer = '';
+      while(true){
+        const { value, done } = await reader.read();
+        if(done) break;
+        buffer += decoder.decode(value, { stream:true });
+        const res = processSSE(buffer, (tok)=>{
+          assistantText += tok;
+          bubble.textContent = assistantText;
+          scrollToBottom(false);
+        });
+        buffer = res.buffer;
+        if(res.done) break;
+      }
+
+      history.push({ role:'assistant', content: assistantText });
+      controller = null;
+    }
+
+    function setStreamingUI(on){
+      sendBtn.style.display = on ? 'none' : 'grid';
+      stopBtn.style.display = on ? 'grid' : 'none';
+      q.disabled = on;
+      if(!on) q.focus();
+    }
+    function stopStreaming(){ if(controller){ controller.abort(); } controller = null; setStreamingUI(false); }
+
+    async function handleSend(){
+      if(sending) return;
+      const text = q.value.trim();
+      if(!text) return;
+      sending = true; setStreamingUI(true);
+      ensureDocked();
+      appendMessage('user', text);
+      history.push({ role:'user', content:text });
+      q.value = ''; autoResizeTextarea(q);
+      try{
+        await streamNovita();
+      }catch(err){
+        if(err.name === 'AbortError'){ appendMessage('assistant','⏹️ Generation stopped.'); }
+        else{ appendMessage('assistant','⚠️ Error contacting model. Check API key, model, or network.'); console.error(err); }
+      }finally{
+        sending = false; setStreamingUI(false);
+      }
+    }
+
+    q?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); } });
+    sendBtn?.addEventListener('click', handleSend);
+    stopBtn?.addEventListener('click', stopStreaming);
+
+    // Icons
+    function icon(name){
+      switch(name){
+        case 'arrow-right': return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h12"/><path d="m13 6 6 6-6 6"/></svg>`;
+        default: return '';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.querySelectorAll('.i').forEach(el=>{ const n = el.getAttribute('data-icon'); if(n) el.innerHTML = icon(n); });
+    });
+
+    // Self-tests (SSE)
+    (function runTests(){
+      const results = [];
+      function assert(name, cond){ (cond?console.log:console.error)(`[${cond?'PASS':'FAIL'}] ${name}`); results.push(!!cond); }
+      let out='', buf=''; const push=(s)=>out+=s;
+      buf += 'data: {"choices":[{"delta":{"content":"Hi"}}]}\n\n' + 'data: {"choices":[{"delta":{"content":"!"}}]}\n\n' + 'data: [DONE]\n\n';
+      let r = processSSE(buf, push); assert('SSE tokens', out==='Hi!'); assert('SSE done', r.done===true);
+    })();
+  </script>
+</body>
+</html>

@@ -88,3 +88,287 @@ Optional subtle hover lift (like your features):
 
 
 That’s it—drop the snippet in once, then add reveal-up or reveal-zoom-up to any element to get the same elegant scroll reveals your original page uses.
+
+
+
+
+
+
+
+
+
+
+
+
+
+=============================== REVEAL SNIPPET 2========================================================================================================================
+
+
+
+<!-- ONX Reveal Pack — drop-in scroll reveals -->
+<style id="onx-reveal-css">
+  /* Usage:
+     <div class="reveal reveal-up" data-reveal-delay="120ms" data-reveal-once="true">...</div>
+     <div data-reveal-group data-reveal-stagger="80ms">
+       <div class="reveal reveal-left"></div>
+       <div class="reveal reveal-left"></div>
+     </div>
+  */
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { transition: none !important; transform: none !important; opacity: 1 !important; filter: none !important; clip-path: none !important; }
+  }
+
+  /* Engine defaults are scoped to .reveal (so we don't touch your :root) */
+  .reveal{
+    --reveal-duration: 700ms;
+    --reveal-delay: 0ms;
+    --reveal-distance: 24px;
+    --reveal-ease: cubic-bezier(.22,1,.36,1);    /* soft, Apple-like */
+    --reveal-spring: cubic-bezier(.34,1.56,.64,1); /* gentle overshoot */
+
+    opacity: 0;
+    will-change: opacity, transform, filter, clip-path;
+    transform: translateZ(0);
+    transition:
+      opacity var(--reveal-duration) var(--reveal-ease) var(--reveal-delay),
+      transform var(--reveal-duration) var(--reveal-ease) var(--reveal-delay),
+      filter var(--reveal-duration) var(--reveal-ease) var(--reveal-delay),
+      clip-path var(--reveal-duration) var(--reveal-ease) var(--reveal-delay),
+      -webkit-clip-path var(--reveal-duration) var(--reveal-ease) var(--reveal-delay);
+  }
+  .reveal.is-inview{
+    opacity: 1;
+    transform: none;
+    filter: none;
+    clip-path: inset(0 0 0 0 round var(--clip-radius,0));
+    -webkit-clip-path: inset(0 0 0 0 round var(--clip-radius,0));
+  }
+
+  /* Directional slides */
+  .reveal-up{    transform: translate3d(0,  var(--reveal-distance), 0) }
+  .reveal-down{  transform: translate3d(0, calc(-1 * var(--reveal-distance)), 0) }
+  .reveal-left{  transform: translate3d(calc(-1 * var(--reveal-distance)), 0, 0) }
+  .reveal-right{ transform: translate3d(  var(--reveal-distance), 0, 0) }
+
+  /* Subtle scale */
+  .reveal-scale{ transform: translate3d(0, var(--reveal-distance), 0) scale(.96) }
+
+  /* Blur-to-crisp */
+  .reveal-blur{  filter: blur(12px); transform: translate3d(0, var(--reveal-distance), 0) }
+
+  /* Clip & wipe variants */
+  .reveal-clip{  clip-path: inset(0 0 20% 0 round var(--clip-radius,16px)); -webkit-clip-path: inset(0 0 20% 0 round var(--clip-radius,16px)); transform: translate3d(0,12px,0) }
+  .reveal-wipe-x{ clip-path: inset(0 50% 0 50%); -webkit-clip-path: inset(0 50% 0 50%) }
+  .reveal-wipe-y{ clip-path: inset(50% 0 50% 0); -webkit-clip-path: inset(50% 0 50% 0) }
+
+  /* Easing presets (optional) */
+  .ease-soft  { --reveal-ease: var(--reveal-ease) }
+  .ease-spring{ --reveal-ease: var(--reveal-spring) }
+</style>
+
+<script id="onx-reveal-js">
+  (function(){
+    // Skip animations if user prefers reduced motion
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const OBS = new IntersectionObserver(onIntersect, { threshold: 0.12, rootMargin: '0px 0px -10% 0px' });
+
+    function onIntersect(entries){
+      for(const entry of entries){
+        const el = entry.target;
+        if(entry.isIntersecting){
+          // Pull per-element options
+          const dur   = el.dataset.revealDuration;
+          const delay = el.dataset.revealDelay;
+          const dist  = el.dataset.revealDistance;
+
+          if(dur)   el.style.setProperty('--reveal-duration', dur);
+          if(delay) el.style.setProperty('--reveal-delay', delay);
+          if(dist)  el.style.setProperty('--reveal-distance', dist);
+
+          el.classList.add('is-inview');
+          if(el.dataset.revealOnce === 'true') OBS.unobserve(el);
+        } else {
+          if(el.dataset.revealOnce !== 'true'){
+            el.classList.remove('is-inview');
+          }
+        }
+      }
+    }
+
+    // Stagger children inside any [data-reveal-group]
+    function applyGroupStaggers(root){
+      root.querySelectorAll('[data-reveal-group]').forEach(group=>{
+        const staggerMs = parseTimeMs(group.dataset.revealStagger || '70ms');
+        const items = Array.from(group.querySelectorAll(':scope .reveal'));
+        items.forEach((el, i)=>{
+          const base = parseTimeMs(el.dataset.revealDelay || '0ms');
+          el.dataset.revealDelay = (base + i * staggerMs) + 'ms';
+        });
+      });
+    }
+
+    // Observe .reveal elements (idempotent)
+    function observeNewReveals(root){
+      root.querySelectorAll('.reveal').forEach(el=>{
+        if(el.__onxBound) return;
+        el.__onxBound = true;
+        if(prefersReduced){
+          el.classList.add('is-inview');
+          return; // no IO if reduced motion
+        }
+        OBS.observe(el);
+      });
+    }
+
+    function parseTimeMs(s){
+      if(typeof s === 'number') return s;
+      const n = parseFloat(s || '0');
+      return String(s).toLowerCase().includes('s') ? Math.round(n * 1000) : Math.round(n);
+    }
+
+    // Public refresh for dynamically added content
+    window.ONXReveal = window.ONXReveal || {};
+    window.ONXReveal.refresh = function(root=document){
+      applyGroupStaggers(root);
+      observeNewReveals(root);
+    };
+
+    // Init on DOM ready
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', ()=>window.ONXReveal.refresh(document));
+    } else {
+      window.ONXReveal.refresh(document);
+    }
+  })();
+</script>
+
+
+<h2 class="reveal reveal-up" data-reveal-distance="36px">Intelligence. Refined.</h2>
+
+<div data-reveal-group data-reveal-stagger="90ms">
+  <div class="reveal reveal-left ease-spring">Card A</div>
+  <div class="reveal reveal-left ease-spring" data-reveal-once="true">Card B</div>
+  <div class="reveal reveal-left ease-spring" data-reveal-delay="120ms">Card C</div>
+</div>
+
+<img class="reveal reveal-clip" style="--clip-radius:20px" src="hero.jpg" alt="">
+
+
+
+
+
+=============================== END REVEAL SNIPPET 2========================================================================================================================
+
+=============================== REVEAL SNIPPET 3========================================================================================================================
+
+<!-- Paste in your <head> (or anywhere before </body>) -->
+<style>
+  /* ===== Universal "Intelligence. Refined." reveal ===== */
+  .reveal-up {
+    /* Defaults (can be overridden via data-attributes or inline CSS vars) */
+    --reveal-translate: 50px;      /* matches your hero: 50px up */
+    --reveal-duration: 1200ms;     /* matches your hero: 1.2s */
+    --reveal-delay: 0ms;
+
+    opacity: 0;
+    transform: translate3d(0, var(--reveal-translate), 0);
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+  }
+
+  .reveal-up.is-visible {
+    animation: fadeInUp var(--reveal-duration) ease both;
+    animation-delay: var(--reveal-delay);
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Accessibility: respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-up {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+    .reveal-up.is-visible {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  // ===== Make any `.reveal-up` animate on scroll, hero-style =====
+  document.addEventListener('DOMContentLoaded', () => {
+    const selector = '.reveal-up';
+    const nodes = document.querySelectorAll(selector);
+
+    // Apply per-element overrides from data-* (optional)
+    nodes.forEach(el => {
+      const dist = el.dataset.revealDistance;
+      const dur  = el.dataset.revealDuration;
+      const del  = el.dataset.revealDelay;
+
+      if (dist) el.style.setProperty('--reveal-translate', `${parseFloat(dist)}px`);
+      if (dur)  el.style.setProperty('--reveal-duration', `${parseInt(dur, 10)}ms`);
+      if (del)  el.style.setProperty('--reveal-delay', `${parseInt(del, 10)}ms`);
+    });
+
+    // Optional stagger: add data-reveal-stagger="120" to a parent to cascade children
+    document.querySelectorAll('[data-reveal-stagger]').forEach(group => {
+      const step = parseInt(group.dataset.revealStagger, 10) || 120; // ms between siblings
+      const targets = group.querySelectorAll(selector);
+      targets.forEach((el, i) => {
+        // Only set delay if not already customized
+        if (!el.style.getPropertyValue('--reveal-delay') && !el.dataset.revealDelay) {
+          el.style.setProperty('--reveal-delay', `${i * step}ms`);
+        }
+      });
+    });
+
+    // If browser lacks IntersectionObserver, just show everything
+    if (!('IntersectionObserver' in window)) {
+      nodes.forEach(el => el.classList.add('is-visible'));
+      return;
+    }
+
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          obs.unobserve(entry.target); // animate once
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -10% 0px' // start a bit before fully in view
+    });
+
+    nodes.forEach(el => io.observe(el));
+  });
+</script>
+
+
+How to use
+<h2 class="reveal-up">Section Title</h2>
+
+<p class="reveal-up" data-reveal-distance="60" data-reveal-duration="1000" data-reveal-delay="150">
+  This paragraph uses the same hero reveal, with custom distance/duration/delay.
+</p>
+
+<!-- Stagger example (children cascade automatically: 0ms, 120ms, 240ms, …) -->
+<div data-reveal-stagger="120">
+  <h3 class="reveal-up">Card A</h3>
+  <h3 class="reveal-up">Card B</h3>
+  <h3 class="reveal-up">Card C</h3>
+</div>
+
+
+That’s it—add reveal-up wherever you want that exact fade-in + up motion. Adjust via data-reveal-distance, data-reveal-duration, and data-reveal-delay as needed.
+
+=============================== END REVEAL SNIPPET 3========================================================================================================================
